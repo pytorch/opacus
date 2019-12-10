@@ -1,0 +1,95 @@
+version: 2.1
+
+setup_venv: &setup_venv
+  name: Sets up the virtualenv
+  no_output_timeout: 5h
+  command: |
+    python3 -m venv ~/pytorch-privacy-test
+    . ~/pytorch-privacy-test/bin/activate
+    pip3 install --upgrade pip
+    pip3 install -r requirements.txt
+
+# -------------------------------------------------------------------------------------
+# Jobs
+# -------------------------------------------------------------------------------------
+jobs:
+  rununittests:
+    docker:
+      - image: circleci/python:3.7.4-buster
+    resource_class: 2xlarge+
+    working_directory: ~/pytorch-dp
+    steps:
+      - checkout
+      - run:
+          <<: *setup_venv
+      - run:
+          name: Unit tests
+          no_output_timeout: 1h
+          command: |
+            . ~/pytorch-privacy-test/bin/activate
+            mkdir unittest-reports
+            pytest --junitxml=unittest-reports/junit.xml
+
+      - store_test_results:
+          path: unittest-reports
+      - store_artifacts:
+          path: unittest-reports
+
+
+  runmnistexample:
+    docker:
+      - image: circleci/python:3.7.4-buster
+    resource_class: 2xlarge+
+    working_directory: ~/pytorch-dp
+    steps:
+      - checkout
+      - run:
+          <<: *setup_venv
+      - run:
+          name: MNIST example
+          command: |
+            . ~/pytorch-privacy-test/bin/activate
+            mkdir mnist-test-reports
+            PYTHONPATH=. python3 examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 16 --epochs 2 --data-root . --n-runs 1 --device cpu
+      - store_test_results:
+          path: mnist-test-reports
+      - store_artifacts:
+          path: mnist-test-reports
+
+
+# -------------------------------------------------------------------------------------
+# Workflows
+# -------------------------------------------------------------------------------------
+workflows:
+  version: 2.1
+  commit:
+    jobs:
+      - rununittests:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - runmnistexample:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - rununittests:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - runmnistexample:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
