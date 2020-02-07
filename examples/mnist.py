@@ -23,16 +23,16 @@ TARGET_DELTA = 1e-5
 class SampleConvNet(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 16, 8, 1)
-        self.conv2 = nn.Conv2d(16, 32, 4, 1)
+        self.conv1 = nn.Conv2d(1, 16, 8, 2)
+        self.conv2 = nn.Conv2d(16, 32, 4, 2)
         self.fc1 = nn.Linear(32 * 3 * 3, 10)
 
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
-        x = F.relu(self.conv1(x))  # -> [B, 16, 21, 21]
-        x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 10, 10]
-        x = F.relu(self.conv2(x))  # -> [B, 32, 7, 7]
-        x = F.max_pool2d(x, 2, 2)  # -> [B, 32, 3, 3]
+        x = F.relu(self.conv1(x))  # -> [B, 16, 11, 11]
+        x = F.max_pool2d(x, 2, 1)  # -> [B, 16, 10, 10]
+        x = F.relu(self.conv2(x))  # -> [B, 32, 4, 4]
+        x = F.max_pool2d(x, 2, 1)  # -> [B, 32, 3, 3]
         x = x.view(-1, 32 * 3 * 3)  # -> [B, 32*3*3]
         x = self.fc1(x)  # -> [B, 10]
         return x

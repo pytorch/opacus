@@ -172,7 +172,8 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
                 layer.bias.grad_sample = B
 
         elif layer_type == "Conv2d":
-            A = torch.nn.functional.unfold(A, layer.kernel_size)
+            A = torch.nn.functional.unfold(
+                A, layer.kernel_size, padding=layer.padding, stride=layer.stride)
             B = B.reshape(n, -1, A.shape[-1])
             grad_sample = torch.einsum("ijk,ilk->ijl", B, A)
             shape = [n] + list(layer.weight.shape)
