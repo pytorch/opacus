@@ -17,9 +17,6 @@ from torchvision import datasets, transforms
 from tqdm import tqdm
 
 
-TARGET_DELTA = 1e-5
-
-
 class SampleConvNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -53,11 +50,11 @@ def train(args, model, device, train_loader, optimizer, epoch):
         optimizer.step()
 
     if not args.disable_dp:
-        epsilon, best_alpha = optimizer.privacy_engine.get_privacy_spent(TARGET_DELTA)
+        epsilon, best_alpha = optimizer.privacy_engine.get_privacy_spent(args.delta)
         print(
             f"Train Epoch: {epoch} \t"
             f"Loss: {loss.item():.6f} "
-            f"(Ɛ = {epsilon}, 𝛿 = {TARGET_DELTA}) for α = {best_alpha}"
+            f"(Ɛ = {epsilon}, 𝛿 = {args.delta}) for α = {best_alpha}"
         )
     else:
         print(f"Train Epoch: {epoch} \t" f"Loss: {loss.item():.6f} ")
