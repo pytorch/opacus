@@ -18,7 +18,7 @@ Currently, we only supporting installing from source. To do that, just run:
 ```bash
 git clone https://github.com/facebookresearch/pytorch-dp.git
 cd pytorch-dp
-pip install -e
+pip install -e .
 ```
 
 ## Getting started
