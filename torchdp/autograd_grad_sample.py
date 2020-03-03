@@ -148,7 +148,8 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
             continue
         if not hasattr(layer, "activations"):
             raise ValueError(
-                "No activations detected, run forward after add_hooks(model)"
+                f"No activations detected for {type(layer)},"
+                " run forward after add_hooks(model)"
             )
         if not hasattr(layer, "backprops_list"):
             raise ValueError(
