@@ -6,8 +6,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchdp import PrivacyEngine
+from torchdp.dp_model_inspector import IncompatibleModuleException
 from torch.utils.data import DataLoader
-from torchvision import transforms
+from torchvision import transforms, models
 from torchvision.datasets import FakeData
 
 
@@ -136,9 +137,24 @@ class PrivacyEngine_test(unittest.TestCase):
         We disable clipping in this test by setting it to a very high threshold.
         """
         self.setUp_private_model(noise_multiplier=1.3, max_grad_norm=999)
-        first_run_params = [p for p in self.private_model.parameters()]
+        first_run_params = (p for p in self.private_model.parameters())
 
         self.setUp_private_model(noise_multiplier=1.3, max_grad_norm=999)
-        second_run_params = [p for p in self.private_model.parameters()]
+        second_run_params = (p for p in self.private_model.parameters())
         for p0, p1 in zip(first_run_params, second_run_params):
             self.assertFalse(torch.allclose(p0, p1))
+
+    def test_model_validator(self):
+        """
+        Test that the privacy engine throws on attach
+        if there are unsupported modules
+        """
+        privacy_engine = PrivacyEngine(
+            models.resnet18(),
+            self.dl,
+            alphas=self.ALPHAS,
+            noise_multiplier=1.3,
+            max_grad_norm=1,
+        )
+        with self.assertRaises(IncompatibleModuleException):
+            privacy_engine.attach(self.private_optimizer)

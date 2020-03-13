@@ -22,7 +22,7 @@ class dp_model_inspector_test(unittest.TestCase):
         model = models.resnet50()
         inspector.should_throw = False
         self.assertFalse(inspector.validate(model))
- 
+
     def test_returns_true(self):
         inspector = dp_inspector.DPModelInspector()
         model = utils.convert_batchnorm_modules(models.resnet50())

@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 
 from . import privacy_analysis as tf_privacy
 from .per_sample_gradient_clip import PerSampleGradientClipper
+from .dp_model_inspector import DPModelInspector
 
 
 class PrivacyEngine:
@@ -39,7 +40,7 @@ class PrivacyEngine:
             if self.device.type == "cpu"
             else torch.cuda.manual_seed(self.secure_seed)
         )
-
+        self.validator = DPModelInspector()
         self.clipper = PerSampleGradientClipper(self.module, self.max_grad_norm)
 
     def attach(self, optimizer: torch.optim.Optimizer):
@@ -48,11 +49,15 @@ class PrivacyEngine:
         the optimizer's step.
 
         To do that, this method does the following:
-        1. Adds a pointer to this object (the PrivacyEngine) inside the optimizer
-        2. Moves the original optimizer's `step()` function to `original_step()`
-        3. Monkeypatches the optimizer's `step()` function to call `step()` on
+        1. Validates the model for containing un-attachable layers
+        2. Adds a pointer to this object (the PrivacyEngine) inside the optimizer
+        3. Moves the original optimizer's `step()` function to `original_step()`
+        4. Monkeypatches the optimizer's `step()` function to call `step()` on
         the query engine automatically whenever it would call `step()` for itself
         """
+
+        # Validate the model for not containing un-supported modules.
+        self.validator.validate(self.module)
 
         def dp_step(self, closure=None):
             self.privacy_engine.step()
