@@ -176,8 +176,16 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
             A = torch.nn.functional.unfold(
                 A, layer.kernel_size, padding=layer.padding, stride=layer.stride)
             B = B.reshape(n, -1, A.shape[-1])
-            grad_sample = torch.einsum("ijk,ilk->ijl", B, A)
-            shape = [n] + list(layer.weight.shape)
-            layer.weight.grad_sample = grad_sample.reshape(shape)
+            try:
+                grad_sample = torch.einsum("ijk,ilk->ijl", B, A)\
+                    if layer.groups == 1\
+                    else torch.einsum("ijk,ijk->ij", B, A)
+                shape = [n] + list(layer.weight.shape)
+                layer.weight.grad_sample = grad_sample.reshape(shape)
+            except Exception as e:
+                raise type(e)(
+                    f"{e} There is probably a problem with Conv2d.groups"
+                    + "It should be either 1 or in_channel")
+
             if layer.bias is not None:
                 layer.bias.grad_sample = torch.sum(B, dim=2)

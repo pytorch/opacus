@@ -14,44 +14,18 @@ import time
 import warnings
 
 import torch
-import torch.nn as nn
-import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
-import torch.optim
 import torch.multiprocessing as mp
+import torch.nn as nn
+import torch.nn.parallel
+import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
-import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-
-from torchdp import PrivacyEngine
-import torch.nn.functional as F
-
-
-class SampleConvNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 16, 8, 2)
-        self.conv2 = nn.Conv2d(16, 32, 4, 2)
-        self.conv3 = nn.Conv2d(32, 64, 4, 4)
-        self.fc1 = nn.Linear(64 * 3 * 3, 1000)
-
-    def forward(self, x):
-        # x of shape [B, 1, 28, 28]
-        x = F.relu(self.conv1(x))  # -> [B, 16, 109, 109]
-        x = F.max_pool2d(x, 2, 1)  # -> [B, 16, 108, 108]
-        x = F.relu(self.conv2(x))  # -> [B, 32, 53, 53]
-        x = F.max_pool2d(x, 2, 1)  # -> [B, 32, 52, 52]
-        x = F.relu(self.conv3(x))  # -> [B, 64, 13, 13]
-        x = F.max_pool2d(x, 2, 1)  # -> [B, 64, 12, 12]
-        x = F.max_pool2d(x, 4, 4)  # -> [B, 64, 3, 3]
-        x = x.view(-1, 64 * 3 * 3)  # -> [B, 64*3*3]
-        x = self.fc1(x)  # -> [B, 1000]
-        return x
-
-    def name(self):
-        return "SampleConvNet"
+import torchvision.models as models
+import torchvision.transforms as transforms
+from torchdp import PrivacyEngine, utils
 
 
 parser = argparse.ArgumentParser(description="PyTorch ImageNet DP Training")
@@ -184,6 +158,13 @@ parser.add_argument(
     help="Target delta (default: 1e-5)",
 )
 
+parser.add_argument(
+    "--checkpoint-file",
+    type=str,
+    default="checkpoint",
+    help="path to save check points",
+)
+
 best_acc1 = 0
 
 
@@ -246,8 +227,11 @@ def main_worker(gpu, ngpus_per_node, args):
             world_size=args.world_size,
             rank=args.rank,
         )
-    # create model
-    model = SampleConvNet().to(f"cuda:{args.gpu}")
+    # create model: resnet 18
+    # since our differential privacy engine does not support BatchNormXd
+    # we need to replace all such blocks with Identity, this is done with
+    # the help of the nullifyModule utility function.
+    model = utils.convert_batchnorm_modules(models.resnet18())
 
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
@@ -364,6 +348,7 @@ def main_worker(gpu, ngpus_per_node, args):
     )
 
     if not args.disable_dp:
+        print("PRIVACY ENGINE ON")
         privacy_engine = PrivacyEngine(
             model,
             train_loader,
@@ -372,6 +357,8 @@ def main_worker(gpu, ngpus_per_node, args):
             max_grad_norm=args.max_per_sample_grad_norm,
         )
         privacy_engine.attach(optimizer)
+    else:
+        print("PRIVACY ENGINE OFF")
 
     if args.evaluate:
         validate(val_loader, model, criterion, args)
@@ -404,6 +391,7 @@ def main_worker(gpu, ngpus_per_node, args):
                     "optimizer": optimizer.state_dict(),
                 },
                 is_best,
+                filename=args.checkpoint_file + ".tar",
             )
 
 
@@ -509,7 +497,7 @@ def validate(val_loader, model, criterion, args):
     return top1.avg
 
 
-def save_checkpoint(state, is_best, filename="checkpoint.pth.tar"):
+def save_checkpoint(state, is_best, filename="checkpoint.tar"):
     torch.save(state, filename)
     if is_best:
         shutil.copyfile(filename, "model_best.pth.tar")
