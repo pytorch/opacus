@@ -1,18 +1,26 @@
 # Simple run
 run like:
 ```
-buck run @mode/dev-nosan //aml/privacy/pytorch-dp/examples:imagenet -- --lr 0.1 --sigma 1.3 -c 1.5 --batch-size 64 --epochs 10 /data/datasets/imagenet_small_10class --gpu 3 --checkpoint-file nodpOriginal10class_learning.1 --disable-dp
+python imagenet.py --lr 0.1 --sigma 1.3 -c 1.5 --batch-size 64 --epochs 10 /data/datasets/imagenet_small_10class --gpu 3 --checkpoint-file nodpOriginal10class_learning.1 --disable-dp
 
 ```
 for no dp, and like:
 ```
-buck run @mode/dev-nosan //aml/privacy/pytorch-dp/examples:imagenet -- --lr 0.1 --sigma 1.3 -c 1.5 --batch-size 64 --epochs 10 /data/datasets/imagenet_small_10class/ --gpu 6 --checkpoint-file dp100k
+python imagenet.py --lr 0.1 --sigma 1.3 -c 1.5 --batch-size 64 --epochs 10 /data/datasets/imagenet_small_10class/ --gpu 6 --checkpoint-file dp100k
 ```
 for dp enabled.
 
-# Results 
-We have done some tests to evaluate different option for replacing BatchNorm modules as they cannot be attached
-to the privacy engine. For our tests we have used ImageNet with only 10 classes. Below are some of our results, 
+# Get smaller ImageNet samples
+
+Since ImageNet is a big dataset, in order to experiment with *part of* the dataset, you can use the scripts under `/scripts` directory to make sampled version of ImageNet dataset. 
+
+Scripts:
+* `make_small_imagebet_sampled.py`: *This script makes a sampled version of ImageNet, with all 1000 classes.* usage Example: *bash make_small_imagenet_N_classes.sh -o Documents/imagenet_full_size -d Documents/imagenet_small_100 -nt 100 -nv 10*
+* `make_small_imagebet_N_classes.py`: *This script makes a smaller version of ImageNet, where only N classes are copied.* usage Example: *bash make_small_imagenet_N_classes.sh -o Documents/imagenet_full_size -d Documents/imagenet_small_50_classes -n 50* 
+
+# Study
+We have done some tests to evaluate the different options for replacing BatchNorm modules, since they cannot be attached
+to the privacy engine yet. For our tests we have used ImageNet with only 10 out of 1000 classes. Below are some of our results, 
 that lead us to use our modified version of GroupNorm instead of BatchNorm.
 
 **base case: original resne18, nodp**
