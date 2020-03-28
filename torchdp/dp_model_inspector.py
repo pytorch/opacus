@@ -39,6 +39,10 @@ class DPModelInspector:
 
         def is_valid(module: nn.Module):
             valid = (not requires_grad(module)) or is_supported(module)
+            if valid and isinstance(module, nn.Conv2d):
+                valid = \
+                    module.groups == 1 or\
+                    module.groups == module.in_channels
             return valid
 
         def no_batchnorm(module: nn.Module):
