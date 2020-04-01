@@ -154,7 +154,7 @@ def has_no_param(module: nn.Module):
     for _ in module.parameters(recurse=False):
         has_param = True
         break
-    return (not has_param)
+    return not has_param
 
 
 class ModelInspector:
@@ -193,10 +193,13 @@ class ModelInspector:
         print(inspector(nn.Conv2d(1, 1, 1)))  # prints True
     """
 
-    def __init__(self, name: str,
-                 predicate: Callable[[nn.Module], bool],
-                 check_leaf_nodes_only: bool = True,
-                 message: str = None):
+    def __init__(
+        self,
+        name: str,
+        predicate: Callable[[nn.Module], bool],
+        check_leaf_nodes_only: bool = True,
+        message: str = None,
+    ):
         self.name = name
         if check_leaf_nodes_only:
             self.predicate = lambda x: has_no_param(x) or predicate(x)
@@ -207,7 +210,7 @@ class ModelInspector:
 
     def validate(self, model: nn.Module) -> bool:
         valid = True
-        for name, module in model.named_modules(prefix='Main'):
+        for name, module in model.named_modules(prefix="Main"):
             if not self.predicate(module):
                 valid = False
                 self.violators.append(name)

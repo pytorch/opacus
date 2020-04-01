@@ -82,17 +82,13 @@ class PrivacyEngine:
 
     def get_renyi_divergence(self):
         rdp = torch.tensor(
-            tf_privacy.compute_rdp(
-                self.sample_rate, self.sigma, 1, self.alphas
-            )
+            tf_privacy.compute_rdp(self.sample_rate, self.sigma, 1, self.alphas)
         )
         return rdp
 
     def get_privacy_spent(self, target_delta: float):
         rdp = self.get_renyi_divergence() * self.steps
-        return tf_privacy.get_privacy_spent(
-            self.alphas, rdp, target_delta
-        )
+        return tf_privacy.get_privacy_spent(self.alphas, rdp, target_delta)
 
     def step(self):
         self.steps += 1

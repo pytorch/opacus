@@ -174,7 +174,8 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
         elif layer_type == "Conv2d":
             # Extracts sliding local blocks from a batched input tensor.
             A = torch.nn.functional.unfold(
-                A, layer.kernel_size, padding=layer.padding, stride=layer.stride)
+                A, layer.kernel_size, padding=layer.padding, stride=layer.stride
+            )
             B = B.reshape(n, -1, A.shape[-1])
             grad_sample = torch.einsum("ijk,ilk->ijl", B, A)
             shape = [n] + list(layer.weight.shape)

@@ -10,7 +10,6 @@ from torchdp import utils
 
 
 class dp_model_inspector_test(unittest.TestCase):
-
     def test_raises_exception(self):
         inspector = dp_inspector.DPModelInspector()
         model = models.resnet50()

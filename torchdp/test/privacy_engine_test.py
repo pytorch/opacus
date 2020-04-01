@@ -70,9 +70,7 @@ class PrivacyEngine_test(unittest.TestCase):
         )
 
     def setUp_private_model(
-        self,
-        noise_multiplier=1.3,
-        max_grad_norm=1.0,
+        self, noise_multiplier=1.3, max_grad_norm=1.0,
     ):
         # Deep copy
         self.private_model = SampleConvNet()  # create the structure
