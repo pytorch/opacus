@@ -110,7 +110,7 @@ def main():
         "-n",
         "--epochs",
         type=int,
-        default=14,
+        default=2,
         metavar="N",
         help="number of epochs to train (default: 14)",
     )
@@ -125,7 +125,7 @@ def main():
     parser.add_argument(
         "--lr",
         type=float,
-        default=1.0,
+        default=0.15,
         metavar="LR",
         help="learning rate (default: 1.0)",
     )
@@ -178,7 +178,7 @@ def main():
     args = parser.parse_args()
     device = torch.device(args.device)
 
-    kwargs = {"num_workers": 1, "pin_memory": True}
+    kwargs = {"num_workers": 0, "pin_memory": True}
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST(
             args.data_root,

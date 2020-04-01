@@ -23,6 +23,16 @@ class PrivacyEngine:
         max_grad_norm: float,
         grad_norm_type: int = 2,
     ):
+        """
+        Initialization of the privacy class.
+        :param module: The default nn.Module
+        :param dataloader: The dataloader object.
+        :param alphas: The alphas for RDP calculation
+        :param noise_multiplier: The ratio of the standard deviation of the Gaussian noise
+        to the l2-sensitivity of the function to which it is added.
+        :param max_grad_norm: The max of grad norms which bound the l2 sensitivity.
+        :param grad_norm_type: int
+        """
         self.steps = 0
         self.module = module
         self.dataloader = dataloader
@@ -42,6 +52,9 @@ class PrivacyEngine:
         )
         self.validator = DPModelInspector()
         self.clipper = PerSampleGradientClipper(self.module, self.max_grad_norm)
+
+        # Standard deviation of the additive noise
+        self.sigma = self.noise_multiplier * self.max_grad_norm
 
     def attach(self, optimizer: torch.optim.Optimizer):
         """
@@ -70,7 +83,7 @@ class PrivacyEngine:
     def get_renyi_divergence(self):
         rdp = torch.tensor(
             tf_privacy.compute_rdp(
-                self.sample_rate, self.noise_multiplier, 1, self.alphas
+                self.sample_rate, self.sigma, 1, self.alphas
             )
         )
         return rdp
@@ -88,7 +101,7 @@ class PrivacyEngine:
         for p in self.module.parameters():
             noise = torch.normal(
                 0,
-                self.noise_multiplier * self.max_grad_norm,
+                self.sigma,
                 p.grad.shape,
                 device=self.device,
                 generator=self.secure_generator,

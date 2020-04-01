@@ -8,7 +8,6 @@ the author's permission.
 """
 
 from typing import List
-
 import torch
 import torch.nn as nn
 
@@ -173,6 +172,7 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
                 layer.bias.grad_sample = B
 
         elif layer_type == "Conv2d":
+            # Extracts sliding local blocks from a batched input tensor.
             A = torch.nn.functional.unfold(
                 A, layer.kernel_size, padding=layer.padding, stride=layer.stride)
             B = B.reshape(n, -1, A.shape[-1])

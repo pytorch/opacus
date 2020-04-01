@@ -160,21 +160,20 @@ def _compute_rdp(q, sigma, alpha):
     return _compute_log_a(q, sigma, alpha) / (alpha - 1)
 
 
-def compute_rdp(q, noise_multiplier, steps, orders):
+def compute_rdp(q, sigma, steps, orders):
     """Compute RDP of the Sampled Gaussian Mechanism.
   Args:
     q: The sampling rate.
-    noise_multiplier: The ratio of the standard deviation of the Gaussian noise
-        to the l2-sensitivity of the function to which it is added.
+    sigma: Standard deviation of the additive noise
     steps: The number of steps.
     orders: An array (or a scalar) of RDP orders.
   Returns:
     The RDPs at all orders, can be np.inf.
   """
     if np.isscalar(orders):
-        rdp = _compute_rdp(q, noise_multiplier, orders)
+        rdp = _compute_rdp(q, sigma, orders)
     else:
-        rdp = np.array([_compute_rdp(q, noise_multiplier, order) for order in orders])
+        rdp = np.array([_compute_rdp(q, sigma, order) for order in orders])
 
     return rdp * steps
 
