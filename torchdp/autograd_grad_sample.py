@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 
 
-_supported_layers = ["Linear", "Conv2d"]  # Supported layer class types
+_supported_layers = ["Linear", "Conv2d", "Conv1d"]  # Supported layer class types
 
 # work-around for https://github.com/pytorch/pytorch/issues/25723
 _hooks_disabled: bool = False
@@ -172,20 +172,37 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
             if layer.bias is not None:
                 layer.bias.grad_sample = B
 
-        elif layer_type == "Conv2d":
-            A = torch.nn.functional.unfold(
-                A, layer.kernel_size, padding=layer.padding, stride=layer.stride)
-            B = B.reshape(n, -1, A.shape[-1])
+        elif layer_type == "Conv2d" or layer_type == "Conv1d":
+            # get A and B in shape depending on the Conv layer
+            if layer_type == "Conv2d":
+                A = torch.nn.functional.unfold(
+                    A, layer.kernel_size, padding=layer.padding, stride=layer.stride
+                )
+                B = B.reshape(n, -1, A.shape[-1])
+            elif layer_type == "Conv1d":
+                # unfold doesn't work for 3D tensors; so force it to be 4D
+                A = A.unsqueeze(-2)  # add the H dimension
+                # set arguments to tuples with appropriate second element
+                A = torch.nn.functional.unfold(
+                    A,
+                    (1, layer.kernel_size[0]),
+                    padding=(0, layer.padding[0]),
+                    stride=(1, layer.stride[0]),
+                )
+                B = B.reshape(n, -1, A.shape[-1])
             try:
-                grad_sample = torch.einsum("ijk,ilk->ijl", B, A)\
-                    if layer.groups == 1\
-                    else torch.einsum("ijk,ijk->ij", B, A)
+                # n=batch_sz; o=num_out_channels; p=num_in_channels*kernel_sz
+                grad_sample = (
+                    torch.einsum("noq,npq->nop", B, A)
+                    if layer.groups == 1
+                    else torch.einsum("njk,njk->nj", B, A)
+                )
                 shape = [n] + list(layer.weight.shape)
                 layer.weight.grad_sample = grad_sample.reshape(shape)
             except Exception as e:
                 raise type(e)(
-                    f"{e} There is probably a problem with Conv2d.groups"
-                    + "It should be either 1 or in_channel")
-
+                    f"{e} There is probably a problem with {layer_type}.groups"
+                    + "It should be either 1 or in_channel"
+                )
             if layer.bias is not None:
                 layer.bias.grad_sample = torch.sum(B, dim=2)

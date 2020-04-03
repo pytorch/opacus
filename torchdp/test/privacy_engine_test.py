@@ -16,16 +16,16 @@ class SampleConvNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 16, 8, 3)
-        self.conv2 = nn.Conv2d(16, 32, 3, 1)
-        self.fc1 = nn.Linear(32 * 1 * 1, 10)
+        self.conv2 = nn.Conv1d(16, 32, 3, 1)
+        self.fc1 = nn.Linear(32 * 23, 10)
 
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
         x = F.relu(self.conv1(x))  # -> [B, 16, 10, 10]
         x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 5, 5]
-        x = F.relu(self.conv2(x))  # -> [B, 32, 3, 3]
-        x = F.max_pool2d(x, 2, 2)  # -> [B, 32, 1, 1]
-        x = x.view(-1, 32 * 1 * 1)  # -> [B, 32 * 1 * 1]
+        x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
+        x = F.relu(self.conv2(x))  # -> [B, 32, 23]
+        x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 23]
         x = self.fc1(x)  # -> [B, 10]
         return x
 
