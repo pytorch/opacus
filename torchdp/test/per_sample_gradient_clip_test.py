@@ -5,8 +5,8 @@ import unittest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchdp import PerSampleGradientClipper
 from torch.utils.data import DataLoader
+from torchdp import PerSampleGradientClipper
 from torchvision import transforms
 from torchvision.datasets import FakeData
 
@@ -16,6 +16,9 @@ class SampleConvNet(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 16, 8, 3)
         self.conv2 = nn.Conv1d(16, 32, 3, 1)
+        self.convf = nn.Conv1d(32, 32, 1, 1)
+        for p in self.convf.parameters():
+            p.requires_grad = False
         self.fc1 = nn.Linear(32 * 23, 10)
 
     def forward(self, x):
@@ -24,6 +27,7 @@ class SampleConvNet(nn.Module):
         x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 5, 5]
         x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
         x = F.relu(self.conv2(x))  # -> [B, 32, 23]
+        x = self.convf(x)  # -> [B, 32, 23]
         x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 23]
         x = self.fc1(x)  # -> [B, 10]
         return x
@@ -59,7 +63,12 @@ class PerSampleGradientClipper_test(unittest.TestCase):
             loss = self.criterion(logits, y)
             loss.backward()  # puts grad in self.original_model.parameters()
         self.original_grads_norms = torch.stack(
-            [p.grad.norm() for p in self.original_model.parameters()], dim=-1
+            [
+                p.grad.norm()
+                for p in self.original_model.parameters()
+                if p.requires_grad
+            ],
+            dim=-1,
         )
 
     def setUp_clipped_model(self, clip_value=0.003, run_clipper_step=True):
@@ -76,7 +85,8 @@ class PerSampleGradientClipper_test(unittest.TestCase):
             if run_clipper_step:
                 self.clipper.step()
         self.clipped_grads_norms = torch.stack(
-            [p.grad.norm() for p in self.clipped_model.parameters()], dim=-1
+            [p.grad.norm() for p in self.clipped_model.parameters() if p.requires_grad],
+            dim=-1,
         )
 
     def test_clipped_grad_norm_is_smaller(self):

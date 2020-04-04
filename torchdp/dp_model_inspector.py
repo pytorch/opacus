@@ -2,7 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 from torch import nn
-from .utils import ModelInspector
+from .utils import ModelInspector, requires_grad
 from .autograd_grad_sample import is_supported
 
 
@@ -30,12 +30,6 @@ class DPModelInspector:
 
     def __init__(self):
         self.should_throw = True
-
-        def requires_grad(module: nn.Module):
-            requires_grad = True
-            for p in module.parameters(recurse=False):
-                requires_grad &= p.requires_grad
-            return requires_grad
 
         def is_valid(module: nn.Module):
             valid = (not requires_grad(module)) or is_supported(module)

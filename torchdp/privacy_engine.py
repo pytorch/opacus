@@ -86,14 +86,15 @@ class PrivacyEngine:
         self.clipper.step()
 
         for p in self.module.parameters():
-            noise = torch.normal(
-                0,
-                self.noise_multiplier * self.max_grad_norm,
-                p.grad.shape,
-                device=self.device,
-                generator=self.secure_generator,
-            )
-            p.grad += noise / self.clipper.batch_size
+            if p.requires_grad:
+                noise = torch.normal(
+                    0,
+                    self.noise_multiplier * self.max_grad_norm,
+                    p.grad.shape,
+                    device=self.device,
+                    generator=self.secure_generator,
+                )
+                p.grad += noise / self.clipper.batch_size
 
     def to(self, device):
         self.device = device

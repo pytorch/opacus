@@ -7,6 +7,10 @@ from typing import Callable, Type
 from torch import nn
 
 
+def requires_grad(module: nn.Module, recurse: bool = False):
+    return all((p.requires_grad for p in module.parameters(recurse)))
+
+
 def _replace_child(
     root: nn.Module, child_name: str, converter: Callable[[nn.Module], nn.Module]
 ) -> None:

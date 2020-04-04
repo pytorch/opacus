@@ -5,10 +5,10 @@ import unittest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
 from torchdp import PrivacyEngine
 from torchdp.dp_model_inspector import IncompatibleModuleException
-from torch.utils.data import DataLoader
-from torchvision import transforms, models
+from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
 
@@ -17,6 +17,9 @@ class SampleConvNet(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 16, 8, 3)
         self.conv2 = nn.Conv1d(16, 32, 3, 1)
+        self.convf = nn.Conv1d(32, 32, 1, 1)
+        for p in self.convf.parameters():
+            p.requires_grad = False
         self.fc1 = nn.Linear(32 * 23, 10)
 
     def forward(self, x):
@@ -25,6 +28,7 @@ class SampleConvNet(nn.Module):
         x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 5, 5]
         x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
         x = F.relu(self.conv2(x))  # -> [B, 32, 23]
+        x = self.convf(x)  # -> [B, 32, 23]
         x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 23]
         x = self.fc1(x)  # -> [B, 10]
         return x
@@ -66,14 +70,15 @@ class PrivacyEngine_test(unittest.TestCase):
             loss.backward()
             self.original_optimizer.step()
         self.original_grads_norms = torch.stack(
-            [p.grad.norm() for p in self.original_model.parameters()], dim=-1
+            [
+                p.grad.norm()
+                for p in self.original_model.parameters()
+                if p.requires_grad
+            ],
+            dim=-1,
         )
 
-    def setUp_private_model(
-        self,
-        noise_multiplier=1.3,
-        max_grad_norm=1.0,
-    ):
+    def setUp_private_model(self, noise_multiplier=1.3, max_grad_norm=1.0):
         # Deep copy
         self.private_model = SampleConvNet()  # create the structure
         self.private_model.load_state_dict(self.original_model.state_dict())  # fill it
@@ -96,7 +101,8 @@ class PrivacyEngine_test(unittest.TestCase):
             loss.backward()  # puts grad in self.private_model.parameters()
             self.private_optimizer.step()
         self.private_grad_norms = torch.stack(
-            [p.grad.norm() for p in self.private_model.parameters()], dim=-1
+            [p.grad.norm() for p in self.private_model.parameters() if p.requires_grad],
+            dim=-1,
         )
 
     def test_privacy_analysis_alpha_in_alphas(self):
@@ -118,7 +124,8 @@ class PrivacyEngine_test(unittest.TestCase):
         Test that gradients are different after one step of SGD
         """
         for layer_grad, private_layer_grad in zip(
-            self.original_model.parameters(), self.private_model.parameters()
+            [p for p in self.original_model.parameters() if p.requires_grad],
+            [p for p in self.private_model.parameters() if p.requires_grad],
         ):
             self.assertFalse(torch.allclose(layer_grad, private_layer_grad))
 
@@ -127,7 +134,8 @@ class PrivacyEngine_test(unittest.TestCase):
         Test that the updated models are different after one step of SGD
         """
         for layer, private_layer in zip(
-            self.original_model.parameters(), self.private_model.parameters()
+            [p for p in self.original_model.parameters() if p.requires_grad],
+            [p for p in self.private_model.parameters() if p.requires_grad],
         ):
             self.assertFalse(torch.allclose(layer, private_layer))
 
@@ -137,10 +145,14 @@ class PrivacyEngine_test(unittest.TestCase):
         We disable clipping in this test by setting it to a very high threshold.
         """
         self.setUp_private_model(noise_multiplier=1.3, max_grad_norm=999)
-        first_run_params = (p for p in self.private_model.parameters())
+        first_run_params = (
+            p for p in self.private_model.parameters() if p.requires_grad
+        )
 
         self.setUp_private_model(noise_multiplier=1.3, max_grad_norm=999)
-        second_run_params = (p for p in self.private_model.parameters())
+        second_run_params = (
+            p for p in self.private_model.parameters() if p.requires_grad
+        )
         for p0, p1 in zip(first_run_params, second_run_params):
             self.assertFalse(torch.allclose(p0, p1))
 

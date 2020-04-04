@@ -12,6 +12,8 @@ from typing import List
 import torch
 import torch.nn as nn
 
+from .utils import requires_grad
+
 
 _supported_layers = ["Linear", "Conv2d", "Conv1d"]  # Supported layer class types
 
@@ -144,7 +146,7 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
         raise ValueError(f"loss_type = {loss_type}. Only 'sum' and 'mean' supported")
     for layer in model.modules():
         layer_type = _layer_type(layer)
-        if layer_type not in _supported_layers:
+        if not requires_grad(layer) or layer_type not in _supported_layers:
             continue
         if not hasattr(layer, "activations"):
             raise ValueError(

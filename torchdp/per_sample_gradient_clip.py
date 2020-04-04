@@ -59,19 +59,27 @@ def clip_per_sample_grad_norm_(model, max_norm):
 
     # We recompute .grad from .grad_sample by simply averaging it over the B dim
     for p in model.parameters():
-        p.grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample) / b_sz
+        if p.requires_grad:
+            p.grad = (
+                torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample) / b_sz
+            )
     return
 
 
 def get_per_sample_norm(t):
-    aggregation_dims = [i for i in range(1, len(t.shape))]  # All dims except the first
+    aggregation_dims = list(range(1, len(t.shape)))  # All dims except the first
     t_squared = t * t  # elementwise
     return torch.sqrt(t_squared.sum(dim=aggregation_dims))
 
 
 def get_total_per_sample_grad_norm(model):
     all_layers_norms = torch.stack(
-        [get_per_sample_norm(p.grad_sample) for p in model.parameters()], dim=-1
+        [
+            get_per_sample_norm(p.grad_sample)
+            for p in model.parameters()
+            if p.requires_grad
+        ],
+        dim=-1,
     )
     return all_layers_norms.norm(2, dim=1)
 
@@ -97,7 +105,9 @@ class PerSampleGradientClipper:
 
         # The first dim of param.grad_sample is b_sz for every param.
         # To look up what that value is, we just pick one
-        self.batch_size = next(p.grad_sample.shape[0] for p in self.module.parameters())
+        self.batch_size = next(
+            p.grad_sample.shape[0] for p in self.module.parameters() if p.requires_grad
+        )
 
         clip_per_sample_grad_norm_(self.module, self.max_norm)
         autograd_grad_sample.clear_backprops(self.module)
