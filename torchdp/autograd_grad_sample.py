@@ -170,9 +170,10 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
             B = layer.backprops_list[0]
 
         if layer_type == "Linear":
-            layer.weight.grad_sample = torch.einsum("ni,nj->nij", B, A)
+            gs = torch.einsum("n...i,n...j->n...ij", B, A)
+            layer.weight.grad_sample = torch.einsum("n...ij->nij", gs)
             if layer.bias is not None:
-                layer.bias.grad_sample = B
+                layer.bias.grad_sample = torch.einsum("n...k->nk", B)
 
         elif layer_type == "Conv2d" or layer_type == "Conv1d":
             # get A and B in shape depending on the Conv layer

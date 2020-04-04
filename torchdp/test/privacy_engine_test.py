@@ -20,7 +20,8 @@ class SampleConvNet(nn.Module):
         self.convf = nn.Conv1d(32, 32, 1, 1)
         for p in self.convf.parameters():
             p.requires_grad = False
-        self.fc1 = nn.Linear(32 * 23, 10)
+        self.fc1 = nn.Linear(23, 17)
+        self.fc2 = nn.Linear(32 * 17, 10)
 
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
@@ -29,8 +30,9 @@ class SampleConvNet(nn.Module):
         x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
         x = F.relu(self.conv2(x))  # -> [B, 32, 23]
         x = self.convf(x)  # -> [B, 32, 23]
-        x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 23]
-        x = self.fc1(x)  # -> [B, 10]
+        x = self.fc1(x)  # -> [B, 32, 17]
+        x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 17]
+        x = self.fc2(x)  # -> [B, 10]
         return x
 
     def name(self):
