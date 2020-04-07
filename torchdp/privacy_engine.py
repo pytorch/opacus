@@ -6,7 +6,6 @@ from typing import List
 
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
 
 from . import privacy_analysis as tf_privacy
 from .per_sample_gradient_clip import PerSampleGradientClipper
@@ -17,7 +16,8 @@ class PrivacyEngine:
     def __init__(
         self,
         module: nn.Module,
-        dataloader: DataLoader,
+        batch_size: int,
+        sample_size: int,
         alphas: List[float],
         noise_multiplier: float,
         max_grad_norm: float,
@@ -25,11 +25,10 @@ class PrivacyEngine:
     ):
         self.steps = 0
         self.module = module
-        self.dataloader = dataloader
         self.alphas = alphas
         self.device = next(module.parameters()).device
 
-        self.sample_rate = dataloader.batch_size / len(dataloader.dataset)
+        self.sample_rate = batch_size / sample_size
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
         self.grad_norm_type = grad_norm_type

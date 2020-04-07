@@ -42,6 +42,7 @@ class SampleConvNet(nn.Module):
 class PrivacyEngine_test(unittest.TestCase):
     def setUp(self):
         self.DATA_SIZE = 64
+        self.BATCH_SIZE = 64
         self.LR = 0.5
         self.ALPHAS = [1 + x / 10.0 for x in range(1, 100, 10)]
         self.criterion = nn.CrossEntropyLoss()
@@ -59,7 +60,7 @@ class PrivacyEngine_test(unittest.TestCase):
                 [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
             ),
         )
-        self.dl = DataLoader(self.ds, batch_size=self.DATA_SIZE)
+        self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
 
     def setUp_original_model(self):
         self.original_model = SampleConvNet()
@@ -90,7 +91,8 @@ class PrivacyEngine_test(unittest.TestCase):
 
         privacy_engine = PrivacyEngine(
             self.private_model,
-            self.dl,
+            batch_size=self.BATCH_SIZE,
+            sample_size=self.DATA_SIZE,
             alphas=self.ALPHAS,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
@@ -165,7 +167,8 @@ class PrivacyEngine_test(unittest.TestCase):
         """
         privacy_engine = PrivacyEngine(
             models.resnet18(),
-            self.dl,
+            batch_size=self.BATCH_SIZE,
+            sample_size=self.DATA_SIZE,
             alphas=self.ALPHAS,
             noise_multiplier=1.3,
             max_grad_norm=1,

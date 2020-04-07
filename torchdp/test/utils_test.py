@@ -92,7 +92,8 @@ class utils_convert_batchnorm_modules_test(unittest.TestCase):
         if privacy_engine:
             pe = PrivacyEngine(
                 model,
-                data_loader,
+                batch_size=data_loader.batch_size,
+                sample_size=len(data_loader.dataset),
                 alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
                 noise_multiplier=1.3,
                 max_grad_norm=1,

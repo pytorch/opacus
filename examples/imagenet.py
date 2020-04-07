@@ -351,7 +351,8 @@ def main_worker(gpu, ngpus_per_node, args):
         print("PRIVACY ENGINE ON")
         privacy_engine = PrivacyEngine(
             model,
-            train_loader,
+            batch_size=args.batch_size,
+            sample_size=len(train_dataset),
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,

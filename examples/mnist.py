@@ -211,7 +211,8 @@ def main():
         if not args.disable_dp:
             privacy_engine = PrivacyEngine(
                 model,
-                train_loader,
+                batch_size=args.batch_size,
+                sample_size=len(train_loader.dataset),
                 alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
                 noise_multiplier=args.sigma,
                 max_grad_norm=args.max_per_sample_grad_norm,
