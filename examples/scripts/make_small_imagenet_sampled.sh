@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (c) Facebook, Inc. and its affiliates.
 # ===================
 # This script makes a sampled version of ImageNet, with all 1000 classes.
 # ===================
@@ -9,11 +10,11 @@ usage()
     echo "usage: bash make_small_imagenet_N_classes.sh -o <path to the orignal ImageNet> -d <path of a new folder (will be created) where a sampled version of imagenet will be copied to> -nt <Number of desired samples (images) in train folder> -nv <Number of desired samples (images) in val folder>"
 }
 
-if [ "$1" == "" ]; then
+if [ "$1" == "" ]; then # If arguments are not specified
     usage
     exit 1
 fi
-while [ "$1" != "" ]; do
+while [ "$1" != "" ]; do # Read the input arguments
     case $1 in
         -d | --destination )    shift
                                 destination=$1
@@ -37,6 +38,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
+# If all necessary arguments are not supplied
 if [[ -z $destination || -z $origin || -z $N_train || -z $N_val ]] 
 then
     echo "You must specify all necessary parameters."
@@ -44,7 +46,7 @@ then
     exit 1
 fi
 
-# Get absolute path
+# Get absolute paths
 destination="$(readlink -f "$destination")"
 origin="$(readlink -f "$origin")"
 
@@ -53,17 +55,17 @@ mkdir "$destination/train"
 mkdir "$destination/val"
 
 echo 'Copying'
-for val_train_folder in val train; do
+for val_train_folder in val train; do # Do copying for both 'train' and 'val' folders
     if [[ $val_train_folder = 'train' ]]; then
         N=$N_train   
     else
         N=$N_val   
     fi
-    cd "$origin/$val_train_folder" || { echo "Failure"; exit 1; }
-    for d in */ ; do
+    cd "$origin/$val_train_folder" || { echo "Failure"; exit 1; } # change directory to origin's train or val folders
+    for d in */ ; do # loop through the 1000 folders 
         mkdir "$destination/$val_train_folder/$d"
-        cd "$origin/$val_train_folder/$d" || { echo "Failure"; exit 1; }
-        find . -maxdepth 1 -mindepth 1 -type f |sort -R |tail -"$N" |while read -r file; do
+        cd "$origin/$val_train_folder/$d" || { echo "Failure"; exit 1; } 
+        find . -maxdepth 1 -mindepth 1 -type f |sort -R |tail -"$N" |while read -r file; do # select N files from each 1000 folders
             cp "$file" "$destination/$val_train_folder/$d/$file"
             printf "."
         done
