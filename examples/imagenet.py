@@ -229,8 +229,7 @@ def main_worker(gpu, ngpus_per_node, args):
         )
     # create model: resnet 18
     # since our differential privacy engine does not support BatchNormXd
-    # we need to replace all such blocks with Identity, this is done with
-    # the help of the nullifyModule utility function.
+    # we need to replace all such blocks with DP-aware normalisation modules
     model = utils.convert_batchnorm_modules(models.resnet18())
 
     if args.distributed:

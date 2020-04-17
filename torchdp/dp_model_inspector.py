@@ -84,6 +84,7 @@ class DPModelInspector:
         if self.should_throw and (not valid):
             message = 'Model contains incompatible modules.'
             for inspector in self.inspectors:
-                message += f'{inspector.message}: {inspector.violators}\n'
+                if inspector.violators:
+                    message += f'\n{inspector.message}: {inspector.violators}'
             raise IncompatibleModuleException(message)
         return valid
