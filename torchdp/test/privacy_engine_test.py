@@ -37,21 +37,37 @@ class SampleConvNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 16, 8, 3)
+        self.gnorm1 = nn.GroupNorm(4, 16)
         self.conv2 = nn.Conv1d(16, 32, 3, 1)
+        self.lnorm1 = nn.LayerNorm((32, 23))
+        self.conv3 = nn.Conv1d(32, 32, 3, 1)
+        self.instnorm1 = nn.InstanceNorm1d(32, affine=True)
         self.convf = nn.Conv1d(32, 32, 1, 1)
         for p in self.convf.parameters():
             p.requires_grad = False
-        self.fc1 = nn.Linear(23, 17)
+        self.fc1 = nn.Linear(21, 17)
+        self.lnorm2 = nn.LayerNorm(17)
         self.fc2 = nn.Linear(32 * 17, 10)
+
+        for layer in (self.gnorm1, self.lnorm1, self.lnorm2, self.instnorm1):
+            nn.init.uniform_(layer.weight)
+            nn.init.uniform_(layer.bias)
 
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
-        x = F.relu(self.conv1(x))  # -> [B, 16, 10, 10]
+        x = self.conv1(x)  # -> [B, 16, 10, 10]
+        x = self.gnorm1(x)  # -> [B, 16, 10, 10]
+        x = F.relu(x)  # -> [B, 16, 10, 10]
         x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 5, 5]
         x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
-        x = F.relu(self.conv2(x))  # -> [B, 32, 23]
-        x = self.convf(x)  # -> [B, 32, 23]
+        x = self.conv2(x)  # -> [B, 32, 23]
+        x = self.lnorm1(x)  # -> [B, 32, 23]
+        x = F.relu(x)  # -> [B, 32, 23]
+        x = self.conv3(x)  # -> [B, 32, 21]
+        x = self.instnorm1(x)  # -> [B, 32, 21]
+        x = self.convf(x)  # -> [B, 32, 21]
         x = self.fc1(x)  # -> [B, 32, 17]
+        x = self.lnorm2(x)  # -> [B, 32, 17]
         x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 17]
         x = self.fc2(x)  # -> [B, 10]
         return x
@@ -114,7 +130,9 @@ class PrivacyEngine_test(unittest.TestCase):
         return model, optimizer
 
     def setUp_model_step(self, model: nn.Module, optimizer: torch.optim.Optimizer):
+
         for x, y in self.dl:
+            optimizer.zero_grad()
             logits = model(x)
             loss = self.criterion(logits, y)
             loss.backward()
@@ -174,7 +192,35 @@ class PrivacyEngine_test(unittest.TestCase):
                 self.assertTrue(
                     is_grad_sample_consistent(param_tensor),
                     f"grad_sample doesn't match grad. "
-                    f"Layer: {layer_name}, Tensor: {param_tensor.shape}"
+                    f"Layer: {layer_name}, Tensor: {param_tensor.shape}",
+                )
+
+    def test_grad_matches_original(self):
+        original_model, orignial_optimizer = self.setUp_init_model()
+        private_model, private_optimizer = self.setUp_init_model(
+            private=True,
+            state_dict=original_model.state_dict(),
+            noise_multiplier=0,
+            max_grad_norm=999,
+        )
+
+        for _ in range(3):
+            self.setUp_model_step(original_model, orignial_optimizer)
+            self.setUp_model_step(private_model, private_optimizer)
+
+        for layer_name, private_layer in private_model.named_children():
+            if not utils.requires_grad(private_layer):
+                continue
+
+            original_layer = getattr(original_model, layer_name)
+
+            for layer, private_layer in zip(
+                [p.grad for p in original_layer.parameters() if p.requires_grad],
+                [p.grad for p in private_layer.parameters() if p.requires_grad],
+            ):
+                self.assertTrue(
+                    torch.allclose(layer, private_layer, atol=10e-4, rtol=10e-2),
+                    f"Layer: {layer_name}. Private gradients with noise 0 doesn't match original",
                 )
 
     def test_noise_changes_every_time(self):

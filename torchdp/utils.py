@@ -2,13 +2,15 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 
-from typing import Callable, Type
+from typing import Callable, List, Type, Union
 
+import torch
 from torch import nn
 
 
 def requires_grad(module: nn.Module, recurse: bool = False):
-    return all((p.requires_grad for p in module.parameters(recurse)))
+    is_req_grad = [p.requires_grad for p in module.parameters(recurse)]
+    return len(is_req_grad) > 0 and all(is_req_grad)
 
 
 def get_layer_type(layer: nn.Module) -> str:
@@ -92,41 +94,6 @@ def _batchnorm_to_instancenorm(module: nn.modules.batchnorm._BatchNorm) -> nn.Mo
     return matchDim()(module.num_features)
 
 
-class DPGroupNorm(nn.GroupNorm):
-    """
-    An extension of the `nn.GroupNorm` which is DP compatible.
-    We do not support internal affine parameters of a
-    `nn.GroupNorm`. Therefore we need to MonkeyPatch groupnorm
-    as a normal non-affine groupnorm followed by a depth-wise
-    Conv1x1. This class does this. It is exactly equivalent to
-    a normal `nn.GroupNorm` with `affine=True`.
-    """
-
-    def __init__(self, num_groups, num_channels, eps=1e-05, affine=True):
-        super().__init__(num_groups, num_channels, eps, affine=False)
-        self.affine = None
-        if affine:
-            self.affine = nn.Conv2d(num_channels, num_channels, 1, groups=num_channels)
-            self.affine.weight.data.fill_(1.0)
-            self.affine.bias.data.fill_(0.0)
-
-    def forward(self, x):
-        if x.dim() != 4:
-            raise ValueError(
-                f"DPGroupNorm currenlty only supports 3-dimenstional Tensors. "
-                f"Got {x.shape}"
-            )
-
-        x = super().forward(x)
-        return self.affine(x) if self.affine else x
-
-    def __repr__(self):
-        return (
-            f"DPGroupNorm({self.num_groups}, {self.num_channels}, "
-            + f"eps={self.eps}, affine={self.affine is not None})"
-        )
-
-
 def _batchnorm_to_groupnorm(module: nn.modules.batchnorm._BatchNorm) -> nn.Module:
     """
     Converts a BatchNorm `module` to GroupNorm module.
@@ -137,7 +104,7 @@ def _batchnorm_to_groupnorm(module: nn.modules.batchnorm._BatchNorm) -> nn.Modul
         paper *Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour*
         https://arxiv.org/pdf/1706.02677.pdf
     """
-    return DPGroupNorm(min(32, module.num_features), module.num_features, affine=True)
+    return nn.GroupNorm(min(32, module.num_features), module.num_features, affine=True)
 
 
 def nullify_batchnorm_modules(root: nn.Module, target_class):
@@ -198,6 +165,37 @@ def has_no_param(module: nn.Module):
         has_param = True
         break
     return not has_param
+
+
+def sum_over_all_but_batch_and_last_n(
+    tensor: torch.Tensor, n_dims: int
+) -> torch.Tensor:
+    """
+    Returns the sum of the input tensor over all dimensions except
+    the first (batch) and last n_dims.
+
+    Args:
+        tensor: input tensor of shape (B, * , X[0], X[1], ..., X[n_dims-1])
+        n_dims: Number of input tensor dimensions to keep
+
+    Returns:
+        New tensor of shape (B, X[0], X[1], ..., X[n_dims-1]).
+        Will return the unchanged input tensor if `tensor.dim() == n_dims + 1`
+
+    Examples:
+        import torch
+
+        A = torch.ones(2,3,4)
+        print(sum_over_all_but_batch_and_last_n(A, 1))
+        # prints torch.Size([2, 4])
+        print(sum_over_all_but_batch_and_last_n(A, 2))
+        # prints torch.Size([2, 3, 4])
+    """
+    if tensor.dim() == n_dims + 1:
+        return tensor
+    else:
+        dims = list(range(1, tensor.dim() - n_dims))
+        return tensor.sum(dim=dims)
 
 
 class ModelInspector:

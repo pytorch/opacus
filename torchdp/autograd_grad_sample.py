@@ -11,10 +11,21 @@ from typing import List
 
 import torch
 import torch.nn as nn
+from torch.functional import F
 
-from .utils import requires_grad, get_layer_type
+from .utils import get_layer_type, requires_grad, sum_over_all_but_batch_and_last_n
 
-_supported_layers = ["Linear", "Conv2d", "Conv1d"]  # Supported layer class types
+
+_supported_layers = [
+    "Linear",
+    "Conv2d",
+    "Conv1d",
+    "LayerNorm",
+    "GroupNorm",
+    "InstanceNorm1d",
+    "InstanceNorm2d",
+    "InstanceNorm3d",
+]  # Supported layer class types
 
 # work-around for https://github.com/pytorch/pytorch/issues/25723
 _hooks_disabled: bool = False
@@ -170,7 +181,31 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
             if layer.bias is not None:
                 layer.bias.grad_sample = torch.einsum("n...k->nk", B)
 
-        elif layer_type == "Conv2d" or layer_type == "Conv1d":
+        if layer_type == "LayerNorm":
+            layer.weight.grad_sample = sum_over_all_but_batch_and_last_n(
+                F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B, layer.weight.dim()
+            )
+            layer.bias.grad_sample = sum_over_all_but_batch_and_last_n(
+                B, layer.bias.dim()
+            )
+
+        if layer_type == "GroupNorm":
+            gs = F.group_norm(A, layer.num_groups, eps=layer.eps) * B
+            layer.weight.grad_sample = torch.einsum("ni...->ni", gs)
+            if layer.bias is not None:
+                layer.bias.grad_sample = torch.einsum("ni...->ni", B)
+
+        elif layer_type in (
+            "InstanceNorm1d",
+            "InstanceNorm2d",
+            "InstanceNorm3d",
+        ):
+            gs = F.instance_norm(A, eps=layer.eps) * B
+            layer.weight.grad_sample = torch.einsum("ni...->ni", gs)
+            if layer.bias is not None:
+                layer.bias.grad_sample = torch.einsum("ni...->ni", B)
+
+        elif layer_type in ("Conv2d", "Conv1d"):
             # get A and B in shape depending on the Conv layer
             if layer_type == "Conv2d":
                 A = torch.nn.functional.unfold(
