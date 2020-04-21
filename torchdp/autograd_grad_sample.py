@@ -61,13 +61,6 @@ def remove_hooks(model: nn.Module) -> None:
     """
     Remove hooks added by add_hooks(model)
     """
-
-    if model != 0:
-        raise ValueError(
-            f"Not working, remove this after fix to "
-            f"https://github.com/pytorch/pytorch/issues/25723"
-        )
-
     if not hasattr(model, "autograd_grad_sample_hooks"):
         print("Warning, asked to remove hooks, but no hooks found")
     else:

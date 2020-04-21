@@ -99,6 +99,7 @@ class PrivacyEngine_test(unittest.TestCase):
         self.private_grads_norms = self.setUp_model_step(
             self.private_model, self.private_optimizer
         )
+        self.privacy_default_params = {'noise_multiplier' : 1.0, 'max_grad_norm' : 1}
 
     def setUp_data(self):
         self.ds = FakeData(
@@ -111,13 +112,15 @@ class PrivacyEngine_test(unittest.TestCase):
         )
         self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
 
-    def setUp_init_model(self, private=False, state_dict=None, **privacy_engine_kwargs):
-        model = SampleConvNet()
+    def setUp_init_model(self, private=False, state_dict=None, model=None, **privacy_engine_kwargs):
+        model = model or SampleConvNet()
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
         if state_dict:
             model.load_state_dict(state_dict)
 
         if private:
+            if len(privacy_engine_kwargs) == 0:
+                privacy_engine_kwargs = self.privacy_default_params
             privacy_engine = PrivacyEngine(
                 model,
                 batch_size=self.BATCH_SIZE,
@@ -140,6 +143,27 @@ class PrivacyEngine_test(unittest.TestCase):
         return torch.stack(
             [p.grad.norm() for p in model.parameters() if p.requires_grad], dim=-1
         )
+
+    def test_throws_double_attach(self):
+        model, optimizer = self.setUp_init_model(private=True)
+        self.setUp_model_step(model, optimizer)
+        with self.assertRaises(ValueError):
+            model, optimizer = self.setUp_init_model(private=True, model=model)
+            self.setUp_model_step(model, optimizer)
+
+    def test_attach_delete_attach(self):
+        model, optimizer = self.setUp_init_model(private=True)
+        self.setUp_model_step(model, optimizer)
+        del optimizer.privacy_engine
+        model, optimizer = self.setUp_init_model(private=True, model=model)
+        self.setUp_model_step(model, optimizer)
+
+    def test_attach_detach_attach(self):
+        model, optimizer = self.setUp_init_model(private=True)
+        self.setUp_model_step(model, optimizer)
+        optimizer.privacy_engine.detach()
+        model, optimizer = self.setUp_init_model(private=True, model=model)
+        self.setUp_model_step(model, optimizer)
 
     def test_privacy_analysis_alpha_in_alphas(self):
         target_delta = 1e-5

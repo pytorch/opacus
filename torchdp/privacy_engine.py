@@ -40,7 +40,13 @@ class PrivacyEngine:
             else torch.cuda.manual_seed(self.secure_seed)
         )
         self.validator = DPModelInspector()
-        self.clipper = PerSampleGradientClipper(self.module, self.max_grad_norm)
+        self.clipper = None  # lazy initialization in attach
+
+    def detach(self):
+        optim = self.optimizer
+        optim.privacy_engine = None
+        self.clipper.close()
+        optim.step = types.MethodType(optim.original_step, optim)
 
     def attach(self, optimizer: torch.optim.Optimizer):
         """
@@ -57,6 +63,8 @@ class PrivacyEngine:
 
         # Validate the model for not containing un-supported modules.
         self.validator.validate(self.module)
+        # only attach if model is validated
+        self.clipper = PerSampleGradientClipper(self.module, self.max_grad_norm)
 
         def dp_step(self, closure=None):
             self.privacy_engine.step()
@@ -65,6 +73,8 @@ class PrivacyEngine:
         optimizer.privacy_engine = self
         optimizer.original_step = optimizer.step
         optimizer.step = types.MethodType(dp_step, optimizer)
+
+        self.optimizer = optimizer  # create a cross reference for detaching
 
     def get_renyi_divergence(self):
         rdp = torch.tensor(

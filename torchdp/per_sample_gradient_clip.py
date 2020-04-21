@@ -94,6 +94,9 @@ class PerSampleGradientClipper:
         autograd_grad_sample.add_hooks(self.module)
         self.max_norm = max_norm
 
+    def __del__(self):
+        self.close()
+
     def close(self):
         autograd_grad_sample.remove_hooks(self.module)
 
