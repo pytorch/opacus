@@ -12,8 +12,7 @@ from typing import List
 import torch
 import torch.nn as nn
 
-from .utils import requires_grad
-
+from .utils import requires_grad, get_layer_type
 
 _supported_layers = ["Linear", "Conv2d", "Conv1d"]  # Supported layer class types
 
@@ -40,7 +39,7 @@ def add_hooks(model: nn.Module) -> None:
 
     handles = []
     for layer in model.modules():
-        if _layer_type(layer) in _supported_layers:
+        if get_layer_type(layer) in _supported_layers:
             handles.append(layer.register_forward_hook(_capture_activations))
             handles.append(layer.register_backward_hook(_capture_backprops))
 
@@ -85,11 +84,7 @@ def enable_hooks() -> None:
 def is_supported(layer: nn.Module) -> bool:
     """Check if this layer is supported"""
 
-    return _layer_type(layer) in _supported_layers
-
-
-def _layer_type(layer: nn.Module) -> str:
-    return layer.__class__.__name__
+    return get_layer_type(layer) in _supported_layers
 
 
 def _capture_activations(
@@ -99,7 +94,7 @@ def _capture_activations(
 
     if _hooks_disabled:
         return
-    if _layer_type(layer) not in _supported_layers:
+    if get_layer_type(layer) not in _supported_layers:
         raise ValueError("Hook installed on unsupported layer")
 
     layer.activations = input[0].detach()
@@ -145,7 +140,7 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
     if loss_type not in ("sum", "mean"):
         raise ValueError(f"loss_type = {loss_type}. Only 'sum' and 'mean' supported")
     for layer in model.modules():
-        layer_type = _layer_type(layer)
+        layer_type = get_layer_type(layer)
         if not requires_grad(layer) or layer_type not in _supported_layers:
             continue
         if not hasattr(layer, "activations"):

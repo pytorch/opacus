@@ -11,6 +11,10 @@ def requires_grad(module: nn.Module, recurse: bool = False):
     return all((p.requires_grad for p in module.parameters(recurse)))
 
 
+def get_layer_type(layer: nn.Module) -> str:
+    return layer.__class__.__name__
+
+
 def _replace_child(
     root: nn.Module, child_name: str, converter: Callable[[nn.Module], nn.Module]
 ) -> None:
@@ -97,22 +101,30 @@ class DPGroupNorm(nn.GroupNorm):
     Conv1x1. This class does this. It is exactly equivalent to
     a normal `nn.GroupNorm` with `affine=True`.
     """
+
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True):
         super().__init__(num_groups, num_channels, eps, affine=False)
         self.affine = None
         if affine:
-            self.affine = nn.Conv2d(num_channels, num_channels,
-                                    1, groups=num_channels)
+            self.affine = nn.Conv2d(num_channels, num_channels, 1, groups=num_channels)
             self.affine.weight.data.fill_(1.0)
             self.affine.bias.data.fill_(0.0)
 
     def forward(self, x):
+        if x.dim() != 4:
+            raise ValueError(
+                f"DPGroupNorm currenlty only supports 3-dimenstional Tensors. "
+                f"Got {x.shape}"
+            )
+
         x = super().forward(x)
         return self.affine(x) if self.affine else x
 
     def __repr__(self):
-        return f'DPGroupNorm({self.num_groups}, {self.num_channels}, ' +\
-               f'eps={self.eps}, affine={self.affine is not None})'
+        return (
+            f"DPGroupNorm({self.num_groups}, {self.num_channels}, "
+            + f"eps={self.eps}, affine={self.affine is not None})"
+        )
 
 
 def _batchnorm_to_groupnorm(module: nn.modules.batchnorm._BatchNorm) -> nn.Module:
@@ -125,8 +137,7 @@ def _batchnorm_to_groupnorm(module: nn.modules.batchnorm._BatchNorm) -> nn.Modul
         paper *Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour*
         https://arxiv.org/pdf/1706.02677.pdf
     """
-    return DPGroupNorm(
-        min(32, module.num_features), module.num_features, affine=True)
+    return DPGroupNorm(min(32, module.num_features), module.num_features, affine=True)
 
 
 def nullify_batchnorm_modules(root: nn.Module, target_class):
@@ -186,7 +197,7 @@ def has_no_param(module: nn.Module):
     for _ in module.parameters(recurse=False):
         has_param = True
         break
-    return (not has_param)
+    return not has_param
 
 
 class ModelInspector:
@@ -225,10 +236,13 @@ class ModelInspector:
         print(inspector(nn.Conv2d(1, 1, 1)))  # prints True
     """
 
-    def __init__(self, name: str,
-                 predicate: Callable[[nn.Module], bool],
-                 check_leaf_nodes_only: bool = True,
-                 message: str = None):
+    def __init__(
+        self,
+        name: str,
+        predicate: Callable[[nn.Module], bool],
+        check_leaf_nodes_only: bool = True,
+        message: str = None,
+    ):
         self.name = name
         if check_leaf_nodes_only:
             self.predicate = lambda x: has_no_param(x) or predicate(x)
@@ -239,7 +253,7 @@ class ModelInspector:
 
     def validate(self, model: nn.Module) -> bool:
         valid = True
-        for name, module in model.named_modules(prefix='Main'):
+        for name, module in model.named_modules(prefix="Main"):
             if not self.predicate(module):
                 valid = False
                 self.violators.append(name)

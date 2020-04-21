@@ -85,7 +85,7 @@ class PrivacyEngine:
         self.clipper.step()
 
         for p in self.module.parameters():
-            if p.requires_grad:
+            if p.requires_grad and self.noise_multiplier > 0:
                 noise = torch.normal(
                     0,
                     self.noise_multiplier * self.max_grad_norm,

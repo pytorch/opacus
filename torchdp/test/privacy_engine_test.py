@@ -6,10 +6,31 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torchdp import PrivacyEngine
+from torchdp import PrivacyEngine, utils
 from torchdp.dp_model_inspector import IncompatibleModuleException
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
+
+
+def is_grad_sample_consistent(tensor: torch.Tensor, loss_type: str = "mean"):
+    if tensor.grad is None:
+        return True
+
+    if tensor.grad_sample is None:
+        raise ValueError(
+            f"The input tensor {tensor} has grad computed, but missing grad_sample."
+            f"Please attach PrivacyEngine"
+        )
+
+    if loss_type not in ("sum", "mean"):
+        raise ValueError(f"loss_type = {loss_type}. Only 'sum' and 'mean' supported")
+
+    grad_sample_aggregated = torch.einsum("i...->...", tensor.grad_sample)
+    if loss_type == "mean":
+        b_sz = tensor.grad_sample.shape[0]
+        grad_sample_aggregated /= b_sz
+
+    return torch.allclose(tensor.grad, grad_sample_aggregated, atol=10e-5, rtol=10e-2)
 
 
 class SampleConvNet(nn.Module):
@@ -48,8 +69,20 @@ class PrivacyEngine_test(unittest.TestCase):
         self.criterion = nn.CrossEntropyLoss()
 
         self.setUp_data()
-        self.setUp_original_model()
-        self.setUp_private_model(noise_multiplier=1.3, max_grad_norm=1.0)
+        self.original_model, self.original_optimizer = self.setUp_init_model()
+        self.private_model, self.private_optimizer = self.setUp_init_model(
+            private=True,
+            state_dict=self.original_model.state_dict(),
+            noise_multiplier=1.3,
+            max_grad_norm=1.0,
+        )
+
+        self.original_grads_norms = self.setUp_model_step(
+            self.original_model, self.original_optimizer
+        )
+        self.private_grads_norms = self.setUp_model_step(
+            self.private_model, self.private_optimizer
+        )
 
     def setUp_data(self):
         self.ds = FakeData(
@@ -62,51 +95,32 @@ class PrivacyEngine_test(unittest.TestCase):
         )
         self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
 
-    def setUp_original_model(self):
-        self.original_model = SampleConvNet()
-        self.original_optimizer = torch.optim.SGD(
-            self.original_model.parameters(), lr=self.LR, momentum=0
-        )
+    def setUp_init_model(self, private=False, state_dict=None, **privacy_engine_kwargs):
+        model = SampleConvNet()
+        optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
+        if state_dict:
+            model.load_state_dict(state_dict)
+
+        if private:
+            privacy_engine = PrivacyEngine(
+                model,
+                batch_size=self.BATCH_SIZE,
+                sample_size=self.DATA_SIZE,
+                alphas=self.ALPHAS,
+                **privacy_engine_kwargs,
+            )
+            privacy_engine.attach(optimizer)
+
+        return model, optimizer
+
+    def setUp_model_step(self, model: nn.Module, optimizer: torch.optim.Optimizer):
         for x, y in self.dl:
-            logits = self.original_model(x)
+            logits = model(x)
             loss = self.criterion(logits, y)
             loss.backward()
-            self.original_optimizer.step()
-        self.original_grads_norms = torch.stack(
-            [
-                p.grad.norm()
-                for p in self.original_model.parameters()
-                if p.requires_grad
-            ],
-            dim=-1,
-        )
-
-    def setUp_private_model(self, noise_multiplier=1.3, max_grad_norm=1.0):
-        # Deep copy
-        self.private_model = SampleConvNet()  # create the structure
-        self.private_model.load_state_dict(self.original_model.state_dict())  # fill it
-        self.private_optimizer = torch.optim.SGD(
-            self.private_model.parameters(), lr=self.LR, momentum=0
-        )
-
-        privacy_engine = PrivacyEngine(
-            self.private_model,
-            batch_size=self.BATCH_SIZE,
-            sample_size=self.DATA_SIZE,
-            alphas=self.ALPHAS,
-            noise_multiplier=noise_multiplier,
-            max_grad_norm=max_grad_norm,
-        )
-        privacy_engine.attach(self.private_optimizer)
-
-        for x, y in self.dl:
-            logits = self.private_model(x)
-            loss = self.criterion(logits, y)
-            loss.backward()  # puts grad in self.private_model.parameters()
-            self.private_optimizer.step()
-        self.private_grad_norms = torch.stack(
-            [p.grad.norm() for p in self.private_model.parameters() if p.requires_grad],
-            dim=-1,
+            optimizer.step()
+        return torch.stack(
+            [p.grad.norm() for p in model.parameters() if p.requires_grad], dim=-1
         )
 
     def test_privacy_analysis_alpha_in_alphas(self):
@@ -143,20 +157,48 @@ class PrivacyEngine_test(unittest.TestCase):
         ):
             self.assertFalse(torch.allclose(layer, private_layer))
 
+    def test_grad_consistency(self):
+        model, optimizer = self.setUp_init_model(
+            private=True,
+            state_dict=self.original_model.state_dict(),
+            noise_multiplier=0,
+            max_grad_norm=999,
+        )
+        self.setUp_model_step(model, optimizer)
+
+        for layer_name, layer in model.named_modules():
+            if utils.get_layer_type(layer) == "SampleConvNet":
+                continue
+
+            for param_tensor in layer.parameters():
+                self.assertTrue(
+                    is_grad_sample_consistent(param_tensor),
+                    f"grad_sample doesn't match grad. "
+                    f"Layer: {layer_name}, Tensor: {param_tensor.shape}"
+                )
+
     def test_noise_changes_every_time(self):
         """
         Test that adding noise results in ever different model params.
         We disable clipping in this test by setting it to a very high threshold.
         """
-        self.setUp_private_model(noise_multiplier=1.3, max_grad_norm=999)
-        first_run_params = (
-            p for p in self.private_model.parameters() if p.requires_grad
+        model, optimizer = self.setUp_init_model(
+            private=True,
+            state_dict=self.original_model.state_dict(),
+            noise_multiplier=1.3,
+            max_grad_norm=999,
         )
+        self.setUp_model_step(model, optimizer)
+        first_run_params = (p for p in model.parameters() if p.requires_grad)
 
-        self.setUp_private_model(noise_multiplier=1.3, max_grad_norm=999)
-        second_run_params = (
-            p for p in self.private_model.parameters() if p.requires_grad
+        model, optimizer = self.setUp_init_model(
+            private=True,
+            state_dict=self.original_model.state_dict(),
+            noise_multiplier=1.3,
+            max_grad_norm=999,
         )
+        self.setUp_model_step(model, optimizer)
+        second_run_params = (p for p in model.parameters() if p.requires_grad)
         for p0, p1 in zip(first_run_params, second_run_params):
             self.assertFalse(torch.allclose(p0, p1))
 
