@@ -29,7 +29,8 @@ model = Net()
 optimizer = SGD(model.parameters(), lr=0.05)
 privacy_engine = PrivacyEngine(
     model,
-    train_loader,
+    batch_size,
+    sample_size,
     alphas=[1, 10, 100],
     noise_multiplier=1.3,
     max_grad_norm=1.0,
