@@ -158,6 +158,16 @@ class PrivacyEngine_test(unittest.TestCase):
         model, optimizer = self.setUp_init_model(private=True, model=model)
         self.setUp_model_step(model, optimizer)
 
+    def test_attach_delete_detach(self):
+        model, optimizer = self.setUp_init_model(private=True)
+        self.setUp_model_step(model, optimizer)
+        pe = optimizer.privacy_engine
+        pe.detach()
+        try:
+            pe.clipper.__del__()
+        except ValueError as e:
+            self.fail(f"Detaching hooks twice! {e}")
+
     def test_attach_detach_attach(self):
         model, optimizer = self.setUp_init_model(private=True)
         self.setUp_model_step(model, optimizer)

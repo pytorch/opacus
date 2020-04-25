@@ -93,12 +93,15 @@ class PerSampleGradientClipper:
         self.module = module
         autograd_grad_sample.add_hooks(self.module)
         self.max_norm = max_norm
+        self.hooks_attached = True
 
     def __del__(self):
         self.close()
 
     def close(self):
-        autograd_grad_sample.remove_hooks(self.module)
+        if self.hooks_attached:  # do not close twice
+            autograd_grad_sample.remove_hooks(self.module)
+        self.hooks_attached = False
 
     def __repr__(self):
         return f"PerSampleGradientClipModuleHook on {self.module}"

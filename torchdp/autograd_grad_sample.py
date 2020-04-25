@@ -62,7 +62,7 @@ def remove_hooks(model: nn.Module) -> None:
     Remove hooks added by add_hooks(model)
     """
     if not hasattr(model, "autograd_grad_sample_hooks"):
-        print("Warning, asked to remove hooks, but no hooks found")
+        raise ValueError("Asked to remove hooks, but no hooks found")
     else:
         for handle in model.autograd_grad_sample_hooks:
             handle.remove()
