@@ -1,0 +1,12 @@
+\BOOKMARK [1][-]{section.1}{Vue d'ensemble}{}% 1
+\BOOKMARK [2][-]{subsection.1.1}{Confidentialit\351 diff\351rentielle}{section.1}% 2
+\BOOKMARK [2][-]{subsection.1.2}{Deep Learning}{section.1}% 3
+\BOOKMARK [1][-]{section.2}{Approche choisie dans l'article}{}% 4
+\BOOKMARK [2][-]{subsection.2.1}{Principe de la DP-SGD}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.2}{Comptabilit\351 du budget de confidentialit\351 plus en d\351tails}{section.2}% 6
+\BOOKMARK [2][-]{subsection.2.3}{R\351glage des hyper-param\350tres}{section.2}% 7
+\BOOKMARK [1][-]{section.3}{Exp\351rimentations}{}% 8
+\BOOKMARK [2][-]{subsection.3.1}{DP-PCA}{section.3}% 9
+\BOOKMARK [1][-]{section.4}{Exp\351rimentations}{}% 10
+\BOOKMARK [2][-]{subsection.4.1}{MNIST}{section.4}% 11
+\BOOKMARK [2][-]{subsection.4.2}{CIFAR-10}{section.4}% 12

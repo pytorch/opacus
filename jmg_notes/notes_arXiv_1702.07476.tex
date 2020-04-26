@@ -1,0 +1,216 @@
+\documentclass[a4paper,11pt]{article} %, landscape report
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8x]{inputenc}
+
+%Selon les goûts: times palatino bookman newcent chancery helvet avant fourier kpfonts cmbright
+%\usepackage{avant}
+
+%\usepackage[hmargin=2cm,vmargin=2cm]{geometry}
+%\usepackage{multicol}
+%\setlength{\columnsep}{1cm}
+\usepackage{ragged2e}% for \justifiy
+
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{multicol}\setlength{\columnsep}{1cm}
+
+\usepackage{amsmath,amssymb,amsfonts,makeidx}
+\usepackage{stmaryrd}% crochets «intervalles d'entiers»
+%\newcommand{\B}{\mathbb{B}}
+\usepackage{tikz}
+\newcommand{\e}{\text{e}}
+
+\usepackage{lscape}
+
+\newcommand{\vesp}{\vspace*{0.2em}}
+\newcommand{\VESP}{\vspace*{0.8em}}
+\newcommand{\ttt}[1]{\texttt{#1}}
+\newcommand{\code}[1]{\colorbox{gray!15}{\texttt{#1}}}
+\newcommand{\rem}[1]{\colorbox{yellow}{\textbf{#1}}}
+\newcommand{\REM}[1]{\colorbox{yellow}{\color{red}\textbf{#1}}}
+\newcommand{\evid}[1]{\colorbox{blue!10}{\textbf{#1}}}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,
+            linkcolor=violet,
+            urlcolor=teal,
+            citecolor=olive,
+            }
+\newcommand{\www}[2]{\href{#1}{\nolinkurl{#2}}}
+%black, blue, brown, cyan, darkgray, gray, green, lightgray, lime, magenta, olive, orange, pink, purple, red, teal, violet, white, yellow
+%\urlstyle{same}% Pas stylés \og URL
+
+%\usepackage[nosort]{cite}
+
+%\usepackage{minted}
+%\usemintedstyle{%friendly, %colorful, %autumn
+%    breaklines, fontfamily=courier,%helvetica,%tt,
+%    bgcolor=gray!10,
+%    %framesep=2mm,
+%    %fontsize=\large,
+%    %frame=lines,%single,
+%    numbers=none,%left,
+%    autogobble, mathescape, texcomments,
+%    %stepnumber=2,
+%    escapeinside=\%
+%}
+%% Inline
+%\newcommand{\Py}[1]{\mintinline[bgcolor=gray!15]{python}{#1}}
+%\newcommand{\BPy}[1]{\textbf{\Py{#1}}}
+%\newcommand{\SerreCode}{\vspace*{-0.8em}}
+\newcommand{\Py}[1]{\colorbox{gray!20}{\texttt{#1}}}
+
+%\newcommand{\1}{\textcircled{\small 1}}
+%\newcommand{\2}{\textcircled{\small 2}}
+\setlength{\parskip}{0.2em}
+%\setlength{\parindent}{0ex}
+
+\usepackage[french]{babel} \frenchbsetup{StandardLists=true}
+\usepackage[autolanguage]{numprint}
+\DecimalMathComma
+
+\AddThinSpaceBeforeFootnotes
+\FrenchFootnotes
+
+% =================================================================================================
+\title{\emph{Notes sur}\\\textbf{Rényi Differential Privacy}\\\small{arXiv:1702.07476}}
+\author{}
+\date{}
+
+\begin{document}%\setlength\parindent{5mm}
+\maketitle
+%%
+%\section*{\center Notes...\\[1cm]pytorch-dp}
+%%
+%\thispagestyle{empty}
+%\newpage
+%%
+
+%\tableofcontents
+
+%\newpage
+Cet article d'août $2\,017$ d'Ilya Mironov (Google Brain) présente cette relaxation de la confidentialité différentielle \og classique\fg{}, basée sur la divergence de Rényi.
+%%
+\section{Variantes de confidentialité différentielle (DP)}
+%%
+\begin{itemize}
+    \item 
+    La définition originelle de Dwork (\evid{$\varepsilon$-DP}) revient à majorer un coefficient multiplicatif, quant au changement des probabilités d'une base de donnée à une autre \og adjacente\fg{} autrement dit différente d'un unique enregistrement, donc à se baser sur le pire cas. Le coefficient $\varepsilon$ représente le \evid{budget de} \evid{confidentialité} qu'on s'alloue. Lors d'une composition de mécanismes DP, il est additionné.\\
+    Si une fonction a une \evid{$\ell_1$-sensibilité} donnée $\Delta_1$ (définie comme étant $\max||f(D)-f(D')||_1$ pour des bases $D$ et $D'$ adjacentes), alors l'ajout d'un bruit laplacien centré de paramètre $\Delta_1/\varepsilon$ aboutit à un \textbf{mécanisme laplacien} $\varepsilon$-DP.
+    \item 
+    Le relâchement proposé par la \evid{$(\varepsilon,\delta)$-DP} est l'ajout du paramètre additif $\delta$, quantifiant la probabilité que la garantie de confidentialité ne soit pas assurée, en queue de distribution (\og $\varepsilon$-DP garantie avec une probabilité de $1-\delta$\fg{}). De préférence, on prend $\delta \ll 1/N$ où $N$ est le nombre d'enregistrements de la base.\\
+    Elle fonctionne typiquement avec un \textbf{mécanisme gaussien} (\emph{ajout de bruit suivant une loi normale et plus de Laplace, plus \og naturel\fg{} et dont la queue de distribution décroît plus vite}). Ici, on n'a plus un paramètre optimal unique, mais une \og courbe\fg{} de $(\varepsilon(\delta),\, \delta)$-DP avec une infinité de choix possibles: si $f$ a pour \evid{$\ell_2$-sensibilité} $\Delta_2$ ($\max||f(D)-f(D')||_2$ pour $D$ et $D'$ adjacentes), alors pour tout $\varepsilon<1$ et tout $\sigma > \sqrt{2\ln 1,25/\delta}\,\Delta_2/\varepsilon$, l'ajout de bruit gaussien d'écart-type $\sigma$ rend le mécanisme $(\varepsilon(\delta),\, \delta)$-DP. Mais le choix particulier pour lequel on opte peut trahir d'importantes informations sur le mécanisme.\\
+    Elle est également utile pour \textbf{les théorèmes avancés de composition}, où l'on peut consommer moins du budget global de confidentialité. Pour un enchaînement de $k$ mécanismes adaptatifs $(\varepsilon(\delta),\, \delta)$-DP, pour tout $\delta'>0$, la composée est $(\varepsilon',\,k\delta+\delta')$-DP pour $\varepsilon' = \sqrt{2k\ln(1/\delta')}\,\varepsilon+k\varepsilon(\text{e}^\varepsilon-1)$.
+    Mais l'infinité des paramètres envisageables amène à une \textbf{explosion combinatoire} qui rend difficile un choix optimal.
+    \item 
+    (\emph{Concentrated}-DP et \emph{zero concentrated}-DP sont présentées, comme ayant introduit le principe du \emph{moments accountant} et la descente de gradient stochastique SGD, et d'autres sont mentionnées en fin de \texttt{II.})
+    \item 
+    Pour surmonter ces difficultés, l'idée a été d'utiliser les \og moments d'ordre supérieur\fg{}, pour majorer (les queues de distribution de) la variable de perte de confidentialité, introduisant ainsi la \evid{Rényi-DP}, adaptée à la composition de mécanismes hétérogènes et performante quant à la consommation du budget de confidentialité.    \footnote{\textbf{Note perso. hors article}: la RDP n'est pas forcément ce qu'on fait de mieux à l'heure actuelle, \emph{cf.} \url{https://arxiv.org/abs/1911.11607} de décembre $2\,019$ que je n'ai pas étudié...)}
+\end{itemize}
+%%
+\section{Rényi-DP}
+%%
+\subsection{Définitions}
+%
+\begin{itemize}
+    \item 
+    La \evid{Rényi-divergence d'ordre $\alpha > 1$} de deux distributions de probabilité $P$ et $Q$\footnote{Une divergence ou \og quasi-distance\fg{} quantifie la différence entre deux distributions, voir \url{https://fr.wikipedia.org/wiki/Divergence_(statistiques)}.} est 
+    \[ D_\alpha(P||Q) = \frac{1}{\alpha - 1} \ln \mathbb{E}_{x\sim Q}\left( \frac{P(x)}{Q(x)} \right)^\alpha \]
+    Et en prolongeant par continuité ou en passant à la limite, on pose
+    \[ D_1(P||Q) = \mathbb{E}_{x\sim P} \ln \frac{P(x)}{Q(x)} \]
+    \[ D_\infty(P||Q) = \sup_{x\in \text{supp}Q} \ln \frac{P(x)}{Q(x)} \]
+   \item 
+    La propriété $10$ en annexe en permet une interprétation un peu plus concrète: pour deux distributions $P$ et $Q$ à support identique, pour tout événement $A$, on a
+    \[ P(A) \leqslant \left[ \mathsf{e}^{D_\alpha(P\,||\, Q)} \cdot Q(A) \right]^{(\alpha-1)/\alpha} \]
+    \item 
+   Un mécanisme aléatoire $f$ défini sur $D$ est dit \evid{$(\alpha,\,\varepsilon)$-RDP} si pour toutes bases $D$ et $D'$ adjacentes, on a
+   \[ D_\alpha(f(D)||f(D')) \leqslant \varepsilon \]
+\end{itemize}
+%
+\subsection{Conséquence sur les propriétés classiques}
+%
+\rem{** Certaines sont relâchées. Incomplet pour l'instant... **}%%%%%
+
+\subsubsection{Garantie sur les \og réponses gênantes\fg{}}
+Cette \emph{\og{}bad outcomes\fg{} guarantee} est l'assurance que la probabilité d'observer en sortie une propriété potentiellement gênante pour un individu est peu modifiée (elle l'est à un facteur multiplicatif près), qu'un enregistrement particulier soit présent ou non dans la base, c'est une conséquence immédiate de la DP.
+
+La propriété est relâchée pour la RDP. On obtient, pour toutes bases $D$ et $D'$ adjacentes et tout ensemble de valeurs de sortie $S$
+\[ \text{e}^{-\varepsilon} \mathbb{P}[f(D')\in S]^{\alpha/(\alpha-1)}
+   \leqslant \mathbb{P}[f(D)\in S] \leqslant
+   \left(\text{e}^{\varepsilon} \mathbb{P}[f(D')\in S]\right)^{(\alpha-1)/\alpha} \]
+   \rem{conséq. cf. VII.}%%%%%
+\subsubsection{Robustesse aux informations auxiliaires}
+\rem{relâchement : prop. probabiliste ici, par partout...}%%%%%
+\subsubsection{Compatibilité avec les post-traitements}
+Comme pour les autres formulations, la RDP est heureusement insensible aux post-traitements: si on applique une fonction $g$ aux sorties d'un mécanisme $f$ qui est $(\alpha,\,\varepsilon)$-RDP, alors la composée $g\circ f$ l'est encore.
+\subsubsection{Préservation lors de compositions séquentielles adaptatives}
+Si l'on enchaîne les mécanismes $f$ défini sur $D$ et  $(\alpha,\,\varepsilon_1)$-RDP, suivi de $g$ défini sur $f(D)\times D$ (ce qui lui autorise à s'adapter aux sorties de $f$) et $(\alpha,\,\varepsilon_2)$-RDP, alors la séquence $(f(D),\, g(f(D),D))$ est $(\alpha,\,\varepsilon_1 + \varepsilon_2)$-RDP.\\
+Cela permet la gestion du budget de confidentialité (la variété des paramètres possibles étant donnée par une \og courbe de budget\fg{}, paramétrée par $\alpha$). À noter que $\alpha$ reste constant dans ces compositions.~\REM{*}%%%%%%%%%%
+\subsection{Confidentialité de groupe}
+On passe de la garantie basée sur deux bases adjacentes à une situation où elles sont distinctes d'un nombre plus important. 
+\rem{... cf. fin III.}%%%%%
+
+\rem{** Fin de la partie à compléter **}%%%%%
+%%
+\section{De la RDP à la ($\varepsilon, \delta$)-DP et réciproquement}
+%%
+\begin{itemize}
+    \item 
+    La ($\varepsilon, \delta$)-DP est équivalent à la $\varepsilon$-RDP. 
+    \item 
+    Cette $(\infty, \varepsilon)$-RDP implique la $(\alpha, \varepsilon)$-RDP pour tout $\alpha$ fini.
+    \item 
+    Inversement, si un mécanisme $f$ est $(\alpha, \varepsilon)$-RDP, alors il est\\ $(\varepsilon + \frac{\ln 1/\delta}{\alpha - 1},\, \delta)$-DP pour tout $0<\alpha<1$. \rem{+ de détails au VII.}%%%%%
+\end{itemize}
+%%
+\section{Théorème avancé de composition}
+%%
+Ce type de propriété est \emph{justifiée} ici avec les outils de la RDP, pour montrer que ce concept permet d'établir de telles garanties concernant la composition de mécanismes, qu'il contient suffisamment d'information.
+
+\textbf{Propriété 4}: la composée $f$ de $n$ mécanismes adaptatifs $\varepsilon$-DP vérifie, pour toutes bases $D$ et $D'$ adjacentes et tout ensemble $S$ de valeurs de sortie, 
+\[ \mathbb{P}[f(D)\in S] \leqslant \exp \left( 2\varepsilon \sqrt{n \ln \frac {1}{\mathbb{P}[f(D')\in S]}}\, \right)
+ \cdot \mathbb{P}[f(D')\in S] \]
+\label{dep_proba}À noter que la garantie dépend ici de la probabilité de l'événement $f(D')\in S$.\\[0.4em]
+
+\textbf{Corollaire 1}: la composée de $n$ mécanismes $\varepsilon$-DP est $(\varepsilon',\,\delta)$-DP, pour tout $0<\delta<1$ tel que $\ln(1/\delta) \geqslant \varepsilon^2 n$, pour $\varepsilon' = 4 \varepsilon \sqrt{2n \ln(1/\delta)}$.~\REM{*}%%%%%%%%%%
+
+%%
+\section{Mécanismes de référence}
+%%
+\rem{Vu nos objectifs, on délaisse pour l'instant les deux premiers}%%%%%
+%
+\subsection{Réponse randomisée}
+%
+%
+\subsection{Bruit laplacien}
+%
+%
+\subsection{Bruit gaussien}
+%
+Pour une fonction $f$ ) valeurs réelles, le mécanisme gaussien $\mathbf{G}_\sigma$ est défini par l'ajout d'un bruit suivant la loi normale centrée d'écart-type $\sigma$, $\mathcal{N}(0,\sigma^2)$.\footnote{Il y a me semble-t-il une coquille dans l'article avec un carré en trop pour l'écart-type dans l'explication de cette notation, page 8 juste sous la table II dans la seconde colonne}
+
+De la propriété $D_\alpha(\mathcal{N}(0,\sigma^2)\,||\, \mathcal{N}(\mu,\sigma^2)) = \alpha \mu^2 / (2\sigma^2)$, on déduit que si $f$ a comme sensibilité 1, alors le \textbf{mécanisme gaussien} de paramètre $\sigma$ est $(\alpha,\, \alpha/(2\sigma^2))$-RDP (\textbf{corollaire 3}). La courbe de budget RDP (autrement dit $\varepsilon = \alpha/(2\sigma^2)$ fonction de $\alpha$) du mécanisme gaussien est donc une simple droite passant par l'origine.
+
+En utilisant la propriété concernant la composition de mécanismes RDP, on montre que l'enchaînement de $n$ mécanismes gaussiens tous de paramètre $\sigma$, offre la garantie RDP d'un mécanisme gaussien de paramètre $(\alpha/\sqrt{n})$ (il a la même courbe RDP).~\REM{*}%%%%%%%%%%
+
+%
+\subsection{Composition de mécanismes de référence}
+%
+On l'a vu (partie \ref{dep_proba}), la garantie offerte par la RDP dépend de la probabilité de la probabilité de l'événement $f(D)\in S$, ce qui est plus complexe à gérer qu'avec les autres approches de DP. L'avantage est cependant de permettre la plupart du temps des majorations plus serrées...\\
+\rem{+ Expérimentations du \ttt{VI.} hors bruit gaussien...}
+
+%%
+\section{Discussion}
+%%
+On revient dans le \ttt{VII.} sur la comparaison des garanties entre $(\varepsilon,\,\delta)$-DP et RDP, pour montrer qu'elles sont fortement comparables, malgré des différences importantes. \rem{plutôt à inclure dans le 3. ?}
+
+La RDP n'autorise pas de rupture absolue de la garantie de confidentialité (contrairement à la $(\varepsilon,\,\delta)$-DP, avec une probabilité $\delta$). En ce sens, elle est plus stricte. 
+
+Les bornes induites par la RDP (\emph{voir la propriété 4 et corollaire 1}) se dégradent (s'éloignent) quand la probabilité de $f(D)\in S$ diminue. Cependant, si l'on fixe un niveau minimal de référence (\emph{baseline}), il devient aisé de trouver la valeur optimale \rem{de quoi ? Je m'y perds, revoir VII. !}
+
+Par ailleurs (\emph{voir fin du \ttt{VII.}}), choisir $\alpha$ peut être fait de manière quasi-optimale parmi un ensemble fini de valeurs tel que\\$\{ 1,5 ; 1,75 ; 2 ; 2,5 ; 3 ; 4 ; 5 ; 6 ; 8 ; 16 ; 32 ; 64 ; +\infty \}$~\REM{*}
+
+%%
+
+\end{document}
