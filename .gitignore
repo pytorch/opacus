@@ -108,3 +108,14 @@ website/static/js/*
 !website/static/js/mathjax.js
 !website/static/js/code_block_buttons.js
 website/static/_sphinx-sources/
+
+# JMG
+*.aux
+/jmg_notes/*.aux
+/jmg_notes/*.log
+/jmg_notes/*.out
+/jmg_notes/*.gz
+/jmg_notes/*.toc
+/jmg_notes/*.w18
+/jmg_notes/*.dvi
+/jmg_notes/*.ps
