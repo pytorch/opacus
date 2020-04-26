@@ -1,3 +1,0 @@
-\babel@toc {french}{}
-\babel@toc {french}{}
-\contentsline {section}{\numberline {1}Organisation du code}{3}{section.1}% 
