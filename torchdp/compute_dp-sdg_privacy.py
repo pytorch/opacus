@@ -25,10 +25,13 @@ from privacy_analysis import compute_rdp, get_privacy_spent
 def apply_dp_sgd_analysis(q, sigma, steps, orders, delta):
     """Compute and print results of DP-SGD analysis.
 
-   Compute_rdp requires that sigma be the ratio of the standard deviation of
-   the Gaussian noise to the l2-sensitivity of the function to which it is
-   added. Hence, sigma here corresponds to the `noise_multiplier` parameter
-   in the DP-SGD implementation found in privacy.optimizers.dp_optimizer
+    Args:
+        q: the sample rate in SGD.
+        sigma: the noise_multiplier in compute_rdp(), ratio of the
+               standard deviation of the Gaussian noise to
+               the l2-sensitivity of the function to which it is added
+        steps: the number of steps.
+        orders: an array (or a scalar) of RDP orders.
   """
     rdp = compute_rdp(q, sigma, steps, orders)
 
@@ -39,16 +42,12 @@ def apply_dp_sgd_analysis(q, sigma, steps, orders, delta):
     eps, opt_order = get_privacy_spent(orders, rdp, delta=delta)
 
     print(
-        "DP-SGD with\n\tsampling rate = {:.3g}% and\n\tnoise_multiplier = {}"
-        "\n\titerated over {} steps\n satisfies".format(100 * q, sigma, steps),
-        end=" ",
+        f"DP-SGD with\n\tsampling rate = {100 * q:.3g}% and"
+        f"\n\tnoise_multiplier = {sigma}"
+        f"\n\titerated over {steps} steps\n  satisfies "
+        f"differential privacy with\n\teps = {eps:.3g} and\n\tdelta = {delta}."
+        f"\nThe optimal RDP order is {opt_order}."
     )
-    print(
-        "differential privacy with\n\teps = {:.3g} and\n\tdelta = {}.".format(
-            eps, delta
-        )
-    )
-    print("The optimal RDP order is {}.".format(opt_order))
 
     if opt_order == max(orders) or opt_order == min(orders):
         print(
@@ -114,19 +113,18 @@ def main():
     )
     args = parser.parse_args()
 
-    print("==================================================================")
-    print(
-        f"* Script called with those arguments:\n\t"
-        f"-n = --dataset-size = {args.training_dataset_size}\n\t"
-        f"-b = --batch-size = {args.batch_size}\n\t"
-        f"-s = --sigma = {args.sigma}\n\t"
-        f"-e = --epochs = {args.epochs}\n\t"
-        f"-d = --delta = {args.delta}\n"
+    print("=================================================================="
+          "\n* Script called with those arguments:\n\t"
+          f"-n = --dataset-size = {args.dataset_size}\n\t"
+          f"-b = --batch-size = {args.batch_size}\n\t"
+          f"-s = --sigma = {args.sigma}\n\t"
+          f"-e = --epochs = {args.epochs}\n\t"
+          f"-d = --delta = {args.delta}\n"
+          "* Result is:",
+          end="\n  "
     )
-
-    print("* Result is", end=" ")
     compute_dp_sgd_privacy(
-        args.training_dataset_size,
+        args.dataset_size,
         args.batch_size,
         args.sigma,
         args.epochs,
