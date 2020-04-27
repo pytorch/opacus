@@ -32,7 +32,10 @@
 \newcommand{\REM}[1]{\colorbox{yellow}{\color{red}\textbf{#1}}}
 \newcommand{\evid}[1]{\colorbox{blue!10}{\textbf{#1}}}
 
-\newcommand{\prop}[1]{\begin{center}\rule{0.95\linewidth}{0.5pt}\\\textsf{#1}\\\rule{0.95\linewidth}{0.5pt}\end{center}}
+% Plutôt avec minipage pour éviter de couper / saut de page ??
+\newcommand{\prop}[1]{\begin{center}\smallskip\rule{0.95\linewidth}{0.5pt}\nopagebreak\\
+                      \textsf{#1}\nopagebreak\\
+                      \rule{0.95\linewidth}{0.5pt}\smallskip\end{center}}
 
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,
@@ -100,7 +103,7 @@ Le répertoire \file{torchdp/} fournit les outils assurant le respect de la conf
 %
 \subsection{Transformation du modèle en version DP}
 %
-\subsubsection{Utilisation habituelle de \ttt{pytorch}}
+\subsubsection{Utilisation classique de \ttt{pytorch}}
 %
 Rappelons d'abord le déroulement de l'entraînement d'un modèle classique, ici d'apprentissage supervisé d'un réseau neuronal convolutif visant à catégoriser des images.\REM{Principes généraux d'un CNN à voir avant...}
 
@@ -153,27 +156,28 @@ On peut construire une phase de test de manière analogue, tout en évitant les 
             correct += pred.eq(label.view_as(pred)).sum().item()
     loss /= len(test_loader.dataset)
     \end{minted}
-
-Analysons maintenant ce qui diffère, dans la version adaptée à la confidentialité différentielle.
+%Voyons maintenant comment ajouter une garantie de confidentialité différentielle.
 %
 \subsubsection{Adaptation en version DP}
-\rem{... TODO ...}
+Dans \code{torchdp/privacy\_engine.py} on définit une classe \code{PrivacyEngine}, construite notamment à partir d'une instance \code{model} de \code{SampleConvNet}, des hyper-paramètres (\code{batch\_size}, \code{noise\_multiplier} égal au \ttt{sigma} passé en argument, \code{max\_grad\_norm}...) et de la liste des moments \code{alphas} qui seront utilisés pour estimer de manière optimale, grâce à la Rényi-DP, la consommation $\varepsilon$ du budget de confidentialité lors de la phase d'entraînement.
 
+Cette classe se charge d'\textbf{adapter l'objet \code{model}, afin de le rendre} garant de la confidentialité différentielle (on le dira \textbf{DP}, pour \emph{Differentialy Private}). Ceci est assuré en définissant une méthode \code{step()} spécifique, visant à remplacer son homonyme standard de l'\code{optimizer} choisi. Puis une autre \code{attach()} qui transforme à chaud ce dernier (\og \emph{monkey patch}\fg{}), en y substituant la version modifiée de \code{step()} qui le rendra DP.
+
+
+\rem{* * *}\\
 Mais au final, pour pouvoir mettre concrètement en œuvre ces mécanismes, il faut savoir calibrer le bruit ajouté par le SGM, l'ajuster aux paramètres de DP qu'on s'est accordés. Cela dépendra également de la structure du réseau neuronal, ainsi que du nombre d'itérations en phase d'entraînement. Étudions la partie consacrée à ces calculs.
 %
-\subsection{Comptabilité de la confidentialité: contenu de \ttt{torchdp/}}
+\subsection{Comptabilité de la confidentialité}%: contenu de \ttt{torchdp/}
 %
+Parcourons les scripts du dossier \ttt{torchdp/}, pour découvrir la cascade d'appels des fonctions concernées.
 \subsubsection{\ttt{privacy\_engine.py}}
-%
-On y définit une classe \code{PrivacyEngine}, construite notamment à partir d'une instance \code{model} de \code{SampleConvNet}, des hyper-paramètres (\code{batch\_size}, \code{noise\_multiplier} égal au \ttt{sigma} passé en argument, \code{max\_grad\_norm}...) et de la liste des moments \code{alphas} qui seront utilisés pour estimer de manière optimale, grâce à la Rényi-DP, la consommation $\varepsilon$ du budget de confidentialité lors de la phase d'entraînement.
-
+La classe \code{PrivacyEngine} évoquée précédemment expose deux méthodes utilisées pour gérer le budget de confidentialité.
 \begin{itemize}
     \item 
-     Cette classe se chargera d'\textbf{adapter l'objet \code{model}, afin de le rendre} garant de la confidentialité différentielle (on le dira \textbf{DP}, pour \emph{Differentialy Private}). Ceci est assuré en définissant une méthode \code{step()} spécifique, visant à remplacer son homonyme standard. Puis une autre \code{attach()} qui transforme à chaud (\og \emph{monkey patch}\fg{}) l'\emph{optimizer} non privatif choisi pour l'entraînement, en y substituant la version modifiée de \code{step()} afin de le rendre DP.
     %
+    \code{get\_privacy\_spent()} est appelée par \code{train()} de notre exemple de \file{mnist.py}. Elle renvoie les valeurs $(\varepsilon,\,\alpha)$ du budget $\varepsilon$ consommé  pour chaque \emph{epoch} et l'ordre du moment optimal associé (ce $\alpha$ étant celui de la Rényi-DP utilisée pour les calculs), à partir de la valeur de $\delta$ qu'on s'est accordée en termes de $(\varepsilon,\,\delta)$-DP.
     \item 
-    On y trouve également la méthode \code{get\_privacy\_spent()} ---~appelée par \code{train()} de notre exemple \file{mnist.py}~--- qui renvoie les valeurs $(\varepsilon,\,\alpha)$ indiquant le budget $\varepsilon$ consommé  pour chaque \emph{epoch} et l'ordre du moment optimal associé (ce $\alpha$ étant celui de la Rényi-DP utilisée pour les calculs), à partir de la valeur de $\delta$ qu'on s'est autorisée en termes de $(\varepsilon,\,\delta)$-DP.\\
-    Elle-même utilise la méthode \code{get\_renyi\_divergence(self)} qui lui renvoie le coût en termes de Rényi-DP-$\varepsilon$ pour une occurence du \emph{Sampled Gaussian Mechanism}. Toutes deux présentent des interfaces pratiques, mais le cœur des calculs est déporté dans des fonctions du module \code{tf\_privacy}, alias du fichier suivant.
+    La méthode \code{get\_renyi\_divergence(self)} est utilisée par la précédente, à qui elle renvoie le coût en termes de Rényi-DP-$\varepsilon$ pour une occurrence du \emph{Sampled Gaussian Mechanism}. Toutes deux présentent des interfaces pratiques, mais le cœur des calculs est déporté dans des fonctions du module \code{tf\_privacy}, qui est un alias pour le  fichier suivant.
 \end{itemize}
 %
 \subsubsection{\ttt{privacy\_analysis.py}}
