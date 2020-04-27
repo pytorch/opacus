@@ -25,6 +25,7 @@ _supported_layers = [
     "InstanceNorm1d",
     "InstanceNorm2d",
     "InstanceNorm3d",
+    "SequenceBias",
 ]  # Supported layer class types
 
 # work-around for https://github.com/pytorch/pytorch/issues/25723
@@ -131,7 +132,9 @@ def clear_backprops(model: nn.Module) -> None:
             del layer.backprops_list
 
 
-def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
+def compute_grad_sample(
+    model: nn.Module, loss_type: str = "mean", batch_dim: int = 0
+) -> None:
     """
     Compute per-example gradients and save them under 'param.grad_sample'.
     Must be called after loss.backprop()
@@ -162,11 +165,15 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
             )
 
         A = layer.activations
-        n = A.shape[0]
+        n = A.shape[batch_dim]
         if loss_type == "mean":
             B = layer.backprops_list[0] * n
         else:  # loss_type == 'sum':
             B = layer.backprops_list[0]
+
+        if batch_dim != 0:
+            A = A.permute([batch_dim] + [x for x in range(A.dim()) if x != batch_dim])
+            B = B.permute([batch_dim] + [x for x in range(B.dim()) if x != batch_dim])
 
         if layer_type == "Linear":
             gs = torch.einsum("n...i,n...j->n...ij", B, A)
@@ -176,7 +183,8 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
 
         if layer_type == "LayerNorm":
             layer.weight.grad_sample = sum_over_all_but_batch_and_last_n(
-                F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B, layer.weight.dim()
+                F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B,
+                layer.weight.dim(),
             )
             layer.bias.grad_sample = sum_over_all_but_batch_and_last_n(
                 B, layer.bias.dim()
@@ -188,11 +196,7 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
             if layer.bias is not None:
                 layer.bias.grad_sample = torch.einsum("ni...->ni", B)
 
-        elif layer_type in (
-            "InstanceNorm1d",
-            "InstanceNorm2d",
-            "InstanceNorm3d",
-        ):
+        elif layer_type in ("InstanceNorm1d", "InstanceNorm2d", "InstanceNorm3d"):
             gs = F.instance_norm(A, eps=layer.eps) * B
             layer.weight.grad_sample = torch.einsum("ni...->ni", gs)
             if layer.bias is not None:
@@ -232,3 +236,5 @@ def compute_grad_sample(model: nn.Module, loss_type: str = "mean") -> None:
                 )
             if layer.bias is not None:
                 layer.bias.grad_sample = torch.sum(B, dim=2)
+        if layer_type == "SequenceBias":
+            layer.bias.grad_sample = B[:, -1]

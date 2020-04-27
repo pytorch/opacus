@@ -8,8 +8,8 @@ import torch
 from torch import nn
 
 from . import privacy_analysis as tf_privacy
-from .per_sample_gradient_clip import PerSampleGradientClipper
 from .dp_model_inspector import DPModelInspector
+from .per_sample_gradient_clip import PerSampleGradientClipper
 
 
 class PrivacyEngine:
@@ -22,6 +22,7 @@ class PrivacyEngine:
         noise_multiplier: float,
         max_grad_norm: float,
         grad_norm_type: int = 2,
+        batch_dim: int = 0,
     ):
         self.steps = 0
         self.module = module
@@ -32,6 +33,7 @@ class PrivacyEngine:
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
         self.grad_norm_type = grad_norm_type
+        self.batch_dim = batch_dim
 
         self.secure_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
         self.secure_generator = (
@@ -64,7 +66,9 @@ class PrivacyEngine:
         # Validate the model for not containing un-supported modules.
         self.validator.validate(self.module)
         # only attach if model is validated
-        self.clipper = PerSampleGradientClipper(self.module, self.max_grad_norm)
+        self.clipper = PerSampleGradientClipper(
+            self.module, self.max_grad_norm, self.batch_dim
+        )
 
         def dp_step(self, closure=None):
             self.privacy_engine.step()
@@ -86,9 +90,7 @@ class PrivacyEngine:
 
     def get_privacy_spent(self, target_delta: float):
         rdp = self.get_renyi_divergence() * self.steps
-        return tf_privacy.get_privacy_spent(
-            self.alphas, rdp, target_delta
-        )
+        return tf_privacy.get_privacy_spent(self.alphas, rdp, target_delta)
 
     def step(self):
         self.steps += 1

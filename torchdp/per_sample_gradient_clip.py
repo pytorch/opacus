@@ -81,11 +81,12 @@ def get_total_per_sample_grad_norm(model):
         ],
         dim=-1,
     )
+
     return all_layers_norms.norm(2, dim=1)
 
 
 class PerSampleGradientClipper:
-    def __init__(self, module, max_norm):
+    def __init__(self, module, max_norm, batch_dim=0):
         """
         Attaches to a module, and clips all grad_sample in the backward
         pass. It then puts them in each parameter's .grad.
@@ -94,6 +95,7 @@ class PerSampleGradientClipper:
         autograd_grad_sample.add_hooks(self.module)
         self.max_norm = max_norm
         self.hooks_attached = True
+        self.batch_dim = batch_dim
 
     def __del__(self):
         self.close()
@@ -107,7 +109,7 @@ class PerSampleGradientClipper:
         return f"PerSampleGradientClipModuleHook on {self.module}"
 
     def step(self):
-        autograd_grad_sample.compute_grad_sample(self.module)
+        autograd_grad_sample.compute_grad_sample(self.module, batch_dim=self.batch_dim)
 
         # The first dim of param.grad_sample is b_sz for every param.
         # To look up what that value is, we just pick one
