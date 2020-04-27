@@ -46,23 +46,24 @@
 
 %\usepackage[nosort]{cite}
 
-%\usepackage{minted}
-%\usemintedstyle{%friendly, %colorful, %autumn
-%    breaklines, fontfamily=courier,%helvetica,%tt,
-%    bgcolor=gray!10,
-%    %framesep=2mm,
-%    %fontsize=\large,
-%    %frame=lines,%single,
-%    numbers=none,%left,
-%    autogobble, mathescape, texcomments,
-%    %stepnumber=2,
-%    escapeinside=\%
-%}
-%% Inline
-%\newcommand{\Py}[1]{\mintinline[bgcolor=gray!15]{python}{#1}}
-%\newcommand{\BPy}[1]{\textbf{\Py{#1}}}
-%\newcommand{\SerreCode}{\vspace*{-0.8em}}
-\newcommand{\Py}[1]{\colorbox{gray!20}{\texttt{#1}}}
+\usepackage{minted}
+\usemintedstyle{%friendly, %colorful, %autumn
+    breaklines, fontfamily=courier,%helvetica,%tt,
+    bgcolor=gray!10,
+    %framesep=2mm,
+    %fontsize=\large,
+    %frame=lines,%single,
+    numbers=none,%left,
+    autogobble, mathescape, texcomments,
+    %stepnumber=2,
+    escapeinside=\%
+}
+% Inline
+\newcommand{\Py}[1]{\mintinline[bgcolor=gray!15]{python}{#1}}
+\newcommand{\BPy}[1]{\textbf{\Py{#1}}}
+\newcommand{\SerreCode}{\vspace*{-0.8em}}
+%\newcommand{\Py}[1]{\colorbox{gray!20}{\texttt{#1}}}
+
 
 %\newcommand{\1}{\textcircled{\small 1}}
 %\newcommand{\2}{\textcircled{\small 2}}
@@ -87,14 +88,11 @@
 %%
 \section{Étude de l'exemple du MNIST}
 %%
-
 %
 \subsection{Organisation générale}
 %
 On omet volontairement certains détails, d'autant que le projet, très actif, est régulièrement modifié (\emph{ce fût le cas notamment pour la structure même du modèle de cet exemple, durant son étude de notre part}).
-\\\rem{. Rappeler ici les principales étapes de l'entraînement}
-\\\rem{et les fonctions associées de PyTorch...}
-\\\rem{. Idem / SGM, bruit gaussien ajouté}
+\\\rem{. Rappeler ici le principe du SGM ?}
 
 Le script \file{examples/mnist.py} est exécutable directement en ligne de commande (sa fonction \code{main()} est alors appelée). Le réseau neuronal convolutif est modélisé par la classe \code{SampleConvNet} qui hérite de \code{nn.Module}.
 
@@ -102,13 +100,70 @@ Le répertoire \file{torchdp/} fournit les outils assurant le respect de la conf
 %
 \subsection{Transformation du modèle en version DP}
 %
-Rappelons ici le déroulement de l'entraînement d'un modèle classique, ici un réseau neuronal convolutif.
-
-
+\subsubsection{Utilisation habituelle de \ttt{pytorch}}
 %
-\subsection{Comptabilité de la confidentialité: contenu de \file{torchdp/}}
+Rappelons d'abord le déroulement de l'entraînement d'un modèle classique, ici d'apprentissage supervisé d'un réseau neuronal convolutif visant à catégoriser des images.\REM{Principes généraux d'un CNN à voir avant...}
+
+On peut instancier un objet \code{model} d'une classe héritant de \code{nn.Module} (on désigne généralement \code{torch.nn} par l'alias \code{nn}) pour décrire la structure du modèle. Le constructeur définit les différentes couches qui le constituent.%
+    \begin{minted}{python3}
+    def __init__(self):
+        super(MyNet, self).__init__()
+        self.conv1 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16*5*5, 120) # ...
+    \end{minted}
+La méthode \code{forward()} sera appliquée comme son nom l'indique lors de la phase de propagation directe, de calcul des sorties à partir de données d'entraînement, à comparer avec les valeurs attendues associées, toutes deux issues du \emph{training dataset}. On indique donc dans sa définition les différentes couches du modèle, les fonctions d'activation et autres réorganisations \og géométriques\fg{} des tenseurs, avant de renvoyer le résultat de cette séquence de transformations.
+    \begin{minted}{python3}
+    # import torch.nn.functional as F
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.max_pool2d(x, 2, 2)
+        x = F.relu(self.fc1(x)) # ...
+        return x
+    \end{minted}
+
+On précise une fonction de coût (\emph{loss function}) pour quantifier l'erreur entre les sorties et les valeurs attendues. Un objet \code{optimizer} est créé~--- les principaux étant disponibles \og clé en main\fg{} dans le module \ttt{torch.optim}~--- qui gèrera l'optimisation et les calculs de gradients associés grâce à sa méthode \code{step()}.
+    \begin{minted}{python3}
+    # import torch.optim as optim
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(params, lr=0.1, momentum=0.0)
+    \end{minted}
+
+Reste alors à itérer la phase d'entraînement: remise à zéro des gradients, calcul des sorties avec les paramètres en cours puis du coût associé, rétropropagation du gradient pour mettre à jour les paramètres (et suivi des performances).
+    \begin{minted}{python3}
+    # `trainloader` contient le training set
+    losses = []
+    for inputs, labels in trainloader:
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = criterion(ouputs, labels)
+        loss.backward()    # Thanks to PyTorch,
+        optimizer.step()   #  everthing is 'automatic' !
+        losses.append(loss.item())
+        # if ... : print(np.mean(losses))
+    \end{minted}
+
+On peut construire une phase de test de manière analogue, tout en évitant les calculs de gradients, donc sans utilisation de l'\code{optimizer}.
+    \begin{minted}{python3}
+    with torch.no_grad():
+        for inputs, labels in testloader:
+            outputs = model(inputs)
+            loss += criterion(ouputs, labels).item()
+            # Index of the max log-probability
+            pred = output.argmax(dim=1, keepdim=True)
+            correct += pred.eq(label.view_as(pred)).sum().item()
+    loss /= len(test_loader.dataset)
+    \end{minted}
+
+Analysons maintenant ce qui diffère, dans la version adaptée à la confidentialité différentielle.
 %
-\subsubsection{\file{privacy\_engine.py}}
+\subsubsection{Adaptation en version DP}
+\rem{... TODO ...}
+
+Mais au final, pour pouvoir mettre concrètement en œuvre ces mécanismes, il faut savoir calibrer le bruit ajouté par le SGM, l'ajuster aux paramètres de DP qu'on s'est accordés. Cela dépendra également de la structure du réseau neuronal, ainsi que du nombre d'itérations en phase d'entraînement. Étudions la partie consacrée à ces calculs.
+%
+\subsection{Comptabilité de la confidentialité: contenu de \ttt{torchdp/}}
+%
+\subsubsection{\ttt{privacy\_engine.py}}
 %
 On y définit une classe \code{PrivacyEngine}, construite notamment à partir d'une instance \code{model} de \code{SampleConvNet}, des hyper-paramètres (\code{batch\_size}, \code{noise\_multiplier} égal au \ttt{sigma} passé en argument, \code{max\_grad\_norm}...) et de la liste des moments \code{alphas} qui seront utilisés pour estimer de manière optimale, grâce à la Rényi-DP, la consommation $\varepsilon$ du budget de confidentialité lors de la phase d'entraînement.
 
@@ -121,7 +176,7 @@ On y définit une classe \code{PrivacyEngine}, construite notamment à partir d'
     Elle-même utilise la méthode \code{get\_renyi\_divergence(self)} qui lui renvoie le coût en termes de Rényi-DP-$\varepsilon$ pour une occurence du \emph{Sampled Gaussian Mechanism}. Toutes deux présentent des interfaces pratiques, mais le cœur des calculs est déporté dans des fonctions du module \code{tf\_privacy}, alias du fichier suivant.
 \end{itemize}
 %
-\subsubsection{\file{privacy\_analysis.py}}
+\subsubsection{\ttt{privacy\_analysis.py}}
 %
 C'est en effet le moteur des calculs de DP, qui exploite les résultats théoriques récents. C'est une reprise, quasiment à l'identique, des outils de calculs du projet \textbf{TensorFlow Privacy} de Google. Il expose deux fonctions:
 
