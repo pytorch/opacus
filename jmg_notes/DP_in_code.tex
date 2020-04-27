@@ -32,6 +32,8 @@
 \newcommand{\REM}[1]{\colorbox{yellow}{\color{red}\textbf{#1}}}
 \newcommand{\evid}[1]{\colorbox{blue!10}{\textbf{#1}}}
 
+\newcommand{\prop}[1]{\begin{center}\rule{0.95\linewidth}{0.5pt}\\\textsf{#1}\\\rule{0.95\linewidth}{0.5pt}\end{center}}
+
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,
             linkcolor=violet,
@@ -81,107 +83,85 @@
 
 \begin{document}%\setlength\parindent{5mm}
 \maketitle
+\tableofcontents
 %%
-\section{Ajout du bruit pour l'entraînement}
+\section{Étude de l'exemple du MNIST}
 %%
 
 %
-\subsection{Organisation générale de l'exemple du MNIST}
+\subsection{Organisation générale}
 %
+On omet volontairement certains détails, d'autant que le projet, très actif, est régulièrement modifié (\emph{ce fût le cas notamment pour la structure même du modèle de cet exemple, durant son étude de notre part}).
+\\\rem{. Rappeler ici les principales étapes de l'entraînement}
+\\\rem{et les fonctions associées de PyTorch...}
+\\\rem{. Idem / SGM, bruit gaussien ajouté}
 
-Dans le fichier file{mnist.py},
+Le script \file{examples/mnist.py} est exécutable directement en ligne de commande (sa fonction \code{main()} est alors appelée). Le réseau neuronal convolutif est modélisé par la classe \code{SampleConvNet} qui hérite de \code{nn.Module}.
+
+Le répertoire \file{torchdp/} fournit les outils assurant le respect de la confidentialité différentielle ainsi que sa gestion. Ils interviennent ici à deux endroits: dans \code{main()} pour rendre le modèle conforme à cette exigence, puis dans la méthode \code{train()} de \code{SampleConvNet}, qui traite la phase d'apprentissage, en affichant au fur et à mesure notamment la consommation du \og budget de confidentialité\fg{}.
+%
+\subsection{Transformation du modèle en version DP}
+%
+Rappelons ici le déroulement de l'entraînement d'un modèle classique, ici un réseau neuronal convolutif.
+
+
+%
+\subsection{Comptabilité de la confidentialité: contenu de \file{torchdp/}}
+%
+\subsubsection{\file{privacy\_engine.py}}
+%
+On y définit une classe \code{PrivacyEngine}, construite notamment à partir d'une instance \code{model} de \code{SampleConvNet}, des hyper-paramètres (\code{batch\_size}, \code{noise\_multiplier} égal au \ttt{sigma} passé en argument, \code{max\_grad\_norm}...) et de la liste des moments \code{alphas} qui seront utilisés pour estimer de manière optimale, grâce à la Rényi-DP, la consommation $\varepsilon$ du budget de confidentialité lors de la phase d'entraînement.
+
 \begin{itemize}
-    \item
-    La fonction principale \code{main()} commence par \textbf{parser les arguments} de la ligne de commande, notamment\\
-        \ttt{--batch-size} (par défaut $64$),\\
-        \ttt{--epochs} ($14$, nombre de répétitions des cycles complets),\\
-        \ttt{-lr} ($1.0$, \emph{learning rate}),\\
-        \ttt{--sigma} ($1.0$, futur écart-type $\sigma$ du bruit gaussien)\\
-        \ttt{--max-per-sample-grad\_norm} ($1.0$, seuil du \emph{clipping}),\\
-        \ttt{--delta} ($10^{-5}$, paramètre $\delta$ de la $(\varepsilon,\,\delta)$-DP)
-    \item
-    Puis (l. 234 \emph{numérotation dans \og ma\fg{} version commentée}) on crée les instances  \code{train\_loader} et \code{test\_loader} (en indiquant leur taille de \emph{batch} à chacun\footnote{Le \textbf{\emph{batch}} est l'ensemble des données utilisées avant la mise à jour des paramètres du modèle lors de l'entraînement, alors que l'\textbf{\emph{epoch}} correspond au parcours de l'ensemble des données d'entraînement. On parle respectivement de \emph{Stochastic~/ batch~/ mini-batch Gradient Descent} quand la taille du \emph{batch} vaut $1$~/ la taille du \emph{training set}~/ entre les deux. \url{https://machinelearningmastery.com/difference-between-a-batch-and-an-epoch/}}. de \ttt{torch.utils.data.Dataloader}. Les données seront téléchargées si besoin.
-    \item
-    Ensuite vient la phase d'entraînement (l. 278). On crée l'instance \code{model} de \ttt{SampleConvNet}, définie dans le même fichier comme sous-classe de  \ttt{pytorch.nn.Module}. Puis \code{optimizer}, de classe \ttt{torch.optim.SGD}, sans considération de DP à ce stade.
-    \item
-    La DP est alors implantée dans \code{model}:
-    \begin{itemize}
-        \item
-            l. 293, on crée \code{privacy\_engine}, instance de \code{PrivacyEngine} avec en arguments\\
-            \code{model}\\
-            \code{train\_loader}\\
-            \code{alphas} une liste des coefficients $\alpha$ (\emph{cf.} Rényi-DP) valant {\ttt{[1.1, 1.2, 1.3, ..., 10.9, 12, 13, ..., 63]}}\\
-            \code{noise\_multiplier} ($\sigma$, passé en argument du script)\\
-            \code{max\_grad\_norm} (seuil de \emph{clipping}, idem).
-        \item
-        L'appel (l. 304) à sa méthode \code{.attach(optimizer)} transforme sa phase d'entraînement en version DP ---~détaillé plus bas.
-    \end{itemize}
-    \item
-    La fonction \code{train()}\footnote{Cette fonction fait également intervenir la DP, au niveau calcul du budget de confidentialité, on en parle plus loin.} définie dans le même fichier est appelée \ttt{epoch} fois, pour l'entraînement. Puis la valeur de retour de \code{test()}, fonction définie également dans ce fichier, est ajoutée à la liste \code{run\_results} dont la moyenne indiquera la justesse (\emph{accuracy}) du modèle...
+    \item 
+     Cette classe se chargera d'\textbf{adapter l'objet \code{model}, afin de le rendre} garant de la confidentialité différentielle (on le dira \textbf{DP}, pour \emph{Differentialy Private}). Ceci est assuré en définissant une méthode \code{step()} spécifique, visant à remplacer son homonyme standard. Puis une autre \code{attach()} qui transforme à chaud (\og \emph{monkey patch}\fg{}) l'\emph{optimizer} non privatif choisi pour l'entraînement, en y substituant la version modifiée de \code{step()} afin de le rendre DP.
+    %
+    \item 
+    On y trouve également la méthode \code{get\_privacy\_spent()} ---~appelée par \code{train()} de notre exemple \file{mnist.py}~--- qui renvoie les valeurs $(\varepsilon,\,\alpha)$ indiquant le budget $\varepsilon$ consommé  pour chaque \emph{epoch} et l'ordre du moment optimal associé (ce $\alpha$ étant celui de la Rényi-DP utilisée pour les calculs), à partir de la valeur de $\delta$ qu'on s'est autorisée en termes de $(\varepsilon,\,\delta)$-DP.\\
+    Elle-même utilise la méthode \code{get\_renyi\_divergence(self)} qui lui renvoie le coût en termes de Rényi-DP-$\varepsilon$ pour une occurence du \emph{Sampled Gaussian Mechanism}. Toutes deux présentent des interfaces pratiques, mais le cœur des calculs est déporté dans des fonctions du module \code{tf\_privacy}, alias du fichier suivant.
 \end{itemize}
 %
-\subsection{De la version standard à la DP}
+\subsubsection{\file{privacy\_analysis.py}}
 %
+C'est en effet le moteur des calculs de DP, qui exploite les résultats théoriques récents. C'est une reprise, quasiment à l'identique, des outils de calculs du projet \textbf{TensorFlow Privacy} de Google. Il expose deux fonctions:
 
-La classe \code{PrivacyEngine} est définie dans le fichier \file{privacy\_engine.py}.
 \begin{itemize}
-    \item
-    Les éléments locaux suivants sont importés:
-        \begin{itemize}
-        \item
-        le module \ttt{privacy\_analysis as tf\_privacy}, repris du code TensorFLow Privacy de Google, gérant la RDP du mécanisme gaussien ---~détaillé plus bas.
-        \item
-        \ttt{PerSampleGradientClipper} du module \ttt{per\_sample\_gradient\_clip} qui prend en charge le \emph{clipping} des gradients, couche par couche.
-        \item
-        \ttt{DPModelInspector} du module \ttt{dp\_model\_inspector} pour vérifier que le modèle est compatible avec la transformation en version DP.
-    \end{itemize}
-
-    \item
-    Le constructeur de \code{PrivacyEngine} reprend comme attributs les valeurs passées en paramètres, donc \code{module} pour qui recevra l'objet \code{model} instance de \ttt{SampleConvNet}. Il en crée aussi de nouveaux, dont:\\
-         \code{sample\_rate}\ttt{ = dataloader.batch\_size / len(dataloader.dataset)},\\
-         \code{validator}\ttt{ = DPModelInspector()},\\
-         \code{clipper}\ttt{ = PerSampleGradientClipper(self.module, self.max\_grad\_norm)}
-
-    \item
-    La méthode \code{attach(optimizer)} permet de remplacer à chaud (\emph{monkey patching}) l'\emph{optimizer} d'origine par sa version DP, en redéclarant sa méthode \ttt{step}.
-
-    \item
-    La méthode \code{step()} de \ttt{PrivacyEngine} appelle son homonyme de \code{clipper} pour majorer les normes des gradients de chaque couche. Cette dernière est donc définie dans \file{per\_sample\_gradient\_clip.py} (l. 95):
-    \begin{itemize}
-        \item
-        Appel de \ttt{autograd\_grad\_sample.compute\_grad\_sample(module)} qui crée un attribut \code{grad\_sample}, tenseur contenant les gradients calculés sur les données fournies d'entraînement. Les couches de type \ttt{Linear} et \ttt{Conv2d} sont prises en compte.\rem{Détailler  ?}
-        \item
-        Puis \ttt{clip\_per\_sample\_grad\_norm\_(module, max\_norm)} (fonction interne de \file{per\_sample\_gradient\_clip.py}) assure le \emph{clipping} des gradients, et enfin le calcul de leur moyennes  par batch\footnote{Elle utilise l'itérateur \ttt{torch.nn.Module.parameters()} pour traiter chacun des éléments du réseau neuronal.}, enregistrées dans l'attribut \code{grad}.
-    \end{itemize}
-    \item
-    Ensuite, pour chaque élément du réseau, le \textbf{bruit gaussien} est ajouté\footnote{\emph{Idem}.}. Il est centré et d'écart-type  \ttt{noise\_multiplier * max\_grad\_norm} (soit $\sigma C$ en notation de l'algorithme 1 de l'article arXiv:1607.00133 \emph{Deep Learning with Differential Privacy}). Plus précisément, on crée un tenseur aléatoire \ttt{noise} de même \emph{shape} que celui qui représente le gradient associé à la couche traitée, puis on ajoute à ce dernier \ttt{noise} divisé par la taille du batch. En effet, la moyenne de chaque gradient a déjà été effectuée, on distribue donc dans la formule indiquée dans l'algorithme le facteur $\frac{1}{L}$ sur chacun des termes avant de les additionner. Les gradients bruités sont à nouveau stockés dans l'attribut \code{grad}.
-
+    \item 
+    \code{get\_privacy\_spent(orders, rdp, delta)} renvoie le couple de valeurs Rényi-DP $(\varepsilon,\,\alpha)$ optimal: elle détermine celui pour lequel le $\varepsilon'$ qu'on peut en déduire en termes de $(\varepsilon',\,\delta)$-DP est minimal, parmi les valeurs de $\alpha$ envisagées et passées par la liste \code{orders} et celles associées de $\varepsilon$ données dans \code{rdp}.\\
+    La \textbf{justification} du calcul associé à chaque couple $(\varepsilon',\,\alpha)$ est donnée par la propriété suivante\footnote{\textsf{Proposition 3} dans \og Rényi Differential Privacy\fg{}, Ilya Mironov, août $2\,017$ [arXiv:1702.07476] qu'on notera \textbf{\ttt{[MIR17]}} dans la suite} qui permet de déterminer la \og courbe de budget\fg{}, à savoir les couples $(\varepsilon,\,\alpha)$ pour la Rényi-DP :
+    \prop{Pour tout $0<\delta<1$,\\
+        si un mécanisme aléatoire est $(\varepsilon,\,\alpha)$-Rényi DP,\\
+        alors il est également $(\varepsilon',\, \delta)$-DP pour $\varepsilon'=\varepsilon+\frac{\ln 1/\delta}{\alpha-1}$.}
+    %
+    \item 
+    \code{compute\_rdp(q, noise\_multiplier, steps, orders)} fournit justement les valeurs de $\varepsilon$ (ici \code{rdp}), en fonction des ordres des moments $\alpha$ envisagés indiqués par \code{orders}, du taux d'échantillonnage \code{q} (\emph{détailler, lot / batch, ici ? en note de bas de page ?}), de l'écart-type \code{noise\_multiplier} du bruit gaussien ajouté et du nombre \code{steps} de répétitions. Le calcul est en réalité sous-traité par la fonction \og privée\fg{} \code{\_compute\_rdp()}.
 \end{itemize}
+\code{\_compute\_rdp(q, sigma, alpha)} renvoie le coût $\varepsilon$ de la RDP à l'ordre \code{alpha} du mécanisme gaussien (SGM, \emph{Sampled Gaussian Mechanism}) de taux d'échantillonnage \code{q} et d'écart-type \code{sigma}.
 
-Les \emph{shapes} des éléments \og paramètres\fg{} itérés permettent de comprendre leur nature quand on les met en parallèle avec l'architecture du réseau neuronal: [16, 1, 8, 8] (kernel de convolution pour $16$ couches en sortie, 1 niveau en entrée, en dimensions $8\times8$), puis [16] (ReLU sur chaque couche; rien concernant le \emph{max-pooling}), [32, 16, 4, 4] (convolution, idem), [32] (ReLU), puis [10, 288] (couche complètetement connectée, des $3\times3\times32$ valeurs ré-alignées vers les $10$ catégories en sortie).\\
-\hspace*{-0.2\textwidth}
-\includegraphics[width=1.4\textwidth]{cnn.png}
+Le calcul est direct dans le cas où \code{q} vaut \code{1.0}, grâce à la propriété suivante\footnote{\textsf{Proposition 7} \& \textsf{Corollary 3}, dans \textbf{\ttt{[MIR17]}}.}~--- qui montre une \og courbe de budget RDP\fg{} qui est une droite passant par l'origine puisque $\varepsilon = \frac{1}{2\sigma^2}\alpha$ :
+\prop{Si une fonction $f$ a une sensibilité de 1,\\
+      alors le SGM d'écart-type $\sigma$ appliqué à $f$ est\\
+      $(\alpha,\, \alpha/(2\sigma^2))$-Rényi DP pour tout $\alpha>1$.}
 
-%%
-\section{Optimisation du budget de DP}
-%%
-La fonction \code{train()} du fichier \file{mnist.py} qui affiche les performances appelle la méthode  \code{get\_privacy\_spent(targeted\_delta)} de \file{privacy\_analysis.py} qui renvoie les valeurs optimales de $\varepsilon$ et du $\alpha$ associé [en parcourant les points $(\alpha,\,\varepsilon)$ sur la \og courbe de budget\fg{} de confidentialité \emph{cf.} article \og Rényi-DP\fg{}, pour la liste des ordres $\alpha$ qu'on se donne].
+Quand \code{0 < q < 1}, \code{\_compute\_log\_a(q, sigma, alpha)} renvoie une valeur $\ln(A_\alpha)$ calculée en fonction de $\alpha>1$, telle que\footnote{***ref. erreur inégalité def Aalpha*****}:
+\prop{
+    Si $f$ a une sensibilité de $1$\quad et\quad si $\varepsilon \geqslant \frac{\ln (A_\alpha)}{\alpha - 1}$,\\
+    alors le SGM appliqué à $f$ (avec les paramètres \code{q}, \code{sigma}) est $(\alpha,\, \varepsilon)$-RDP.
+    }
+En pratique \code{\_compute\_rdp()} choisit bien sûr la valeur $\varepsilon = \frac{\ln (A_\alpha)}{\alpha - 1}$, pour minimiser le budget consommé. 
 
-Cette méthode utilise la fonction homonyme de \file{privacy\_analysis.py} à qui l'on passe la listes des $\alpha$ utilisables, le tenseur \code{rdp} [qui semble présenter les $\varepsilon$ courant de la $(\alpha,\,\varepsilon)$-RDP cumulée\rem{pas sûr ! vérifier...}] et le $\delta$ attendu. Elle ajoute (l. 209; terme à terme, pour chacune des données incluses dans ce tenseur) à \code{rdp}  la valeur $\frac{\ln(1/\delta)}{\alpha-1}$, conformément à la propriété 3 du IV. de l'article \og Rényi DP\fg{}: du $\varepsilon$ de la $(\alpha,\,\varepsilon)$-RDP on déduit à partir du $\delta$ attendu le $\varepsilon' = \varepsilon + \frac{\ln(1/\delta)}{\alpha-1}$ pour la $(\varepsilon',\,\delta)$-DP alors garantie.  Elle détermine enfin la valeur minimale de $\varepsilon$, avant de renvoyer le couple $(\varepsilon;\,\alpha)$ associé.
-\\\rem{+ lien avec ce qui est affiché ; + comment cumuler /budget ?}
+Le calcul de $\ln(A_\alpha)$ est traité différemment\footnote{\emph{cf.} \textbf{\texttt{[MIR19]}}, partie \textsf{3.3}.} selon que $\alpha$ est entier (calcul direct assuré par \code{\_compute\_log\_a\_int()}) ou non (approximation par une série convergente via \code{\_compute\_log\_a\_frac()}).
 
+\REM{Pour l'instant, j'ai un souci avec la sensibilité 1 !}\\
+En effet, cela ne me semble pas garanti dans l'algo. 1 du \og Abadi $2\,016$\fg{} utilisé dans pytorch-dp, si le seuil de clipping du gradient est supérieur à 1...\vspace{-0.4em}
 
-La valeur de \code{rdp} dans ce contexte de SGD est calculée par la méthode \ttt{get\_renyi\_divergence()} de \ttt{PrivacyEngine} qui utilise directement la fonction \code{compute\_rdp()} (l. 169) de \file{privacy\_analysis.py}. Celle-ci multiplie par le nombre d'étapes (\emph{de batches ?} \rem{à vérifier}) les valeurs renvoyées par la fonction \og locale\fg{} \ttt{\_compute\_rdp(q, sigma, alpha)} où \ttt{q} représente le taux d'échantillonnage.
-\\\rem{Calculs à justifier (vérifier la sensibilité 1) Grossièrement :}
 \begin{itemize}
-    \item
-    Cas q=1 / corollaire 3 VI de l'article \og RDP\fg{}
-    \item
-    Sinon, dans arXiv:1908.10530 "Rényi-DP of Sampled Gaussian Mecanism", conséquence en section 3 du théorème 4 et corollaire 7. pour justifier le $\varepsilon \leqslant \frac{\ln (A_\alpha)}{\alpha - 1}$ suffisant pour avoir la $(\varepsilon,\,\alpha)$-RDP.\\
-    Puis pour le calcul de $A_\alpha$ soit entier soit en fraction, même article 3.3 page 11.
+    \item 
+    pour $q=1$: pour une fonction $f$ de sensibilité $S_f$, le SGM sur $f$ d'écart-type $S_f \sigma$ est $(\varepsilon,\, \delta)$-DP si $\varepsilon<1$ et $\delta>\frac{4}{5}\exp(-\sigma^2\varepsilon^2/2)$ , \emph{cf.} Dwork Roth \og Algorithmic Fundation of DP\fg{} en $2\,014$ ou $2\,013$), mais on parle alors de DP classique, pas de RDP. Or c'est bien la RDP qui justifie nos calculs \og serrés\fg{} ici...
+    \item 
+    Pour l'autre cas avec $A_\alpha$: je n'ai pas totalement saisi comment Mironov déduit (dans [MIR17]) coroll. 3 de de la prop. 7. Si l'idée que je devine vaguement est correcte (je me fie à ce qu'il fait juste avant au coroll. 2 pour Laplace, \og since the Laplace mecanism is additive...\fg{}), on devrait pouvoir passer de la Prop. 7 avec un $\mu$ égal à la sensibilité de $f$ à la RDP pour $\varepsilon = \alpha / (2\mu^2\sigma^2)$, dans une sorte de Coroll. 3bis... À approfondir!
 \end{itemize}
-
-
+\REM{Fin de la parenthèse...}\\
 
 
 
