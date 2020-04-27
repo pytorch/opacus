@@ -1,7 +1,7 @@
 # First run
 To run a basic training script without differential privacy:
 ```shell
-python mnist.ru --device=cpu --disable-dp --n=20 --lr=.1 -b=250
+python mnist.py --device=cpu --disable-dp --n=20 --lr=.1 -b=250
 ```
 The first time the script runs, it attempts to download the MNIST dataset from http://yann.lecun.com and place it in `../mnist/MNIST/raw`. If you prefer a different location or your execution environment does not have access to the outside world, download and unpack the dataset yourself and pass the location as `--data-root=custom_dir_name`. The script will expect to find under `custom_dir_name/MNIST/processed` two files: `test.pt` (7.9 MB) and `training.pt` (47.5 MB).
 
