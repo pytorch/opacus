@@ -111,6 +111,7 @@ website/static/_sphinx-sources/
 
 # JMG
 *.aux
+*.pygtex
 /jmg_notes/*.aux
 /jmg_notes/*.log
 /jmg_notes/*.out
