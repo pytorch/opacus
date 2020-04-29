@@ -1,6 +1,38 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""
+This helper file provides simple wrapper around tensorboard for gathering
+statistics as a research tool to get insight into differential privacy and
+to observe how clipping, and noising affects loss, accuracy, ...
+Internal Privacy metrics (`StatType.PRIVACY` and StatType.CLIPPING` are
+already added to the code and need only be activated by adding the stat
+as shown in the example. Other stat types need to be added to the stat
+and updated properly using `update` function. Example below tries to
+show simple use cases.
 
+Example:
+    If an instance of `tensorboard.SummaryWriter` exists it can be used
+    for stat gathering, o.w. one can be created, e.g.
+
+        stats.set_global_summary_writer(tensorboard.SummaryWriter())
+
+    If you like to get stats about clipping you can add the following line
+    to your main file. That is it. The frequency, defines the sampling frequency
+    of the statistics. By default the samples are averaged and the average is
+    reported every `1 / frequency` times.
+
+        stats.add(
+            stats.Stat(stats.StatType.CLIPPING, 'AllLayers', frequency=0.1))
+
+    To add stats about test accuracy you can do:
+
+        stats.add(stats.StatType.TEST, 'accuracy', frequency=0.1))
+
+    and then update the stat in the proper location using:
+
+        # calculate accuracy@1 for example
+        stats.update(stats.StatType.TEST, acc1=acc1_value)
+"""
 
 from enum import IntEnum
 from torch.utils.tensorboard import SummaryWriter

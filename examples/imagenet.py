@@ -21,11 +21,34 @@ import torch.nn as nn
 import torch.nn.parallel
 import torch.optim
 import torch.utils.data
+import torch.utils.tensorboard as tensorboard
 import torch.utils.data.distributed
 import torchvision.datasets as datasets
 import torchvision.models as models
 import torchvision.transforms as transforms
 from torchdp import PrivacyEngine, utils
+from torchdp import stats
+
+
+# The following few lines, enable stats gathering about the run
+# 1. where the stats should be logged
+stats.set_global_summary_writer(
+    tensorboard.SummaryWriter('/tmp/stats'))
+# 2. enable stats
+stats.add(
+    # stats about gradient norms aggregated for all layers
+    stats.Stat(
+        stats.StatType.CLIPPING, 'AllLayers', frequency=0.1),
+    # stats about gradient norms per layer
+    stats.Stat(
+        stats.StatType.CLIPPING, 'IndividualLayers', frequency=0.1),
+    # stats on training accuracy
+    stats.Stat(
+        stats.StatType.TRAIN, 'accuracy', frequency=0.01),
+    # stats on validation accuracy
+    stats.Stat(
+        stats.StatType.TEST, 'accuracy'),
+)
 
 
 parser = argparse.ArgumentParser(description="PyTorch ImageNet DP Training")
@@ -230,8 +253,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # create model: resnet 18
     # since our differential privacy engine does not support BatchNormXd
     # we need to replace all such blocks with DP-aware normalisation modules
-    model = utils.convert_batchnorm_modules(models.resnet18())
-
+    model = utils.convert_batchnorm_modules(models.resnet18(num_classes=10))
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
         # should always set the single device scope, otherwise,
@@ -425,6 +447,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        stats.update(stats.StatType.TRAIN, acc1=acc1[0], acc5=acc5[0])
         losses.update(loss.item(), images.size(0))
         top1.update(acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
@@ -486,10 +509,10 @@ def validate(val_loader, model, criterion, args):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            if i % args.print_freq == 0:
-                progress.display(i)
+            progress.display(i)
 
         # TODO: this should also be done with the ProgressMeter
+        stats.update(stats.StatType.TEST, acc1=top1.avg, acc2=top5.avg)
         print(
             " * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}".format(top1=top1, top5=top5)
         )
@@ -547,7 +570,10 @@ class ProgressMeter(object):
 
 def adjust_learning_rate(optimizer, epoch, args):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = args.lr * (0.1 ** (epoch // 30))
+    if epoch < 5:  # warm-up
+        lr = args.lr * float(epoch + 1) / 5
+    else:
+        lr = args.lr * (0.1 ** (epoch // 30))
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
 

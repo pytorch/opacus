@@ -9,7 +9,9 @@ from torch import nn
 
 from . import privacy_analysis as tf_privacy
 from .dp_model_inspector import DPModelInspector
-from .per_sample_gradient_clip import PerSampleGradientClipper
+from .per_sample_gradient_clip import (
+    PerSampleGradientClipper,
+    __clip_value_calculation_params__ as clipping_method)
 
 
 class PrivacyEngine:
@@ -66,6 +68,10 @@ class PrivacyEngine:
         # Validate the model for not containing un-supported modules.
         self.validator.validate(self.module)
         # only attach if model is validated
+        if clipping_method['method'].lower() != 'none':
+            print('Warning! Current implementations of dynamic clipping '
+                  'are not privacy safe; Caclulated privacy loss is not '
+                  'indicative of a proper bound.')
         self.clipper = PerSampleGradientClipper(
             self.module, self.max_grad_norm, self.batch_dim
         )
@@ -94,13 +100,12 @@ class PrivacyEngine:
 
     def step(self):
         self.steps += 1
-        self.clipper.step()
-
+        max_norm = self.clipper.step()
         for p in self.module.parameters():
             if p.requires_grad and self.noise_multiplier > 0:
                 noise = torch.normal(
                     0,
-                    self.noise_multiplier * self.max_grad_norm,
+                    self.noise_multiplier * max_norm,
                     p.grad.shape,
                     device=self.device,
                     generator=self.secure_generator,
