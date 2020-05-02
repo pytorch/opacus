@@ -35,8 +35,16 @@ Example:
 """
 
 from enum import IntEnum
-from torch.utils.tensorboard import SummaryWriter
 from typing import Any
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except ImportError:
+    # dummy SummaryWriter
+    print('Warning! Tensorboard library was not found.')
+
+    class SummaryWriter:
+        def add_scalar(self, *args, **kwargs):
+            pass
 
 
 class StatType(IntEnum):
