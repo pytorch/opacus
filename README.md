@@ -40,7 +40,7 @@ privacy_engine.attach(optimizer)
 ```
 The [MNIST example](examples/mnist.py) contains an end to end run.
 
-The [compute_dp-sgd_privacy](torchdp/compute_dp-sgd_privacy.py) command-line script computes privacy of a model trained with DP-SGD.
+The [compute_dp_sgd_privacy](torchdp/compute_dp_sgd_privacy.py) command-line script computes privacy of a model trained with DP-SGD.
 
 ## Contributing
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
