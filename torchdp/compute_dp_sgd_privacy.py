@@ -50,7 +50,7 @@ def apply_dp_sgd_analysis(q, sigma, steps, orders, delta, printed=True):
             f"\n\titerated over {steps} steps\n  satisfies "
             f"differential privacy with\n\tƐ = {eps:.3g} "
             f"and\n\tδ = {delta}."
-            f"\n  The optimal RDP order is {opt_order}."
+            f"\n  The optimal α is {opt_order}."
         )
 
         if opt_order == max(orders) or opt_order == min(orders):
