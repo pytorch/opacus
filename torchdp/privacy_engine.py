@@ -25,6 +25,7 @@ class PrivacyEngine:
         max_grad_norm: float,
         grad_norm_type: int = 2,
         batch_dim: int = 0,
+        target_delta: float = 0.000001,
     ):
         self.steps = 0
         self.module = module
@@ -36,6 +37,7 @@ class PrivacyEngine:
         self.max_grad_norm = max_grad_norm
         self.grad_norm_type = grad_norm_type
         self.batch_dim = batch_dim
+        self.target_delta = target_delta
 
         self.secure_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
         self.secure_generator = (
@@ -94,7 +96,9 @@ class PrivacyEngine:
         )
         return rdp
 
-    def get_privacy_spent(self, target_delta: float):
+    def get_privacy_spent(self, target_delta: float = None):
+        if target_delta is None:
+            target_delta = self.target_delta
         rdp = self.get_renyi_divergence() * self.steps
         return tf_privacy.get_privacy_spent(self.alphas, rdp, target_delta)
 
