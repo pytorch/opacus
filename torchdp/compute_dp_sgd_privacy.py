@@ -48,8 +48,8 @@ def apply_dp_sgd_analysis(q, sigma, steps, orders, delta, printed=True):
             f"DP-SGD with\n\tsampling rate = {100 * q:.3g}% and"
             f"\n\tnoise_multiplier = {sigma}"
             f"\n\titerated over {steps} steps\n  satisfies "
-            f"differential privacy with\n\teps = {eps:.3g} "
-            f"and\n\tdelta = {delta}."
+            f"differential privacy with\n\tƐ = {eps:.3g} "
+            f"and\n\tδ = {delta}."
             f"\n  The optimal RDP order is {opt_order}."
         )
 
