@@ -149,7 +149,7 @@ def main():
     args.orders = [float(a) for a in args.orders.strip('[]').split(',')]
 
     print("=================================================================="
-          "\n* Script was called with those arguments:\n\t"
+          "\n* Script was called with arguments:\n\t"
           f"-n = --dataset-size = {args.dataset_size}\n\t"
           f"-b = --batch-size = {args.batch_size}\n\t"
           f"-s = --sigma = {args.sigma}\n\t"
