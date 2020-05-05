@@ -12,19 +12,19 @@ Example:
   compute_dp_sgd_privacy
     --dataset-size=60000 \
     --batch-size=256 \
-    --sigma=1.12 \
+    --noise_multiplier=1.12 \
     --epochs=60 \
     --delta=1e-5
 The output states that DP-SGD with these parameters satisfies (2.92, 1e-5)-DP.
 
-In addition, there is an argument -o or --orders for the list of RDP orders
+In addition, there is an argument -a or --alphas for the list of RDP α orders
 (usually denoted by alpha).
 """
 import argparse
 import math
 from privacy_analysis import compute_rdp, get_privacy_spent
 
-def apply_dp_sgd_analysis(sample_rate, 
+def apply_dp_sgd_analysis(sample_rate,
                           noise_multiplier,
                           steps,
                           alphas,
@@ -102,7 +102,7 @@ def main():
     # Settings w.r.t. parameters on command line or default values if missing
     parser = argparse.ArgumentParser(description="RDP computation")
     parser.add_argument(
-        "-n",
+        "-s",
         "--dataset-size",
         type=int,
         default=60_000,
@@ -116,8 +116,8 @@ def main():
         help="Input batch size (default: 256)",
     )
     parser.add_argument(
-        "-s",
-        "--sigma",
+        "-n",
+        "--noise_multiplier",
         type=float,
         default=1.12,
         help="Noise multiplier (default: 1.12)",
@@ -137,41 +137,41 @@ def main():
         help="Targeted delta (default: 1e-5)",
     )
     parser.add_argument(
-        "-o",
-        "--orders",
+        "-a",
+        "--alphas",
         type=str,
         default=("[1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5, "
             + str(list(range(5, 64))).strip('[]')
             + "128, 256, 512]"
         ),
-        help="List of orders (alpha values) for Rényi-DP evaluation. "
+        help="List of alpha values (α orders of Rényi-DP evaluation). "
              "A default list is provided. Else, write it quoted, e.g. "
              "\"[1.25, 1.5, 1.75, 2.0, 3.0, 4.0, 5.0, 10.0]\"",
     )
 
     args = parser.parse_args()
 
-    # From str to list of floats for orders
-    args.orders = [float(a) for a in args.orders.strip('[]').split(',')]
+    # From str to list of floats for alphas
+    args.alphas = [float(a) for a in args.alphas.strip('[]').split(',')]
 
     print("=================================================================="
           "\n* Script was called with arguments:\n\t"
-          f"-n = --dataset-size = {args.dataset_size}\n\t"
+          f"-s = --dataset-size = {args.dataset_size}\n\t"
           f"-b = --batch-size = {args.batch_size}\n\t"
-          f"-s = --sigma = {args.sigma}\n\t"
+          f"-n = --noise_multiplier = {args.noise_multiplier}\n\t"
           f"-e = --epochs = {args.epochs}\n\t"
           f"-d = --delta = {args.delta}\n\t"
-          f"-o = --orders = {args.orders}\n\n"
+          f"-a = --aplhas = {args.alphas}\n\n"
           "* Result is:",
           end="\n  "
     )
     compute_dp_sgd_privacy(
         args.dataset_size,
         args.batch_size,
-        args.sigma,
+        args.noise_multiplier,
         args.epochs,
         args.delta,
-        args.orders,
+        args.alphas,
     )
     print("==================================================================")
 
