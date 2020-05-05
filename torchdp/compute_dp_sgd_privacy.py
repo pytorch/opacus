@@ -70,7 +70,7 @@ def compute_dp_sgd_privacy(n,
                            orders=None,
                            printed=True,
 ):
-    """Compute epsilon based on the given hyperparameters.
+    """Compute epsilon based on the given parameters.
     """
     if orders is None:
         orders = ([1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5]
