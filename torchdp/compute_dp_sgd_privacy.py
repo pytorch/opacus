@@ -17,8 +17,8 @@ Example:
     --delta=1e-5
 The output states that DP-SGD with these parameters satisfies (2.92, 1e-5)-DP.
 
-In addition, there is a -o or --orders argument for a list of RDP orders
-(usually denoted alpha). All arguments have a default value, including -o.
+In addition, there is an argument -o or --orders for the list of RDP orders
+(usually denoted by alpha).
 """
 import argparse
 import math
