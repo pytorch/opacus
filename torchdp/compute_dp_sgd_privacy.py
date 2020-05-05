@@ -24,69 +24,75 @@ import argparse
 import math
 from privacy_analysis import compute_rdp, get_privacy_spent
 
-def apply_dp_sgd_analysis(q, sigma, steps, orders, delta, printed=True):
+def apply_dp_sgd_analysis(sample_rate, 
+                          noise_multiplier,
+                          steps,
+                          alphas,
+                          delta,
+                          printed=True
+):
     """Compute and print results of DP-SGD analysis.
 
     Args:
-        q: the sample rate in SGD.
-        sigma: the noise_multiplier in compute_rdp(), ratio of the
+        sample_rate: the sample rate in SGD.
+        noise_multiplier: the noise_multiplier in compute_rdp(), ratio of the
                standard deviation of the Gaussian noise to
                the l2-sensitivity of the function to which it is added
         steps: the number of steps.
-        orders: an array (or a scalar) of RDP orders.
+        alphas: an array (or a scalar) of RDP α orders.
         printed: boolean, True (by default) to print results on stdout.
   """
-    rdp = compute_rdp(q, sigma, steps, orders)
+    rdp = compute_rdp(sample_rate, noise_multiplier, steps, alphas)
     #  Slight adaptation from TF version, in which
     # `get_privacy_spent()` has one more arguments and one more element in
     #  returned tuple, because it can also compute delta for a given epsilon
     #  (and not only compute epsilon for a targeted delta).
-    eps, opt_order = get_privacy_spent(orders, rdp, delta=delta)
+    eps, opt_alpha = get_privacy_spent(alphas, rdp, delta=delta)
 
     if printed:
         print(
-            f"DP-SGD with\n\tsampling rate = {100 * q:.3g}% and"
-            f"\n\tnoise_multiplier = {sigma}"
+            f"DP-SGD with\n\tsampling rate = {100 * sample_rate:.3g}% and"
+            f"\n\tnoise_multiplier = {noise_multiplier}"
             f"\n\titerated over {steps} steps\n  satisfies "
             f"differential privacy with\n\tƐ = {eps:.3g} "
             f"and\n\tδ = {delta}."
-            f"\n  The optimal α is {opt_order}."
+            f"\n  The optimal α is {opt_alpha}."
         )
 
-        if opt_order == max(orders) or opt_order == min(orders):
+        if opt_alpha == max(alphas) or opt_alpha == min(alphas):
             print(
                 "The privacy estimate is likely to be improved by expanding "
-                "the set of orders."
+                "the set of α orders."
             )
 
-    return eps, opt_order
+    return eps, opt_alpha
 
 
-def compute_dp_sgd_privacy(n,
+def compute_dp_sgd_privacy(sample_size,
                            batch_size,
                            noise_multiplier,
                            epochs,
                            delta,
-                           orders=None,
+                           alphas=None,
                            printed=True,
 ):
     """Compute epsilon based on the given parameters.
     """
-    if orders is None:
-        orders = ([1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5]
+    if alphas is None:
+        alphas = ([1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5]
             + list(range(5, 64))
             + [128, 256, 512]
     )
 
-    q = batch_size / n  # q - the sampling ratio.
-    if q > 1:
-        raise ValueError("n must be larger than the batch size.")
-    steps = int(math.ceil(epochs * n / batch_size))
+    sample_rate = batch_size / sample_size # the sampling ratio
+    if sample_rate > 1:
+        raise ValueError("sample_size must be larger than the batch size.")
+    steps = int(math.ceil(epochs * sample_size / batch_size))
 
-    return apply_dp_sgd_analysis(q,
+    return apply_dp_sgd_analysis(sample_rate,
                                 noise_multiplier,
                                 steps,
-                                orders,
+                                alphas,
                                 delta,
                                 printed
     )
