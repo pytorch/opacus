@@ -142,7 +142,7 @@ def main():
         type=str,
         default=("[1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5, "
             + str(list(range(5, 64))).strip('[]')
-            + "128, 256, 512]"
+            + ",128, 256, 512]"
         ),
         help="List of alpha values (α orders of Rényi-DP evaluation). "
              "A default list is provided. Else, write it quoted, e.g. "
