@@ -72,13 +72,6 @@ def compute_dp_sgd_privacy(
 ):
     """Compute epsilon based on the given parameters.
     """
-    if alphas is None:
-        alphas = (
-            [1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5]
-            + list(range(5, 64))
-            + [128, 256, 512]
-        )
-
     sample_rate = batch_size / sample_size
     if sample_rate > 1:
         raise ValueError("sample_size must be larger than the batch size.")
