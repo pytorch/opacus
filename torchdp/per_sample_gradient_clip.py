@@ -203,6 +203,15 @@ class PerSampleGradientClipper:
         return f"PerSampleGradientClipModuleHook on {self.module}"
 
     def step(self):
+
+        """
+        if hasattr(self, 'accumulated_grads'):
+			# TODO move to .grad / batch_size
+            max_norm = self.accumulated_max_norm.copy()
+            del self.accumulated_max_norm
+            del self.accumulated_grads
+        """
+
         # The first dim of param.grad_sample is b_sz for every param.
         # To look up what that value is, we just pick one
         self.batch_size = next(
@@ -211,3 +220,31 @@ class PerSampleGradientClipper:
 
         max_norm = self.gradient_clipper.clip()
         return max_norm
+
+    def accumulate_grads(self):
+        """clips and sums up per-sample gradients into an accumulator"""
+
+        # disable stats for the accumulation step
+        saved_stat = self.gradient_clipper.stat
+        self.gradient_clipper.stat = None
+
+        max_norm = self.gradient_clipper.clip(accumulate=True)
+
+        # check if we have an ongoing accumulator
+        if hasattr(self, 'accumulated_max_norm'):
+            # retain the largest clipping thresholds accross the entire batch
+            self.accumulated_max_norm = [max(n1, n2) for (n1, n2) 
+                                          in zip(max_norm, self.accumulated_max_norm)]
+        else:
+            self.accumulated_max_norm = max_norm
+            self.batch_size = 0
+            
+        # keep track of the number of accumulated gradients in this batch
+        batch_size = next(
+            p.grad_sample.shape[0] for p in self.module.parameters() if p.requires_grad
+        )
+        self.batch_size += batch_size
+
+        # restore stats
+        self.gradient_clipper.stat = saved_stat
+        

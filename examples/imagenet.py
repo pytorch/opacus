@@ -81,6 +81,16 @@ parser.add_argument(
     "using Data Parallel or Distributed Data Parallel",
 )
 parser.add_argument(
+    "-eb",
+    "--effective-batch-size",
+    default=None,
+    type=int,
+    metavar="N",
+    help="effective batch size used for SGD. Defaults to the "
+         "size of a mini-batch, but can be set to any integer "
+         "multiple of the mini-batch size",
+)
+parser.add_argument(
     "--lr",
     "--learning-rate",
     default=0.1,
@@ -215,6 +225,12 @@ def main():
         args.world_size = int(os.environ["WORLD_SIZE"])
 
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
+
+    if args.effective_batch_size is None:
+        args.effective_batch_size = args.batch_size
+
+    if args.effective_batch_size % args.batch_size != 0:
+        raise ValueError("'effective_batch_size' must be a multiple of 'batch_size'")
 
     ngpus_per_node = torch.cuda.device_count()
     if args.multiprocessing_distributed:
@@ -371,7 +387,7 @@ def main_worker(gpu, ngpus_per_node, args):
         print("PRIVACY ENGINE ON")
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=args.batch_size * 4,
+            batch_size=args.effective_batch_size,
             sample_size=len(train_dataset),
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
@@ -431,6 +447,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     # switch to train mode
     model.train()
+    optimizer.zero_grad()
+
+    # number of mini-batches to compute gradients on, before an actual update step
+    n_accumulation_steps = args.effective_batch_size / args.batch_size
 
     end = time.time()
     for i, (images, target) in enumerate(train_loader):
@@ -453,13 +473,14 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         top5.update(acc5[0], images.size(0))
 
         # compute gradient and do SGD step
-        optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
 
-        #if (i+1) % 2 == 0:
-        #    optimizer.step()
-        #    optimizer.zero_grad()
+        #if n_accumulation_steps > 1:
+        #    optimizer.accumulate_grads()
+
+        if (i+1) % n_accumulation_steps == 0:
+            optimizer.step()
+            optimizer.zero_grad()
 
         # measure elapsed time
         batch_time.update(time.time() - end)

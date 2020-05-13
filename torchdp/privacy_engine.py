@@ -55,6 +55,7 @@ class PrivacyEngine:
         self.clipper.close()
         optim.step = types.MethodType(optim.original_step, optim)
         optim.zero_grad = types.MethodType(optim.original_zero_grad, optim)
+        del optim.accumulate_grads
 
     def attach(self, optimizer: torch.optim.Optimizer):
         """
@@ -86,11 +87,15 @@ class PrivacyEngine:
             self.privacy_engine.zero_grad()
             self.original_zero_grad()
 
+        def accumulate_grads(self):
+            self.privacy_engine.accumulate_grads()
+
         optimizer.privacy_engine = self
         optimizer.original_step = optimizer.step
         optimizer.step = types.MethodType(dp_step, optimizer)
         optimizer.original_zero_grad = optimizer.zero_grad
         optimizer.zero_grad = types.MethodType(zero_all_grads, optimizer)
+        optimizer.accumulate_grads = types.MethodType(accumulate_grads, optimizer)
 
         self.optimizer = optimizer  # create a cross reference for detaching
 
@@ -132,3 +137,6 @@ class PrivacyEngine:
 
     def zero_grad(self):
         autograd_grad_sample.clear_grad_sample(self.module)
+
+    def accumulate_grads(self):
+        self.clipper.accumulate_grads()

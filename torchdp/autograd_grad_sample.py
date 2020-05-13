@@ -132,7 +132,7 @@ def clear_grad_sample(model: nn.Module) -> None:
         for param in layer.parameters():
             if hasattr(param, "grad_sample"):
                 del param.grad_sample
-                #del param.grad_sample_pos
+
 
 def _create_or_extend_grad_sample(param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int) -> None:
     """Create a 'grad_sample' attribute in the given parameter, or append to it if it already exsits."""
@@ -142,22 +142,6 @@ def _create_or_extend_grad_sample(param: torch.Tensor, grad_sample: torch.Tensor
     else:
         param.grad_sample = grad_sample
     
-    """
-    shape = list(grad_sample.shape)
-    b_sz = shape[0]
-
-    if not hasattr(param, "grad_sample"):
-        shape[0] *= 1
-        param.grad_sample = torch.zeros(shape, device=param.device)
-        param.grad_sample_pos = 0
-
-    #print(shape)
-    #print(param.grad_sample.shape)
-    #print(param.grad_sample_pos, param.grad_sample_pos+b_sz)
-    param.grad_sample[param.grad_sample_pos:param.grad_sample_pos+b_sz] = grad_sample
-    param.grad_sample_pos += b_sz
-    """
-
 
 def _compute_grad_sample(
     layer: nn.Module, backprops: torch.Tensor, loss_type: str, batch_dim: int
