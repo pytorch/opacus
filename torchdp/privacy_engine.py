@@ -7,6 +7,7 @@ from typing import List
 import torch
 from torch import nn
 
+from . import autograd_grad_sample
 from . import privacy_analysis as tf_privacy
 from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import (
@@ -53,6 +54,7 @@ class PrivacyEngine:
         optim.privacy_engine = None
         self.clipper.close()
         optim.step = types.MethodType(optim.original_step, optim)
+        optim.zero_grad = types.MethodType(optim.original_zero_grad, optim)
 
     def attach(self, optimizer: torch.optim.Optimizer):
         """
@@ -82,9 +84,15 @@ class PrivacyEngine:
             self.privacy_engine.step()
             self.original_step(closure)
 
+        def zero_all_grads(self):
+            autograd_grad_sample.clear_grad_sample(self.privacy_engine.module)
+            self.original_zero_grad()
+
         optimizer.privacy_engine = self
         optimizer.original_step = optimizer.step
         optimizer.step = types.MethodType(dp_step, optimizer)
+        optimizer.original_zero_grad = optimizer.zero_grad
+        optimizer.zero_grad = types.MethodType(zero_all_grads, optimizer)
 
         self.optimizer = optimizer  # create a cross reference for detaching
 

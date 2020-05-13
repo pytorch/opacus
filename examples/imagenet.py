@@ -372,7 +372,7 @@ def main_worker(gpu, ngpus_per_node, args):
         print("PRIVACY ENGINE ON")
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=args.batch_size,
+            batch_size=args.batch_size * 4,
             sample_size=len(train_dataset),
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
@@ -453,9 +453,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         top5.update(acc5[0], images.size(0))
 
         # compute gradient and do SGD step
-        optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+        if i % 4 == 3:
+            optimizer.step()
+            optimizer.zero_grad()
 
         # measure elapsed time
         batch_time.update(time.time() - end)

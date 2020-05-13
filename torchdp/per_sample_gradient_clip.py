@@ -134,7 +134,7 @@ class PerSampleGradientClipper:
         pass. It then puts them in each parameter's .grad.
         """
         self.module = module
-        autograd_grad_sample.add_hooks(self.module)
+        autograd_grad_sample.add_hooks(self.module, batch_dim=batch_dim)
         self.max_norm = max_norm
         self.hooks_attached = True
         self.batch_dim = batch_dim
@@ -143,7 +143,7 @@ class PerSampleGradientClipper:
         self.close()
 
     def close(self):
-        if self.hooks_attached:  # do not close twice
+        if hasattr(self, "hooks_attached") and self.hooks_attached:  # do not close twice
             autograd_grad_sample.remove_hooks(self.module)
         self.hooks_attached = False
 
@@ -151,8 +151,6 @@ class PerSampleGradientClipper:
         return f"PerSampleGradientClipModuleHook on {self.module}"
 
     def step(self):
-        autograd_grad_sample.compute_grad_sample(self.module, batch_dim=self.batch_dim)
-
         # The first dim of param.grad_sample is b_sz for every param.
         # To look up what that value is, we just pick one
         self.batch_size = next(
@@ -160,5 +158,5 @@ class PerSampleGradientClipper:
         )
 
         max_norm = clip_per_sample_grad_norm_(self.module, self.max_norm)
-        autograd_grad_sample.clear_backprops(self.module)
+        #autograd_grad_sample.clear_grad_sample(self.module)
         return max_norm

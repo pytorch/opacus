@@ -148,8 +148,8 @@ class PrivacyEngine_test(unittest.TestCase):
         model, optimizer = self.setUp_init_model(private=True)
         self.setUp_model_step(model, optimizer)
         with self.assertRaises(ValueError):
-            model, optimizer = self.setUp_init_model(private=True, model=model)
-            self.setUp_model_step(model, optimizer)
+            model, optimizer2 = self.setUp_init_model(private=True, model=model)
+            self.setUp_model_step(model, optimizer2)
 
     def test_attach_delete_attach(self):
         model, optimizer = self.setUp_init_model(private=True)
