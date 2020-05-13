@@ -64,9 +64,11 @@ class PrivacyEngine:
         To do that, this method does the following:
         1. Validates the model for containing un-attachable layers
         2. Adds a pointer to this object (the PrivacyEngine) inside the optimizer
-        3. Moves the original optimizer's `step()` function to `original_step()`
-        4. Monkeypatches the optimizer's `step()` function to call `step()` on
-        the query engine automatically whenever it would call `step()` for itself
+        3. Moves the original optimizer's `step()` and `zero_grad()` functions to 
+           `original_step()` and `original_zero_grad()`
+        4. Monkeypatches the optimizer's `step()` and `zero_grad()` functions to 
+           call `step()` or `zero_grad()` on the query engine automatically 
+           whenever it would call `step()` or `zero_grad()` for itself
         """
 
         # Validate the model for not containing un-supported modules.
@@ -81,7 +83,7 @@ class PrivacyEngine:
             self.original_step(closure)
 
         def zero_all_grads(self):
-            autograd_grad_sample.clear_grad_sample(self.privacy_engine.module)
+            self.privacy_engine.zero_grad()
             self.original_zero_grad()
 
         optimizer.privacy_engine = self
@@ -127,3 +129,6 @@ class PrivacyEngine:
     def to(self, device):
         self.device = device
         return self
+
+    def zero_grad(self):
+        autograd_grad_sample.clear_grad_sample(self.module)

@@ -40,9 +40,10 @@ def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> 
     2. append backprops to params.backprops_list during backward pass.
     Call "remove_hooks(model)" to disable this.
     Args:
-        model:
-        loss_type:
-        batch_dim:
+        model: the model to add hooks to
+        loss_type: either "mean" or "sum" depending whether backpropped
+        loss was averaged or summed over batch (default: "mean")
+        batch_dim: the batch dimension (default: 0)
     """
 
     if hasattr(model, "autograd_grad_sample_hooks"):
@@ -114,29 +115,48 @@ def _capture_activations(
 
 
 def _capture_backprops(layer: nn.Module, _input: torch.Tensor, output: torch.Tensor, loss_type: str, batch_dim: int):
-    """Append backprop to layer.backprops_list in backward pass."""
+    """Capture backprops in backward pass and store per-sample gradients."""
 
     if _hooks_disabled:
         return
 
     backprops = output[0].detach()
     _compute_grad_sample(layer, backprops, loss_type, batch_dim)
+    if hasattr(layer, "activations"):
+        del layer.activations
 
 
 def clear_grad_sample(model: nn.Module) -> None:
-    """Delete param.grad_sample in every parameter."""
+    """Delete 'param.grad_sample' in every parameter of the model."""
     for layer in model.modules():
         for param in layer.parameters():
             if hasattr(param, "grad_sample"):
                 del param.grad_sample
-
+                #del param.grad_sample_pos
 
 def _create_or_extend_grad_sample(param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int) -> None:
-    """Create a grad_sample field in the given parameter, or append to it if it already exsits."""
+    """Create a 'grad_sample' attribute in the given parameter, or append to it if it already exsits."""
+    
     if hasattr(param, "grad_sample"):
         param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
     else:
         param.grad_sample = grad_sample
+    
+    """
+    shape = list(grad_sample.shape)
+    b_sz = shape[0]
+
+    if not hasattr(param, "grad_sample"):
+        shape[0] *= 1
+        param.grad_sample = torch.zeros(shape, device=param.device)
+        param.grad_sample_pos = 0
+
+    #print(shape)
+    #print(param.grad_sample.shape)
+    #print(param.grad_sample_pos, param.grad_sample_pos+b_sz)
+    param.grad_sample[param.grad_sample_pos:param.grad_sample_pos+b_sz] = grad_sample
+    param.grad_sample_pos += b_sz
+    """
 
 
 def _compute_grad_sample(
@@ -146,10 +166,11 @@ def _compute_grad_sample(
     Compute per-example gradients and save them under 'param.grad_sample'.
     Must be called after loss.backprop()
     Args:
-        layer:
-        backprops:
+        layer: the layer for which to computer per-sample gradients
+        backprops: the captured backpros
         loss_type: either "mean" or "sum" depending whether backpropped
         loss was averaged or summed over batch
+        batch_dim: the batch dimension
     """
 
     layer_type = get_layer_type(layer)
@@ -235,3 +256,4 @@ def _compute_grad_sample(
             _create_or_extend_grad_sample(layer.bias, torch.sum(B, dim=2), batch_dim)
     if layer_type == "SequenceBias":
         _create_or_extend_grad_sample(layer.bias, B[:, -1], batch_dim)
+
