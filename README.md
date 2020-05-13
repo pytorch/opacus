@@ -40,7 +40,14 @@ privacy_engine.attach(optimizer)
 ```
 The [MNIST example](examples/mnist.py) contains an end to end run.
 
-The [compute_dp_sgd_privacy](torchdp/compute_dp_sgd_privacy.py) command-line script computes privacy of a model trained with DP-SGD.
+## Updates 
+
+### May, 11, 2020
+Added [compute_dp_sgd_privacy](torchdp/compute_dp_sgd_privacy.py) command-line script that computes privacy of a model trained with DP-SGD.
+
+### May, 12, 2020
+You can now perform per-layer clipping of gradients! You can set `clip_per_layer=True` when building a PrivacyEngine. You can also provide a list instead of a single clipping threshold for the `max_grad_norm` input.
+The [ImageNet example](examples/imagenet.py) now exhibits how to enable this functionality.
 
 ## Contributing
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.

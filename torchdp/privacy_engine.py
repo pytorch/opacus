@@ -2,16 +2,14 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import os
 import types
-from typing import List
+from typing import List, Union
 
 import torch
 from torch import nn
 
 from . import privacy_analysis as tf_privacy
 from .dp_model_inspector import DPModelInspector
-from .per_sample_gradient_clip import (
-    PerSampleGradientClipper,
-    __clip_value_calculation_params__ as clipping_method)
+from .per_sample_gradient_clip import PerSampleGradientClipper
 
 
 class PrivacyEngine:
@@ -22,10 +20,11 @@ class PrivacyEngine:
         sample_size: int,
         alphas: List[float],
         noise_multiplier: float,
-        max_grad_norm: float,
+        max_grad_norm: Union[float, List[float]],
         grad_norm_type: int = 2,
         batch_dim: int = 0,
         target_delta: float = 0.000001,
+        **misc_settings
     ):
         self.steps = 0
         self.module = module
@@ -47,6 +46,7 @@ class PrivacyEngine:
         )
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
+        self.misc_settings = misc_settings
 
     def detach(self):
         optim = self.optimizer
@@ -70,12 +70,8 @@ class PrivacyEngine:
         # Validate the model for not containing un-supported modules.
         self.validator.validate(self.module)
         # only attach if model is validated
-        if clipping_method['method'].lower() != 'none':
-            print('Warning! Current implementations of dynamic clipping '
-                  'are not privacy safe; Caclulated privacy loss is not '
-                  'indicative of a proper bound.')
         self.clipper = PerSampleGradientClipper(
-            self.module, self.max_grad_norm, self.batch_dim
+            self.module, self.max_grad_norm, self.batch_dim, **self.misc_settings
         )
 
         def dp_step(self, closure=None):
@@ -104,17 +100,21 @@ class PrivacyEngine:
 
     def step(self):
         self.steps += 1
-        max_norm = self.clipper.step()
-        for p in self.module.parameters():
-            if p.requires_grad and self.noise_multiplier > 0:
-                noise = torch.normal(
+        clip_values = self.clipper.step()
+        params = (p for p in self.module.parameters() if p.requires_grad)
+        for p, clip_value in zip(params, clip_values):
+            noise = (
+                torch.normal(
                     0,
-                    self.noise_multiplier * max_norm,
+                    self.noise_multiplier * clip_value,
                     p.grad.shape,
                     device=self.device,
                     generator=self.secure_generator,
                 )
-                p.grad += noise / self.clipper.batch_size
+                if self.noise_multiplier > 0
+                else 0.0
+            )
+            p.grad += noise / self.clipper.batch_size
 
     def to(self, device):
         self.device = device

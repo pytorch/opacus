@@ -21,35 +21,34 @@ import torch.nn as nn
 import torch.nn.parallel
 import torch.optim
 import torch.utils.data
-import torch.utils.tensorboard as tensorboard
 import torch.utils.data.distributed
+import torch.utils.tensorboard as tensorboard
 import torchvision.datasets as datasets
 import torchvision.models as models
 import torchvision.transforms as transforms
-from torchdp import PrivacyEngine, utils
-from torchdp import stats
+from torchdp import PrivacyEngine, stats, utils
 
 
 # The following few lines, enable stats gathering about the run
 # 1. where the stats should be logged
-stats.set_global_summary_writer(
-    tensorboard.SummaryWriter('/tmp/stats'))
+stats.set_global_summary_writer(tensorboard.SummaryWriter("/tmp/stat"))
 # 2. enable stats
 stats.add(
     # stats about gradient norms aggregated for all layers
-    stats.Stat(
-        stats.StatType.CLIPPING, 'AllLayers', frequency=0.1),
+    stats.Stat(stats.StatType.CLIPPING, "AllLayers", frequency=0.1),
     # stats about gradient norms per layer
-    stats.Stat(
-        stats.StatType.CLIPPING, 'IndividualLayers', frequency=0.1),
+    stats.Stat(stats.StatType.CLIPPING, "PerLayer", frequency=0.1),
+    # stats about clipping
+    stats.Stat(stats.StatType.CLIPPING, "ClippingStats", frequency=0.1),
     # stats on training accuracy
-    stats.Stat(
-        stats.StatType.TRAIN, 'accuracy', frequency=0.01),
+    stats.Stat(stats.StatType.TRAIN, "accuracy", frequency=0.01),
     # stats on validation accuracy
-    stats.Stat(
-        stats.StatType.TEST, 'accuracy'),
+    stats.Stat(stats.StatType.TEST, "accuracy"),
 )
 
+# The following lines enable stat gathering for the clipping process
+# and set a default of per layer clipping for the Privacy Engine
+clipping = {"clip_per_layer": True, "enable_stat": True}
 
 parser = argparse.ArgumentParser(description="PyTorch ImageNet DP Training")
 parser.add_argument("data", metavar="DIR", help="path to dataset")
@@ -377,6 +376,7 @@ def main_worker(gpu, ngpus_per_node, args):
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
+            **clipping,
         )
         privacy_engine.attach(optimizer)
     else:
