@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
-from typing import Callable, List, Type, Union
+import math
+from enum import IntEnum
+from typing import Callable, Type
 
 import torch
 from torch import nn
+
+
+try:
+    from skimage.filters import threshold_otsu as otsu
+except ImportError:
+
+    def otsu(*args, **kwargs):
+        NotImplemented("Install skimage!")
+
+
+#####################################################################
+## utils for inspecting model layers, replacing layers, ...
+#####################################################################
 
 
 def requires_grad(module: nn.Module, recurse: bool = False):
@@ -167,37 +181,6 @@ def has_no_param(module: nn.Module):
     return not has_param
 
 
-def sum_over_all_but_batch_and_last_n(
-    tensor: torch.Tensor, n_dims: int
-) -> torch.Tensor:
-    """
-    Returns the sum of the input tensor over all dimensions except
-    the first (batch) and last n_dims.
-
-    Args:
-        tensor: input tensor of shape (B, * , X[0], X[1], ..., X[n_dims-1])
-        n_dims: Number of input tensor dimensions to keep
-
-    Returns:
-        New tensor of shape (B, X[0], X[1], ..., X[n_dims-1]).
-        Will return the unchanged input tensor if `tensor.dim() == n_dims + 1`
-
-    Examples:
-        import torch
-
-        A = torch.ones(2,3,4)
-        print(sum_over_all_but_batch_and_last_n(A, 1))
-        # prints torch.Size([2, 4])
-        print(sum_over_all_but_batch_and_last_n(A, 2))
-        # prints torch.Size([2, 3, 4])
-    """
-    if tensor.dim() == n_dims + 1:
-        return tensor
-    else:
-        dims = list(range(1, tensor.dim() - n_dims))
-        return tensor.sum(dim=dims)
-
-
 class ModelInspector:
     """
     Class to inspect models for a specific predicate. If a module has
@@ -256,3 +239,110 @@ class ModelInspector:
                 valid = False
                 self.violators.append(name)
         return valid
+
+
+#####################################################################
+## utils for generating stats from torch tensors.
+#####################################################################
+def sum_over_all_but_batch_and_last_n(
+    tensor: torch.Tensor, n_dims: int
+) -> torch.Tensor:
+    """
+    Returns the sum of the input tensor over all dimensions except
+    the first (batch) and last n_dims.
+
+    Args:
+        tensor: input tensor of shape (B, * , X[0], X[1], ..., X[n_dims-1])
+        n_dims: Number of input tensor dimensions to keep
+
+    Returns:
+        New tensor of shape (B, X[0], X[1], ..., X[n_dims-1]).
+        Will return the unchanged input tensor if `tensor.dim() == n_dims + 1`
+
+    Examples:
+        import torch
+
+        A = torch.ones(2,3,4)
+        print(sum_over_all_but_batch_and_last_n(A, 1))
+        # prints torch.Size([2, 4])
+        print(sum_over_all_but_batch_and_last_n(A, 2))
+        # prints torch.Size([2, 3, 4])
+    """
+    if tensor.dim() == n_dims + 1:
+        return tensor
+    else:
+        dims = list(range(1, tensor.dim() - n_dims))
+        return tensor.sum(dim=dims)
+
+
+def _mean_var(data: torch.Tensor, ratio: float = 0, **kwargs):
+    """
+    Finds mean(x) + ratio * std(x)
+    """
+    return max(data.min().item(), data.mean().item() + ratio * data.std().item() + 1e-8)
+
+
+def _pvalue(data: torch.Tensor, ratio: float = 0.25, **kwargs):
+    """
+    Finds the P-(ratio* 100)'s value in the tensor, equivalent
+    to the kth largest element where k = ratio * len(data)
+    """
+    cut = max(1, int(data.numel() * (1 - ratio)))
+    return torch.kthvalue(data, cut)[0].item()
+
+
+def _static(data: torch.Tensor, current_thresh, **kwargs):
+    """
+    Simple path through
+    """
+    return current_thresh
+
+
+def _otsu(data: torch.Tensor, **kwargs):
+    """
+    Use Otsu's method, which assumes a GMM with 2 components
+    but uses some heuristic to maximize the variance differences.
+    """
+    h = 2 ** int(1 + math.log2(data.shape[0]) / 2)
+    fake_img = data.view(h, -1).cpu().numpy()
+    return otsu(fake_img, h)
+
+
+class ClippingMethod(IntEnum):
+    STATIC = 0
+    PVALUE = 1
+    MEAN = 2
+    GMM = 3
+    OTSU = 4
+
+
+_thresh_ = {
+    ClippingMethod.STATIC: _static,
+    ClippingMethod.PVALUE: _pvalue,
+    ClippingMethod.MEAN: _mean_var,
+    ClippingMethod.OTSU: _otsu,
+}
+
+
+def calculate_thresh_value(
+    data: torch.Tensor,
+    current_thresh: float,
+    clipping_mehod: ClippingMethod = ClippingMethod.STATIC,
+    ratio: float = -1,
+):
+    """
+    Calculates the clipping threshold by looking at the layer norms
+    of each example. Three methods are supported: static threshold,
+    threshold calculated based on mean and variance of the norms, and
+    threshold calculated based on percentile values of the norms.
+
+    Arguments:
+        data: 1-D tensor
+        current_thresh: value of the current threshold
+        clipping_method: enum value defining the clipping strategy
+                         current options are STATIC, PVALUE, MEAN, and OTSU
+        ratio: has different meaning for differnet strategies, it is the p-value
+        for PVALUE, and a multiplier for standard deviation for MEAN.
+
+    """
+    return _thresh_[clipping_mehod](data, ratio=ratio, current_thresh=current_thresh)

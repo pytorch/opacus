@@ -99,7 +99,7 @@ class PrivacyEngine_test(unittest.TestCase):
         self.private_grads_norms = self.setUp_model_step(
             self.private_model, self.private_optimizer
         )
-        self.privacy_default_params = {'noise_multiplier' : 1.0, 'max_grad_norm' : 1}
+        self.privacy_default_params = {"noise_multiplier": 1.0, "max_grad_norm": 1}
 
     def setUp_data(self):
         self.ds = FakeData(
@@ -112,7 +112,9 @@ class PrivacyEngine_test(unittest.TestCase):
         )
         self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
 
-    def setUp_init_model(self, private=False, state_dict=None, model=None, **privacy_engine_kwargs):
+    def setUp_init_model(
+        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
+    ):
         model = model or SampleConvNet()
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
         if state_dict:
@@ -236,6 +238,35 @@ class PrivacyEngine_test(unittest.TestCase):
             state_dict=original_model.state_dict(),
             noise_multiplier=0,
             max_grad_norm=999,
+        )
+
+        for _ in range(3):
+            self.setUp_model_step(original_model, orignial_optimizer)
+            self.setUp_model_step(private_model, private_optimizer)
+
+        for layer_name, private_layer in private_model.named_children():
+            if not utils.requires_grad(private_layer):
+                continue
+
+            original_layer = getattr(original_model, layer_name)
+
+            for layer, private_layer in zip(
+                [p.grad for p in original_layer.parameters() if p.requires_grad],
+                [p.grad for p in private_layer.parameters() if p.requires_grad],
+            ):
+                self.assertTrue(
+                    torch.allclose(layer, private_layer, atol=10e-4, rtol=10e-2),
+                    f"Layer: {layer_name}. Private gradients with noise 0 doesn't match original",
+                )
+
+    def test_grad_matches_original_per_layer_clipping(self):
+        original_model, orignial_optimizer = self.setUp_init_model()
+        private_model, private_optimizer = self.setUp_init_model(
+            private=True,
+            state_dict=original_model.state_dict(),
+            noise_multiplier=0,
+            max_grad_norm=[999] * 18,
+            clip_per_layer=True,
         )
 
         for _ in range(3):
