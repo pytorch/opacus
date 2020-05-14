@@ -60,8 +60,9 @@ def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> 
         if get_layer_type(layer) in _supported_layers:
             handles.append(layer.register_forward_hook(_capture_activations))
 
-            def backward_hook_closure(layer, _input, output): 
+            def backward_hook_closure(layer, _input, output):
                 _capture_backprops(layer, _input, output, loss_type, batch_dim)
+
             handles.append(layer.register_backward_hook(backward_hook_closure))
 
     model.__dict__.setdefault("autograd_grad_sample_hooks", []).extend(handles)
@@ -114,7 +115,13 @@ def _capture_activations(
     layer.activations = input[0].detach()
 
 
-def _capture_backprops(layer: nn.Module, _input: torch.Tensor, output: torch.Tensor, loss_type: str, batch_dim: int):
+def _capture_backprops(
+    layer: nn.Module,
+    _input: torch.Tensor,
+    output: torch.Tensor,
+    loss_type: str,
+    batch_dim: int,
+):
     """Capture backprops in backward pass and store per-sample gradients."""
 
     if _hooks_disabled:
@@ -134,14 +141,16 @@ def clear_grad_sample(model: nn.Module) -> None:
                 del param.grad_sample
 
 
-def _create_or_extend_grad_sample(param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int) -> None:
+def _create_or_extend_grad_sample(
+    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
+) -> None:
     """Create a 'grad_sample' attribute in the given parameter, or append to it if it already exsits."""
-    
+
     if hasattr(param, "grad_sample"):
         param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
     else:
         param.grad_sample = grad_sample
-    
+
 
 def _compute_grad_sample(
     layer: nn.Module, backprops: torch.Tensor, loss_type: str, batch_dim: int
@@ -159,7 +168,7 @@ def _compute_grad_sample(
 
     layer_type = get_layer_type(layer)
     if not requires_grad(layer) or layer_type not in _supported_layers:
-        return 
+        return
     if not hasattr(layer, "activations"):
         raise ValueError(
             f"No activations detected for {type(layer)},"
@@ -179,30 +188,48 @@ def _compute_grad_sample(
 
     if layer_type == "Linear":
         gs = torch.einsum("n...i,n...j->n...ij", B, A)
-        _create_or_extend_grad_sample(layer.weight, torch.einsum("n...ij->nij", gs), batch_dim)
+        _create_or_extend_grad_sample(
+            layer.weight, torch.einsum("n...ij->nij", gs), batch_dim
+        )
         if layer.bias is not None:
-            _create_or_extend_grad_sample(layer.bias, torch.einsum("n...k->nk", B), batch_dim)
+            _create_or_extend_grad_sample(
+                layer.bias, torch.einsum("n...k->nk", B), batch_dim
+            )
 
     if layer_type == "LayerNorm":
-        _create_or_extend_grad_sample(layer.weight, sum_over_all_but_batch_and_last_n(
-            F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B,
-            layer.weight.dim(),
-        ), batch_dim)
-        _create_or_extend_grad_sample(layer.bias, sum_over_all_but_batch_and_last_n(
-            B, layer.bias.dim()
-        ), batch_dim)
+        _create_or_extend_grad_sample(
+            layer.weight,
+            sum_over_all_but_batch_and_last_n(
+                F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B,
+                layer.weight.dim(),
+            ),
+            batch_dim,
+        )
+        _create_or_extend_grad_sample(
+            layer.bias,
+            sum_over_all_but_batch_and_last_n(B, layer.bias.dim()),
+            batch_dim,
+        )
 
     if layer_type == "GroupNorm":
         gs = F.group_norm(A, layer.num_groups, eps=layer.eps) * B
-        _create_or_extend_grad_sample(layer.weight, torch.einsum("ni...->ni", gs), batch_dim)
+        _create_or_extend_grad_sample(
+            layer.weight, torch.einsum("ni...->ni", gs), batch_dim
+        )
         if layer.bias is not None:
-            _create_or_extend_grad_sample(layer.bias, torch.einsum("ni...->ni", B), batch_dim)
+            _create_or_extend_grad_sample(
+                layer.bias, torch.einsum("ni...->ni", B), batch_dim
+            )
 
     elif layer_type in ("InstanceNorm1d", "InstanceNorm2d", "InstanceNorm3d"):
         gs = F.instance_norm(A, eps=layer.eps) * B
-        _create_or_extend_grad_sample(layer.weight, torch.einsum("ni...->ni", gs), batch_dim)
+        _create_or_extend_grad_sample(
+            layer.weight, torch.einsum("ni...->ni", gs), batch_dim
+        )
         if layer.bias is not None:
-            _create_or_extend_grad_sample(layer.bias, torch.einsum("ni...->ni", B), batch_dim)
+            _create_or_extend_grad_sample(
+                layer.bias, torch.einsum("ni...->ni", B), batch_dim
+            )
 
     elif layer_type in ("Conv2d", "Conv1d"):
         # get A and B in shape depending on the Conv layer
@@ -230,7 +257,9 @@ def _compute_grad_sample(
                 else torch.einsum("njk,njk->nj", B, A)
             )
             shape = [n] + list(layer.weight.shape)
-            _create_or_extend_grad_sample(layer.weight, grad_sample.reshape(shape), batch_dim)
+            _create_or_extend_grad_sample(
+                layer.weight, grad_sample.reshape(shape), batch_dim
+            )
         except Exception as e:
             raise type(e)(
                 f"{e} There is probably a problem with {layer_type}.groups"
@@ -240,4 +269,3 @@ def _compute_grad_sample(
             _create_or_extend_grad_sample(layer.bias, torch.sum(B, dim=2), batch_dim)
     if layer_type == "SequenceBias":
         _create_or_extend_grad_sample(layer.bias, B[:, -1], batch_dim)
-

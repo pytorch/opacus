@@ -87,8 +87,8 @@ parser.add_argument(
     type=int,
     metavar="N",
     help="effective batch size used for SGD. Defaults to the "
-         "size of a mini-batch, but can be set to any integer "
-         "multiple of the mini-batch size",
+    "size of a mini-batch, but can be set to any integer "
+    "multiple of the mini-batch size",
 )
 parser.add_argument(
     "--lr",
@@ -475,10 +475,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # compute gradient and do SGD step
         loss.backward()
 
-        #if n_accumulation_steps > 1:
-        #    optimizer.accumulate_grads()
+        if n_accumulation_steps > 1:
+            optimizer.accumulate_grads()
 
-        if (i+1) % n_accumulation_steps == 0:
+        if (i + 1) % n_accumulation_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
 

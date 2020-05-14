@@ -115,7 +115,7 @@ class PrivacyEngine:
 
     def step(self):
         self.steps += 1
-        clip_values = self.clipper.step()
+        clip_values, batch_size = self.clipper.step()
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
             noise = (
@@ -129,7 +129,7 @@ class PrivacyEngine:
                 if self.noise_multiplier > 0
                 else 0.0
             )
-            p.grad += noise / self.clipper.batch_size
+            p.grad += noise / batch_size
 
     def to(self, device):
         self.device = device
@@ -137,6 +137,9 @@ class PrivacyEngine:
 
     def zero_grad(self):
         autograd_grad_sample.clear_grad_sample(self.module)
+        self.clipper.zero_grads()
 
     def accumulate_grads(self):
         self.clipper.accumulate_grads()
+        # reset the accumulation of per-sample gradients
+        autograd_grad_sample.clear_grad_sample(self.module)
