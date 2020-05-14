@@ -144,7 +144,10 @@ def clear_grad_sample(model: nn.Module) -> None:
 def _create_or_extend_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
 ) -> None:
-    """Create a 'grad_sample' attribute in the given parameter, or append to it if it already exsits."""
+    """
+    Create a 'grad_sample' attribute in the given parameter, or append to it
+    if it already exists.
+    """
 
     if hasattr(param, "grad_sample"):
         param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
