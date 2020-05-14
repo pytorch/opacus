@@ -56,7 +56,7 @@ class PrivacyEngine:
         self.clipper.close()
         optim.step = types.MethodType(optim.original_step, optim)
         optim.zero_grad = types.MethodType(optim.original_zero_grad, optim)
-        del optim.accumulate_grads
+        del optim.virtual_step
 
     def attach(self, optimizer: torch.optim.Optimizer):
         """
@@ -94,13 +94,13 @@ class PrivacyEngine:
         optimizer.original_zero_grad = optimizer.zero_grad
         optimizer.zero_grad = types.MethodType(zero_all_grads, optimizer)
 
-        # We add an 'accumulate_grads' function to the optimizer, which
+        # We add a 'virtual_step' function to the optimizer, which
         # enables the use of virtual batches. 
-        # By repeatedly computing backward passes and calling accumulate_grads, 
+        # By repeatedly computing backward passes and calling virtual_step,
         # we can aggregate the clipped gradient for large batches 
-        def accumulate_grads(self):
-            self.privacy_engine.accumulate_grads()
-        optimizer.accumulate_grads = types.MethodType(accumulate_grads, optimizer)
+        def virtual_step(self):
+            self.privacy_engine.virtual_step()
+        optimizer.virtual_step = types.MethodType(virtual_step, optimizer)
 
         self.optimizer = optimizer  # create a cross reference for detaching
 
@@ -152,5 +152,5 @@ class PrivacyEngine:
         autograd_grad_sample.clear_grad_sample(self.module)
         self.clipper.zero_grad()
 
-    def accumulate_grads(self):
-        self.clipper.accumulate_grads()
+    def virtual_step(self):
+        self.clipper.virtual_step()

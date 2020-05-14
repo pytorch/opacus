@@ -81,7 +81,7 @@ class GradientClipper:
             self.stat[f"{name}:median"] = normalized_per_coordinate_value.median()
         return batch_norms
 
-    def get_all_layer_norms(self) -> torch.Tensor:
+    def get_all_layer_norms(self) -> Union[list, List[torch.Tensor]]:
         all_layers_norms = [
             self._get_per_layer_norms((name, p.grad_sample))
             for name, p in self.named_params
@@ -126,12 +126,12 @@ class GradientClipper:
             thresh_norm if self.clip_per_layer else thresh_norm * len(self.named_params)
         )
 
-    def clip(self, accumulate: bool = False) -> List[float]:
+    def clip(self, virtual: bool = False) -> (List[float], int):
         r"""
         Clips the grad_sample stored in .grad_sample by computing a per-sample
         norm clip factor, using it to rescale each sample's gradient in
         .grad_sample to norm clip, then averaging them back into .grad.
-        If 'accumulate' is set, the clipped gradients are summed up into a 
+        If 'virtual' is set, the clipped gradients are summed up into a
         temporary accumulator instead.
 
         The gradients of the model's parameters are modified in-place.
@@ -139,7 +139,7 @@ class GradientClipper:
         We assume the batch size is the first dimension.
 
         Arguments:
-            accumulate (bool): if set, the clipped gradients in this mini-batch 
+            virtual (bool): if set, the clipped gradients in this mini-batch
             are summed up into a accummulator for a larger batch
 
         Returns:
@@ -147,7 +147,7 @@ class GradientClipper:
         """
 
         # check if we've already accumulated all the clipped gradients for this batch
-        if self.accumulation_state and not accumulate:
+        if self.accumulation_state and not virtual:
             return self.finalize_batch()
 
         # step 0 : calculate the layer norms and thresholds
@@ -166,7 +166,7 @@ class GradientClipper:
             pre_clip_pos = p.grad_sample.mean(0) > 0
             summed_grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
 
-            if accumulate:
+            if virtual:
                 # accumulate the summed gradient for this mini-batch
                 if p in self.accumulation_state:
                     self.accumulation_state[p] += summed_grad
@@ -189,7 +189,7 @@ class GradientClipper:
             stats.update(stats.StatType.CLIPPING, "ClippingStats", **self.stat)
             self.stat = {}
 
-        if accumulate:
+        if virtual:
             # check if we're adding to an existing accumulator
             if "clip_threshs" in self.accumulation_state:
                 # retain the largest clipping thresholds accross the entire batch
@@ -208,7 +208,7 @@ class GradientClipper:
 
         return threshs, batch_size
 
-    def finalize_batch(self):
+    def finalize_batch(self) -> (List[float], int):
         """
         Averages the clipped gradients aggregated over multiple mini-batches and
         stores them in the .grad field
@@ -221,11 +221,11 @@ class GradientClipper:
             p.grad = acc_grad / batch_size
 
         threshs = self.accumulation_state["clip_threshs"].copy()
-        self.erase_accumulated_grads()
+        self.erase_virtual_batch()
         return threshs, batch_size
 
-    def erase_accumulated_grads(self):
-        """Deletes any accumulateds gradient state"""
+    def erase_virtual_batch(self) -> None:
+        """Deletes any accumulated gradient state"""
         self.accumulation_state = {}
 
 
@@ -259,26 +259,26 @@ class PerSampleGradientClipper:
     def __repr__(self):
         return f"PerSampleGradientClipModuleHook on {self.module}"
 
-    def step(self):
+    def step(self) -> (List[float], int):
         clip_threshs, batch_size = self.gradient_clipper.clip()
         return clip_threshs, batch_size
 
-    def accumulate_grads(self):
+    def virtual_step(self) -> None:
         """
         Clips and sums up per-sample gradients into an accumulator.
-        After calling self.accumulate_grads() N times on mini-batches of 
+        After calling self.virtual_step() N times on mini-batches of
         B per-sample gradients, a call to self.step() will 
         populate the .grad field with the average gradient over
         the entire batch of size N*B.
         """
-        self.gradient_clipper.clip(accumulate=True)
+        self.gradient_clipper.clip(virtual=True)
         # reset the accumulation of per-sample gradients
         autograd_grad_sample.clear_grad_sample(self.module)
 
-    def zero_grad(self):
+    def zero_grad(self) -> None:
         """
         Erase any aggregated gradients when we zero-out the gradient.
         This is useful when gradients were accumulated but not processed in the
         last mini-batches of a training epoch.
         """
-        self.gradient_clipper.erase_accumulated_grads()
+        self.gradient_clipper.erase_virtual_batch()

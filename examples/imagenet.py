@@ -3,7 +3,6 @@
 
 """
 Runs ImageNet training with differential privacy.
-
 """
 
 import argparse
@@ -451,7 +450,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     optimizer.zero_grad()
 
     # number of mini-batches to compute gradients on, before an actual update step
-    n_accumulation_steps = args.effective_batch_size / args.batch_size
+    n_virtual_steps = args.effective_batch_size / args.batch_size
 
     end = time.time()
     for i, (images, target) in enumerate(train_loader):
@@ -476,10 +475,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # compute gradient and do SGD step
         loss.backward()
 
-        if n_accumulation_steps > 1:
-            optimizer.accumulate_grads()
+        if n_virtual_steps > 1:
+            optimizer.virtual_step()
 
-        if (i + 1) % n_accumulation_steps == 0:
+        if (i + 1) % n_virtual_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
 

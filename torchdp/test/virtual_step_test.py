@@ -156,7 +156,7 @@ class GradientAccumulation_test(unittest.TestCase):
 
     def test_clipper_accumulation(self):
         """
-        Calling optimizer.accumulate_grads() should accumulate clipped gradients to form
+        Calling optimizer.virtual_step() should accumulate clipped gradients to form
         one large batch.
         """
         self.setUp_privacy_engine(self.DATA_SIZE)
@@ -165,7 +165,7 @@ class GradientAccumulation_test(unittest.TestCase):
             logits = self.model(x)
             loss = self.criterion(logits, y)
             loss.backward()
-            self.optimizer.accumulate_grads()
+            self.optimizer.virtual_step()
 
         # the full data gradient accumulated in .grad
         grad = torch.cat(
@@ -190,7 +190,7 @@ class GradientAccumulation_test(unittest.TestCase):
     def test_mixed_accumulation(self):
         """
         Calling loss.backward() multiple times aggregates all per-sample gradients in
-        .grad-sample. Then, calling optimizer.accumulate_grads() should clip all gradients
+        .grad-sample. Then, calling optimizer.virtual_step() should clip all gradients
         and aggregate them into one large batch.
         """
         self.setUp_privacy_engine(self.DATA_SIZE)
@@ -203,7 +203,7 @@ class GradientAccumulation_test(unittest.TestCase):
             # accumulate per-sample grads for two mini batches
             # and then aggregate them in the clippper
             if (idx + 1) % 2 == 0:
-                self.optimizer.accumulate_grads()
+                self.optimizer.virtual_step()
 
         # the full data gradient accumulated in .grad
         grad = torch.cat(
@@ -294,7 +294,7 @@ class GradientAccumulation_test(unittest.TestCase):
             logits = self.model(x)
             loss = self.criterion(logits, y)
             loss.backward()
-            self.optimizer.accumulate_grads()
+            self.optimizer.virtual_step()
 
             # accumulate per-sample grads for two mini batches
             # and then aggregate them in the clippper
@@ -351,7 +351,7 @@ class GradientAccumulation_test(unittest.TestCase):
         logits = self.model(x)
         loss = self.criterion(logits, y)
         loss.backward()
-        self.optimizer.accumulate_grads()
+        self.optimizer.virtual_step()
 
         with self.assertRaises(ValueError):
             self.optimizer.step()
