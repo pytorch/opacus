@@ -146,6 +146,18 @@ class PrivacyEngine_test(unittest.TestCase):
             [p.grad.norm() for p in model.parameters() if p.requires_grad], dim=-1
         )
 
+    def test_throws_on_bad_per_layer_maxnorm_size(self):
+        model, optimizer = self.setUp_init_model(
+            private=True,
+            noise_multiplier=0.1,
+            max_grad_norm=[999] * 10,
+            clip_per_layer=True,
+        )
+        # there are a total of 18 parameters sets, [bias, weight] * 9 layers
+        # the provided max_grad_norm is not either a scalar or a list of size 18
+        with self.assertRaises(ValueError):
+            self.setUp_model_step(model, optimizer)
+
     def test_throws_double_attach(self):
         model, optimizer = self.setUp_init_model(private=True)
         self.setUp_model_step(model, optimizer)
