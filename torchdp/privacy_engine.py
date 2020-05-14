@@ -25,13 +25,14 @@ class PrivacyEngine:
         grad_norm_type: int = 2,
         batch_dim: int = 0,
         target_delta: float = 0.000001,
-        **misc_settings
+        **misc_settings,
     ):
         self.steps = 0
         self.module = module
         self.alphas = alphas
         self.device = next(module.parameters()).device
 
+        self.batch_size = batch_size
         self.sample_rate = batch_size / sample_size
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
@@ -87,14 +88,18 @@ class PrivacyEngine:
             self.privacy_engine.zero_grad()
             self.original_zero_grad()
 
-        def accumulate_grads(self):
-            self.privacy_engine.accumulate_grads()
-
         optimizer.privacy_engine = self
         optimizer.original_step = optimizer.step
         optimizer.step = types.MethodType(dp_step, optimizer)
         optimizer.original_zero_grad = optimizer.zero_grad
         optimizer.zero_grad = types.MethodType(zero_all_grads, optimizer)
+
+        # We add an 'accumulate_grads' function to the optimizer, which
+        # enables the use of virtual batches. 
+        # By repeatedly computing backward passes and calling accumulate_grads, 
+        # we can aggregate the clipped gradient for large batches 
+        def accumulate_grads(self):
+            self.privacy_engine.accumulate_grads()
         optimizer.accumulate_grads = types.MethodType(accumulate_grads, optimizer)
 
         self.optimizer = optimizer  # create a cross reference for detaching
@@ -116,6 +121,14 @@ class PrivacyEngine:
     def step(self):
         self.steps += 1
         clip_values, batch_size = self.clipper.step()
+
+        # ensure the clipper consumed the right amount of gradients
+        if batch_size != self.batch_size:
+            raise ValueError(
+                f"PrivacyEngine expected a batch of size {self.batch_size} "
+                f"but received a batch of size {batch_size}"
+            )
+
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
             noise = (
@@ -137,9 +150,7 @@ class PrivacyEngine:
 
     def zero_grad(self):
         autograd_grad_sample.clear_grad_sample(self.module)
-        self.clipper.zero_grads()
+        self.clipper.zero_grad()
 
     def accumulate_grads(self):
         self.clipper.accumulate_grads()
-        # reset the accumulation of per-sample gradients
-        autograd_grad_sample.clear_grad_sample(self.module)
