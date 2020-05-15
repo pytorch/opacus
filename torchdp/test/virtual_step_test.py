@@ -342,10 +342,7 @@ class GradientAccumulation_test(unittest.TestCase):
         If we accumulate the wrong number of gradients and feed this batch to the 
         privacy engine, we expect a failure.
         """
-        self.setUp_privacy_engine(self.DATA_SIZE)
-
-        double_grads_clipped = []
-        double_grads = []
+        self.setUp_privacy_engine(2*self.BATCH_SIZE)
 
         x, y = next(iter(self.dl))
         logits = self.model(x)
@@ -353,5 +350,17 @@ class GradientAccumulation_test(unittest.TestCase):
         loss.backward()
         self.optimizer.virtual_step()
 
+        # consuming a batch that is smaller than expected should work
+        self.optimizer.step()
+        self.optimizer.zero_grad()
+
+        for i in range(3):
+            x, y = next(iter(self.dl))
+            logits = self.model(x)
+            loss = self.criterion(logits, y)
+            loss.backward()
+            self.optimizer.virtual_step()
+
+        # consuming a larger batch than expected should fail
         with self.assertRaises(ValueError):
             self.optimizer.step()
