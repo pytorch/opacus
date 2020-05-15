@@ -133,8 +133,6 @@ def _capture_backprops(
 
     backprops = output[0].detach()
     _compute_grad_sample(layer, backprops, loss_type, batch_dim)
-    if hasattr(layer, "activations"):
-        del layer.activations
 
 
 def clear_grad_sample(model: nn.Module) -> None:
