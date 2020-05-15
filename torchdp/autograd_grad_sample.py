@@ -137,10 +137,9 @@ def _capture_backprops(
 
 def clear_grad_sample(model: nn.Module) -> None:
     """Delete 'param.grad_sample' in every parameter of the model."""
-    for layer in model.modules():
-        for param in layer.parameters():
-            if hasattr(param, "grad_sample"):
-                del param.grad_sample
+    for param in model.parameters():
+        if hasattr(param, "grad_sample"):
+            del param.grad_sample
 
 
 def _create_or_extend_grad_sample(

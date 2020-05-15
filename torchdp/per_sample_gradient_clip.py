@@ -147,7 +147,7 @@ class GradientClipper:
         """
 
         # check if we've already accumulated all the clipped gradients for this batch
-        if self.accumulation_state and not virtual:
+        if len(self.accumulation_state) > 0 and not virtual:
             return self.finalize_batch()
 
         # step 0 : calculate the layer norms and thresholds
@@ -168,10 +168,10 @@ class GradientClipper:
 
             if virtual:
                 # accumulate the summed gradient for this mini-batch
-                if p in self.accumulation_state:
-                    self.accumulation_state[p] += summed_grad
+                if hasattr(p, 'summed_grad'):
+                    p.summed_grad += summed_grad
                 else:
-                    self.accumulation_state[p] = summed_grad
+                    p.summed_grad = summed_grad
             else:
                 p.grad = summed_grad / batch_size
 
@@ -192,7 +192,11 @@ class GradientClipper:
         if virtual:
             # check if we're adding to an existing accumulator
             if "clip_threshs" in self.accumulation_state:
+
                 # retain the largest clipping thresholds accross the entire batch
+                # TODO: we could add other strategies for dynamic clipping here,
+                #       as the max threshold for a small mini-batch may be very
+                #       different from the max across the entire effective batch
                 curr_thresh = self.accumulation_state["clip_threshs"]
                 self.accumulation_state["clip_threshs"] = [
                     max(n1, n2) for (n1, n2) in zip(threshs, curr_thresh)
@@ -217,15 +221,20 @@ class GradientClipper:
         batch_size = self.accumulation_state["batch_size"]
         # now that we know the full batch size, we can average the gradients
         for _, p in self.named_params:
-            acc_grad = self.accumulation_state[p]
+            acc_grad = p.summed_grad
             p.grad = acc_grad / batch_size
 
-        threshs = self.accumulation_state["clip_threshs"].copy()
+        threshs = self.accumulation_state["clip_threshs"]
         self.erase_virtual_batch()
         return threshs, batch_size
 
     def erase_virtual_batch(self) -> None:
         """Deletes any accumulated gradient state"""
+
+        for _, p in self.named_params:
+            if hasattr(p, "summed_grad"):
+                del p.summed_grad
+
         self.accumulation_state = {}
 
 
