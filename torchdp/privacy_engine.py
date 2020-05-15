@@ -122,8 +122,10 @@ class PrivacyEngine:
         self.steps += 1
         clip_values, batch_size = self.clipper.step()
 
-        # ensure the clipper consumed the right amount of gradients
-        if batch_size != self.batch_size:
+        # ensure the clipper consumed the right amount of gradients.
+        # In the last batch of a training epoch, we might get a batch that is
+        # smaller than others but we should never get a batch that is too large
+        if batch_size > self.batch_size:
             raise ValueError(
                 f"PrivacyEngine expected a batch of size {self.batch_size} "
                 f"but received a batch of size {batch_size}"
