@@ -7,6 +7,7 @@ Original license is Unlicense. We put it here for user's convenience, with
 the author's permission.
 """
 
+from functools import partial
 from typing import List
 
 import torch
@@ -60,10 +61,13 @@ def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> 
         if get_layer_type(layer) in _supported_layers:
             handles.append(layer.register_forward_hook(_capture_activations))
 
-            def backward_hook_closure(layer, _input, output):
-                _capture_backprops(layer, _input, output, loss_type, batch_dim)
-
-            handles.append(layer.register_backward_hook(backward_hook_closure))
+            handles.append(
+                layer.register_backward_hook(
+                    partial(
+                        _capture_backprops, loss_type=loss_type, batch_dim=batch_dim
+                    )
+                )
+            )
 
     model.__dict__.setdefault("autograd_grad_sample_hooks", []).extend(handles)
 
