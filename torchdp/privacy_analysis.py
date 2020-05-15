@@ -141,15 +141,19 @@ def _log_erfc(x):
 
 def _compute_rdp(q, sigma, alpha):
     """Compute RDP of the Sampled Gaussian mechanism at order alpha.
-  Args:
-    q: The sampling rate.
-    sigma: The std of the additive Gaussian noise.
-    alpha: The order at which RDP is computed.
-  Returns:
-    RDP at alpha, can be np.inf.
-  """
+    Args:
+      q: The sampling rate.
+      sigma: The std of the additive Gaussian noise.
+      alpha: The order at which RDP is computed.
+    Returns:
+      RDP at alpha, can be np.inf.
+    """
     if q == 0:
         return 0
+
+    # no privacy
+    if sigma == 0:
+        return np.inf
 
     if q == 1.0:
         return alpha / (2 * sigma ** 2)
@@ -162,15 +166,15 @@ def _compute_rdp(q, sigma, alpha):
 
 def compute_rdp(q, noise_multiplier, steps, orders):
     """Compute RDP of the Sampled Gaussian Mechanism.
-  Args:
-    q: The sampling rate.
-    noise_multiplier: The ratio of the standard deviation of the Gaussian noise
-        to the l2-sensitivity of the function to which it is added.
-    steps: The number of steps.
-    orders: An array (or a scalar) of RDP orders.
-  Returns:
-    The RDPs at all orders, can be np.inf.
-  """
+    Args:
+      q: The sampling rate.
+      noise_multiplier: The ratio of the standard deviation of the Gaussian noise
+          to the l2-sensitivity of the function to which it is added.
+      steps: The number of steps.
+      orders: An array (or a scalar) of RDP orders.
+    Returns:
+      The RDPs at all orders, can be np.inf.
+    """
     if np.isscalar(orders):
         rdp = _compute_rdp(q, noise_multiplier, orders)
     else:
@@ -181,15 +185,15 @@ def compute_rdp(q, noise_multiplier, steps, orders):
 
 def get_privacy_spent(orders, rdp, delta):
     """Compute epsilon given a list of RDP values and target delta.
-  Args:
-    orders: An array (or a scalar) of orders.
-    rdp: A list (or a scalar) of RDP guarantees.
-    delta: The target delta.
-  Returns:
-    Pair of (eps, optimal_order).
-  Raises:
-    ValueError: If input is malformed.
-  """
+    Args:
+      orders: An array (or a scalar) of orders.
+      rdp: A list (or a scalar) of RDP guarantees.
+      delta: The target delta.
+    Returns:
+      Pair of (eps, optimal_order).
+    Raises:
+      ValueError: If input is malformed.
+    """
     orders_vec = np.atleast_1d(orders)
     rdp_vec = np.atleast_1d(rdp)
 
@@ -201,6 +205,10 @@ def get_privacy_spent(orders, rdp, delta):
         )
 
     eps = rdp_vec - math.log(delta) / (orders_vec - 1)
+
+    # special case when there is no privacy
+    if np.isnan(eps).all():
+        return np.inf, np.nan
 
     idx_opt = np.nanargmin(eps)  # Ignore NaNs
     return eps[idx_opt], orders_vec[idx_opt]
