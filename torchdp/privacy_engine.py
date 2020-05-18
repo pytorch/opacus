@@ -23,7 +23,7 @@ class PrivacyEngine:
         max_grad_norm: Union[float, List[float]],
         grad_norm_type: int = 2,
         batch_dim: int = 0,
-        target_delta: float = 0.000001,
+        target_delta: float = 1e-6,
         **misc_settings
     ):
         self.steps = 0
@@ -38,12 +38,7 @@ class PrivacyEngine:
         self.batch_dim = batch_dim
         self.target_delta = target_delta
 
-        self.secure_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
-        self.secure_generator = (
-            torch.random.manual_seed(self.secure_seed)
-            if self.device.type == "cpu"
-            else torch.cuda.manual_seed(self.secure_seed)
-        )
+        self._set_seed(None)
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
         self.misc_settings = misc_settings
@@ -103,19 +98,31 @@ class PrivacyEngine:
         clip_values = self.clipper.step()
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
-            noise = (
-                torch.normal(
-                    0,
-                    self.noise_multiplier * clip_value,
-                    p.grad.shape,
-                    device=self.device,
-                    generator=self.secure_generator,
-                )
-                if self.noise_multiplier > 0
-                else 0.0
-            )
+            noise = self._generate_noise(clip_value, p)
             p.grad += noise / self.clipper.batch_size
 
     def to(self, device):
         self.device = device
         return self
+
+    def _generate_noise(self, max_norm, parameter):
+        if self.noise_multiplier > 0:
+            return torch.normal(
+                0,
+                self.noise_multiplier * max_norm,
+                parameter.grad.shape,
+                device=self.device,
+                generator=self.secure_generator,
+            )
+        return 0.0
+
+    def _set_seed(self, secure_seed: int):
+        if secure_seed is not None:
+            self.secure_seed = secure_seed
+        else:
+            self.secure_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
+        self.secure_generator = (
+            torch.random.manual_seed(self.secure_seed)
+            if self.device.type == "cpu"
+            else torch.cuda.manual_seed(self.secure_seed)
+        )
