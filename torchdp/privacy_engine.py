@@ -24,8 +24,8 @@ class PrivacyEngine:
         max_grad_norm: Union[float, List[float]],
         grad_norm_type: int = 2,
         batch_dim: int = 0,
-        target_delta: float = 0.000001,
-        **misc_settings,
+        target_delta: float = 1e-6,
+        **misc_settings
     ):
         self.steps = 0
         self.module = module
@@ -40,12 +40,7 @@ class PrivacyEngine:
         self.batch_dim = batch_dim
         self.target_delta = target_delta
 
-        self.secure_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
-        self.secure_generator = (
-            torch.random.manual_seed(self.secure_seed)
-            if self.device.type == "cpu"
-            else torch.cuda.manual_seed(self.secure_seed)
-        )
+        self._set_seed(None)
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
         self.misc_settings = misc_settings
@@ -66,11 +61,11 @@ class PrivacyEngine:
         To do that, this method does the following:
         1. Validates the model for containing un-attachable layers
         2. Adds a pointer to this object (the PrivacyEngine) inside the optimizer
-        3. Moves the original optimizer's `step()` and `zero_grad()` functions to 
-           `original_step()` and `original_zero_grad()`
-        4. Monkeypatches the optimizer's `step()` and `zero_grad()` functions to 
-           call `step()` or `zero_grad()` on the query engine automatically 
-           whenever it would call `step()` or `zero_grad()` for itself
+        3. Moves the original optimizer's `step()` and `zero_grad()` functions to
+         `original_step()` and `original_zero_grad()`
+        4. Monkeypatches the optimizer's `step()` and `zero_grad()` functions to
+         call `step()` or `zero_grad()` on the query engine automatically
+         whenever it would call `step()` or `zero_grad()` for itself
         """
 
         # Validate the model for not containing un-supported modules.
@@ -95,11 +90,12 @@ class PrivacyEngine:
         optimizer.zero_grad = types.MethodType(zero_all_grads, optimizer)
 
         # We add a 'virtual_step' function to the optimizer, which
-        # enables the use of virtual batches. 
+        # enables the use of virtual batches.
         # By repeatedly computing backward passes and calling virtual_step,
-        # we can aggregate the clipped gradient for large batches 
+        # we can aggregate the clipped gradient for large batches
         def virtual_step(self):
             self.privacy_engine.virtual_step()
+
         optimizer.virtual_step = types.MethodType(virtual_step, optimizer)
 
         self.optimizer = optimizer  # create a cross reference for detaching
@@ -133,17 +129,7 @@ class PrivacyEngine:
 
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
-            noise = (
-                torch.normal(
-                    0,
-                    self.noise_multiplier * clip_value,
-                    p.grad.shape,
-                    device=self.device,
-                    generator=self.secure_generator,
-                )
-                if self.noise_multiplier > 0
-                else 0.0
-            )
+            noise = self._generate_noise(clip_value, p)
             p.grad += noise / batch_size
 
     def to(self, device):
@@ -156,3 +142,25 @@ class PrivacyEngine:
 
     def virtual_step(self):
         self.clipper.virtual_step()
+
+    def _generate_noise(self, max_norm, parameter):
+        if self.noise_multiplier > 0:
+            return torch.normal(
+                0,
+                self.noise_multiplier * max_norm,
+                parameter.grad.shape,
+                device=self.device,
+                generator=self.secure_generator,
+            )
+        return 0.0
+
+    def _set_seed(self, secure_seed: int):
+        if secure_seed is not None:
+            self.secure_seed = secure_seed
+        else:
+            self.secure_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
+        self.secure_generator = (
+            torch.random.manual_seed(self.secure_seed)
+            if self.device.type == "cpu"
+            else torch.cuda.manual_seed(self.secure_seed)
+        )

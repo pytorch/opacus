@@ -47,7 +47,7 @@ stats.add(
 
 # The following lines enable stat gathering for the clipping process
 # and set a default of per layer clipping for the Privacy Engine
-clipping = {"clip_per_layer": True, "enable_stat": True}
+clipping = {"clip_per_layer": False, "enable_stat": True}
 
 parser = argparse.ArgumentParser(description="PyTorch ImageNet DP Training")
 parser.add_argument("data", metavar="DIR", help="path to dataset")

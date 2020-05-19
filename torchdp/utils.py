@@ -14,7 +14,7 @@ try:
 except ImportError:
 
     def otsu(*args, **kwargs):
-        NotImplemented("Install skimage!")
+        raise NotImplementedError("Install skimage!")
 
 
 #####################################################################

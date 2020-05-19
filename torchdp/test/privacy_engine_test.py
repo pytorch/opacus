@@ -4,6 +4,7 @@ import unittest
 
 import torch
 import torch.nn as nn
+import numpy as np
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchdp import PrivacyEngine, utils
@@ -145,6 +146,18 @@ class PrivacyEngine_test(unittest.TestCase):
         return torch.stack(
             [p.grad.norm() for p in model.parameters() if p.requires_grad], dim=-1
         )
+
+    def test_throws_on_bad_per_layer_maxnorm_size(self):
+        model, optimizer = self.setUp_init_model(
+            private=True,
+            noise_multiplier=0.1,
+            max_grad_norm=[999] * 10,
+            clip_per_layer=True,
+        )
+        # there are a total of 18 parameters sets, [bias, weight] * 9 layers
+        # the provided max_grad_norm is not either a scalar or a list of size 18
+        with self.assertRaises(ValueError):
+            self.setUp_model_step(model, optimizer)
 
     def test_throws_double_attach(self):
         model, optimizer = self.setUp_init_model(private=True)
@@ -328,3 +341,59 @@ class PrivacyEngine_test(unittest.TestCase):
         )
         with self.assertRaises(IncompatibleModuleException):
             privacy_engine.attach(self.private_optimizer)
+
+    def test_deterministic_run(self):
+        """
+        Tests that for 2 different models, secure seed can be fixed
+        to produce same (deterministic) runs.
+        """
+        model1, optimizer1 = self.setUp_init_model(private=True)
+        model2, optimizer2 = self.setUp_init_model(private=True, state_dict=model1.state_dict())
+        # assert the models are identical initially
+        first_model_params = [p for p in model1.parameters() if p.requires_grad]
+        second_model_params = [p for p in model2.parameters() if p.requires_grad]
+        for p0, p1 in zip(first_model_params, second_model_params):
+            self.assertTrue(torch.allclose(p0, p1))
+
+        optimizer1.privacy_engine._set_seed(10)
+        self.setUp_model_step(model1, optimizer1)
+
+        optimizer2.privacy_engine._set_seed(10)
+        self.setUp_model_step(model2, optimizer2)
+        # assert the models are identical after we did one step
+        first_model_params = (p for p in model1.parameters() if p.requires_grad)
+        second_model_params = (p for p in model2.parameters() if p.requires_grad)
+        for p0, p1 in zip(first_model_params, second_model_params):
+            self.assertTrue(torch.allclose(p0, p1))
+
+    def test_deterministic_noise_generation(self):
+        """
+        Tests that when secure seed is set for a model, the sequence
+        of the generated noise is the same.
+        It performs the following test:
+        1- Initiate a model, do one step, set the seed, and save the noise sequence
+        2- Do 3 more steps, set the seed, and save the noise sequnece
+        The two noise sequences should be the same, because the seed has been set
+        prior to calling the noise generation each time
+        """
+        max_norm = 5
+        model, optimizer = self.setUp_init_model(private=True)
+        self.setUp_model_step(model, optimizer)  # do one step so we have gradiants
+        model_params = [p for p in model.parameters() if p.requires_grad]
+
+        optimizer.privacy_engine._set_seed(20)
+        noise_generated_before = [
+            optimizer.privacy_engine._generate_noise(max_norm, p).detach().numpy()
+            for p in model_params
+        ]
+
+        for _ in range(3):
+            self.setUp_model_step(model, optimizer)
+
+        optimizer.privacy_engine._set_seed(20)
+        noise_generated_after = [
+            optimizer.privacy_engine._generate_noise(max_norm, p).detach().numpy()
+            for p in model_params
+        ]
+
+        np.testing.assert_equal(noise_generated_before, noise_generated_after)
