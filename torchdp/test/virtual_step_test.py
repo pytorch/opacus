@@ -201,7 +201,7 @@ class GradientAccumulation_test(unittest.TestCase):
             loss.backward()
 
             # accumulate per-sample grads for two mini batches
-            # and then aggregate them in the clippper
+            # and then aggregate them in the clipper
             if (idx + 1) % 2 == 0:
                 self.optimizer.virtual_step()
 
@@ -240,7 +240,7 @@ class GradientAccumulation_test(unittest.TestCase):
             loss.backward()
 
             # accumulate per-sample grads for two mini batches
-            # and then aggregate them in the clippper
+            # and then aggregate them in the clipper
             if (idx + 1) % 2 == 0:
 
                 # the accumulated per-sample gradients
@@ -281,62 +281,6 @@ class GradientAccumulation_test(unittest.TestCase):
             torch.allclose(self.double_grads, double_grads, atol=10e-5, rtol=10e-3)
         )
 
-    def test_zero_grad_clipper(self):
-        """
-        Calling optimizer.zero_grad() should erase any accumulated clipped gradients.
-        """
-        self.setUp_privacy_engine(2 * self.BATCH_SIZE)
-
-        double_grads_clipped = []
-        double_grads = []
-
-        for idx, (x, y) in enumerate(self.dl):
-            logits = self.model(x)
-            loss = self.criterion(logits, y)
-            loss.backward()
-            self.optimizer.virtual_step()
-
-            # accumulate per-sample grads for two mini batches
-            # and then aggregate them in the clippper
-            if (idx + 1) % 2 == 0:
-
-                # the double-batch gradient accumulated in .grad
-                double_grads.append(
-                    torch.cat(
-                        [
-                            p.grad.reshape(-1)
-                            for p in self.model.parameters()
-                            if p.requires_grad
-                        ]
-                    )
-                    * 0.5
-                )
-
-                self.optimizer.step()
-
-                # .grad should contain the average gradient over the double batch
-                accumulated_grad = torch.cat(
-                    [
-                        p.grad.reshape(-1)
-                        for p in self.model.parameters()
-                        if p.requires_grad
-                    ]
-                )
-                double_grads_clipped.append(accumulated_grad)
-                self.optimizer.zero_grad()
-
-        double_grads = torch.cat(double_grads)
-        double_grads_clipped = torch.cat(double_grads_clipped)
-
-        self.assertTrue(
-            torch.allclose(
-                self.double_grads, double_grads_clipped, atol=10e-5, rtol=10e-3
-            )
-        )
-        self.assertTrue(
-            torch.allclose(self.double_grads, double_grads, atol=10e-5, rtol=10e-3)
-        )
-
     def test_throws_wrong_batch_size(self):
         """
         If we accumulate the wrong number of gradients and feed this batch to the 
@@ -351,8 +295,9 @@ class GradientAccumulation_test(unittest.TestCase):
         self.optimizer.virtual_step()
 
         # consuming a batch that is smaller than expected should work
-        self.optimizer.step()
-        self.optimizer.zero_grad()
+        with self.assertWarns(Warning):
+            self.optimizer.step()
+            self.optimizer.zero_grad()
 
         for i in range(3):
             x, y = next(iter(self.dl))

@@ -13,10 +13,7 @@ from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
 
-def is_grad_sample_consistent(tensor: torch.Tensor, loss_type: str = "mean"):
-    if tensor.grad is None:
-        return True
-
+def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
     if tensor.grad_sample is None:
         raise ValueError(
             f"The input tensor {tensor} has grad computed, but missing grad_sample."
@@ -31,7 +28,7 @@ def is_grad_sample_consistent(tensor: torch.Tensor, loss_type: str = "mean"):
         b_sz = tensor.grad_sample.shape[0]
         grad_sample_aggregated /= b_sz
 
-    return torch.allclose(tensor.grad, grad_sample_aggregated, atol=10e-5, rtol=10e-2)
+    return grad_sample_aggregated
 
 
 class SampleConvNet(nn.Module):
@@ -143,6 +140,7 @@ class PrivacyEngine_test(unittest.TestCase):
             loss = self.criterion(logits, y)
             loss.backward()
             optimizer.step()
+
         return torch.stack(
             [p.grad.norm() for p in model.parameters() if p.requires_grad], dim=-1
         )
@@ -231,18 +229,38 @@ class PrivacyEngine_test(unittest.TestCase):
             noise_multiplier=0,
             max_grad_norm=999,
         )
-        self.setUp_model_step(model, optimizer)
+
+        grad_sample_aggregated = {}
+
+        for x, y in self.dl:
+            optimizer.zero_grad()
+            logits = model(x)
+            loss = self.criterion(logits, y)
+            loss.backward()
+
+            # collect all per-sample gradients before we take the step
+            for layer_name, layer in model.named_modules():
+                if utils.get_layer_type(layer) == "SampleConvNet":
+                    continue
+
+                grad_sample_aggregated[layer] = {}
+                for p in layer.parameters():
+                    if p.requires_grad:
+                        grad_sample_aggregated[layer][p] = get_grad_sample_aggregated(p)
+
+            optimizer.step()
 
         for layer_name, layer in model.named_modules():
             if utils.get_layer_type(layer) == "SampleConvNet":
                 continue
 
-            for param_tensor in layer.parameters():
-                self.assertTrue(
-                    is_grad_sample_consistent(param_tensor),
-                    f"grad_sample doesn't match grad. "
-                    f"Layer: {layer_name}, Tensor: {param_tensor.shape}",
-                )
+            for p in layer.parameters():
+                if p.requires_grad:
+                    self.assertTrue(
+                        torch.allclose(p.grad, grad_sample_aggregated[layer][p], atol=10e-5, rtol=10e-2),
+                        f"grad_sample doesn't match grad. "
+                        f"Layer: {layer_name}, Tensor: {p.shape}"
+                    )
 
     def test_grad_matches_original(self):
         original_model, orignial_optimizer = self.setUp_init_model()
