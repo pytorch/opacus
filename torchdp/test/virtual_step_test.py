@@ -286,7 +286,7 @@ class GradientAccumulation_test(unittest.TestCase):
         If we accumulate the wrong number of gradients and feed this batch to the 
         privacy engine, we expect a failure.
         """
-        self.setUp_privacy_engine(2*self.BATCH_SIZE)
+        self.setUp_privacy_engine(2 * self.BATCH_SIZE)
 
         x, y = next(iter(self.dl))
         logits = self.model(x)

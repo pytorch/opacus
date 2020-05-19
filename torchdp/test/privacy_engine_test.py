@@ -257,9 +257,14 @@ class PrivacyEngine_test(unittest.TestCase):
             for p in layer.parameters():
                 if p.requires_grad:
                     self.assertTrue(
-                        torch.allclose(p.grad, grad_sample_aggregated[layer][p], atol=10e-5, rtol=10e-2),
+                        torch.allclose(
+                            p.grad,
+                            grad_sample_aggregated[layer][p],
+                            atol=10e-5,
+                            rtol=10e-2,
+                        ),
                         f"grad_sample doesn't match grad. "
-                        f"Layer: {layer_name}, Tensor: {p.shape}"
+                        f"Layer: {layer_name}, Tensor: {p.shape}",
                     )
 
     def test_grad_matches_original(self):
@@ -366,7 +371,9 @@ class PrivacyEngine_test(unittest.TestCase):
         to produce same (deterministic) runs.
         """
         model1, optimizer1 = self.setUp_init_model(private=True)
-        model2, optimizer2 = self.setUp_init_model(private=True, state_dict=model1.state_dict())
+        model2, optimizer2 = self.setUp_init_model(
+            private=True, state_dict=model1.state_dict()
+        )
         # assert the models are identical initially
         first_model_params = [p for p in model1.parameters() if p.requires_grad]
         second_model_params = [p for p in model2.parameters() if p.requires_grad]

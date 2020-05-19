@@ -171,7 +171,7 @@ class GradientClipper:
 
             if virtual:
                 # accumulate the summed gradient for this mini-batch
-                if hasattr(p, 'summed_grad'):
+                if hasattr(p, "summed_grad"):
                     p.summed_grad += summed_grad
                 else:
                     p.summed_grad = summed_grad

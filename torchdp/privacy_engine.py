@@ -25,7 +25,7 @@ class PrivacyEngine:
         grad_norm_type: int = 2,
         batch_dim: int = 0,
         target_delta: float = 1e-6,
-        **misc_settings
+        **misc_settings,
     ):
         self.steps = 0
         self.module = module
@@ -123,9 +123,11 @@ class PrivacyEngine:
             )
 
         if batch_size < self.batch_size:
-            warnings.warn(f"PrivacyEngine expected a batch of size {self.batch_size} "
-                          f"but received a batch of size {batch_size}. The privacy "
-                          f"level will be underestimated.")
+            warnings.warn(
+                f"PrivacyEngine expected a batch of size {self.batch_size} "
+                f"but received a batch of size {batch_size}. The privacy "
+                f"level will be underestimated."
+            )
 
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
@@ -154,7 +156,9 @@ class PrivacyEngine:
         if secure_seed is not None:
             self.secure_seed = secure_seed
         else:
-            self.secure_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
+            self.secure_seed = int.from_bytes(
+                os.urandom(8), byteorder="big", signed=True
+            )
         self.secure_generator = (
             torch.random.manual_seed(self.secure_seed)
             if self.device.type == "cpu"
