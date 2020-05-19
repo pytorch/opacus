@@ -229,8 +229,10 @@ def main():
         args.effective_batch_size = args.batch_size
 
     if args.effective_batch_size % args.batch_size != 0:
-        raise ValueError(f"'effective_batch_size' ({args.effective_batch_size}) "
-                         f"must be a multiple of 'batch_size' ({args.batch_size})")
+        raise ValueError(
+            f"'effective_batch_size' ({args.effective_batch_size}) "
+            f"must be a multiple of 'batch_size' ({args.batch_size})"
+        )
 
     ngpus_per_node = torch.cuda.device_count()
     if args.multiprocessing_distributed:
