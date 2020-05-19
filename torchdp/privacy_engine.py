@@ -2,12 +2,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import os
 import types
+import warnings
 from typing import List, Union
 
 import torch
 from torch import nn
 
-from . import autograd_grad_sample
 from . import privacy_analysis as tf_privacy
 from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import PerSampleGradientClipper
@@ -50,7 +50,6 @@ class PrivacyEngine:
         optim.privacy_engine = None
         self.clipper.close()
         optim.step = types.MethodType(optim.original_step, optim)
-        optim.zero_grad = types.MethodType(optim.original_zero_grad, optim)
         del optim.virtual_step
 
     def attach(self, optimizer: torch.optim.Optimizer):
@@ -61,11 +60,9 @@ class PrivacyEngine:
         To do that, this method does the following:
         1. Validates the model for containing un-attachable layers
         2. Adds a pointer to this object (the PrivacyEngine) inside the optimizer
-        3. Moves the original optimizer's `step()` and `zero_grad()` functions to
-         `original_step()` and `original_zero_grad()`
-        4. Monkeypatches the optimizer's `step()` and `zero_grad()` functions to
-         call `step()` or `zero_grad()` on the query engine automatically
-         whenever it would call `step()` or `zero_grad()` for itself
+        3. Moves the original optimizer's `step()` function to `original_step()`
+        4. Monkeypatches the optimizer's `step()` function to call `step()` on
+           the query engine automatically whenever it would call `step()` for itself
         """
 
         # Validate the model for not containing un-supported modules.
@@ -86,8 +83,6 @@ class PrivacyEngine:
         optimizer.privacy_engine = self
         optimizer.original_step = optimizer.step
         optimizer.step = types.MethodType(dp_step, optimizer)
-        optimizer.original_zero_grad = optimizer.zero_grad
-        optimizer.zero_grad = types.MethodType(zero_all_grads, optimizer)
 
         # We add a 'virtual_step' function to the optimizer, which
         # enables the use of virtual batches.
@@ -127,6 +122,11 @@ class PrivacyEngine:
                 f"but received a batch of size {batch_size}"
             )
 
+        if batch_size < self.batch_size:
+            warnings.warn(f"PrivacyEngine expected a batch of size {self.batch_size} "
+                          f"but received a batch of size {batch_size}. The privacy "
+                          f"level will be underestimated.")
+
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
             noise = self._generate_noise(clip_value, p)
@@ -135,10 +135,6 @@ class PrivacyEngine:
     def to(self, device):
         self.device = device
         return self
-
-    def zero_grad(self):
-        autograd_grad_sample.clear_grad_sample(self.module)
-        self.clipper.zero_grad()
 
     def virtual_step(self):
         self.clipper.virtual_step()

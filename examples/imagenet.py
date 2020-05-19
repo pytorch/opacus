@@ -447,7 +447,6 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     # switch to train mode
     model.train()
-    optimizer.zero_grad()
 
     # number of mini-batches to compute gradients on, before an actual update step
     n_virtual_steps = args.effective_batch_size / args.batch_size
@@ -473,14 +472,16 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         top5.update(acc5[0], images.size(0))
 
         # compute gradient and do SGD step
+        optimizer.zero_grad()
         loss.backward()
 
         if n_virtual_steps > 1:
             optimizer.virtual_step()
 
-        if (i + 1) % n_virtual_steps == 0:
+        # make sure we take a step after processing the last mini-batch in the
+        # epoch to ensure we start the next epoch with a clean state
+        if ((i + 1) % n_virtual_steps == 0) or ((i + 1) == len(train_loader)):
             optimizer.step()
-            optimizer.zero_grad()
 
         # measure elapsed time
         batch_time.update(time.time() - end)

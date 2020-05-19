@@ -166,6 +166,9 @@ class GradientClipper:
             pre_clip_pos = p.grad_sample.mean(0) > 0
             summed_grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
 
+            # remove the per-sample gradients
+            del p.grad_sample
+
             if virtual:
                 # accumulate the summed gradient for this mini-batch
                 if hasattr(p, 'summed_grad'):
@@ -224,18 +227,12 @@ class GradientClipper:
             acc_grad = p.summed_grad
             p.grad = acc_grad / batch_size
 
+            # remove aggregated clipped gradients
+            del p.summed_grad
+
         threshs = self.accumulation_state["clip_threshs"]
-        self.erase_virtual_batch()
-        return threshs, batch_size
-
-    def erase_virtual_batch(self) -> None:
-        """Deletes any accumulated gradient state"""
-
-        for _, p in self.named_params:
-            if hasattr(p, "summed_grad"):
-                del p.summed_grad
-
         self.accumulation_state = {}
+        return threshs, batch_size
 
 
 class PerSampleGradientClipper:
@@ -281,13 +278,3 @@ class PerSampleGradientClipper:
         the entire batch of size N*B.
         """
         self.gradient_clipper.clip(virtual=True)
-        # reset the accumulation of per-sample gradients
-        autograd_grad_sample.clear_grad_sample(self.module)
-
-    def zero_grad(self) -> None:
-        """
-        Erase any aggregated gradients when we zero-out the gradient.
-        This is useful when gradients were accumulated but not processed in the
-        last mini-batches of a training epoch.
-        """
-        self.gradient_clipper.erase_virtual_batch()

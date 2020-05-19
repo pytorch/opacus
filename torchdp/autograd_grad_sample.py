@@ -135,13 +135,6 @@ def _capture_backprops(
     _compute_grad_sample(layer, backprops, loss_type, batch_dim)
 
 
-def clear_grad_sample(model: nn.Module) -> None:
-    """Delete 'param.grad_sample' in every parameter of the model."""
-    for param in model.parameters():
-        if hasattr(param, "grad_sample"):
-            del param.grad_sample
-
-
 def _create_or_extend_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
 ) -> None:
