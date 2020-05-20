@@ -80,14 +80,12 @@ parser.add_argument(
     "using Data Parallel or Distributed Data Parallel",
 )
 parser.add_argument(
-    "-eb",
-    "--effective-batch-size",
-    default=None,
+    "-na",
+    "--n_accumulation_steps",
+    default=1,
     type=int,
     metavar="N",
-    help="effective batch size used for SGD. Defaults to the "
-    "size of a mini-batch, but can be set to any integer "
-    "multiple of the mini-batch size",
+    help="number of mini-batches to accumulate into an effective batch for SGD",
 )
 parser.add_argument(
     "--lr",
@@ -224,15 +222,6 @@ def main():
         args.world_size = int(os.environ["WORLD_SIZE"])
 
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
-
-    if args.effective_batch_size is None:
-        args.effective_batch_size = args.batch_size
-
-    if args.effective_batch_size % args.batch_size != 0:
-        raise ValueError(
-            f"'effective_batch_size' ({args.effective_batch_size}) "
-            f"must be a multiple of 'batch_size' ({args.batch_size})"
-        )
 
     ngpus_per_node = torch.cuda.device_count()
     if args.multiprocessing_distributed:
@@ -389,7 +378,7 @@ def main_worker(gpu, ngpus_per_node, args):
         print("PRIVACY ENGINE ON")
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=args.effective_batch_size,
+            batch_size=args.batch_size * args.n_accumulation_steps,
             sample_size=len(train_dataset),
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
@@ -450,9 +439,6 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     # switch to train mode
     model.train()
 
-    # number of mini-batches to compute gradients on, before an actual update step
-    n_virtual_steps = args.effective_batch_size / args.batch_size
-
     end = time.time()
     for i, (images, target) in enumerate(train_loader):
         # measure data loading time
@@ -477,12 +463,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         optimizer.zero_grad()
         loss.backward()
 
-        if n_virtual_steps > 1:
+        if args.n_accumulation_steps > 1:
             optimizer.virtual_step()
 
         # make sure we take a step after processing the last mini-batch in the
         # epoch to ensure we start the next epoch with a clean state
-        if ((i + 1) % n_virtual_steps == 0) or ((i + 1) == len(train_loader)):
+        if ((i + 1) % args.n_accumulation_steps == 0) or ((i + 1) == len(train_loader)):
             optimizer.step()
 
         # measure elapsed time
