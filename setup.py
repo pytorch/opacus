@@ -18,7 +18,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name="pytorch-dp",
-    version="0.1",
+    version="0.1-beta.1",
     author="PyTorch Team",
     description="Train PyTorch models with Differential Privacy",
     long_description=long_description,
