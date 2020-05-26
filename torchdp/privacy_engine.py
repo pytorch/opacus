@@ -125,8 +125,10 @@ class PrivacyEngine:
         if batch_size < self.batch_size:
             warnings.warn(
                 f"PrivacyEngine expected a batch of size {self.batch_size} "
-                f"but received a batch of size {batch_size}. The privacy "
-                f"level will be underestimated."
+                f"but the last step received a batch of size {batch_size}. "
+                "This means we will be a bit more pessimistic in our privacy "
+                "analysis. Consider setting `drop_last = True` in your PyTorch "
+                "dataloader to avoid this problem completely"
             )
 
         params = (p for p in self.module.parameters() if p.requires_grad)

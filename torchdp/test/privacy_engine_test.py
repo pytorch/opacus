@@ -161,8 +161,8 @@ class PrivacyEngine_test(unittest.TestCase):
         model, optimizer = self.setUp_init_model(private=True)
         self.setUp_model_step(model, optimizer)
         with self.assertRaises(ValueError):
-            model, optimizer2 = self.setUp_init_model(private=True, model=model)
-            self.setUp_model_step(model, optimizer2)
+            model, optimizer = self.setUp_init_model(private=True, model=model)
+            self.setUp_model_step(model, optimizer)
 
     def test_attach_delete_attach(self):
         model, optimizer = self.setUp_init_model(private=True)
@@ -239,7 +239,7 @@ class PrivacyEngine_test(unittest.TestCase):
             loss.backward()
 
             # collect all per-sample gradients before we take the step
-            for layer_name, layer in model.named_modules():
+            for _, layer in model.named_modules():
                 if utils.get_layer_type(layer) == "SampleConvNet":
                     continue
 

@@ -126,12 +126,12 @@ class GradientClipper:
             thresh_norm if self.clip_per_layer else thresh_norm * len(self.named_params)
         )
 
-    def clip(self, virtual: bool = False) -> (List[float], int):
+    def clip(self, is_virtual: bool = False) -> (List[float], int):
         r"""
         Clips the grad_sample stored in .grad_sample by computing a per-sample
         norm clip factor, using it to rescale each sample's gradient in
         .grad_sample to norm clip, then averaging them back into .grad.
-        If 'virtual' is set, the clipped gradients are summed up into a
+        If 'is_virtual' is set, the clipped gradients are summed up into a
         temporary accumulator instead.
 
         The gradients of the model's parameters are modified in-place.
@@ -139,15 +139,15 @@ class GradientClipper:
         We assume the batch size is the first dimension.
 
         Arguments:
-            virtual (bool): if set, the clipped gradients in this mini-batch
+            is_virtual (bool): if set, the clipped gradients in this mini-batch
             are summed up into a accummulator for a larger batch
 
         Returns:
-            A list of clipping thresholds
+            A tuple containing a list of clipping thresholds, and the batch size
         """
 
         # check if we've already accumulated all the clipped gradients for this batch
-        if len(self.accumulation_state) > 0 and not virtual:
+        if len(self.accumulation_state) > 0 and not is_virtual:
             return self.finalize_batch()
 
         # step 0 : calculate the layer norms and thresholds
@@ -169,7 +169,7 @@ class GradientClipper:
             # remove the per-sample gradients
             del p.grad_sample
 
-            if virtual:
+            if is_virtual:
                 # accumulate the summed gradient for this mini-batch
                 if hasattr(p, "summed_grad"):
                     p.summed_grad += summed_grad
@@ -192,7 +192,7 @@ class GradientClipper:
             stats.update(stats.StatType.CLIPPING, "ClippingStats", **self.stat)
             self.stat = {}
 
-        if virtual:
+        if is_virtual:
             # check if we're adding to an existing accumulator
             if "clip_threshs" in self.accumulation_state:
 
@@ -272,9 +272,8 @@ class PerSampleGradientClipper:
     def virtual_step(self) -> None:
         """
         Clips and sums up per-sample gradients into an accumulator.
-        After calling self.virtual_step() N times on mini-batches of
-        B per-sample gradients, a call to self.step() will 
-        populate the .grad field with the average gradient over
-        the entire batch of size N*B.
+        After calling self.virtual_step() N times on mini-batches of B
+        per-sample gradients, a call to self.step() will populate the .grad
+        field with the average gradient over the entire batch of size N*B.
         """
-        self.gradient_clipper.clip(virtual=True)
+        self.gradient_clipper.clip(is_virtual=True)

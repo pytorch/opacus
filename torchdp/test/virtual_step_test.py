@@ -122,7 +122,7 @@ class GradientAccumulation_test(unittest.TestCase):
         """
         self.setUp_privacy_engine(self.DATA_SIZE)
 
-        for idx, (x, y) in enumerate(self.dl):
+        for x, y in self.dl:
             logits = self.model(x)
             loss = self.criterion(logits, y)
             loss.backward()  # should accumulate grads in .grad and .grad_sample
@@ -161,7 +161,7 @@ class GradientAccumulation_test(unittest.TestCase):
         """
         self.setUp_privacy_engine(self.DATA_SIZE)
 
-        for idx, (x, y) in enumerate(self.dl):
+        for x, y in self.dl:
             logits = self.model(x)
             loss = self.criterion(logits, y)
             loss.backward()
@@ -283,8 +283,8 @@ class GradientAccumulation_test(unittest.TestCase):
 
     def test_throws_wrong_batch_size(self):
         """
-        If we accumulate the wrong number of gradients and feed this batch to the 
-        privacy engine, we expect a failure.
+        If we accumulate the wrong number of gradients and feed this batch to
+        the privacy engine, we expect a failure.
         """
         self.setUp_privacy_engine(2 * self.BATCH_SIZE)
 
@@ -299,7 +299,7 @@ class GradientAccumulation_test(unittest.TestCase):
             self.optimizer.step()
             self.optimizer.zero_grad()
 
-        for i in range(3):
+        for _ in range(3):
             x, y = next(iter(self.dl))
             logits = self.model(x)
             loss = self.criterion(logits, y)
