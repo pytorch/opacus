@@ -7,38 +7,72 @@ from torch.functional import F
 from .utils import get_layer_type, sum_over_all_but_batch_and_last_n
 
 
-def _compute_linear_grad_sample(layer, A, B):
+def _create_or_extend_grad_sample(
+    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
+) -> None:
+    """
+    Create a 'grad_sample' attribute in the given parameter, or append to it
+    if the 'grad_sample' attribute already exists.
+    """
+
+    if hasattr(param, "grad_sample"):
+        param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
+    else:
+        param.grad_sample = grad_sample
+
+
+def _compute_linear_grad_sample(layer, A, B, batch_dim=0):
     gs = torch.einsum("n...i,n...j->n...ij", B, A)
-    layer.weight.grad_sample = torch.einsum("n...ij->nij", gs)
+    _create_or_extend_grad_sample(
+        layer.weight, torch.einsum("n...ij->nij", gs), batch_dim
+    )
     if layer.bias is not None:
-        layer.bias.grad_sample = torch.einsum("n...k->nk", B)
+        _create_or_extend_grad_sample(
+            layer.bias, torch.einsum("n...k->nk", B), batch_dim
+        )
 
 
-def _compute_sequence_bias_grad_sample(layer, A, B):
-    layer.bias.grad_sample = B[:, -1]
+def _compute_sequence_bias_grad_sample(layer, A, B, batch_dim=0):
+    _create_or_extend_grad_sample(layer.bias, B[:, -1], batch_dim)
 
 
-def _compute_norm_grad_sample(layer, A, B):
+def _compute_norm_grad_sample(layer, A, B, batch_dim=0):
     layer_type = get_layer_type(layer)
     if layer_type == "LayerNorm":
-        layer.weight.grad_sample = sum_over_all_but_batch_and_last_n(
-            F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B,
-            layer.weight.dim(),
+        _create_or_extend_grad_sample(
+            layer.weight,
+            sum_over_all_but_batch_and_last_n(
+                F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B,
+                layer.weight.dim(),
+            ),
+            batch_dim,
         )
-        layer.bias.grad_sample = sum_over_all_but_batch_and_last_n(B, layer.bias.dim())
+        _create_or_extend_grad_sample(
+            layer.bias,
+            sum_over_all_but_batch_and_last_n(B, layer.bias.dim()),
+            batch_dim,
+        )
     elif layer_type == "GroupNorm":
         gs = F.group_norm(A, layer.num_groups, eps=layer.eps) * B
-        layer.weight.grad_sample = torch.einsum("ni...->ni", gs)
+        _create_or_extend_grad_sample(
+            layer.weight, torch.einsum("ni...->ni", gs), batch_dim
+        )
         if layer.bias is not None:
-            layer.bias.grad_sample = torch.einsum("ni...->ni", B)
+            _create_or_extend_grad_sample(
+                layer.bias, torch.einsum("ni...->ni", B), batch_dim
+            )
     elif layer_type in {"InstanceNorm1d", "InstanceNorm2d", "InstanceNorm3d"}:
         gs = F.instance_norm(A, eps=layer.eps) * B
-        layer.weight.grad_sample = torch.einsum("ni...->ni", gs)
+        _create_or_extend_grad_sample(
+            layer.weight, torch.einsum("ni...->ni", gs), batch_dim
+        )
         if layer.bias is not None:
-            layer.bias.grad_sample = torch.einsum("ni...->ni", B)
+            _create_or_extend_grad_sample(
+                layer.bias, torch.einsum("ni...->ni", B), batch_dim
+            )
 
 
-def _compute_conv_grad_sample(layer, A, B):
+def _compute_conv_grad_sample(layer, A, B, batch_dim=0):
     n = A.shape[0]
     layer_type = get_layer_type(layer)
     # get A and B in shape depending on the Conv layer
@@ -66,14 +100,16 @@ def _compute_conv_grad_sample(layer, A, B):
             else torch.einsum("njk,njk->nj", B, A)
         )
         shape = [n] + list(layer.weight.shape)
-        layer.weight.grad_sample = grad_sample.reshape(shape)
+        _create_or_extend_grad_sample(
+            layer.weight, grad_sample.reshape(shape), batch_dim
+        )
     except Exception as e:
         raise type(e)(
             f"{e} There is probably a problem with {layer_type}.groups"
             + "It should be either 1 or in_channel"
         )
     if layer.bias is not None:
-        layer.bias.grad_sample = torch.sum(B, dim=2)
+        _create_or_extend_grad_sample(layer.bias, torch.sum(B, dim=2), batch_dim)
 
 
 _supported_layers_grad_samplers = {

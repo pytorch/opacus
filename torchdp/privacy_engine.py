@@ -2,6 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import os
 import types
+import warnings
 from typing import List, Union
 
 import torch
@@ -24,13 +25,14 @@ class PrivacyEngine:
         grad_norm_type: int = 2,
         batch_dim: int = 0,
         target_delta: float = 1e-6,
-        **misc_settings
+        **misc_settings,
     ):
         self.steps = 0
         self.module = module
         self.alphas = alphas
         self.device = next(module.parameters()).device
 
+        self.batch_size = batch_size
         self.sample_rate = batch_size / sample_size
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
@@ -48,6 +50,7 @@ class PrivacyEngine:
         optim.privacy_engine = None
         self.clipper.close()
         optim.step = types.MethodType(optim.original_step, optim)
+        del optim.virtual_step
 
     def attach(self, optimizer: torch.optim.Optimizer):
         """
@@ -59,7 +62,7 @@ class PrivacyEngine:
         2. Adds a pointer to this object (the PrivacyEngine) inside the optimizer
         3. Moves the original optimizer's `step()` function to `original_step()`
         4. Monkeypatches the optimizer's `step()` function to call `step()` on
-        the query engine automatically whenever it would call `step()` for itself
+           the query engine automatically whenever it would call `step()` for itself
         """
 
         # Validate the model for not containing un-supported modules.
@@ -76,6 +79,15 @@ class PrivacyEngine:
         optimizer.privacy_engine = self
         optimizer.original_step = optimizer.step
         optimizer.step = types.MethodType(dp_step, optimizer)
+
+        # We add a 'virtual_step' function to the optimizer, which
+        # enables the use of virtual batches.
+        # By repeatedly computing backward passes and calling virtual_step,
+        # we can aggregate the clipped gradient for large batches
+        def virtual_step(self):
+            self.privacy_engine.virtual_step()
+
+        optimizer.virtual_step = types.MethodType(virtual_step, optimizer)
 
         self.optimizer = optimizer  # create a cross reference for detaching
 
@@ -95,15 +107,37 @@ class PrivacyEngine:
 
     def step(self):
         self.steps += 1
-        clip_values = self.clipper.step()
+        clip_values, batch_size = self.clipper.step()
+
+        # ensure the clipper consumed the right amount of gradients.
+        # In the last batch of a training epoch, we might get a batch that is
+        # smaller than others but we should never get a batch that is too large
+        if batch_size > self.batch_size:
+            raise ValueError(
+                f"PrivacyEngine expected a batch of size {self.batch_size} "
+                f"but received a batch of size {batch_size}"
+            )
+
+        if batch_size < self.batch_size:
+            warnings.warn(
+                f"PrivacyEngine expected a batch of size {self.batch_size} "
+                f"but the last step received a batch of size {batch_size}. "
+                "This means that the privacy analysis will be a bit more "
+                "pessimistic. You can set `drop_last = True` in your PyTorch "
+                "dataloader to avoid this problem completely"
+            )
+
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
             noise = self._generate_noise(clip_value, p)
-            p.grad += noise / self.clipper.batch_size
+            p.grad += noise / batch_size
 
     def to(self, device):
         self.device = device
         return self
+
+    def virtual_step(self):
+        self.clipper.virtual_step()
 
     def _generate_noise(self, max_norm, parameter):
         if self.noise_multiplier > 0:
@@ -120,7 +154,9 @@ class PrivacyEngine:
         if secure_seed is not None:
             self.secure_seed = secure_seed
         else:
-            self.secure_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
+            self.secure_seed = int.from_bytes(
+                os.urandom(8), byteorder="big", signed=True
+            )
         self.secure_generator = (
             torch.random.manual_seed(self.secure_seed)
             if self.device.type == "cpu"

@@ -3,7 +3,6 @@
 
 """
 Runs ImageNet training with differential privacy.
-
 """
 
 import argparse
@@ -48,7 +47,7 @@ stats.add(
 
 # The following lines enable stat gathering for the clipping process
 # and set a default of per layer clipping for the Privacy Engine
-clipping = {"clip_per_layer": True, "enable_stat": True}
+clipping = {"clip_per_layer": False, "enable_stat": True}
 
 parser = argparse.ArgumentParser(description="PyTorch ImageNet DP Training")
 parser.add_argument("data", metavar="DIR", help="path to dataset")
@@ -79,6 +78,14 @@ parser.add_argument(
     help="mini-batch size (default: 256), this is the total "
     "batch size of all GPUs on the current node when "
     "using Data Parallel or Distributed Data Parallel",
+)
+parser.add_argument(
+    "-na",
+    "--n_accumulation_steps",
+    default=1,
+    type=int,
+    metavar="N",
+    help="number of mini-batches to accumulate into an effective batch for SGD",
 )
 parser.add_argument(
     "--lr",
@@ -371,7 +378,7 @@ def main_worker(gpu, ngpus_per_node, args):
         print("PRIVACY ENGINE ON")
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=args.batch_size,
+            batch_size=args.batch_size * args.n_accumulation_steps,
             sample_size=len(train_dataset),
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
@@ -455,7 +462,14 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+
+        if args.n_accumulation_steps > 1:
+            optimizer.virtual_step()
+
+        # make sure we take a step after processing the last mini-batch in the
+        # epoch to ensure we start the next epoch with a clean state
+        if ((i + 1) % args.n_accumulation_steps == 0) or ((i + 1) == len(train_loader)):
+            optimizer.step()
 
         # measure elapsed time
         batch_time.update(time.time() - end)
