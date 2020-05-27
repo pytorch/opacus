@@ -76,10 +76,6 @@ class PrivacyEngine:
             self.privacy_engine.step()
             self.original_step(closure)
 
-        def zero_all_grads(self):
-            self.privacy_engine.zero_grad()
-            self.original_zero_grad()
-
         optimizer.privacy_engine = self
         optimizer.original_step = optimizer.step
         optimizer.step = types.MethodType(dp_step, optimizer)
