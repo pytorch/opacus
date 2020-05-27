@@ -12,7 +12,7 @@ def _create_or_extend_grad_sample(
 ) -> None:
     """
     Create a 'grad_sample' attribute in the given parameter, or append to it
-    if it already exists.
+    if the 'grad_sample' attribute already exists.
     """
 
     if hasattr(param, "grad_sample"):
