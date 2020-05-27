@@ -153,7 +153,12 @@ class GradientClipper:
         # step 0 : calculate the layer norms and thresholds
         all_norms = self.get_all_layer_norms()
         thresh_norms = self.calc_thresh_value(all_norms)
-        batch_size = len(thresh_norms[0][1])
+
+        # The first dim of param.grad_sample is the batch size for every param.
+        # We simply pick the first parameter to look up the batch size.
+        batch_size = next(
+            p.grad_sample.shape[0] for (_, p) in self.named_params
+        )
         threshs = []
         for thresh_norm, named_param in zip(thresh_norms, self.named_params):
             # step 1 : Find the clipping factor per layer (per parameter set)
