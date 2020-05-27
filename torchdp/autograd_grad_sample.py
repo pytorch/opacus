@@ -31,8 +31,8 @@ def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> 
     2. compute per-sample gradients in params.grad_sample during backward pass.
     Call "remove_hooks(model)" to disable this.
     Args:
-        model: the model to add hooks to
-        loss_type: either "mean" or "sum" depending whether backpropped
+        model: the model to which hooks are added
+        loss_type: either "mean" or "sum" depending on whether backpropped
         loss was averaged or summed over batch (default: "mean")
         batch_dim: the batch dimension (default: 0)
     """
@@ -44,7 +44,8 @@ def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> 
 
     if loss_type not in ("sum", "mean"):
         raise ValueError(
-            f"loss_type = {loss_type}. Only 'sum' and 'mean' supported")
+            f"loss_type = {loss_type}. Only 'sum' and 'mean' losses are supported"
+        )
 
     handles = []
     for layer in model.modules():
@@ -54,13 +55,13 @@ def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> 
             handles.append(
                 layer.register_backward_hook(
                     partial(
-                        _capture_backprops, loss_type=loss_type,
-                        batch_dim=batch_dim
+                        _capture_backprops, loss_type=loss_type, batch_dim=batch_dim
                     )
                 )
             )
 
     model.__dict__.setdefault("autograd_grad_sample_hooks", []).extend(handles)
+
 
 def remove_hooks(model: nn.Module) -> None:
     """
@@ -128,14 +129,17 @@ def _compute_grad_sample(
     Compute per-example gradients and save them under 'param.grad_sample'.
     Must be called after loss.backprop()
     Args:
-        layer: the layer for which to computer per-sample gradients
-        backprops: the captured backpros
-        loss_type: either "mean" or "sum" depending whether backpropped
+        layer: the layer for which per-sample gradients are computed
+        backprops: the captured backprops
+        loss_type: either "mean" or "sum" depending on whether backpropped
         loss was averaged or summed over batch
         batch_dim: the batch dimension
     """
     layer_type = get_layer_type(layer)
-    if not requires_grad(layer) or layer_type not in _supported_layers_grad_samplers.keys():
+    if (
+        not requires_grad(layer)
+        or layer_type not in _supported_layers_grad_samplers.keys()
+    ):
         return
 
     if not hasattr(layer, "activations"):
