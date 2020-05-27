@@ -80,39 +80,6 @@ class GradientAccumulation_test(unittest.TestCase):
 
         self.optimizer.zero_grad()
 
-        # accumulate gradients for two mini-batches at a time.
-        # `effective_batch_grads` will contain the gradient for each parameter
-        # computed over effective batches of size `2*BATCH_SIZE`
-        self.effective_batch_grads = []
-
-        for idx, (x, y) in enumerate(self.dl):
-            logits = self.model(x)
-            loss = self.criterion(logits, y)
-            loss.backward()
-
-            if (idx + 1) % 2 == 0:
-                # loss.backward() computes the average gradient for a mini-batch
-                # of size `BATCH_SIZE`. Since we call `loss.backward()` twice
-                # before zeroing out the gradients, the average gradients for
-                # two mini-batches are summed up in each parameter's `.grad`
-                # attribute. To get the average gradient with respect to an
-                # effective batch of size `2*BATCH_SIZE`, we simply have to to
-                # divide the accumulated gradients by 2.
-                self.effective_batch_grads.append(
-                    torch.cat(
-                        [
-                            p.grad.reshape(-1)
-                            for p in self.model.parameters()
-                            if p.requires_grad
-                        ]
-                    )
-                    * 0.5
-                )
-                self.optimizer.zero_grad()
-
-        self.effective_batch_grads = torch.cat(self.effective_batch_grads)
-        self.optimizer.zero_grad()
-
     def setUp_privacy_engine(self, batch_size):
         self.privacy_engine = PrivacyEngine(
             self.model,
@@ -234,18 +201,12 @@ class GradientAccumulation_test(unittest.TestCase):
         )
         self.assertTrue(torch.allclose(grad, orig_grad, atol=10e-5, rtol=10e-3))
 
-    def test_zero_grad(self):
+    def test_grad_sample_erased(self):
         """
-        Calling optimizer.zero_grad() should erase any accumulated per-sample gradients.
+        Calling optimizer.step() should erase any accumulated per-sample gradients.
         """
+
         self.setUp_privacy_engine(2 * self.BATCH_SIZE)
-
-        # store the per-sample gradients for each effective batch of
-        # size `2*BATCH_SIZE`
-        effective_batch_per_sample_grads = []
-
-        # for each effective batch, store the average gradients computed by the clipper
-        clipped_effective_batch_grads = []
 
         for idx, (x, y) in enumerate(self.dl):
             logits = self.model(x)
@@ -255,59 +216,75 @@ class GradientAccumulation_test(unittest.TestCase):
             # accumulate per-sample gradients for two mini-batches to form an
             # effective batch of size `2*BATCH_SIZE`. Once an effective batch
             # has been accumulated, we call `optimizer.step()` to clip and
-            # average the per-sample gradients.
+            # average the per-sample gradients. This should erase the
+            # `grad_sample` fields for each parameter
             if (idx + 1) % 2 == 0:
-
-                # get the accumulated per-sample gradients
-                per_sample_grads = torch.cat(
-                    [
-                        p.grad_sample.reshape(2 * self.BATCH_SIZE, -1)
-                        for p in self.model.parameters()
-                        if p.requires_grad
-                    ],
-                    dim=-1,
-                )
-                effective_batch_per_sample_grads.append(per_sample_grads)
 
                 # take a step. The clipper will compute the mean gradient
                 # for the entire effective batch and populate each parameter's
                 # `.grad` field.
                 self.optimizer.step()
 
-                # retrieve the average gradients for the effective batch
-                clipped_effective_batch_grads.append(
-                    torch.cat(
-                        [
-                            p.grad.reshape(-1)
-                            for p in self.model.parameters()
-                            if p.requires_grad
-                        ]
-                    )
-                )
+                for param_name, param in self.model.named_parameters():
+                    if param.requires_grad:
+                        self.assertFalse(
+                            hasattr(param, "grad_sample"),
+                            f"Per-sample gradients haven't been erased "
+                            f"for {param_name}",
+                        )
+            else:
+                for param_name, param in self.model.named_parameters():
+                    if param.requires_grad:
+                        self.assertTrue(
+                            hasattr(param, "grad_sample"),
+                            f"Per-sample gradients aren't accumulated "
+                            f"for {param_name}",
+                        )
 
-        clipped_effective_batch_grads = torch.cat(clipped_effective_batch_grads)
+    def test_summed_grad_erased(self):
+        """
+        Calling optimizer.step() should erase any accumulated clipped gradients.
+        """
 
-        # explicitly compute the average of the per-sample gradients
-        mean_per_sample_grads = torch.mean(
-            torch.cat(effective_batch_per_sample_grads, dim=-1), dim=0
-        )
+        self.setUp_privacy_engine(2 * self.BATCH_SIZE)
 
-        self.assertTrue(
-            torch.allclose(
-                self.effective_batch_grads,
-                mean_per_sample_grads,
-                atol=10e-5,
-                rtol=10e-3,
-            )
-        )
-        self.assertTrue(
-            torch.allclose(
-                self.effective_batch_grads,
-                clipped_effective_batch_grads,
-                atol=10e-5,
-                rtol=10e-3,
-            )
-        )
+        for idx, (x, y) in enumerate(self.dl):
+            logits = self.model(x)
+            loss = self.criterion(logits, y)
+            loss.backward()
+
+            # perform a virtual step for each mini-batch
+            # this will accumulate clipped gradients in each parameter's
+            # `summed_grads` field.
+            self.optimizer.virtual_step()
+
+            # accumulate gradients for two mini-batches to form an
+            # effective batch of size `2*BATCH_SIZE`. Once an effective batch
+            # has been accumulated, we call `optimizer.step()` to compute the
+            # average gradient for the entire batch. This should erase the
+            # `summed_grads` fields for each parameter.
+            if (idx + 1) % 2 == 0:
+
+                # take a step. The clipper will compute the mean gradient
+                # for the entire effective batch and populate each parameter's
+                # `.grad` field.
+                self.optimizer.step()
+
+                for param_name, param in self.model.named_parameters():
+                    if param.requires_grad:
+                        self.assertFalse(
+                            hasattr(param, "summed_grad"),
+                            f"Accumulated clipped gradients haven't been erased "
+                            f"¨for {param_name}",
+                        )
+            else:
+                for param_name, param in self.model.named_parameters():
+                    if param.requires_grad:
+                        self.assertTrue(
+                            hasattr(param, "summed_grad"),
+                            f"Clipped gradients aren't accumulated "
+                            f"for {param_name}",
+                        )
 
     def test_throws_wrong_batch_size(self):
         """
