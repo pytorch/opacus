@@ -80,8 +80,10 @@ class GradientAccumulation_test(unittest.TestCase):
 
         self.optimizer.zero_grad()
 
-        # accumulate grads for each pair of batches
-        self.double_grads = []
+        # accumulate gradients for two mini-batches at a time.
+        # `effective_batch_grads` will contain the gradient for each parameter
+        # computed over effective batches of size `2*BATCH_SIZE`
+        self.effective_batch_grads = []
 
         for idx, (x, y) in enumerate(self.dl):
             logits = self.model(x)
@@ -89,7 +91,14 @@ class GradientAccumulation_test(unittest.TestCase):
             loss.backward()
 
             if (idx + 1) % 2 == 0:
-                self.double_grads.append(
+                # loss.backward() computes the average gradient for a mini-batch
+                # of size `BATCH_SIZE`. Since we call `loss.backward()` twice
+                # before zeroing out the gradients, the average gradients for
+                # two mini-batches are summed up in each parameter's `.grad`
+                # attribute. To get the average gradient with respect to an
+                # effective batch of size `2*BATCH_SIZE`, we simply have to to
+                # divide the accumulated gradients by 2.
+                self.effective_batch_grads.append(
                     torch.cat(
                         [
                             p.grad.reshape(-1)
@@ -101,7 +110,7 @@ class GradientAccumulation_test(unittest.TestCase):
                 )
                 self.optimizer.zero_grad()
 
-        self.double_grads = torch.cat(self.double_grads)
+        self.effective_batch_grads = torch.cat(self.effective_batch_grads)
         self.optimizer.zero_grad()
 
     def setUp_privacy_engine(self, batch_size):
@@ -231,19 +240,25 @@ class GradientAccumulation_test(unittest.TestCase):
         """
         self.setUp_privacy_engine(2 * self.BATCH_SIZE)
 
-        double_grads_per_sample = []
-        double_grads = []
+        # store the per-sample gradients for each effective batch of
+        # size `2*BATCH_SIZE`
+        effective_batch_per_sample_grads = []
+
+        # for each effective batch, store the average gradients computed by the clipper
+        clipped_effective_batch_grads = []
 
         for idx, (x, y) in enumerate(self.dl):
             logits = self.model(x)
             loss = self.criterion(logits, y)
             loss.backward()
 
-            # accumulate per-sample grads for two mini batches
-            # and then aggregate them in the clipper
+            # accumulate per-sample gradients for two mini-batches to form an
+            # effective batch of size `2*BATCH_SIZE`. Once an effective batch
+            # has been accumulated, we call `optimizer.step()` to clip and
+            # average the per-sample gradients.
             if (idx + 1) % 2 == 0:
 
-                # the accumulated per-sample gradients
+                # get the accumulated per-sample gradients
                 per_sample_grads = torch.cat(
                     [
                         p.grad_sample.reshape(2 * self.BATCH_SIZE, -1)
@@ -252,10 +267,15 @@ class GradientAccumulation_test(unittest.TestCase):
                     ],
                     dim=-1,
                 )
-                # average up all the per-sample gradients
-                double_grads_per_sample.append(torch.mean(per_sample_grads, dim=0))
+                effective_batch_per_sample_grads.append(per_sample_grads)
 
-                double_grads.append(
+                # take a step. The clipper will compute the mean gradient
+                # for the entire effective batch and populate each parameter's
+                # `.grad` field.
+                self.optimizer.step()
+
+                # retrieve the average gradients for the effective batch
+                clipped_effective_batch_grads.append(
                     torch.cat(
                         [
                             p.grad.reshape(-1)
@@ -263,22 +283,30 @@ class GradientAccumulation_test(unittest.TestCase):
                             if p.requires_grad
                         ]
                     )
-                    * 0.5
                 )
 
-                self.optimizer.step()
-                self.optimizer.zero_grad()
+        clipped_effective_batch_grads = torch.cat(clipped_effective_batch_grads)
 
-        double_grads = torch.cat(double_grads)
-        double_grads_per_sample = torch.cat(double_grads_per_sample)
+        # explicitly compute the average of the per-sample gradients
+        mean_per_sample_grads = torch.mean(
+            torch.cat(effective_batch_per_sample_grads, dim=-1), dim=0
+        )
 
         self.assertTrue(
             torch.allclose(
-                self.double_grads, double_grads_per_sample, atol=10e-5, rtol=10e-3
+                self.effective_batch_grads,
+                mean_per_sample_grads,
+                atol=10e-5,
+                rtol=10e-3,
             )
         )
         self.assertTrue(
-            torch.allclose(self.double_grads, double_grads, atol=10e-5, rtol=10e-3)
+            torch.allclose(
+                self.effective_batch_grads,
+                clipped_effective_batch_grads,
+                atol=10e-5,
+                rtol=10e-3,
+            )
         )
 
     def test_throws_wrong_batch_size(self):
