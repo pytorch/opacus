@@ -47,7 +47,6 @@ class LayersGradTest(unittest.TestCase):
         if isinstance(output, tuple):
             output = output[0]
         output.norm().backward()
-        clipper.step()
 
         for param_name, param in layer.named_parameters():
             if param.requires_grad:
@@ -55,6 +54,8 @@ class LayersGradTest(unittest.TestCase):
                     hasattr(param, "grad_sample"),
                     f"Per-sample gradients hasn't been computed for {param_name}",
                 )
+
+        clipper.step()
 
         private_run_grads = [
             p.grad.detach().clone() for p in layer.parameters() if p.requires_grad
