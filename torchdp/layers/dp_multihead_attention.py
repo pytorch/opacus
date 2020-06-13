@@ -84,7 +84,9 @@ class DPMultiheadAttention(nn.Module):
         self.klinear = nn.Linear(self.kdim, embed_dim, bias=bias)
         self.vlinear = nn.Linear(self.vdim, embed_dim, bias=bias)
 
-        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
+        # torch.nn.MultiHeadAttention out_proj is _LinearWithBias
+        # explicilty setting bias=True for consistent mimicry
+        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=True)
 
         self.add_bias_kv = add_bias_kv
         if self.add_bias_kv:
