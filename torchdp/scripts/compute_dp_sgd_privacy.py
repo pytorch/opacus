@@ -18,7 +18,7 @@ Example:
     --epochs=60 \
     --delta=1e-5 \
     --a 10 20 100
-The calculated privacy with these parameters satisfies (2.94, 1e-5)-DP.
+The calculated privacy with these parameters satisfies (2.95, 1e-5)-DP.
 
 The argument -a or --alphas is for entering the list of RDP alpha orders.
 """
@@ -75,7 +75,7 @@ def compute_dp_sgd_privacy(
     sample_rate = batch_size / sample_size
     if sample_rate > 1:
         raise ValueError("sample_size must be larger than the batch size.")
-    steps = int(math.ceil(epochs * sample_size / batch_size))
+    steps = epochs * math.ceil(sample_size / batch_size)
 
     return apply_dp_sgd_analysis(
         sample_rate, noise_multiplier, steps, alphas, delta, printed
