@@ -112,7 +112,17 @@ def _compute_conv_grad_sample(layer, A, B, batch_dim=0):
         _create_or_extend_grad_sample(layer.bias, torch.sum(B, dim=2), batch_dim)
 
 
+def _compute_embedding_grad_sample(layer, A, B, batch_dim=0):
+    one_hot = F.one_hot(A, num_classes=layer.weight.shape[0])
+    gs = torch.einsum("n...i,n...j->n...ij", one_hot, B)
+
+    _create_or_extend_grad_sample(
+        layer.weight, torch.einsum("n...ij->nij", gs), batch_dim
+    )
+
+
 _supported_layers_grad_samplers = {
+    "Embedding": _compute_embedding_grad_sample,
     "Linear": _compute_linear_grad_sample,
     "Conv2d": _compute_conv_grad_sample,
     "Conv1d": _compute_conv_grad_sample,

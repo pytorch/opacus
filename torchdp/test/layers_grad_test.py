@@ -30,7 +30,9 @@ class LayersGradTest(unittest.TestCase):
         if hasattr(layer, "bias"):
             nn.init.uniform_(layer.bias)
 
+        # run without DP
         self._reset_seeds()
+        layer.zero_grad()
         output = layer(*args)
         if isinstance(output, tuple):
             output = output[0]
@@ -39,10 +41,12 @@ class LayersGradTest(unittest.TestCase):
             p.grad.detach().clone() for p in layer.parameters() if p.requires_grad
         ]
 
+        # run with DP
         clipper = PerSampleGradientClipper(
             layer, 999, batch_dim=kwargs.get("batch_dim", 0)
         )
         self._reset_seeds()
+        layer.zero_grad()
         output = layer(*args)
         if isinstance(output, tuple):
             output = output[0]
@@ -61,6 +65,7 @@ class LayersGradTest(unittest.TestCase):
             p.grad.detach().clone() for p in layer.parameters() if p.requires_grad
         ]
 
+        # compare
         for vanilla_grad, private_grad in zip(vanilla_run_grads, private_run_grads):
             self.assertTrue(
                 torch.allclose(vanilla_grad, private_grad, atol=10e-5, rtol=10e-3)
@@ -135,3 +140,10 @@ class LayersGradTest(unittest.TestCase):
             32, 1, bias=True, add_bias_kv=True, add_zero_attn=True, kdim=28, vdim=28
         )
         self._check_one_layer(layer, q, k, v, batch_dim=1)
+
+    def test_embedding(self):
+        layer = nn.Embedding(256, 100)
+        x1 = torch.randint(0, 255, (128, 42)).long()
+        x2 = torch.randint(0, 255, (64,)).long()
+        self._check_one_layer(layer, x1)
+        self._check_one_layer(layer, x2)
