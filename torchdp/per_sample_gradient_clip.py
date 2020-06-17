@@ -69,10 +69,10 @@ class GradientClipper:
 
     def _get_per_layer_norms(self, named_param) -> torch.Tensor:
         name, p = named_param
-        aggregation_dims = list(range(1, len(p.shape)))  # All dims except the first
-        p_squared = p * p  # elementwise
-        batch_norms = torch.sqrt(p_squared.sum(dim=aggregation_dims))
+        batch_norms = p.view(len(p), -1).norm(2, dim=-1)
+
         if self.stat is not None:
+            aggregation_dims = list(range(1, len(p.shape)))  # All dims except the first
             normalized_per_coordinate_value = (
                 p.abs().sum(dim=aggregation_dims) / p[0].numel()
             )
@@ -167,11 +167,7 @@ class GradientClipper:
             per_sample_clip_factor = per_sample_clip_factor.clamp(max=1.0)
             # step 2: Do the clipping
             name, p = named_param
-            pre_clip_pos = p.grad_sample.mean(0) > 0
             summed_grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
-
-            # remove the per-sample gradients
-            del p.grad_sample
 
             if is_virtual:
                 # accumulate the summed gradient for this mini-batch
@@ -182,16 +178,21 @@ class GradientClipper:
             else:
                 p.grad = summed_grad / batch_size
 
-            post_clip_pos = p.grad > 0
-            sign_switched = (pre_clip_pos ^ post_clip_pos).sum()
-            total_num = post_clip_pos.numel()
             if self.stat is not None:
+                pre_clip_pos = p.grad_sample.mean(0) > 0
+                post_clip_pos = p.grad > 0
+                sign_switched = (pre_clip_pos ^ post_clip_pos).sum()
+                total_num = post_clip_pos.numel()
                 self.stat[f"{name}:clip"] = thresh
                 self.stat[f"{name}:percent"] = (
                     (norm > thresh).to(dtype=torch.float64).mean()
                 )
                 self.stat[f"{name}:switch"] = float(sign_switched) / total_num
             threshs.append(thresh)
+
+            # remove the per-sample gradients
+            del p.grad_sample
+
         if self.stat is not None:
             stats.update(stats.StatType.CLIPPING, "ClippingStats", **self.stat)
             self.stat = {}
