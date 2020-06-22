@@ -11,8 +11,8 @@ src_dir = os.path.abspath(os.path.dirname(__file__))
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-requirements_txt = os.path.join(src_dir, "requirements.txt")
-with open("requirements.txt") as f:
+requirements_txt = os.path.join(src_dir, "requirements_release.txt")
+with open("requirements_release.txt") as f:
     required = f.read().splitlines()
 
 

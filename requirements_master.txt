@@ -1,0 +1,7 @@
+numpy>=1.15
+-f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+torch >=1.6.0dev0
+torchvision >= 0.7.0dev0
+tqdm>=4.40
+scipy>=1.2
+pytest

@@ -1,13 +1,31 @@
 version: 2.1
 
-setup_venv: &setup_venv
-  name: Sets up the virtualenv
-  no_output_timeout: 5h
-  command: |
-    python3 -m venv ~/pytorch-privacy-test
-    . ~/pytorch-privacy-test/bin/activate
-    pip3 install --upgrade pip
-    pip3 install -r requirements.txt
+parameters:
+  release_tag:
+    type: string
+    default: "v0.1-beta.1"
+
+commands:
+  setup_venv_master:
+    steps:
+      - run:
+          name: Sets up the virtualenv
+          no_output_timeout: 5h
+          command: |
+            python3 -m venv ~/pytorch-privacy-test
+            . ~/pytorch-privacy-test/bin/activate
+            pip3 install --upgrade pip
+            pip3 install -r requirements_master.txt
+  setup_venv_release:
+    steps:
+      - run:
+          name: Sets up the virtualenv
+          no_output_timeout: 5h
+          command: |
+            python3 -m venv ~/pytorch-privacy-test
+            . ~/pytorch-privacy-test/bin/activate
+            pip3 install --upgrade pip
+            pip3 install -r requirements_release.txt
 
 # -------------------------------------------------------------------------------------
 # Jobs
@@ -18,10 +36,20 @@ jobs:
       - image: circleci/python:3.7.4-buster
     resource_class: 2xlarge+
     working_directory: ~/pytorch-dp
+    parameters:
+      run_on_master_branch:
+        type: boolean
+        default: true
     steps:
       - checkout
-      - run:
-          <<: *setup_venv
+      - when:
+          condition: run_on_master_branch
+          steps:
+            - setup_venv_master
+      - unless:
+          condition: run_on_master_branch
+          steps:
+            - setup_venv_release
       - run:
           name: Unit tests
           no_output_timeout: 1h
@@ -29,22 +57,30 @@ jobs:
             . ~/pytorch-privacy-test/bin/activate
             mkdir unittest-reports
             pytest --junitxml=unittest-reports/junit.xml
-
       - store_test_results:
           path: unittest-reports
       - store_artifacts:
           path: unittest-reports
-
 
   runmnistexample:
     docker:
       - image: circleci/python:3.7.4-buster
     resource_class: 2xlarge+
     working_directory: ~/pytorch-dp
+    parameters:
+      run_on_master_branch:
+        type: boolean
+        default: true
     steps:
       - checkout
-      - run:
-          <<: *setup_venv
+      - when:
+          condition: run_on_master_branch
+          steps:
+            - setup_venv_master
+      - unless:
+          condition: run_on_master_branch
+          steps:
+            - setup_venv_release
       - run:
           name: MNIST example
           command: |
@@ -56,25 +92,19 @@ jobs:
       - store_artifacts:
           path: mnist-test-reports
 
-
 # -------------------------------------------------------------------------------------
 # Workflows
 # -------------------------------------------------------------------------------------
 workflows:
   version: 2.1
+  # run commit workflow on master alone
   commit:
     jobs:
-      - rununittests:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - runmnistexample:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-  nightly:
+      - rununittests
+      - runmnistexample
+
+  # run nightly workflow for master
+  nightly_master:
     triggers:
       - schedule:
           cron: "0 0 * * *"
@@ -82,14 +112,31 @@ workflows:
             branches:
               only:
                 - master
+              ignore:
+                - gh-pages
+    jobs:
+      - rununittests
+      - runmnistexample
+
+  # run nightly workflow for release
+  nightly_release:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              ignore:
+                - /.*/
     jobs:
       - rununittests:
+          run_on_master_branch: false
           filters:
-            branches:
-              ignore:
-                - gh-pages
+            tags:
+              only:
+                - << pipeline.parameters.release_tag >>
       - runmnistexample:
+          run_on_master_branch: false
           filters:
-            branches:
-              ignore:
-                - gh-pages
+            tags:
+              only:
+                - << pipeline.parameters.release_tag >>
