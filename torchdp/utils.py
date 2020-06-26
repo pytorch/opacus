@@ -2,8 +2,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
+from abc import ABC
 from enum import IntEnum
-from typing import Callable, Type
+from itertools import cycle
+from typing import Callable, Dict, Iterator, List, Tuple, Type
 
 import torch
 from torch import nn
@@ -244,6 +246,35 @@ class ModelInspector:
 #####################################################################
 ## utils for generating stats from torch tensors.
 #####################################################################
+def calc_sample_norms(
+    named_params: Iterator[Tuple[str, torch.Tensor]], flat: bool = True
+) -> Tuple[List[torch.Tensor], Dict[str, float]]:
+    """
+    Calculates the (overall) norm of the given tensors over each sample,
+    assuming dim=0 is represnting the sample in the batch.
+
+    Returns:
+        A tuple with first element being a list of torch tensors all of size
+        B (look at `named_params`). Each element in the list corresponds to
+        the norms of the parameter appearing in the same order of the
+        `named_params`.
+
+    Arguments:
+        named_params: An iterator of tuples each representing a named tensor with
+            name being a string and param a tensor of shape [B, XYZ...] where B
+            is the size of the batch and is the 0th dimension
+        flat: a flag, when set to `True` returns a flat norm over all
+            layers, i.e. norm of all the norms across layers for each sample.
+        stats_required: a flag, when set to True, the function will provide some
+            statistics over the batch, including mean, median, and max values
+    """
+    norms = [param.view(len(param), -1).norm(2, dim=-1) for name, param in named_params]
+    # calc norm over all layer norms if flat = True
+    if flat:
+        norms = [torch.stack(norms, dim=0).norm(2, dim=0)]
+    return norms
+
+
 def sum_over_all_but_batch_and_last_n(
     tensor: torch.Tensor, n_dims: int
 ) -> torch.Tensor:
@@ -324,12 +355,12 @@ _thresh_ = {
 }
 
 
-def calculate_thresh_value(
+def _calculate_thresh_value(
     data: torch.Tensor,
     current_thresh: float,
     clipping_mehod: ClippingMethod = ClippingMethod.STATIC,
     ratio: float = -1,
-):
+) -> float:
     """
     Calculates the clipping threshold by looking at the layer norms
     of each example. Three methods are supported: static threshold,
@@ -346,3 +377,132 @@ def calculate_thresh_value(
 
     """
     return _thresh_[clipping_mehod](data, ratio=ratio, current_thresh=current_thresh)
+
+
+class NormClipper(ABC):
+    """
+    Abstract class to calculate the clipping factor
+    """
+
+    def calc_clipping_factors(self, named_norms):
+        """
+        Calculates the clipping factor based on the given
+        parameters
+        """
+        pass
+
+    @property
+    def thresholds(self):
+        pass
+
+    @property
+    def is_per_layer(self):
+        pass
+
+
+class ConstantFlatClipper(NormClipper):
+    def __init__(self, flat_value: float):
+        self.flat_value = float(flat_value)
+
+    def calc_clipping_factors(self, norms):
+        # Expects a list of size one.
+        if len(norms) != 1:
+            raise ValueError(
+                "Waring: flat norm selected but "
+                f"received norm for {len(norms)} layers"
+            )
+        per_sample_clip_factor = self.flat_value / (norms[0] + 1e-6)
+        # We are *clipping* the gradient, so if the factor is ever >1 we set it to 1
+        per_sample_clip_factor = per_sample_clip_factor.clamp(max=1.0)
+        # return this clipping factor for all layers
+        return cycle([per_sample_clip_factor])
+
+    @property
+    def thresholds(self):
+        return torch.tensor([self.flat_value])
+
+    @property
+    def is_per_layer(self):
+        return False
+
+
+class ConstantPerLayerClipper(NormClipper):
+    def __init__(self, flat_values: List[float]):
+        self.flat_values = [float(fv) for fv in flat_values]
+
+    def calc_clipping_factors(self, norms):
+        if len(norms) != len(self.flat_values) and len(self.flat_values) != 1:
+            raise ValueError(
+                f"{len(norms)} layers have provided norms but the "
+                f"number of clipping thresholds is {len(self.flat_values)}"
+            )
+
+        self.flat_values = self.flat_values * (
+            len(norms) if len(self.flat_values) == 1 else 1
+        )
+
+        clipping_factor = []
+        for norm, threshold in zip(norms, self.flat_values):
+            per_sample_clip_factor = threshold / (norm + 1e-6)
+            clipping_factor.append(per_sample_clip_factor.clamp(max=1.0))
+        return clipping_factor
+
+    @property
+    def thresholds(self):
+        return torch.tensor(self.flat_values)
+
+    @property
+    def is_per_layer(self):
+        return True
+
+
+class _Experimental_Clipper_(NormClipper):
+    def __init__(
+        self,
+        flat_values: List[float],
+        clip_per_layer: bool = False,
+        clipping_method: ClippingMethod = ClippingMethod.STATIC,
+        ratio: float = 0.0,
+    ):
+        self.flat_values = flat_values
+        self.clip_per_layer = clip_per_layer
+        if clipping_method != ClippingMethod.STATIC:
+            print(
+                "Warning! Current implementations of dynamic clipping "
+                "are not privacy safe; Caclulated privacy loss is not "
+                "indicative of a proper bound."
+            )
+        self.clipping_method = clipping_method
+        self.ratio = ratio
+        self.thresh = [0]
+
+    def calc_clipping_factors(self, norms):
+        if len(self.flat_values) == 1:
+            current_threshs = self.flat_values * (
+                len(norms) if self.clip_per_layer else 1
+            )
+        clipping_factor = []
+        self.thresh = []
+
+        if len(norms) != len(current_threshs):
+            raise ValueError(
+                f"Provided grad norm max's size {len(self.current_max)}"
+                f" does not match the number of layers {len(norms)}"
+            )
+
+        for norm, current_thresh in zip(norms, current_threshs):
+            thresh = _calculate_thresh_value(
+                norm, current_thresh, self.clipping_method, self.ratio
+            )
+            self.thresh.append(thresh)
+            per_sample_clip_factor = thresh / (norm + 1e-6)
+            clipping_factor.append(per_sample_clip_factor.clamp(max=1.0))
+        return clipping_factor
+
+    @property
+    def thresholds(self):
+        return torch.tensor(self.thresh)
+
+    @property
+    def is_per_layer(self):
+        return self.clip_per_layer

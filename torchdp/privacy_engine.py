@@ -8,7 +8,7 @@ from typing import List, Union
 import torch
 from torch import nn
 
-from . import privacy_analysis as tf_privacy
+from . import privacy_analysis as tf_privacy, utils
 from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import PerSampleGradientClipper
 
@@ -68,8 +68,16 @@ class PrivacyEngine:
         # Validate the model for not containing un-supported modules.
         self.validator.validate(self.module)
         # only attach if model is validated
+        norm_clipper = (
+            utils.ConstantFlatClipper(self.max_grad_norm)
+            if not isinstance(self.max_grad_norm, list)
+            else utils.ConstantPerLayerClipper(self.max_grad_norm)
+        )
+
         self.clipper = PerSampleGradientClipper(
-            self.module, self.max_grad_norm, self.batch_dim, **self.misc_settings
+            self.module,
+            norm_clipper,
+            self.batch_dim == 0,
         )
 
         def dp_step(self, closure=None):
@@ -107,7 +115,8 @@ class PrivacyEngine:
 
     def step(self):
         self.steps += 1
-        clip_values, batch_size = self.clipper.step()
+        self.clipper.clip_and_accumulate()
+        clip_values, batch_size = self.clipper.pre_step()
 
         # ensure the clipper consumed the right amount of gradients.
         # In the last batch of a training epoch, we might get a batch that is
@@ -137,7 +146,7 @@ class PrivacyEngine:
         return self
 
     def virtual_step(self):
-        self.clipper.virtual_step()
+        self.clipper.clip_and_accumulate()
 
     def _generate_noise(self, max_norm, parameter):
         if self.noise_multiplier > 0:

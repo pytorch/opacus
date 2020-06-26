@@ -2,9 +2,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
 
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchdp import PrivacyEngine, utils
@@ -147,10 +147,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
     def test_throws_on_bad_per_layer_maxnorm_size(self):
         model, optimizer = self.setUp_init_model(
-            private=True,
-            noise_multiplier=0.1,
-            max_grad_norm=[999] * 10,
-            clip_per_layer=True,
+            private=True, noise_multiplier=0.1, max_grad_norm=[999] * 10
         )
         # there are a total of 18 parameters sets, [bias, weight] * 9 layers
         # the provided max_grad_norm is not either a scalar or a list of size 18

@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from torchdp import PerSampleGradientClipper
 from torchvision import transforms
 from torchvision.datasets import FakeData
+from torchdp.utils import ConstantFlatClipper, ConstantPerLayerClipper
 
 
 class SampleConvNet(nn.Module):
@@ -79,17 +80,23 @@ class PerSampleGradientClipper_test(unittest.TestCase):
         self.clipped_model.load_state_dict(self.original_model.state_dict())  # fill it
 
         # Intentionally clipping to a very small value
+        norm_clipper = (
+            ConstantFlatClipper(clip_value)
+            if not isinstance(clip_value, list)
+            else ConstantPerLayerClipper(clip_value)
+        )
         self.clipper = PerSampleGradientClipper(
             self.clipped_model,
-            clip_value,
-            clip_per_layer=True if isinstance(clip_value, list) else False,
+            norm_clipper,
         )
+
         for x, y in self.dl:
             logits = self.clipped_model(x)
             loss = self.criterion(logits, y)
             loss.backward()  # puts grad in self.clipped_model.parameters()
             if run_clipper_step:
-                self.clipper.step()
+                self.clipper.clip_and_accumulate()
+                self.clipper.pre_step()
         self.clipped_grads_norms = torch.stack(
             [p.grad.norm() for p in self.clipped_model.parameters() if p.requires_grad],
             dim=-1,

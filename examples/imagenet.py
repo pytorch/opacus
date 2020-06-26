@@ -29,25 +29,59 @@ from torchdp import PrivacyEngine, stats, utils
 
 
 # The following few lines, enable stats gathering about the run
-# 1. where the stats should be logged
-stats.set_global_summary_writer(tensorboard.SummaryWriter("/tmp/stat"))
-# 2. enable stats
-stats.add(
-    # stats about gradient norms aggregated for all layers
-    stats.Stat(stats.StatType.CLIPPING, "AllLayers", frequency=0.1),
-    # stats about gradient norms per layer
-    stats.Stat(stats.StatType.CLIPPING, "PerLayer", frequency=0.1),
-    # stats about clipping
-    stats.Stat(stats.StatType.CLIPPING, "ClippingStats", frequency=0.1),
-    # stats on training accuracy
-    stats.Stat(stats.StatType.TRAIN, "accuracy", frequency=0.01),
-    # stats on validation accuracy
-    stats.Stat(stats.StatType.TEST, "accuracy"),
-)
+_clipping_stats = {}  # will be used to collect stats from different layers
 
-# The following lines enable stat gathering for the clipping process
-# and set a default of per layer clipping for the Privacy Engine
-clipping = {"clip_per_layer": False, "enable_stat": True}
+
+def enable_stats(stats_dir):
+
+    if stats_dir is None:
+        return None
+    # 1. where the stats should be logged
+    stats.set_global_summary_writer(tensorboard.SummaryWriter(stats_dir))
+    # 2. enable stats
+    stats.add(
+        # stats about  gradient norms and clipping
+        stats.Stat(stats.StatType.CLIPPING, "Clipping", frequency=0.1),
+        # stats on training accuracy
+        stats.Stat(stats.StatType.TRAIN, "accuracy", frequency=0.01),
+        # stats on validation accuracy
+        stats.Stat(stats.StatType.TEST, "accuracy"),
+    )
+
+    def layer_stats_collector(
+        param_name,
+        clipping_factor,
+        clipping_threshold,
+        per_sample_norm,
+        per_sample_grad,
+        grad_before_clip,
+        grad_after_clip,
+    ):
+        global _clipping_stats
+        if param_name is None:
+            # module is done processing all params, report all stats at once
+            stats.update(stats.StatType.CLIPPING, "Clipping", **_clipping_stats)
+            # clear stats for next round
+            _clipping_stats = {}
+            return
+
+        _clipping_stats[f"{param_name}:max_norm"] = per_sample_norm.max()
+        _clipping_stats[f"{param_name}:mean_norm"] = per_sample_norm.mean()
+        _clipping_stats[f"{param_name}:median_norm"] = per_sample_norm.median()
+        _clipping_stats[f"{param_name}:clip"] = clipping_threshold
+        _clipping_stats[f"{param_name}:percent"] = (
+            (per_sample_norm > clipping_threshold).to(dtype=torch.float64).mean()
+        )
+        pre_clip_pos = grad_before_clip > 0
+        post_clip_pos = grad_after_clip > 0
+        _clipping_stats[f"{param_name}:switch"] = (
+            torch.logical_xor(pre_clip_pos, post_clip_pos)
+            .to(dtype=torch.float64)
+            .mean()
+        )
+
+    return layer_stats_collector
+
 
 parser = argparse.ArgumentParser(description="PyTorch ImageNet DP Training")
 parser.add_argument("data", metavar="DIR", help="path to dataset")
@@ -81,7 +115,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-na",
-    "--n_accumulation_steps",
+    "--n-accumulation-steps",
     default=1,
     type=int,
     metavar="N",
@@ -193,6 +227,11 @@ parser.add_argument(
     default="checkpoint",
     help="path to save check points",
 )
+
+parser.add_argument(
+    "--stats-dir", type=str, default=None, help="path to save tensor board stats"
+)
+
 
 best_acc1 = 0
 
@@ -383,9 +422,10 @@ def main_worker(gpu, ngpus_per_node, args):
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
-            **clipping,
         )
         privacy_engine.attach(optimizer)
+        stat_collector = enable_stats(args.stats_dir)
+        privacy_engine.clipper.set_on_batch_clip_func(stat_collector)
     else:
         print("PRIVACY ENGINE OFF")
 

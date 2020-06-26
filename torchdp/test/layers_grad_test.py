@@ -7,6 +7,7 @@ import torch.nn as nn
 from torchdp import PerSampleGradientClipper
 from torchdp.dp_model_inspector import DPModelInspector
 from torchdp.layers import DPMultiheadAttention, SequenceBias
+from torchdp.utils import ConstantFlatClipper
 
 
 class LayersGradTest(unittest.TestCase):
@@ -43,7 +44,7 @@ class LayersGradTest(unittest.TestCase):
 
         # run with DP
         clipper = PerSampleGradientClipper(
-            layer, 999, batch_dim=kwargs.get("batch_dim", 0)
+            layer, ConstantFlatClipper(999), kwargs.get('batch_first', True)
         )
         self._reset_seeds()
         layer.zero_grad()
@@ -59,7 +60,8 @@ class LayersGradTest(unittest.TestCase):
                     f"Per-sample gradients hasn't been computed for {param_name}",
                 )
 
-        clipper.step()
+        clipper.clip_and_accumulate()
+        clipper.pre_step()
 
         private_run_grads = [
             p.grad.detach().clone() for p in layer.parameters() if p.requires_grad
@@ -114,24 +116,24 @@ class LayersGradTest(unittest.TestCase):
         x = torch.randn(4, 3, 2)
         layer = SequenceBias(2)
 
-        self._check_one_layer(layer, x, batch_dim=1)
+        self._check_one_layer(layer, x, batch_first=False)
 
     def test_multihead_attention(self):
         x = torch.randn(16, 24, 32)
 
         layer = DPMultiheadAttention(32, 1)
-        self._check_one_layer(layer, x, x, x, batch_dim=1)
+        self._check_one_layer(layer, x, x, x, batch_first=False)
 
         layer = DPMultiheadAttention(32, 1, bias=True, add_bias_kv=True, dropout=0.05)
-        self._check_one_layer(layer, x, x, x, batch_dim=1)
+        self._check_one_layer(layer, x, x, x, batch_first=False)
 
         layer = DPMultiheadAttention(32, 1, bias=True, add_bias_kv=True)
-        self._check_one_layer(layer, x, x, x, batch_dim=1)
+        self._check_one_layer(layer, x, x, x, batch_first=False)
 
         layer = DPMultiheadAttention(
             32, 1, bias=True, add_bias_kv=True, add_zero_attn=True
         )
-        self._check_one_layer(layer, x, x, x, batch_dim=1)
+        self._check_one_layer(layer, x, x, x, batch_first=False)
 
         q = torch.randn(16, 24, 32)
         k = torch.randn(20, 24, 28)
@@ -139,7 +141,8 @@ class LayersGradTest(unittest.TestCase):
         layer = DPMultiheadAttention(
             32, 1, bias=True, add_bias_kv=True, add_zero_attn=True, kdim=28, vdim=28
         )
-        self._check_one_layer(layer, q, k, v, batch_dim=1)
+        self._check_one_layer(layer, q, k, v, batch_first=False)
+
 
     def test_embedding(self):
         layer = nn.Embedding(256, 100)
