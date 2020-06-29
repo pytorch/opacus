@@ -503,13 +503,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         optimizer.zero_grad()
         loss.backward()
 
-        if args.n_accumulation_steps > 1:
-            optimizer.virtual_step()
-
         # make sure we take a step after processing the last mini-batch in the
         # epoch to ensure we start the next epoch with a clean state
         if ((i + 1) % args.n_accumulation_steps == 0) or ((i + 1) == len(train_loader)):
             optimizer.step()
+        else:
+            optimizer.virtual_step()
 
         # measure elapsed time
         batch_time.update(time.time() - end)

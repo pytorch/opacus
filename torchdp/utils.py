@@ -464,7 +464,7 @@ class _Experimental_Clipper_(NormClipper):
         clipping_method: ClippingMethod = ClippingMethod.STATIC,
         ratio: float = 0.0,
     ):
-        self.flat_values = flat_values
+        self.flat_values = [float(float_value) for float_value in flat_values]
         self.clip_per_layer = clip_per_layer
         if clipping_method != ClippingMethod.STATIC:
             print(
@@ -474,7 +474,7 @@ class _Experimental_Clipper_(NormClipper):
             )
         self.clipping_method = clipping_method
         self.ratio = ratio
-        self.thresh = [0]
+        self.thresh = [0.0]
 
     def calc_clipping_factors(self, norms):
         if len(self.flat_values) == 1:
