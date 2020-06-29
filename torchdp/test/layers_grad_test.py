@@ -26,10 +26,9 @@ class LayersGradTest(unittest.TestCase):
             )
 
         self.validator.validate(layer)
-        if hasattr(layer, "weight"):
-            nn.init.uniform_(layer.weight)
-        if hasattr(layer, "bias"):
-            nn.init.uniform_(layer.bias)
+        for name, param in layer.named_parameters():
+            if ("weight" in name) or ("bias" in name):
+                nn.init.uniform_(param, -1.0, 1.0)
 
         # run without DP
         self._reset_seeds()
@@ -44,8 +43,14 @@ class LayersGradTest(unittest.TestCase):
 
         # run with DP
         clipper = PerSampleGradientClipper(
-            layer, ConstantFlatClipper(999), kwargs.get('batch_first', True)
+            layer, ConstantFlatClipper(1999), kwargs.get('batch_first', True)
         )
+        # The test outcome is sensitive to the threshold here. This test verifies that our backward
+        # hooks populate sample specific gradients correctly and that when aggregated, they agree
+        # with the aggregated gradients from vanilla pytorch. The clipper currently does both clipping
+        # and aggregation, whereas we only want to do the latter. As a work around, we simply set a very
+        # high threshold for clipping so that it effectively becomes a no-op.
+
         self._reset_seeds()
         layer.zero_grad()
         output = layer(*args)
