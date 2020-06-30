@@ -25,6 +25,7 @@ class PrivacyEngine:
         grad_norm_type: int = 2,
         batch_dim: int = 0,
         target_delta: float = 1e-6,
+        loss_reduction: str = "mean",
         **misc_settings,
     ):
         self.steps = 0
@@ -44,6 +45,8 @@ class PrivacyEngine:
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
         self.misc_settings = misc_settings
+
+        self.loss_reduction = loss_reduction
 
     def detach(self):
         optim = self.optimizer
@@ -146,7 +149,9 @@ class PrivacyEngine:
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
             noise = self._generate_noise(clip_value, p)
-            p.grad += noise / batch_size
+            if self.loss_reduction == "mean":
+                noise /= batch_size
+            p.grad += noise
 
     def to(self, device):
         self.device = device

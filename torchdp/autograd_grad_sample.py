@@ -23,7 +23,7 @@ _hooks_disabled: bool = False
 _enforce_fresh_backprop: bool = False
 
 
-def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> None:
+def add_hooks(model: nn.Module, loss_reduction: str = "mean", batch_dim: int = 0) -> None:
     """
     Adds hooks to model to save activations and backprop values.
     The hooks will
@@ -42,11 +42,6 @@ def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> 
     global _hooks_disabled
     _hooks_disabled = False
 
-    if loss_type not in ("sum", "mean"):
-        raise ValueError(
-            f"loss_type = {loss_type}. Only 'sum' and 'mean' losses are supported"
-        )
-
     handles = []
     for layer in model.modules():
         if get_layer_type(layer) in _supported_layers_grad_samplers.keys():
@@ -55,7 +50,7 @@ def add_hooks(model: nn.Module, loss_type: str = "mean", batch_dim: int = 0) -> 
             handles.append(
                 layer.register_backward_hook(
                     partial(
-                        _capture_backprops, loss_type=loss_type, batch_dim=batch_dim
+                        _capture_backprops, loss_reduction=loss_reduction, batch_dim=batch_dim
                     )
                 )
             )
@@ -110,7 +105,7 @@ def _capture_backprops(
     layer: nn.Module,
     _input: torch.Tensor,
     output: torch.Tensor,
-    loss_type: str,
+    loss_reduction: str,
     batch_dim: int,
 ):
     """Capture backprops in backward pass and store per-sample gradients."""
@@ -119,11 +114,11 @@ def _capture_backprops(
         return
 
     backprops = output[0].detach()
-    _compute_grad_sample(layer, backprops, loss_type, batch_dim)
+    _compute_grad_sample(layer, backprops, loss_reduction, batch_dim)
 
 
 def _compute_grad_sample(
-    layer: nn.Module, backprops: torch.Tensor, loss_type: str, batch_dim: int
+    layer: nn.Module, backprops: torch.Tensor, loss_reduction: str, batch_dim: int
 ) -> None:
     """
     Compute per-example gradients and save them under 'param.grad_sample'.
@@ -150,10 +145,15 @@ def _compute_grad_sample(
 
     A = layer.activations
     n = A.shape[batch_dim]
-    if loss_type == "mean":
+    if loss_reduction == "mean":
         B = backprops * n
-    else:  # loss_type == 'sum':
+    elif loss_reduction == "sum":
         B = backprops
+    else:
+        raise ValueError(
+            f"loss_reduction = {loss_reduction}. Only 'sum' and 'mean' losses are supported"
+        )
+
     # rearrange the blob dimensions
     if batch_dim != 0:
         A = A.permute([batch_dim] + [x for x in range(A.dim()) if x != batch_dim])

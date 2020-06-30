@@ -32,8 +32,7 @@ class PerSampleGradientTest(unittest.TestCase):
         )
 
     def _check_one_layer_with_criterion(self, layer, criterion, data, batch_first=True):
-
-        clipper = PerSampleGradientClipper(layer, ConstantFlatClipper(1e9), batch_first=batch_first)
+        clipper = PerSampleGradientClipper(layer, ConstantFlatClipper(1e9), batch_first=batch_first, loss_reduction=criterion.reduction)
         self._run_once(layer, criterion, data)
 
         computed_sample_grads = {}
@@ -42,6 +41,7 @@ class PerSampleGradientTest(unittest.TestCase):
 
         clipper.clip_and_accumulate()
         clipper.pre_step()
+        clipper.close()
 
         batch_dim = 0 if batch_first else 1
         data = data.transpose(0, batch_dim)
@@ -59,12 +59,13 @@ class PerSampleGradientTest(unittest.TestCase):
 
                 self.assertTrue(
                     torch.allclose(
-                        vanilla_per_sample_grad, computed_per_sample_grad, atol=10e-5, rtol=10e-3
+                        vanilla_per_sample_grad,
+                        computed_per_sample_grad,
+                        atol=10e-5,
+                        rtol=10e-3,
                     ),
                     f"Gradient mismatch. Parameter: {layer}.{param_name}, loss: {criterion.reduction}",
                 )
-
-        clipper.close()
 
     def test_conv1d(self):
         x = torch.randn(24, 16, 24)

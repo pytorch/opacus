@@ -31,7 +31,7 @@ from typing import Callable, List, Tuple
 import torch
 from torch import nn
 
-from . import autograd_grad_sample, stats
+from . import autograd_grad_sample
 from .utils import NormClipper, calc_sample_norms
 
 
@@ -41,6 +41,7 @@ class PerSampleGradientClipper:
         module: nn.Module,
         norm_clipper: NormClipper,
         batch_first: bool = True,
+        loss_reduction: str = "mean",
     ):
         """
         Attaches to a module, and clips all grad_sample in the backward
@@ -54,11 +55,12 @@ class PerSampleGradientClipper:
                 the batch, if `False` the second dimension is the batch.
         """
         self.module = module
-        autograd_grad_sample.add_hooks(self.module, batch_dim=0 if batch_first else 1)
+        autograd_grad_sample.add_hooks(self.module, batch_dim=0 if batch_first else 1, loss_reduction=loss_reduction)
         # TODO double check on removing batch_dim
         self.hooks_attached = True
         self.norm_clipper = norm_clipper
         self.batch_first = batch_first
+        self.loss_reduction = loss_reduction
         self._reset_aggregated_state()
 
         self.on_batch_clip_func = None
@@ -100,7 +102,7 @@ class PerSampleGradientClipper:
         # now that we know the full batch size, we can average the gradients
         n = 0
         for _, p in self._named_params():
-            p.grad = p.summed_grad / batch_size
+            p.grad = self._scale_summed_grad(p.summed_grad, batch_size)
             n += 1
             del p.summed_grad
 
@@ -157,7 +159,7 @@ class PerSampleGradientClipper:
                 per_sample_norm,
                 p.grad_sample,
                 grad_before_clip=p.grad,
-                grad_after_clip=summed_grad / batch_size,
+                grad_after_clip=self._scale_summed_grad(summed_grad, batch_size),
             )
 
             # remove the per-sample gradients
@@ -175,6 +177,18 @@ class PerSampleGradientClipper:
             for n, p in self.module.named_parameters()
             if p.requires_grad
         )
+
+    def _scale_summed_grad(self, summed_grad, batch_size):
+        """ Depending on the loss type, summed grad might need to be averaged over batch
+        """
+        if self.loss_reduction == "mean":
+            return summed_grad / batch_size
+        elif self.loss_reduction == "sum":
+            return summed_grad.detach()
+        else:
+            raise ValueError(
+                f"Loss reduction must be either sum or mean. Got {self.loss_reduction}"
+            )
 
     def _weighted_sum(self, batch_weight, param):
         """

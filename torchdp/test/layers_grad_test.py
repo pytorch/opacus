@@ -54,7 +54,7 @@ class LayersGradTest(unittest.TestCase):
 
         # run with DP
         clipper = PerSampleGradientClipper(
-            layer, ConstantFlatClipper(1e9), batch_first=kwargs.get("batch_first", True)
+            layer, ConstantFlatClipper(1e9), batch_first=kwargs.get("batch_first", True), loss_reduction=criterion.reduction
         )
         self._run_once(layer, criterion, *args)
 
@@ -84,7 +84,7 @@ class LayersGradTest(unittest.TestCase):
                 torch.allclose(
                     vanilla_grad, private_grad, atol=10e-5, rtol=10e-3
                 ),
-                f"Gradient mismatch. Parameter: {vanilla_name}, loss: {criterion.reduction}",
+                f"Gradient mismatch. Parameter: {layer}.{vanilla_name}, loss: {criterion.reduction}",
             )
 
         clipper.close()
