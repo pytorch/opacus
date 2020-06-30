@@ -18,65 +18,76 @@ class LayersGradTest(unittest.TestCase):
         torch.manual_seed(1337)
         torch.cuda.manual_seed(1337)
 
-    def _check_one_layer(self, layer, *args, **kwargs):
-        if hasattr(layer, "autograd_grad_sample_hooks"):
-            raise ValueError(
-                f"Input layer already has hooks attached."
-                f"Please provide freshly constructed layer"
-            )
+    def _run_once(self, layer, criterion, *args):
+        self._reset_seeds()
+        layer.zero_grad()
+        output = layer(*args)
+        if isinstance(output, tuple):
+            output = output[0]
+        output = output.squeeze()
 
+        y = torch.zeros_like(output)
+        loss = criterion(output, y)
+        loss.backward()
+
+    def _check_one_layer(self, layer, *args, **kwargs):
+        self._check_one_layer_with_criterion(
+            layer, nn.L1Loss(reduction="mean"), *args, **kwargs
+        )
+        self._check_one_layer_with_criterion(
+            layer, nn.L1Loss(reduction="sum"), *args, **kwargs
+        )
+
+    def _check_one_layer_with_criterion(self, layer, criterion, *args, **kwargs):
         self.validator.validate(layer)
         for name, param in layer.named_parameters():
             if ("weight" in name) or ("bias" in name):
                 nn.init.uniform_(param, -1.0, 1.0)
 
         # run without DP
-        self._reset_seeds()
-        layer.zero_grad()
-        output = layer(*args)
-        if isinstance(output, tuple):
-            output = output[0]
-        output.norm().backward()
+        self._run_once(layer, criterion, *args)
         vanilla_run_grads = [
-            p.grad.detach().clone() for p in layer.parameters() if p.requires_grad
+            (name, p.grad.detach())
+            for (name, p) in layer.named_parameters()
+            if p.requires_grad
         ]
 
         # run with DP
         clipper = PerSampleGradientClipper(
-            layer, ConstantFlatClipper(1999), kwargs.get('batch_first', True)
+            layer, ConstantFlatClipper(1e9), batch_first=kwargs.get("batch_first", True)
         )
-        # The test outcome is sensitive to the threshold here. This test verifies that our backward
-        # hooks populate sample specific gradients correctly and that when aggregated, they agree
-        # with the aggregated gradients from vanilla pytorch. The clipper currently does both clipping
-        # and aggregation, whereas we only want to do the latter. As a work around, we simply set a very
-        # high threshold for clipping so that it effectively becomes a no-op.
-
-        self._reset_seeds()
-        layer.zero_grad()
-        output = layer(*args)
-        if isinstance(output, tuple):
-            output = output[0]
-        output.norm().backward()
+        self._run_once(layer, criterion, *args)
 
         for param_name, param in layer.named_parameters():
             if param.requires_grad:
                 self.assertTrue(
                     hasattr(param, "grad_sample"),
-                    f"Per-sample gradients hasn't been computed for {param_name}",
+                    f"Per-sample gradients haven't been computed for {param_name}",
                 )
 
         clipper.clip_and_accumulate()
         clipper.pre_step()
 
         private_run_grads = [
-            p.grad.detach().clone() for p in layer.parameters() if p.requires_grad
+            (name, p.grad.detach())
+            for (name, p) in layer.named_parameters()
+            if p.requires_grad
         ]
 
         # compare
-        for vanilla_grad, private_grad in zip(vanilla_run_grads, private_run_grads):
+        for (vanilla_name, vanilla_grad), (private_name, private_grad) in zip(
+            vanilla_run_grads, private_run_grads
+        ):
+            assert vanilla_name == private_name
+
             self.assertTrue(
-                torch.allclose(vanilla_grad, private_grad, atol=10e-5, rtol=10e-3)
+                torch.allclose(
+                    vanilla_grad, private_grad, atol=10e-5, rtol=10e-3
+                ),
+                f"Gradient mismatch. Parameter: {vanilla_name}, loss: {criterion.reduction}",
             )
+
+        clipper.close()
 
     def test_conv1d(self):
         x = torch.randn(64, 16, 24)
@@ -147,7 +158,6 @@ class LayersGradTest(unittest.TestCase):
             32, 1, bias=True, add_bias_kv=True, add_zero_attn=True, kdim=28, vdim=28
         )
         self._check_one_layer(layer, q, k, v, batch_first=False)
-
 
     def test_embedding(self):
         layer = nn.Embedding(256, 100)
