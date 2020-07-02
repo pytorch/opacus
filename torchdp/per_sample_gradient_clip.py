@@ -55,8 +55,7 @@ class PerSampleGradientClipper:
                 the batch, if `False` the second dimension is the batch.
         """
         self.module = module
-        autograd_grad_sample.add_hooks(self.module, batch_dim=0 if batch_first else 1, loss_reduction=loss_reduction)
-        # TODO double check on removing batch_dim
+        autograd_grad_sample.add_hooks(self.module, batch_first=batch_first, loss_reduction=loss_reduction)
         self.hooks_attached = True
         self.norm_clipper = norm_clipper
         self.batch_first = batch_first

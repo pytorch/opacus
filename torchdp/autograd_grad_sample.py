@@ -23,7 +23,7 @@ _hooks_disabled: bool = False
 _enforce_fresh_backprop: bool = False
 
 
-def add_hooks(model: nn.Module, loss_reduction: str = "mean", batch_dim: int = 0) -> None:
+def add_hooks(model: nn.Module, loss_reduction: str = "mean", batch_first: bool = True) -> None:
     """
     Adds hooks to model to save activations and backprop values.
     The hooks will
@@ -50,7 +50,7 @@ def add_hooks(model: nn.Module, loss_reduction: str = "mean", batch_dim: int = 0
             handles.append(
                 layer.register_backward_hook(
                     partial(
-                        _capture_backprops, loss_reduction=loss_reduction, batch_dim=batch_dim
+                        _capture_backprops, loss_reduction=loss_reduction, batch_first=batch_first
                     )
                 )
             )
@@ -106,7 +106,7 @@ def _capture_backprops(
     _input: torch.Tensor,
     output: torch.Tensor,
     loss_reduction: str,
-    batch_dim: int,
+    batch_first: bool,
 ):
     """Capture backprops in backward pass and store per-sample gradients."""
 
@@ -114,11 +114,11 @@ def _capture_backprops(
         return
 
     backprops = output[0].detach()
-    _compute_grad_sample(layer, backprops, loss_reduction, batch_dim)
+    _compute_grad_sample(layer, backprops, loss_reduction, batch_first)
 
 
 def _compute_grad_sample(
-    layer: nn.Module, backprops: torch.Tensor, loss_reduction: str, batch_dim: int
+    layer: nn.Module, backprops: torch.Tensor, loss_reduction: str, batch_first: bool
 ) -> None:
     """
     Compute per-example gradients and save them under 'param.grad_sample'.
@@ -128,7 +128,7 @@ def _compute_grad_sample(
         backprops: the captured backprops
         loss_type: either "mean" or "sum" depending on whether backpropped
         loss was averaged or summed over batch
-        batch_dim: the batch dimension
+        batch_first: True is batch dimension is first
     """
     layer_type = get_layer_type(layer)
     if (
@@ -142,6 +142,8 @@ def _compute_grad_sample(
             f"No activations detected for {type(layer)},"
             " run forward after add_hooks(model)"
         )
+
+    batch_dim = 0 if batch_first else 1
 
     A = layer.activations
     n = A.shape[batch_dim]
