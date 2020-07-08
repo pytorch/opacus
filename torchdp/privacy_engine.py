@@ -23,7 +23,7 @@ class PrivacyEngine:
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
         grad_norm_type: int = 2,
-        batch_dim: int = 0,
+        batch_first: bool = True,
         target_delta: float = 1e-6,
         loss_reduction: str = "mean",
         **misc_settings,
@@ -38,7 +38,7 @@ class PrivacyEngine:
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
         self.grad_norm_type = grad_norm_type
-        self.batch_dim = batch_dim
+        self.batch_first = batch_first
         self.target_delta = target_delta
 
         self._set_seed(None)
@@ -87,7 +87,7 @@ class PrivacyEngine:
         self.clipper = PerSampleGradientClipper(
             self.module,
             norm_clipper,
-            self.batch_dim == 0,
+            self.batch_first,
         )
 
         def dp_step(self, closure=None):
