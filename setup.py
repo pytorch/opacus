@@ -27,6 +27,8 @@ setuptools.setup(
     license="Apache-2.0",
     install_requires=required,
     packages=setuptools.find_packages(),
+    package_data={'': ['requirements.txt']},
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
