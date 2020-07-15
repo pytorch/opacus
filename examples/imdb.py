@@ -12,10 +12,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchtext
-from tqdm import tqdm
 from torch.functional import F
 from torchdp import PrivacyEngine
 from torchtext.data.utils import get_tokenizer
+from tqdm import tqdm
 
 
 class SampleNet(nn.Module):
@@ -188,10 +188,7 @@ def main():
         help="Disable privacy training and just train with vanilla optimizer",
     )
     parser.add_argument(
-        "--data-root",
-        type=str,
-        default="../imdb",
-        help="Where IMDB is/will be stored",
+        "--data-root", type=str, default="../imdb", help="Where IMDB is/will be stored"
     )
 
     args = parser.parse_args()

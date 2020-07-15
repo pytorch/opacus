@@ -23,7 +23,9 @@ _hooks_disabled: bool = False
 _enforce_fresh_backprop: bool = False
 
 
-def add_hooks(model: nn.Module, loss_reduction: str = "mean", batch_first: bool = True) -> None:
+def add_hooks(
+    model: nn.Module, loss_reduction: str = "mean", batch_first: bool = True
+) -> None:
     """
     Adds hooks to model to save activations and backprop values.
     The hooks will
@@ -50,7 +52,9 @@ def add_hooks(model: nn.Module, loss_reduction: str = "mean", batch_first: bool 
             handles.append(
                 layer.register_backward_hook(
                     partial(
-                        _capture_backprops, loss_reduction=loss_reduction, batch_first=batch_first
+                        _capture_backprops,
+                        loss_reduction=loss_reduction,
+                        batch_first=batch_first,
                     )
                 )
             )

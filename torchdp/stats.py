@@ -36,11 +36,13 @@ Example:
 
 from enum import IntEnum
 from typing import Any
+
+
 try:
     from torch.utils.tensorboard import SummaryWriter
 except ImportError:
     # dummy SummaryWriter
-    print('Warning! Tensorboard library was not found.')
+    print("Warning! Tensorboard library was not found.")
 
     class SummaryWriter:
         def add_scalar(self, *args, **kwargs):
@@ -80,40 +82,45 @@ class Stat:
             stat.log(i)
         # reports (iter:0, value:0) and (iter:10, value:4.5) to tensorboard
     """
+
     summary_writer: SummaryWriter = None
     """
     The global `SummaryWriter` from tensorboard, if is `None` on construction
     of the first `Stat` object, a summary_writer will be created per instance.
     """
 
-    def __init__(self, stat_type : StatType, name : str,
-                 frequency : float = 1., aggr : str = 'avg'):
-        self.type : StatType = stat_type
+    def __init__(
+        self, stat_type: StatType, name: str, frequency: float = 1.0, aggr: str = "avg"
+    ):
+        self.type: StatType = stat_type
         self.name: str = name
         self.report: int = int(1 / frequency)
-        self.aggr : str = aggr
-        self.writer : SummaryWriter = Stat.summary_writer\
-            if Stat.summary_writer else SummaryWriter()
+        self.aggr: str = aggr
+        self.writer: SummaryWriter = Stat.summary_writer if Stat.summary_writer else SummaryWriter()
         self.reset()
 
     def reset(self):
         self.named_value = {}
-        self.iter : int = 0
+        self.iter: int = 0
 
     def log(self, named_value: Any):
         if self.iter % self.report == 0:
             for k, v in self.named_value.items():
                 self.writer.add_scalar(
-                    f'{self.type.name}:{self.name}/{k}', v, self.iter)
+                    f"{self.type.name}:{self.name}/{k}", v, self.iter
+                )
         self._aggregate(named_value)
 
-    def _aggregate(self, named_value : Any):
-        if self.aggr == 'sample':
+    def _aggregate(self, named_value: Any):
+        if self.aggr == "sample":
             self.named_values = named_value
-        elif self.aggr == 'avg':
+        elif self.aggr == "avg":
             for k, v in named_value.items():
-                self.named_value[k] = self.named_value[k] + float(v) / self.report\
-                    if (self.iter % self.report) else float(v) / self.report
+                self.named_value[k] = (
+                    self.named_value[k] + float(v) / self.report
+                    if (self.iter % self.report)
+                    else float(v) / self.report
+                )
         self.iter += 1
 
 
@@ -140,7 +147,7 @@ def clear():
     Stats.clear()
 
 
-def remove(name : str):
+def remove(name: str):
     """
     Will remove the stat object nemaed
     `name` from the global statistics gathering.
@@ -149,16 +156,19 @@ def remove(name : str):
     Stats = [stat for stat in Stats if stat.name != name]
 
 
-def reset(stat_type : StatType = None, name : str = None):
+def reset(stat_type: StatType = None, name: str = None):
     """
     Resets the stat with given `name` and `stat_type`
     """
-    [stat.reset() for stat in Stats if
-        (stat_type is None or stat.type == stat_type)
-        and (name is None or stat.name == name)]
+    [
+        stat.reset()
+        for stat in Stats
+        if (stat_type is None or stat.type == stat_type)
+        and (name is None or stat.name == name)
+    ]
 
 
-def update(stat_type : StatType = None, name : str = None, **named_values):
+def update(stat_type: StatType = None, name: str = None, **named_values):
     """
     updates the stat(s) with the given `name` and `stat_type`
 
@@ -169,6 +179,9 @@ def update(stat_type : StatType = None, name : str = None, **named_values):
             stat for the `stat_type`
         **named_values: set of values with their names
     """
-    [stat.log(named_values) for stat in Stats if
-        (stat_type is None or stat.type == stat_type)
-        and (name is None or stat.name == name)]
+    [
+        stat.log(named_values)
+        for stat in Stats
+        if (stat_type is None or stat.type == stat_type)
+        and (name is None or stat.name == name)
+    ]

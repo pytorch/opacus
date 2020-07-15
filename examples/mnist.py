@@ -9,7 +9,6 @@ Runs MNIST training with differential privacy.
 import argparse
 
 import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -34,13 +33,13 @@ class SampleConvNet(nn.Module):
 
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
-        x = F.relu(self.conv1(x))   # -> [B, 16, 14, 14]
-        x = F.max_pool2d(x, 2, 1)   # -> [B, 16, 13, 13]
-        x = F.relu(self.conv2(x))   # -> [B, 32, 5, 5]
-        x = F.max_pool2d(x, 2, 1)   # -> [B, 32, 4, 4]
+        x = F.relu(self.conv1(x))  # -> [B, 16, 14, 14]
+        x = F.max_pool2d(x, 2, 1)  # -> [B, 16, 13, 13]
+        x = F.relu(self.conv2(x))  # -> [B, 32, 5, 5]
+        x = F.max_pool2d(x, 2, 1)  # -> [B, 32, 4, 4]
         x = x.view(-1, 32 * 4 * 4)  # -> [B, 512]
-        x = F.relu(self.fc1(x))     # -> [B, 32]
-        x = self.fc2(x)             # -> [B, 10]
+        x = F.relu(self.fc1(x))  # -> [B, 32]
+        x = self.fc2(x)  # -> [B, 10]
         return x
 
     def name(self):
@@ -136,7 +135,7 @@ def main():
     parser.add_argument(
         "--lr",
         type=float,
-        default=.1,
+        default=0.1,
         metavar="LR",
         help="learning rate (default: .1)",
     )
@@ -197,8 +196,10 @@ def main():
             train=True,
             download=True,
             transform=transforms.Compose(
-                [transforms.ToTensor(),
-                transforms.Normalize((MNIST_MEAN,), (MNIST_STD,))]
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize((MNIST_MEAN,), (MNIST_STD,)),
+                ]
             ),
         ),
         batch_size=args.batch_size,
@@ -210,8 +211,10 @@ def main():
             args.data_root,
             train=False,
             transform=transforms.Compose(
-                [transforms.ToTensor(),
-                transforms.Normalize((MNIST_MEAN,), (MNIST_STD,))]
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize((MNIST_MEAN,), (MNIST_STD,)),
+                ]
             ),
         ),
         batch_size=args.test_batch_size,
@@ -238,11 +241,10 @@ def main():
         run_results.append(test(args, model, device, test_loader))
 
     if len(run_results) > 1:
-        print("Accuracy averaged over {} runs: {:.2f}% ± {:.2f}%".format(
-            len(run_results),
-            np.mean(run_results) * 100,
-            np.std(run_results) * 100
-        )
+        print(
+            "Accuracy averaged over {} runs: {:.2f}% ± {:.2f}%".format(
+                len(run_results), np.mean(run_results) * 100, np.std(run_results) * 100
+            )
         )
 
     repro_str = (

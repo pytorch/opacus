@@ -6,71 +6,59 @@ Runs DCGAN training with differential privacy.
 
 """
 from __future__ import print_function
+
 import argparse
 import os
 import random
+
 import torch
+import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.nn.parallel
-import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
-from torchdp import PrivacyEngine, utils
-from torchdp import autograd_grad_sample
+from torchdp import PrivacyEngine, autograd_grad_sample, utils
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data-root', required=False, help='path to dataset')
+parser.add_argument("--data-root", required=False, help="path to dataset")
 parser.add_argument(
-    '--workers',
-    type=int,
-    help='number of data loading workers',
-    default=2
+    "--workers", type=int, help="number of data loading workers", default=2
 )
-parser.add_argument('--batch-size', type=int, default=64, help='input batch size')
+parser.add_argument("--batch-size", type=int, default=64, help="input batch size")
 parser.add_argument(
-    '--imageSize',
+    "--imageSize",
     type=int,
     default=64,
-    help='the height / width of the input image to network'
+    help="the height / width of the input image to network",
 )
-parser.add_argument('--nz', type=int, default=100, help='size of the latent z vector')
-parser.add_argument('--ngf', type=int, default=128)
-parser.add_argument('--ndf', type=int, default=128)
+parser.add_argument("--nz", type=int, default=100, help="size of the latent z vector")
+parser.add_argument("--ngf", type=int, default=128)
+parser.add_argument("--ndf", type=int, default=128)
 parser.add_argument(
-    '--epochs',
-    type=int,
-    default=25,
-    help='number of epochs to train for'
+    "--epochs", type=int, default=25, help="number of epochs to train for"
 )
 parser.add_argument(
-    '--lr',
-    type=float,
-    default=0.0002,
-    help='learning rate, default=0.0002'
+    "--lr", type=float, default=0.0002, help="learning rate, default=0.0002"
 )
 parser.add_argument(
-    '--beta1',
-    type=float,
-    default=0.5,
-    help='beta1 for adam. default=0.5'
+    "--beta1", type=float, default=0.5, help="beta1 for adam. default=0.5"
 )
-parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
-parser.add_argument('--netG', default='', help="path to netG (to continue training)")
-parser.add_argument('--netD', default='', help="path to netD (to continue training)")
+parser.add_argument("--ngpu", type=int, default=1, help="number of GPUs to use")
+parser.add_argument("--netG", default="", help="path to netG (to continue training)")
+parser.add_argument("--netD", default="", help="path to netD (to continue training)")
 parser.add_argument(
-    '--outf',
-    default='.',
-    help='folder to output images and model checkpoints'
+    "--outf", default=".", help="folder to output images and model checkpoints"
 )
-parser.add_argument('--manualSeed', type=int, help='manual seed')
+parser.add_argument("--manualSeed", type=int, help="manual seed")
 parser.add_argument(
-    '--target-digit',
+    "--target-digit",
     type=int,
     default=8,
-    help='the target digit(0~9) for MNIST training'
+    help="the target digit(0~9) for MNIST training",
 )
 parser.add_argument(
     "--device",
@@ -130,17 +118,25 @@ torch.manual_seed(opt.manualSeed)
 
 cudnn.benchmark = True
 
-if opt.data_root is None and str(opt.dataset).lower() != 'fake':
-    raise ValueError("`data-root` parameter is \
-    required for dataset \"%s\"" % opt.dataset)
+if opt.data_root is None and str(opt.dataset).lower() != "fake":
+    raise ValueError(
+        '`data-root` parameter is \
+    required for dataset "%s"'
+        % opt.dataset
+    )
 
 try:
-    dataset = dset.MNIST(root=opt.data_root, download=False,
-                        transform=transforms.Compose([
-                            transforms.Resize(opt.imageSize),
-                            transforms.ToTensor(),
-                            transforms.Normalize((0.5,), (0.5,)),
-                        ]))
+    dataset = dset.MNIST(
+        root=opt.data_root,
+        download=False,
+        transform=transforms.Compose(
+            [
+                transforms.Resize(opt.imageSize),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,)),
+            ]
+        ),
+    )
     idx = dataset.targets == opt.target_digit
     dataset.targets = dataset.targets[idx]
     dataset.data = dataset.data[idx]
@@ -148,8 +144,9 @@ try:
 except ValueError:
     print("Cannot load dataset")
 
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size,
-                                         shuffle=True, num_workers=int(opt.workers))
+dataloader = torch.utils.data.DataLoader(
+    dataset, batch_size=opt.batch_size, shuffle=True, num_workers=int(opt.workers)
+)
 
 device = torch.device(opt.device)
 ngpu = int(opt.ngpu)
@@ -161,9 +158,9 @@ ndf = int(opt.ndf)
 # custom weights initialization called on netG and netD
 def weights_init(m):
     classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
+    if classname.find("Conv") != -1:
         m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
+    elif classname.find("BatchNorm") != -1:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
@@ -208,7 +205,7 @@ if not opt.disable_dp:
     netG = utils.convert_batchnorm_modules(netG)
 netG = netG.to(device)
 netG.apply(weights_init)
-if opt.netG != '':
+if opt.netG != "":
     netG.load_state_dict(torch.load(opt.netG))
 
 
@@ -234,7 +231,7 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
             nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
     def forward(self, input):
@@ -252,7 +249,7 @@ if not opt.disable_dp:
     netG = utils.convert_batchnorm_modules(netG)
 netD = netD.to(device)
 netD.apply(weights_init)
-if opt.netD != '':
+if opt.netD != "":
     netD.load_state_dict(torch.load(opt.netD))
 
 criterion = nn.BCELoss()
@@ -270,7 +267,7 @@ privacy_engine = PrivacyEngine(
     sample_size=len(dataloader.dataset),
     alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
     noise_multiplier=opt.sigma,
-    max_grad_norm=opt.max_per_sample_grad_norm
+    max_grad_norm=opt.max_per_sample_grad_norm,
 )
 if not opt.disable_dp:
     privacy_engine.attach(optimizerD)
@@ -326,24 +323,38 @@ for epoch in range(opt.epochs):
         # (even though it's slower than it should be because we generate
         # per-sample gradients and then throw them away)
         autograd_grad_sample.clear_backprops(netD)
-        print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
-              % (epoch, opt.epochs, i, len(dataloader),
-                 errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+        print(
+            "[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f"
+            % (
+                epoch,
+                opt.epochs,
+                i,
+                len(dataloader),
+                errD.item(),
+                errG.item(),
+                D_x,
+                D_G_z1,
+                D_G_z2,
+            )
+        )
 
         if not opt.disable_dp:
             epsilon, best_alpha = optimizerD.privacy_engine.get_privacy_spent(opt.delta)
-            print('(ε = %.2f, δ = %.2f) for α = %.2f'
-            % (epsilon, opt.delta, best_alpha))
+            print(
+                "(ε = %.2f, δ = %.2f) for α = %.2f" % (epsilon, opt.delta, best_alpha)
+            )
 
         if i % 100 == 0:
-            vutils.save_image(real_data,
-                    '%s/real_samples.png' % opt.outf,
-                    normalize=True)
+            vutils.save_image(
+                real_data, "%s/real_samples.png" % opt.outf, normalize=True
+            )
             fake = netG(FIXED_NOISE)
-            vutils.save_image(fake.detach(),
-                    '%s/fake_samples_epoch_%03d.png' % (opt.outf, epoch),
-                    normalize=True)
+            vutils.save_image(
+                fake.detach(),
+                "%s/fake_samples_epoch_%03d.png" % (opt.outf, epoch),
+                normalize=True,
+            )
 
     # do checkpointing
-    torch.save(netG.state_dict(), '%s/netG_epoch_%d.pth' % (opt.outf, epoch))
-    torch.save(netD.state_dict(), '%s/netD_epoch_%d.pth' % (opt.outf, epoch))
+    torch.save(netG.state_dict(), "%s/netG_epoch_%d.pth" % (opt.outf, epoch))
+    torch.save(netD.state_dict(), "%s/netD_epoch_%d.pth" % (opt.outf, epoch))

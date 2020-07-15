@@ -32,7 +32,12 @@ class PerSampleGradientTest(unittest.TestCase):
         )
 
     def _check_one_layer_with_criterion(self, layer, criterion, data, batch_first=True):
-        clipper = PerSampleGradientClipper(layer, ConstantFlatClipper(1e9), batch_first=batch_first, loss_reduction=criterion.reduction)
+        clipper = PerSampleGradientClipper(
+            layer,
+            ConstantFlatClipper(1e9),
+            batch_first=batch_first,
+            loss_reduction=criterion.reduction,
+        )
         self._run_once(layer, criterion, data)
 
         computed_sample_grads = {}

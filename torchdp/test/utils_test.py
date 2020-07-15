@@ -145,8 +145,7 @@ class utils_convert_batchnorm_modules_test(unittest.TestCase):
         # remove the next two lines when we support batch norm
         with self.assertRaises(Exception):
             self.runOneBatch(BasicModel(imgSize), imgSize)
-        self.runOneBatch(
-            utils.convert_batchnorm_modules(BasicModel(imgSize)), imgSize)
+        self.runOneBatch(utils.convert_batchnorm_modules(BasicModel(imgSize)), imgSize)
 
     def test_run_resnet18(self):
         imgSize = (3, 224, 224)
@@ -154,8 +153,7 @@ class utils_convert_batchnorm_modules_test(unittest.TestCase):
         # remove the next two lines when we support batch norm
         with self.assertRaises(Exception):
             self.runOneBatch(models.resnet18(), imgSize)
-        self.runOneBatch(
-            utils.convert_batchnorm_modules(models.resnet18()), imgSize)
+        self.runOneBatch(utils.convert_batchnorm_modules(models.resnet18()), imgSize)
 
     def test_run_resnet34(self):
         imgSize = (3, 224, 224)
@@ -163,8 +161,7 @@ class utils_convert_batchnorm_modules_test(unittest.TestCase):
         # remove the next two lines when we support batch norm
         with self.assertRaises(Exception):
             self.runOneBatch(models.resnet34(), imgSize)
-        self.runOneBatch(
-            utils.convert_batchnorm_modules(models.resnet34()), imgSize)
+        self.runOneBatch(utils.convert_batchnorm_modules(models.resnet34()), imgSize)
 
     def test_run_resnet50(self):
         imgSize = (3, 224, 224)
@@ -180,8 +177,7 @@ class utils_convert_batchnorm_modules_test(unittest.TestCase):
         # remove the next two lines when we support batch norm
         with self.assertRaises(Exception):
             self.runOneBatch(models.resnet101(), imgSize)
-        self.runOneBatch(
-            utils.convert_batchnorm_modules(models.resnet101()), imgSize)
+        self.runOneBatch(utils.convert_batchnorm_modules(models.resnet101()), imgSize)
 
 
 class utils_ModelInspector_test(unittest.TestCase):
@@ -204,7 +200,7 @@ class utils_ModelInspector_test(unittest.TestCase):
 
     def test_validate_basic(self):
         inspector = utils.ModelInspector(
-            'pred', lambda model: isinstance(model, nn.Linear)
+            "pred", lambda model: isinstance(model, nn.Linear)
         )
         model = nn.Conv1d(1, 1, 1)
         valid = inspector.validate(model)
@@ -212,25 +208,25 @@ class utils_ModelInspector_test(unittest.TestCase):
 
     def test_validate_positive_predicate_valid(self):
         # test when a positive predicate (e.g. supported) returns true
-        inspector = utils.ModelInspector('pred', self.pred_supported)
+        inspector = utils.ModelInspector("pred", self.pred_supported)
         model = nn.Conv2d(1, 1, 1)
         valid = inspector.validate(model)
         self.assertTrue(valid)
         list_len = len(inspector.violators)
-        self.assertEqual(list_len, 0, f'violators = {inspector.violators}')
+        self.assertEqual(list_len, 0, f"violators = {inspector.violators}")
 
     def test_validate_positive_predicate_invalid(self):
         # test when a positive predicate (e.g. supported) returns false
-        inspector = utils.ModelInspector('pred', self.pred_supported)
+        inspector = utils.ModelInspector("pred", self.pred_supported)
         model = nn.Conv1d(1, 1, 1)
         valid = inspector.validate(model)
         self.assertFalse(valid)
         list_len = len(inspector.violators)
-        self.assertEqual(list_len, 1, f'violators = {inspector.violators}')
+        self.assertEqual(list_len, 1, f"violators = {inspector.violators}")
 
     def test_validate_negative_predicate_ture(self):
         # test when a negative predicate (e.g. not unsupported) returns true
-        inspector = utils.ModelInspector('pred1', self.pred_not_unsupported)
+        inspector = utils.ModelInspector("pred1", self.pred_not_unsupported)
         model = nn.Sequential(nn.Conv2d(1, 1, 1), nn.Linear(1, 1))
         valid = inspector.validate(model)
         self.assertTrue(valid)
@@ -239,16 +235,16 @@ class utils_ModelInspector_test(unittest.TestCase):
 
     def test_validate_negative_predicate_False(self):
         # test when a negative predicate (e.g. not unsupported) returns false
-        inspector = utils.ModelInspector('pred', self.pred_not_unsupported)
+        inspector = utils.ModelInspector("pred", self.pred_not_unsupported)
         model = nn.Sequential(nn.Conv2d(1, 1, 1), nn.BatchNorm2d(1))
         valid = inspector.validate(model)
         self.assertFalse(valid)
         list_len = len(inspector.violators)
-        self.assertEqual(list_len, 1, f'violators = {inspector.violators}')
+        self.assertEqual(list_len, 1, f"violators = {inspector.violators}")
 
     def test_validate_mix_predicate(self):
         # check with a mix predicate not requires grad or is not unsupported
-        inspector = utils.ModelInspector('pred1', self.pred_mix)
+        inspector = utils.ModelInspector("pred1", self.pred_mix)
         model = nn.Sequential(nn.Conv2d(1, 1, 1), nn.BatchNorm2d(1))
         for p in model[1].parameters():
             p.requires_grad = False
@@ -258,13 +254,13 @@ class utils_ModelInspector_test(unittest.TestCase):
     def test_check_everything_flag(self):
         # check to see if a model does not containt nn.sequential
         inspector = utils.ModelInspector(
-            'pred', lambda model: not isinstance(model, nn.Sequential),
-            check_leaf_nodes_only=False
+            "pred",
+            lambda model: not isinstance(model, nn.Sequential),
+            check_leaf_nodes_only=False,
         )
         model = nn.Sequential(nn.Conv1d(1, 1, 1))
         valid = inspector.validate(model)
-        self.assertFalse(
-            valid, f'violators = {inspector.violators}')
+        self.assertFalse(valid, f"violators = {inspector.violators}")
 
     def test_complicated_case(self):
         def good(x):
@@ -273,20 +269,16 @@ class utils_ModelInspector_test(unittest.TestCase):
         def bad(x):
             return isinstance(x, nn.modules.batchnorm._BatchNorm)
 
-        inspector1 = utils.ModelInspector(
-            'good_or_bad', lambda x: good(x) | bad(x))
-        inspector2 = utils.ModelInspector(
-            'not_bad', lambda x: not bad(x))
+        inspector1 = utils.ModelInspector("good_or_bad", lambda x: good(x) | bad(x))
+        inspector2 = utils.ModelInspector("not_bad", lambda x: not bad(x))
         model = models.resnet50()
         valid = inspector1.validate(model)
-        self.assertTrue(valid, f'violators = {inspector1.violators}')
+        self.assertTrue(valid, f"violators = {inspector1.violators}")
         self.assertEqual(
-            len(inspector1.violators),
-            0,
-            f'violators = {inspector1.violators}')
+            len(inspector1.violators), 0, f"violators = {inspector1.violators}"
+        )
         valid = inspector2.validate(model)
-        self.assertFalse(valid, f'violators = {inspector2.violators}')
+        self.assertFalse(valid, f"violators = {inspector2.violators}")
         self.assertEqual(
-            len(inspector2.violators),
-            53,
-            f'violators = {inspector2.violators}')
+            len(inspector2.violators), 53, f"violators = {inspector2.violators}"
+        )

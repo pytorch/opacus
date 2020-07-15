@@ -24,6 +24,7 @@ The argument -a or --alphas is for entering the list of RDP alpha orders.
 """
 import argparse
 import math
+
 from torchdp import privacy_analysis as tf_privacy
 
 
@@ -142,7 +143,6 @@ def main():
         f"-a = --aplhas = {args.alphas}\n\n"
         "* Result is:",
         end="\n  ",
-
     )
     compute_dp_sgd_privacy(
         args.dataset_size,

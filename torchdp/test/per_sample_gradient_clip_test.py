@@ -7,9 +7,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchdp import PerSampleGradientClipper
+from torchdp.utils import ConstantFlatClipper, ConstantPerLayerClipper
 from torchvision import transforms
 from torchvision.datasets import FakeData
-from torchdp.utils import ConstantFlatClipper, ConstantPerLayerClipper
 
 
 class SampleConvNet(nn.Module):
@@ -85,10 +85,7 @@ class PerSampleGradientClipper_test(unittest.TestCase):
             if not isinstance(clip_value, list)
             else ConstantPerLayerClipper(clip_value)
         )
-        self.clipper = PerSampleGradientClipper(
-            self.clipped_model,
-            norm_clipper,
-        )
+        self.clipper = PerSampleGradientClipper(self.clipped_model, norm_clipper)
 
         for x, y in self.dl:
             logits = self.clipped_model(x)

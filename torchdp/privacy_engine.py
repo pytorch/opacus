@@ -76,18 +76,16 @@ class PrivacyEngine:
             if not isinstance(self.max_grad_norm, list)
             else utils.ConstantPerLayerClipper(self.max_grad_norm)
         )
-        if self.misc_settings.get('experimental', False):
+        if self.misc_settings.get("experimental", False):
             norm_clipper = utils._Experimental_Clipper_(
                 [self.max_grad_norm],
-                self.misc_settings.get('clip_per_layer', False),
-                self.misc_settings.get('clipping_method', utils.ClippingMethod.STATIC),
-                self.misc_settings.get('ratio', 0.0)
+                self.misc_settings.get("clip_per_layer", False),
+                self.misc_settings.get("clipping_method", utils.ClippingMethod.STATIC),
+                self.misc_settings.get("ratio", 0.0),
             )
 
         self.clipper = PerSampleGradientClipper(
-            self.module,
-            norm_clipper,
-            self.batch_first,
+            self.module, norm_clipper, self.batch_first
         )
 
         def dp_step(self, closure=None):
