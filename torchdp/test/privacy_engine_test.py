@@ -7,8 +7,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torchdp import PrivacyEngine, utils
+from torchdp import PrivacyEngine
 from torchdp.dp_model_inspector import IncompatibleModuleException
+from torchdp.utils.module_inspection import get_layer_type, requires_grad
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
@@ -237,7 +238,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
             # collect all per-sample gradients before we take the step
             for _, layer in model.named_modules():
-                if utils.get_layer_type(layer) == "SampleConvNet":
+                if get_layer_type(layer) == "SampleConvNet":
                     continue
 
                 grad_sample_aggregated[layer] = {}
@@ -248,7 +249,7 @@ class PrivacyEngine_test(unittest.TestCase):
             optimizer.step()
 
         for layer_name, layer in model.named_modules():
-            if utils.get_layer_type(layer) == "SampleConvNet":
+            if get_layer_type(layer) == "SampleConvNet":
                 continue
 
             for p in layer.parameters():
@@ -278,7 +279,7 @@ class PrivacyEngine_test(unittest.TestCase):
             self.setUp_model_step(private_model, private_optimizer)
 
         for layer_name, private_layer in private_model.named_children():
-            if not utils.requires_grad(private_layer):
+            if not requires_grad(private_layer):
                 continue
 
             original_layer = getattr(original_model, layer_name)
@@ -307,7 +308,7 @@ class PrivacyEngine_test(unittest.TestCase):
             self.setUp_model_step(private_model, private_optimizer)
 
         for layer_name, private_layer in private_model.named_children():
-            if not utils.requires_grad(private_layer):
+            if not requires_grad(private_layer):
                 continue
 
             original_layer = getattr(original_model, layer_name)

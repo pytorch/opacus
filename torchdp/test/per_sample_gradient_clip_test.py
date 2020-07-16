@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchdp import PerSampleGradientClipper
-from torchdp.utils import ConstantFlatClipper, ConstantPerLayerClipper
+from torchdp.utils.clipping import ConstantFlatClipper, ConstantPerLayerClipper
 from torchvision import transforms
 from torchvision.datasets import FakeData
 

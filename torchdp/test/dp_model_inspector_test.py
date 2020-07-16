@@ -5,7 +5,8 @@
 import unittest
 
 import torch.nn as nn
-from torchdp import dp_model_inspector as dp_inspector, utils
+from torchdp import dp_model_inspector as dp_inspector
+from torchdp.utils.module_modification import convert_batchnorm_modules
 from torchvision import models
 
 
@@ -24,7 +25,7 @@ class dp_model_inspector_test(unittest.TestCase):
 
     def test_returns_true(self):
         inspector = dp_inspector.DPModelInspector()
-        model = utils.convert_batchnorm_modules(models.resnet50())
+        model = convert_batchnorm_modules(models.resnet50())
         self.assertTrue(inspector.validate(model))
 
     def test_running_stats(self):

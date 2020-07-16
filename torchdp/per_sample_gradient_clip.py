@@ -30,9 +30,10 @@ from typing import Callable, List, Tuple
 
 import torch
 from torch import nn
+from .utils.tensor_utils import calc_sample_norms
 
 from . import autograd_grad_sample
-from .utils import NormClipper, calc_sample_norms
+from .utils.clipping import NormClipper
 
 
 class PerSampleGradientClipper:
@@ -50,7 +51,7 @@ class PerSampleGradientClipper:
         Attributes:
             module: reference to the model that is being trained
             norm_clipper: the class that provides clipping factor for
-                the given gradients, look at `utils.NormClipper`
+                the given gradients, look at `NormClipper`
             batch_first: if `True` [default] the first dimension represents
                 the batch, if `False` the second dimension is the batch.
         """

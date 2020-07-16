@@ -4,7 +4,7 @@
 from torch import nn
 
 from .autograd_grad_sample import is_supported
-from .utils import ModelInspector, get_layer_type, requires_grad
+from .utils.module_inspection import ModelInspector, get_layer_type, requires_grad
 
 
 class IncompatibleModuleException(Exception):

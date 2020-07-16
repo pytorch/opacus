@@ -8,9 +8,10 @@ from typing import List, Union
 import torch
 from torch import nn
 
-from . import privacy_analysis as tf_privacy, utils
+from . import privacy_analysis as tf_privacy
 from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import PerSampleGradientClipper
+from .utils import clipping
 
 
 class PrivacyEngine:
@@ -72,15 +73,18 @@ class PrivacyEngine:
         self.validator.validate(self.module)
         # only attach if model is validated
         norm_clipper = (
-            utils.ConstantFlatClipper(self.max_grad_norm)
+            clipping.ConstantFlatClipper(self.max_grad_norm)
             if not isinstance(self.max_grad_norm, list)
-            else utils.ConstantPerLayerClipper(self.max_grad_norm)
+            else clipping.ConstantPerLayerClipper(self.max_grad_norm)
         )
+
         if self.misc_settings.get("experimental", False):
-            norm_clipper = utils._Experimental_Clipper_(
+            norm_clipper = clipping._Dynamic_Clipper_(
                 [self.max_grad_norm],
                 self.misc_settings.get("clip_per_layer", False),
-                self.misc_settings.get("clipping_method", utils.ClippingMethod.STATIC),
+                self.misc_settings.get(
+                    "clipping_method", clipping.ClippingMethod.STATIC
+                ),
                 self.misc_settings.get("ratio", 0.0),
             )
 

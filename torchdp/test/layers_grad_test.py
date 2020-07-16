@@ -7,7 +7,7 @@ import torch.nn as nn
 from torchdp import PerSampleGradientClipper
 from torchdp.dp_model_inspector import DPModelInspector
 from torchdp.layers import DPMultiheadAttention, SequenceBias
-from torchdp.utils import ConstantFlatClipper
+from torchdp.utils.clipping import ConstantFlatClipper
 
 
 class LayersGradTest(unittest.TestCase):

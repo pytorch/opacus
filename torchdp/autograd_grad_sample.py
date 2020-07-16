@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 
 from .supported_layers_grad_samplers import _supported_layers_grad_samplers
-from .utils import get_layer_type, requires_grad
+from .utils.module_inspection import get_layer_type, requires_grad
 
 
 # work-around for https://github.com/pytorch/pytorch/issues/25723

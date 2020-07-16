@@ -20,7 +20,8 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
-from torchdp import PrivacyEngine, autograd_grad_sample, utils
+from torchdp import PrivacyEngine, autograd_grad_sample
+from torchdp.utils.module_modification import convert_batchnorm_modules
 
 
 parser = argparse.ArgumentParser()
@@ -202,7 +203,7 @@ class Generator(nn.Module):
 
 netG = Generator(ngpu)
 if not opt.disable_dp:
-    netG = utils.convert_batchnorm_modules(netG)
+    netG = convert_batchnorm_modules(netG)
 netG = netG.to(device)
 netG.apply(weights_init)
 if opt.netG != "":
@@ -245,8 +246,8 @@ class Discriminator(nn.Module):
 
 netD = Discriminator(ngpu)
 if not opt.disable_dp:
-    netD = utils.convert_batchnorm_modules(netD)
-    netG = utils.convert_batchnorm_modules(netG)
+    netD = convert_batchnorm_modules(netD)
+    netG = convert_batchnorm_modules(netG)
 netD = netD.to(device)
 netD.apply(weights_init)
 if opt.netD != "":

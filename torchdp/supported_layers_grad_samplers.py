@@ -4,7 +4,8 @@
 import torch
 from torch.functional import F
 
-from .utils import get_layer_type, sum_over_all_but_batch_and_last_n
+from .utils.module_inspection import get_layer_type
+from .utils.tensor_utils import sum_over_all_but_batch_and_last_n
 
 
 def _create_or_extend_grad_sample(
