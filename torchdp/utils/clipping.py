@@ -221,7 +221,7 @@ class _Dynamic_Clipper_(NormClipper):
             self.thresh.append(thresh)
             per_sample_clip_factor = thresh / (norm + 1e-6)
             clipping_factor.append(per_sample_clip_factor.clamp(max=1.0))
-        return clipping_factor
+        return clipping_factor if self.is_per_layer else cycle(clipping_factor)
 
     @property
     def thresholds(self):
