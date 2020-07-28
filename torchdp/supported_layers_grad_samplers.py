@@ -17,6 +17,7 @@ def _create_or_extend_grad_sample(
     """
 
     if hasattr(param, "grad_sample"):
+        # pyre-fixme[16]: `Tensor` has no attribute `grad_sample`.
         param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
     else:
         param.grad_sample = grad_sample

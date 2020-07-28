@@ -42,6 +42,7 @@ class PrivacyEngine:
         self.batch_first = batch_first
         self.target_delta = target_delta
 
+        # pyre-fixme[6]: Expected `int` for 1st param but got `None`.
         self._set_seed(None)
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
@@ -73,13 +74,19 @@ class PrivacyEngine:
         self.validator.validate(self.module)
         # only attach if model is validated
         norm_clipper = (
+            # pyre-fixme[6]: Expected `float` for 1st param but got
+            #  `Union[List[float], float]`.
             clipping.ConstantFlatClipper(self.max_grad_norm)
             if not isinstance(self.max_grad_norm, list)
+            # pyre-fixme[6]: Expected `List[float]` for 1st param but got
+            #  `Union[List[float], float]`.
             else clipping.ConstantPerLayerClipper(self.max_grad_norm)
         )
 
         if self.misc_settings.get("experimental", False):
             norm_clipper = clipping._Dynamic_Clipper_(
+                # pyre-fixme[6]: Expected `List[float]` for 1st param but got
+                #  `List[Union[List[float], float]]`.
                 [self.max_grad_norm],
                 self.misc_settings.get("clip_per_layer", False),
                 self.misc_settings.get(
@@ -96,8 +103,15 @@ class PrivacyEngine:
             self.privacy_engine.step()
             self.original_step(closure)
 
+        # pyre-fixme[16]: `Optimizer` has no attribute `privacy_engine`.
         optimizer.privacy_engine = self
+        # pyre-fixme[16]: `Optimizer` has no attribute `original_step`.
         optimizer.original_step = optimizer.step
+        # pyre-fixme[8]: Attribute has type
+        #  `BoundMethod[typing.Callable(torch.optim.Optimizer.step)[[Named(self,
+        #  torch.optim.Optimizer), Named(closure, typing.Optional[typing.Callable[[],
+        #  torch.Tensor]], default)], typing.Optional[torch.Tensor]],
+        #  torch.optim.Optimizer]`; used as `MethodType`.
         optimizer.step = types.MethodType(dp_step, optimizer)
 
         # We add a 'virtual_step' function to the optimizer, which
@@ -107,8 +121,10 @@ class PrivacyEngine:
         def virtual_step(self):
             self.privacy_engine.virtual_step()
 
+        # pyre-fixme[16]: `Optimizer` has no attribute `virtual_step`.
         optimizer.virtual_step = types.MethodType(virtual_step, optimizer)
 
+        # pyre-fixme[16]: `PrivacyEngine` has no attribute `optimizer`.
         self.optimizer = optimizer  # create a cross reference for detaching
 
     def get_renyi_divergence(self):
@@ -119,6 +135,7 @@ class PrivacyEngine:
         )
         return rdp
 
+    # pyre-fixme[9]: target_delta has type `float`; used as `None`.
     def get_privacy_spent(self, target_delta: float = None):
         if target_delta is None:
             target_delta = self.target_delta
@@ -175,6 +192,7 @@ class PrivacyEngine:
 
     def _set_seed(self, secure_seed: int):
         if secure_seed is not None:
+            # pyre-fixme[16]: `PrivacyEngine` has no attribute `secure_seed`.
             self.secure_seed = secure_seed
         else:
             self.secure_seed = int.from_bytes(

@@ -47,9 +47,11 @@ def add_hooks(
     handles = []
     for layer in model.modules():
         if get_layer_type(layer) in _supported_layers_grad_samplers.keys():
+            # pyre-fixme[16]: `Module` has no attribute `register_forward_hook`.
             handles.append(layer.register_forward_hook(_capture_activations))
 
             handles.append(
+                # pyre-fixme[16]: `Module` has no attribute `register_backward_hook`.
                 layer.register_backward_hook(
                     partial(
                         _capture_backprops,
@@ -69,6 +71,7 @@ def remove_hooks(model: nn.Module) -> None:
     if not hasattr(model, "autograd_grad_sample_hooks"):
         raise ValueError("Asked to remove hooks, but no hooks found")
     else:
+        # pyre-fixme[16]: `Module` has no attribute `autograd_grad_sample_hooks`.
         for handle in model.autograd_grad_sample_hooks:
             handle.remove()
         del model.autograd_grad_sample_hooks
@@ -102,6 +105,7 @@ def _capture_activations(
     if get_layer_type(layer) not in _supported_layers_grad_samplers.keys():
         raise ValueError("Hook installed on unsupported layer")
 
+    # pyre-fixme[16]: `Module` has no attribute `activations`.
     layer.activations = input[0].detach()
 
 
@@ -149,6 +153,7 @@ def _compute_grad_sample(
 
     batch_dim = 0 if batch_first else 1
 
+    # pyre-fixme[16]: `Module` has no attribute `activations`.
     A = layer.activations
     n = A.shape[batch_dim]
     if loss_reduction == "mean":
@@ -163,6 +168,7 @@ def _compute_grad_sample(
     # rearrange the blob dimensions
     if batch_dim != 0:
         A = A.permute([batch_dim] + [x for x in range(A.dim()) if x != batch_dim])
+        # pyre-fixme[6]: Expected `int` for 1st param but got `List[int]`.
         B = B.permute([batch_dim] + [x for x in range(B.dim()) if x != batch_dim])
     # compute grad sample for  individual layers
     compute_layer_grad_sample = _supported_layers_grad_samplers.get(

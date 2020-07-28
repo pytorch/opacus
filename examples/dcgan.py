@@ -265,7 +265,10 @@ optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 privacy_engine = PrivacyEngine(
     netD,
     batch_size=opt.batch_size,
+    # pyre-fixme[6]: Expected `Sized` for 1st param but got `Dataset[typing.Any]`.
     sample_size=len(dataloader.dataset),
+    # pyre-fixme[6]: `+` is not supported for operand types `List[float]` and
+    #  `List[int]`.
     alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
     noise_multiplier=opt.sigma,
     max_grad_norm=opt.max_per_sample_grad_norm,
@@ -323,6 +326,8 @@ for epoch in range(opt.epochs):
         # but for now this works and it is correct
         # (even though it's slower than it should be because we generate
         # per-sample gradients and then throw them away)
+        # pyre-fixme[16]: Module `autograd_grad_sample` has no attribute
+        #  `clear_backprops`.
         autograd_grad_sample.clear_backprops(netD)
         print(
             "[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f"

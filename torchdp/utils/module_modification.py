@@ -108,6 +108,8 @@ def nullify_batchnorm_modules(root: nn.Module, target_class):
         will heavily affect convergance of the model.
     """
     return replace_all_modules(
+        # pyre-fixme[6]: Expected `Type[nn.Module]` for 2nd param but got
+        #  `Type[nn.modules.batchnorm._BatchNorm]`.
         root, nn.modules.batchnorm._BatchNorm, lambda _: nn.Identity()
     )
 
@@ -142,4 +144,6 @@ def convert_batchnorm_modules(
         print(model.layer1[0].bn1)
         # prints GroupNorm module details
     """
+    # pyre-fixme[6]: Expected `Type[nn.Module]` for 2nd param but got
+    #  `Type[nn.modules.batchnorm._BatchNorm]`.
     return replace_all_modules(model, nn.modules.batchnorm._BatchNorm, converter)

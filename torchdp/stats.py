@@ -83,6 +83,7 @@ class Stat:
         # reports (iter:0, value:0) and (iter:10, value:4.5) to tensorboard
     """
 
+    # pyre-fixme[8]: Attribute has type `SummaryWriter`; used as `None`.
     summary_writer: SummaryWriter = None
     """
     The global `SummaryWriter` from tensorboard, if is `None` on construction
@@ -113,6 +114,7 @@ class Stat:
 
     def _aggregate(self, named_value: Any):
         if self.aggr == "sample":
+            # pyre-fixme[16]: `Stat` has no attribute `named_values`.
             self.named_values = named_value
         elif self.aggr == "avg":
             for k, v in named_value.items():
@@ -156,6 +158,8 @@ def remove(name: str):
     Stats = [stat for stat in Stats if stat.name != name]
 
 
+# pyre-fixme[9]: stat_type has type `StatType`; used as `None`.
+# pyre-fixme[9]: name has type `str`; used as `None`.
 def reset(stat_type: StatType = None, name: str = None):
     """
     Resets the stat with given `name` and `stat_type`
@@ -168,6 +172,8 @@ def reset(stat_type: StatType = None, name: str = None):
     ]
 
 
+# pyre-fixme[9]: stat_type has type `StatType`; used as `None`.
+# pyre-fixme[9]: name has type `str`; used as `None`.
 def update(stat_type: StatType = None, name: str = None, **named_values):
     """
     updates the stat(s) with the given `name` and `stat_type`

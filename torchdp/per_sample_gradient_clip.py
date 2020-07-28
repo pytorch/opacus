@@ -110,6 +110,8 @@ class PerSampleGradientClipper:
 
         # NOTE: For Renyi-basedy of epsilon calculation, we will caclulate a flat
         # max norm equal to the norm of all clip values per layer.
+        # pyre-fixme[16]: `List` has no attribute `new_full`.
+        # pyre-fixme[16]: `List` has no attribute `norm`.
         max_norm = threshs.new_full((n,), threshs.norm(2))
         self._reset_aggregated_state()
         return max_norm, batch_size

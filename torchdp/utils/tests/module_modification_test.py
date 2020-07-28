@@ -18,6 +18,9 @@ from torchvision.datasets import FakeData
 class replace_all_modules_test(unittest.TestCase):
     def checkModulePresent(self, root: nn.Module, targetclass):
         result = any(
+            # pyre-fixme[6]: Expected `Union[typing.Type[typing.Any],
+            #  typing.Tuple[typing.Type[typing.Any], ...]]` for 2nd param but got
+            #  `Any`.
             isinstance(module, targetclass) for module in root.modules()
         )
         self.assertTrue(result)
@@ -25,6 +28,9 @@ class replace_all_modules_test(unittest.TestCase):
     def checkModuleNotPresent(self, root: nn.Module, targetclass):
         for module in root.modules():
             self.assertFalse(
+                # pyre-fixme[6]: Expected `Union[typing.Type[typing.Any],
+                #  typing.Tuple[typing.Type[typing.Any], ...]]` for 2nd param but got
+                #  `Any`.
                 isinstance(module, targetclass),
                 msg=f"{module} has the given targetclass type",
             )
@@ -94,8 +100,13 @@ class convert_batchnorm_modules_test(unittest.TestCase):
         if privacy_engine:
             pe = PrivacyEngine(
                 model,
+                # pyre-fixme[6]: Expected `int` for 2nd param but got `Optional[int]`.
                 batch_size=data_loader.batch_size,
+                # pyre-fixme[6]: Expected `Sized` for 1st param but got
+                #  `Dataset[typing.Any]`.
                 sample_size=len(data_loader.dataset),
+                # pyre-fixme[6]: `+` is not supported for operand types
+                #  `List[float]` and `List[int]`.
                 alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
                 noise_multiplier=1.3,
                 max_grad_norm=1,
@@ -106,6 +117,7 @@ class convert_batchnorm_modules_test(unittest.TestCase):
     def genFakeData(
         self, imgSize: Tuple[int, int, int], batch_size: int = 1, num_batches: int = 1
     ) -> DataLoader:
+        # pyre-fixme[16]: `convert_batchnorm_modules_test` has no attribute `ds`.
         self.ds = FakeData(
             size=num_batches,
             image_size=imgSize,

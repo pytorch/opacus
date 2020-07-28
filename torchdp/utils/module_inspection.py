@@ -49,6 +49,7 @@ class ModelInspector:
         name: str,
         predicate: Callable[[nn.Module], bool],
         check_leaf_nodes_only: bool = True,
+        # pyre-fixme[9]: message has type `str`; used as `None`.
         message: str = None,
     ):
         self.name = name
@@ -61,6 +62,7 @@ class ModelInspector:
 
     def validate(self, model: nn.Module) -> bool:
         valid = True
+        # pyre-fixme[16]: `Module` has no attribute `named_modules`.
         for name, module in model.named_modules(prefix="Main"):
             if not self.predicate(module):
                 valid = False

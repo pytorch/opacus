@@ -15,6 +15,7 @@ from torchvision.datasets import FakeData
 
 
 def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
+    # pyre-fixme[16]: `Tensor` has no attribute `grad_sample`.
     if tensor.grad_sample is None:
         raise ValueError(
             f"The input tensor {tensor} has grad computed, but missing grad_sample."
