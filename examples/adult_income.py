@@ -193,6 +193,7 @@ def main():
 
     """Loads ADULT a2a as in LIBSVM and preprocesses to combine training and validation data."""
     # https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html
+    # can also find in github.com/woodyx218/Deep-Learning-with-GDP-Pytorch/blob/master/adult.csv
     x = pd.read_csv("adult.csv")
     trainData, testData = train_test_split(x, test_size=0.1, random_state=218)
     # have to reset index, see https://discuss.pytorch.org/t/keyerror-when-enumerating-over-dataloader/54210/13
