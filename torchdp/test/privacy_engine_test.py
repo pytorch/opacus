@@ -206,8 +206,8 @@ class PrivacyEngine_test(unittest.TestCase):
         Test that gradients are different after one step of SGD
         """
         for layer_grad, private_layer_grad in zip(
-            [p for p in self.original_model.parameters() if p.requires_grad],
-            [p for p in self.private_model.parameters() if p.requires_grad],
+            [p.grad for p in self.original_model.parameters() if p.requires_grad],
+            [p.grad for p in self.private_model.parameters() if p.requires_grad],
         ):
             self.assertFalse(torch.allclose(layer_grad, private_layer_grad))
 
