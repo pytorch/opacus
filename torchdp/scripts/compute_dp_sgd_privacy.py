@@ -1,62 +1,77 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates.
+
 """
 Command-line script for computing privacy of a model trained with DP-SGD.
 The script applies the RDP accountant to estimate privacy budget of an iterated
- Sampled Gaussian Mechanism.
+Sampled Gaussian Mechanism.
 
-Both `apply_dp_sgd_analysis()` and `get_privacy_spent()` functions
- are based on Google's TF Privacy:
- https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/compute_dp_sgd_privacy.py
+The code is mainly based on Google's TF Privacy:
+https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/compute_dp_sgd_privacy.py
 
 
-Example:
-  compute_dp_sgd_privacy
-    --dataset-size=60000 \
-    --batch-size=256 \
-    --noise_multiplier=1.12 \
-    --epochs=60 \
-    --delta=1e-5 \
-    --a 10 20 100
-The calculated privacy with these parameters satisfies (2.95, 1e-5)-DP.
+Example
+-------
 
-The argument -a or --alphas is for entering the list of RDP alpha orders.
+To call this script from command line, you can enter:
+
+>>>  python compute_dp_sgd_privacy.py --dataset-size=60000 --batch-size=256 --noise_multiplier=1.12 --epochs=60 --delta=1e-5 --a 10 20 100
+
+The training process with these parameters satisfies (epsilon,delta)-DP of (2.95, 1e-5).
 """
 import argparse
 import math
 
+from typing import List, Tuple
 from torchdp import privacy_analysis as tf_privacy
 
 
-def apply_dp_sgd_analysis(
-    sample_rate, noise_multiplier, steps, alphas, delta, printed=True
-):
-    """Compute and print results of DP-SGD analysis.
+def _apply_dp_sgd_analysis(
+    sample_rate: float,
+    noise_multiplier: float,
+    steps: int,
+    alphas : List[float],
+    delta : float,
+    verbose : bool = True,
+) -> Tuple[float, float]:
+    """
+    Performs the DP-SGD privacy analysis based on sample rate and steps.
 
-    Args:
-        sample_rate: the sample rate in SGD.
-        noise_multiplier: the noise_multiplier in compute_rdp(), ratio of the
-               standard deviation of the Gaussian noise to
-               the l2-sensitivity of the function to which it is added
-        steps: the number of steps.
-        alphas: an array (or a scalar) of RDP alpha orders.
-        printed: boolean, True (by default) to print results on stdout.
+    Performs the DP-SGD privacy analysis and computes privacy loss epsilon
+    and optimal order alpha.
+
+    Parameters
+    ----------
+    sample_rate : float
+        The sample rate in SGD
+    noise_multiplier : float
+        The ratio of the standard deviation of the Gaussian noise to
+        the L2-sensitivity of the function to which the noise is added
+    steps : int
+        The number of steps
+    alphas : List[float]
+        A list of RDP orders
+    delta : float
+        Target delta
+    verbose : bool, optional
+        If enabled, will print the results of DP-SGD analysis; by default True
+
+    Returns
+    -------
+    Tuple[float, float]
+        Pair of privacy loss epsilon and optimal order alpha
     """
     rdp = tf_privacy.compute_rdp(sample_rate, noise_multiplier, steps, alphas)
-    #  Slight adaptation from TF version, in which
-    # `get_privacy_spent()` has one more arguments and one more element in
-    #  returned tuple, because it can also compute delta for a given epsilon
-    #  (and not only compute epsilon for a targeted delta).
     eps, opt_alpha = tf_privacy.get_privacy_spent(alphas, rdp, delta=delta)
 
-    if printed:
+    if verbose:
         print(
-            f"DP-SGD with\n\tsampling rate = {100 * sample_rate:.3g}% and"
-            f"\n\tnoise_multiplier = {noise_multiplier}"
-            f"\n\titerated over {steps} steps\n  satisfies "
-            f"differential privacy with\n\tƐ = {eps:.3g} "
-            f"and\n\tδ = {delta}."
-            f"\n  The optimal α is {opt_alpha}."
+            f"DP-SGD with\n\tsampling rate = {100 * sample_rate:.3g}%,"
+            f"\n\tnoise_multiplier = {noise_multiplier},"
+            f"\n\titerated over {steps} steps,\nsatisfies "
+            f"differential privacy with\n\tepsilon = {eps:.3g},"
+            f"\n\tdelta = {delta}."
+            f"\nThe optimal alpha is {opt_alpha}."
         )
 
         if opt_alpha == max(alphas) or opt_alpha == min(alphas):
@@ -64,27 +79,63 @@ def apply_dp_sgd_analysis(
                 "The privacy estimate is likely to be improved by expanding "
                 "the set of alpha orders."
             )
-
     return eps, opt_alpha
 
 
 def compute_dp_sgd_privacy(
-    sample_size, batch_size, noise_multiplier, epochs, delta, alphas=None, printed=True
-):
-    """Compute epsilon based on the given parameters.
+    sample_size : int,
+    batch_size : int,
+    noise_multiplier : float,
+    epochs : int,
+    delta : float,
+    alphas : List[float],
+    verbose : bool = True,
+) -> Tuple[float, float]:
+    """
+    Performs the DP-SGD privacy analysis.
+
+    Finds sample rate and number of steps based on the input parameters, and calls
+    DP-SGD privacy analysis to find the privacy loss epsilon and optimal order alpha.
+
+    Parameters
+    ----------
+    sample_size : int
+        The size of the sample (dataset)
+    batch_size : int
+        Batch size
+    noise_multiplier : float
+        The ratio of the standard deviation of the Gaussian noise to
+        the L2-sensitivity of the function to which the noise is added
+    epochs : int
+        Number of epochs
+    delta : float
+        Target delta.
+    alphas : List[float]
+        A list of RDP orders
+    verbose : bool, optional
+         If enabled, will print the results of DP-SGD analysis; by default True
+
+    Returns
+    -------
+    Tuple[float, float]
+        Pair of privacy loss epsilon and optimal order alpha
+
+    Raises
+    ------
+    ValueError
+        When batch size is greater than sample size
     """
     sample_rate = batch_size / sample_size
     if sample_rate > 1:
         raise ValueError("sample_size must be larger than the batch size.")
     steps = epochs * math.ceil(sample_size / batch_size)
 
-    return apply_dp_sgd_analysis(
-        sample_rate, noise_multiplier, steps, alphas, delta, printed
+    return _apply_dp_sgd_analysis(
+        sample_rate, noise_multiplier, steps, alphas, delta, verbose
     )
 
 
 def main():
-    # Settings w.r.t. parameters on command line or default values if missing
     parser = argparse.ArgumentParser(description="RDP computation")
     parser.add_argument(
         "-s",
@@ -132,18 +183,6 @@ def main():
 
     args = parser.parse_args()
 
-    print(
-        "=================================================================="
-        "\n* Script was called with arguments:\n\t"
-        f"-s = --dataset-size = {args.dataset_size}\n\t"
-        f"-b = --batch-size = {args.batch_size}\n\t"
-        f"-n = --noise_multiplier = {args.noise_multiplier}\n\t"
-        f"-e = --epochs = {args.epochs}\n\t"
-        f"-d = --delta = {args.delta}\n\t"
-        f"-a = --aplhas = {args.alphas}\n\n"
-        "* Result is:",
-        end="\n  ",
-    )
     compute_dp_sgd_privacy(
         args.dataset_size,
         args.batch_size,
@@ -152,7 +191,6 @@ def main():
         args.delta,
         args.alphas,
     )
-    print("==================================================================")
 
 
 if __name__ == "__main__":
