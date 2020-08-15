@@ -1,32 +1,34 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-"""
-Based on Google's TF Privacy: https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/rdp_accountant.property.
-Here, we update this code to Python 3, optimize dependencies.
+r"""
+*Based on Google's TF Privacy:* https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/rdp_accountant.py.
+*Here, we update this code to Python 3, and optimize dependencies.*
 
-RDP analysis of the Sampled Gaussian Mechanism.
-Functionality for computing Renyi differential privacy (RDP) of an additive
-Sampled Gaussian Mechanism (SGM). Its public interface consists of two methods:
-  compute_rdp(q, noise_multiplier, T, orders) computes RDP for SGM iterated
-                                   T times.
-  get_privacy_spent(orders, rdp, target_eps, target_delta) computes delta
-                                   (or eps) given RDP at multiple orders and
-                                   a target value for eps (or delta).
-Example use:
-Suppose that we have run an SGM applied to a function with l2-sensitivity 1.
-Its parameters are given as a list of tuples (q1, sigma1, T1), ...,
-(qk, sigma_k, Tk), and we wish to compute eps for a given delta.
+Functionality for computing Renyi Differential Privacy (RDP) of an additive
+Sampled Gaussian Mechanism (SGM).
+
+Example
+-------
+Suppose that we have run an SGM applied to a function with L2-sensitivity of 1.
+
+Its parameters are given as a list of tuples
+``[(q_1, sigma_1, steps_1), ..., (q_k, sigma_k, steps_k)],``
+and we wish to compute epsilon for a given target delta.
+
 The example code would be:
-  max_order = 32
-  orders = range(2, max_order + 1)
-  rdp = np.zeros_like(orders, dtype=float)
-  for q, sigma, T in parameters:
-   rdp += rdp_accountant.compute_rdp(q, sigma, T, orders)
-  eps, _, opt_order = rdp_accountant.get_privacy_spent(rdp, target_delta=delta)
+
+    >>> max_order = 32
+    >>> orders = range(2, max_order + 1)
+    >>> rdp = np.zeros_like(orders, dtype=float)
+    >>> for q, sigma, steps in parameters:
+    >>>     rdp += privacy_analysis.compute_rdp(q, sigma, steps, orders)
+    >>> epsilon, opt_order = privacy_analysis.get_privacy_spent(orders, rdp, delta)
+
 """
+
 import math
-import sys
+from typing import List, Tuple, Union
 
 import numpy as np
 from scipy import special
@@ -37,8 +39,21 @@ from scipy import special
 ########################
 
 
-def _log_add(logx, logy):
-    """Add two numbers in the log space."""
+def _log_add(logx: float, logy: float) -> float:
+    r"""Adds two numbers in the log space.
+
+    Parameters
+    ----------
+    logx: float
+        First term in log space.
+    logy: float
+        Second term in log space.
+
+    Returns
+    -------
+    float
+        Sum of numbers in log space.
+    """
     a, b = min(logx, logy), max(logx, logy)
     if a == -np.inf:  # adding 0
         return b
@@ -46,8 +61,26 @@ def _log_add(logx, logy):
     return math.log1p(math.exp(a - b)) + b  # log1p(x) = log(x + 1)
 
 
-def _log_sub(logx, logy):
-    """Subtract two numbers in the log space. Answer must be non-negative."""
+def _log_sub(logx: float, logy: float) -> float:
+    r"""Subtracts two numbers in the log space.
+
+    Parameters
+    ----------
+    logx: float
+        First term in log space. Expected to be greater than the second term.
+    logy: float
+        First term in log space. Expected to be less than the first term.
+
+    Returns
+    -------
+    float
+        Difference of numbers in log space.
+
+    Raises
+    ------
+    ValueError
+        If the result is negative.
+    """
     if logx < logy:
         raise ValueError("The result of subtraction must be non-negative.")
     if logy == -np.inf:  # subtracting 0
@@ -62,16 +95,31 @@ def _log_sub(logx, logy):
         return logx
 
 
-def _log_print(logx):
-    """Pretty print."""
-    if logx < math.log(sys.float_info.max):
-        return "{}".format(math.exp(logx))
-    else:
-        return "exp({})".format(logx)
+def _compute_log_a_for_int_alpha(q: float, sigma: float, alpha: int) -> float:
+    r"""Computes :math:`log(A_\alpha)` for integer ``alpha``.
 
+    Where,
+        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``.
+    Note that 0 < ``q`` < 1.
 
-def _compute_log_a_int(q, sigma, alpha: int):
-    """Compute log(A_alpha) for integer alpha. 0 < q < 1."""
+    Refer Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf for details.
+
+    Parameters
+    ----------
+    q: float
+        Sampling rate of SGM.
+
+    sigma: float
+        The standard deviation of the additive Gaussian noise.
+
+    alpha: int
+        The order at which RDP is computed.
+
+    Returns
+    -------
+    float
+        :math:`log(A_\alpha)` as defined in Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf.
+    """
 
     # Initialize with 0 in the log space.
     log_a = -np.inf
@@ -89,8 +137,31 @@ def _compute_log_a_int(q, sigma, alpha: int):
     return float(log_a)
 
 
-def _compute_log_a_frac(q, sigma, alpha):
-    """Compute log(A_alpha) for fractional alpha. 0 < q < 1."""
+def _compute_log_a_for_frac_alpha(q: float, sigma: float, alpha: float) -> float:
+    r"""Computes :math:`log(A_\alpha)` for fractional ``alpha``.
+
+    Where,
+        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``.
+    Note that 0 < ``q`` < 1.
+
+    Refer Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf for details.
+
+    Parameters
+    ----------
+    q: float
+        Sampling rate of SGM.
+
+    sigma: float
+        The standard deviation of the additive Gaussian noise.
+
+    alpha: float
+        The order at which RDP is computed.
+
+    Returns
+    -------
+    float
+        :math:`log(A_\alpha)` as defined in Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf.
+    """
     # The two parts of A_alpha, integrals over (-inf,z0] and [z0, +inf), are
     # initialized to 0 in the log space:
     log_a0, log_a1 = -np.inf, -np.inf
@@ -126,27 +197,64 @@ def _compute_log_a_frac(q, sigma, alpha):
     return _log_add(log_a0, log_a1)
 
 
-def _compute_log_a(q, sigma, alpha):
-    """Compute log(A_alpha) for any positive finite alpha."""
+def _compute_log_a(q: float, sigma: float, alpha: float) -> float:
+    r"""Computes :math:`log(A_\alpha)` for any positive finite ``alpha``.
+
+    Where,
+        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``.
+    Note that 0 < ``q`` < 1.
+
+    Refer Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf for details.
+
+    Parameters
+    ----------
+    q: float
+        Sampling rate of SGM.
+
+    sigma: float
+        The standard deviation of the additive Gaussian noise.
+
+    alpha: float (including int)
+        The order at which RDP is computed.
+
+    Returns
+    -------
+    float
+        :math:`log(A_\alpha)` as defined in the paper mentioned above.
+    """
     if float(alpha).is_integer():
-        return _compute_log_a_int(q, sigma, int(alpha))
+        return _compute_log_a_for_int_alpha(q, sigma, int(alpha))
     else:
-        return _compute_log_a_frac(q, sigma, alpha)
+        return _compute_log_a_for_frac_alpha(q, sigma, alpha)
 
 
-def _log_erfc(x):
-    """Compute log(erfc(x)) with high accuracy for large x."""
+def _log_erfc(x: float) -> float:
+    r"""Computes :math:`log(erfc(x))` with high accuracy for large ``x``.
+
+    Helper function used in computation of :math:`log(A_\alpha)`
+    for a fractional alpha.
+    """
     return math.log(2) + special.log_ndtr(-x * 2 ** 0.5)
 
 
-def _compute_rdp(q, sigma, alpha):
-    """Compute RDP of the Sampled Gaussian mechanism at order alpha.
-    Args:
-      q: The sampling rate.
-      sigma: The std of the additive Gaussian noise.
-      alpha: The order at which RDP is computed.
-    Returns:
-      RDP at alpha, can be np.inf.
+def _compute_rdp(q: float, sigma: float, alpha: float) -> float:
+    r"""Computes RDP of the Sampled Gaussian Mechanism at order ``alpha``.
+
+    Parameters
+    ----------
+    q: float
+        Sampling rate of SGM.
+
+    sigma: float
+        The standard deviation of the additive Gaussian noise.
+
+    alpha: int or float
+        The order at which RDP is computed.
+
+    Returns
+    -------
+    float
+        RDP at order ``alpha``; can be np.inf.
     """
     if q == 0:
         return 0
@@ -164,18 +272,36 @@ def _compute_rdp(q, sigma, alpha):
     return _compute_log_a(q, sigma, alpha) / (alpha - 1)
 
 
-def compute_rdp(q, noise_multiplier, steps, orders):
-    """Compute RDP of the Sampled Gaussian Mechanism.
-    Args:
-      q: The sampling rate.
-      noise_multiplier: The ratio of the standard deviation of the Gaussian noise
-          to the l2-sensitivity of the function to which it is added.
-      steps: The number of steps.
-      orders: An array (or a scalar) of RDP orders.
-    Returns:
-      The RDPs at all orders, can be np.inf.
+def compute_rdp(
+    q: float, noise_multiplier: float, steps: int, orders: Union[List[float], float]
+) -> Union[List[float], float]:
+    r"""Computes Renyi Differential Privacy (RDP) guarantees of the
+    Sampled Gaussian Mechanism (SGM) iterated ``steps`` times.
+
+    Parameters
+    ----------
+    q: float
+        Sampling rate of SGM.
+
+    noise_multiplier: float
+        The ratio of the standard deviation of the additive Gaussian noise to
+        the L2-sensitivity of the function to which it is added.
+
+        Note that this is same as the standard deviation of the additive
+        Gaussian noise when the L2-sensitivity of the function is 1.
+
+    steps: int
+        The number of iterations of the mechanism.
+
+    orders: List[float] or float
+        An array (or a scalar) of RDP orders.
+
+    Returns
+    -------
+    List[float] or float:
+      The RDP guarantees at all orders; can be np.inf.
     """
-    if np.isscalar(orders):
+    if isinstance(orders, float):
         rdp = _compute_rdp(q, noise_multiplier, orders)
     else:
         rdp = np.array([_compute_rdp(q, noise_multiplier, order) for order in orders])
@@ -183,16 +309,32 @@ def compute_rdp(q, noise_multiplier, steps, orders):
     return rdp * steps
 
 
-def get_privacy_spent(orders, rdp, delta):
-    """Compute epsilon given a list of RDP values and target delta.
-    Args:
-      orders: An array (or a scalar) of orders.
-      rdp: A list (or a scalar) of RDP guarantees.
-      delta: The target delta.
-    Returns:
-      Pair of (eps, optimal_order).
-    Raises:
-      ValueError: If input is malformed.
+def get_privacy_spent(
+    orders: Union[List[float], float], rdp: Union[List[float], float], delta: float
+) -> Tuple[float, float]:
+    r"""Computes epsilon given a list of Renyi Differential Privacy (RDP) values at
+    multiple RDP orders and target ``delta``.
+
+    Parameters
+    ----------
+    orders: List[float] or float
+        An array (or a scalar) of orders (alphas).
+
+    rdp: List[float] or float
+        A list (or a scalar) of RDP guarantees.
+
+    delta: float
+        The target delta.
+
+    Returns
+    -------
+    Tuple[float, float]
+        Pair of epsilon and optimal order alpha.
+
+    Raises
+    ------
+    ValueError
+        If the lengths of ``orders`` and ``rdp`` are not equal.
     """
     orders_vec = np.atleast_1d(orders)
     rdp_vec = np.atleast_1d(rdp)
