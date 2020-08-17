@@ -58,7 +58,7 @@ class replace_all_modules_test(unittest.TestCase):
         # check module BatchNorms is there
         self.checkModulePresent(model, nn.BatchNorm2d)
         # nullify the module (replace with Idetity)
-        model = mm.nullify_batchnorm_modules(model, nn.BatchNorm2d)
+        model = mm.nullify_batchnorm_modules(model)
         # check module is not present
         self.checkModuleNotPresent(model, nn.BatchNorm2d)
 
