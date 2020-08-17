@@ -36,13 +36,13 @@ Example:
 
 from enum import IntEnum
 from typing import Any
+import warnings
 
 
 try:
     from torch.utils.tensorboard import SummaryWriter
 except ImportError:
-    # dummy SummaryWriter
-    print("Warning! Tensorboard library was not found.")
+    warnings.warn("Tensorboard library was not found. Using dummy SummaryWriter")
 
     class SummaryWriter:
         def add_scalar(self, *args, **kwargs):
