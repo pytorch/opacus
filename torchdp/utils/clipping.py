@@ -449,6 +449,7 @@ class _Dynamic_Clipper_(NormClipper):
 
         if len(norms) != len(current_threshs):  # pyre-ignore
             raise ValueError(
+                # pyre-fixme[6]: Expected `Sized` for 1st param but got `int`.
                 f"Provided grad norm max's size {len(current_threshs)}"  # pyre-ignore
                 f" does not match the number of layers {len(norms)}"
             )
