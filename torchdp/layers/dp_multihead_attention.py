@@ -10,22 +10,21 @@ from torch.nn.parameter import Parameter
 
 
 class SequenceBias(nn.Module):
-    """ Adds one bias element to the end of the sequence
-    Args:
-        embed_dim: Embedding dimension
+    r"""
+    Adds one bias element to the end of the sequence.
+    so if the input has a shape ``(L, N, E)``, where
+    ``L`` is the sequence length, ``N`` is the batch size, and ``E`` is
+    the embedding dimension, the output will have a shape
+    ``(L+1, N, E)``.
 
-    Shape:
-        - Input: (L, N, E), where
-            L - sequence length, N - batch size, E - embedding dimension
-        - Output: (L+1, N, E), where
-            L - sequence length, N - batch size, E - embedding dimension
+    Attributes
+    ------------
+    bias: :class:`torch.nn.parameter.Parameter`
+        the learnable bias of the module of shape ``(E)``,
+        where ``E`` is the embedding dimension.
 
-    Attributes:
-        bias:   the learnable bias of the module of shape (E),
-            where E - embedding dimension
-
-    Examples::
-
+    Example
+    -------
         >>> m = SequenceBias(16)
         >>> input = torch.randn(20, 4, 16)
         >>> output = m(input)
@@ -34,12 +33,21 @@ class SequenceBias(nn.Module):
     """
 
     def __init__(self, embed_dim):
+        r"""
+        Parameters
+        ----------
+        embed_dim: int
+            Embedding dimension
+        """
         super(SequenceBias, self).__init__()
 
         self.bias = Parameter(torch.empty(embed_dim))
         self._reset_parameters()
 
     def _reset_parameters(self):
+        r"""
+        assing's Normally distributed random values to bias.
+        """
         nn.init.normal_(self.bias)
 
     def forward(self, x):
@@ -48,9 +56,10 @@ class SequenceBias(nn.Module):
 
 
 class DPMultiheadAttention(nn.Module):
-    """ This is DP-friendly implementation of nn.MultiheadAttention.
-    For full reference see original module:
-    https://pytorch.org/docs/stable/nn.html#torch.nn.MultiheadAttention
+    r"""
+    This is DP-friendly implementation of nn.MultiheadAttention.
+    For full reference see original module refer to
+    :class:`torch.nn.MultiheadAttention`.
 
     Current implementation leverages pytorch modules as building blocks
     to allow DP engine to calculate per-sample gradients.
@@ -98,9 +107,17 @@ class DPMultiheadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def load_state_dict(self, state_dict):
-        """ Loads module from previously saved state.
-        Supports loading from both DPMultiheadAttention
-        and nn.MultiheadAttention modules
+        r"""
+        Loads module from previously saved state.
+
+        Supports loading from both :class:`torch.nn.MultiheadAttention` and
+        :class:`torchdp.layers.dp_multihead_attention.DPMultiheadAttention`.
+
+        Parameters
+        ----------
+        state_dict
+            Please refer to
+            https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html.
         """
         if "in_proj_weight" in state_dict:
             qweight, kweight, vweight = state_dict["in_proj_weight"].chunk(3, dim=0)
@@ -149,15 +166,23 @@ class DPMultiheadAttention(nn.Module):
         need_weights=True,
         attn_mask=None,
     ):
-
         tgt_len, bsz, embed_dim = query.size()
-        assert embed_dim == self.embed_dim
-        assert key.size() == value.size()
+        if embed_dim != self.embed_dim:
+            raise ValueError(
+                f"query has as size of {embed_dim} while the embedding"
+                " size is {self.embed_dim}"
+            )
+        if key.size() != value.size():
+            raise ValueError(
+                f"key and value have different sizes {key.size()} vs {value.size()}."
+            )
 
         head_dim = embed_dim // self.num_heads
-        assert (
-            head_dim * self.num_heads == embed_dim
-        ), "embed_dim must be divisible by num_heads"
+        if head_dim * self.num_heads != embed_dim:
+            raise ValueError(
+                f"embedding dimension {embed_dim} not divisible "
+                "by number of heads {num_heads}"
+            )
         scaling = float(head_dim) ** -0.5
 
         q = self.qlinear(query)
@@ -167,13 +192,13 @@ class DPMultiheadAttention(nn.Module):
         q = q * scaling
 
         if attn_mask is not None:
-            assert (
-                attn_mask.dtype == torch.float32
-                or attn_mask.dtype == torch.float64
-                or attn_mask.dtype == torch.uint8
-                or attn_mask.dtype == torch.bool
-            ), f"Only float, byte, and bool types are supported for attn_mask,"
-            "not {attn_mask.dtype}"
+            if attn_mask.dtype not in (
+                torch.float32, torch.float64, torch.uint8, torch.bool
+            ):
+                raise ValueError(
+                    f"Only float, byte, and bool types are supported for attn_mask, "
+                    f"not {attn_mask.dtype}."
+                )
 
             if attn_mask.dtype == torch.uint8:
                 warnings.warn(
@@ -185,16 +210,16 @@ class DPMultiheadAttention(nn.Module):
             if attn_mask.dim() == 2:
                 attn_mask = attn_mask.unsqueeze(0)
                 if list(attn_mask.size()) != [1, query.size(0), key.size(0)]:
-                    raise RuntimeError("The size of the 2D attn_mask is not correct.")
+                    raise ValueError("The size of the 2D attn_mask is not correct.")
             elif attn_mask.dim() == 3:
                 if list(attn_mask.size()) != [
                     bsz * self.num_heads,
                     query.size(0),
                     key.size(0),
                 ]:
-                    raise RuntimeError("The size of the 3D attn_mask is not correct.")
+                    raise ValueError("The size of the 3D attn_mask is not correct.")
             else:
-                raise RuntimeError(
+                raise ValueError(
                     "attn_mask's dimension {} is not supported".format(attn_mask.dim())
                 )
             # attn_mask's dim is 3 now.
