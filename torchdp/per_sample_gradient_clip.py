@@ -210,8 +210,8 @@ class PerSampleGradientClipper:
             summed_grad = self._weighted_sum(
                 clip_factor, p.grad_sample  # pyre-ignore[16]
             )
-            clipping_thresh = self._get_ith(self.norm_clipper.thresholds, i)
-            per_sample_norm = self._get_ith(all_norms, i)
+            clipping_thresh = self.norm_clipper.thresholds[i if len(self.norm_clipper.thresholds) > 1 else 0]
+            per_sample_norm = all_norms[i if len(all_norms) > 1 else 0]
             # accumulate the summed gradient for this mini-batch
             if hasattr(p, "summed_grad"):
                 p.summed_grad += summed_grad  # pyre-ignore[16]
@@ -315,10 +315,6 @@ class PerSampleGradientClipper:
             Weighted sum tensor for ``param`` along the batch dimension weighted by batch_weight.
         """
         return torch.einsum("i,i...", batch_weight, param)
-
-    def _get_ith(self, all_data, layer_index):
-        """helper to get ith value for lists of layer_data"""
-        return all_data[layer_index if len(all_data) > 1 else 0]
 
     def _on_batch_clip(
         self,
