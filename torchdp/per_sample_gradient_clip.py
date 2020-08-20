@@ -132,8 +132,6 @@ class PerSampleGradientClipper:
         )
 
         # step 1: calculate the clipping factors based on the noise
-        # pyre-fixme[6]: Expected `List[torch.Tensor]` for 1st param but got
-        #  `Tuple[List[torch.Tensor], typing.Dict[str, float]]`.
         clipping_factor = self.norm_clipper.calc_clipping_factors(all_norms)
 
         # step 2: update the aggreagated thresholds and batch size

@@ -370,6 +370,7 @@ class PrivacyEngine:
                 device=self.device,
                 generator=self.secure_generator,
             )
+        # pyre-fixme[7]: Expected `Tensor` but got `float`.
         return 0.0
 
     def _set_seed(self, secure_seed: Optional[int]):
