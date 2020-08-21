@@ -8,8 +8,8 @@ from .utils.module_inspection import ModelInspector, get_layer_type, requires_gr
 
 
 class IncompatibleModuleException(Exception):
-    """
-    Exception class to be thrown from Privacy Engine in case
+    r"""
+    Exception class to be thrown in case
     the given model contains incompatible modules.
     """
 
@@ -17,17 +17,9 @@ class IncompatibleModuleException(Exception):
 
 
 class DPModelInspector:
-    """
-    Class to wrap `ModelInspector`s that are relevant for the
-    `PrivacyEngine`. This class provides an easy interface for the
-    privacy engine to validate a model.
+    r""" Class to validate if a given module meets the requirements for attaching :class:`~torchdp.privacy_engine.PrivacyEngine`.
 
-    Attributes:
-        inspectors: List of ModuleInspectors that are used for model
-        validation.
-        should_throw: A flag (`True` by default) that makes the inspector throw
-        if any of the ModuleInspectors return `False`. To continue (without
-        privacy and/or run-time error guarantee) you can set this flag to `False`
+    Active checks are listed in :attr:`~torchdp.dp_model_inspector.DPModelInspector.inspectors` attribute.
     """
 
     def __init__(self):
@@ -83,30 +75,46 @@ class DPModelInspector:
             ),
         ]
 
-    # pyre-fixme[31]: Expression `True` is not a valid type.
-    def validate(self, model: nn.Module) -> True:
-        """
-        Runs the existing `inspectors` on all the sub-modules of the model. Returns
-        `True` if all the predicates pass on all the sub-modules, throws
-        `IncompatibleModuleException` if not. The list of modules/sub-modules that
-        violated each of the `predicates` are returned as part of the exception message.
+    def validate(self, model: nn.Module) -> bool:
+        r"""Runs the validation on the model and all its submodules.
 
 
-        Args:
-            model: The model to validate.
+        Validation comprises a series of individual :class:`ModelInspectors <torchdp.utils.module_inspection.ModelInspector>`,
+        each checking one predicate.
+        Depending on ``should_throw`` flag in the constructor, will either return
+        False or throw :class:`~torchdp.dp_model_inspector.IncompatibleModuleException` in case of validation failure.
 
-        Returns:
-            A boolean if all the inspectors pass on all modules.
+        Note, that this method is called within :meth:`torchdp.privacy_engine.PrivacyEngine.attach`.
 
-        Examples:
+        Parameters
+        ----------
+            model: torch.nn.Module
+                The model to validate.
 
-            insp = DPModelInspector()
-            model = nn.BatchNorm1d(2)
-            valid = inspector.validate(model)
-            # returns False, look at insp.inspectors[i].violators.
+        Returns
+        ----------
+        bool
+            True if successful. False if validation fails and ``should_throw == False``
+
+        Raises
+        ------
+        IncompatibleModuleException
+            If the validation fails and ``should_throw == True``. Exception message will
+            contain the details of validation failure reason.
+
+        Example
+        -------
+            >>> insp = DPModelInspector()
+            >>> valid_model = nn.Linear(16, 32)
+            >>> is_valid = inspector.validate(model)
+            >>> is_valid
+            True
+            >>> invalid_model = nn.BatchNorm1d(2)
+            >>> is_valid = inspector.validate(model)
+            # IncompatibleModuleException is thrown.
         """
         valid = all(inspector.validate(model) for inspector in self.inspectors)
-        if self.should_throw and (not valid):
+        if self.should_throw and not valid:
             message = "Model contains incompatible modules."
             for inspector in self.inspectors:
                 if inspector.violators:
