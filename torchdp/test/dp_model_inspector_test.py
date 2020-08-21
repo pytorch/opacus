@@ -18,19 +18,17 @@ class dp_model_inspector_test(unittest.TestCase):
             inspector.validate(model)
 
     def test_returns_False(self):
-        inspector = dp_inspector.DPModelInspector()
+        inspector = dp_inspector.DPModelInspector(should_throw=False)
         model = models.resnet50()
-        inspector.should_throw = False
         self.assertFalse(inspector.validate(model))
 
-    def test_returns_true(self):
+    def test_convert_batchnorm(self):
         inspector = dp_inspector.DPModelInspector()
         model = convert_batchnorm_modules(models.resnet50())
         self.assertTrue(inspector.validate(model))
 
     def test_running_stats(self):
-        inspector = dp_inspector.DPModelInspector()
-        inspector.should_throw = False
+        inspector = dp_inspector.DPModelInspector(should_throw=False)
 
         self.assertTrue(inspector.validate(nn.InstanceNorm1d(16)))
         self.assertTrue(inspector.validate(nn.InstanceNorm1d(16, affine=True)))

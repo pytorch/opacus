@@ -4,7 +4,7 @@
 from torch import nn
 
 from .autograd_grad_sample import is_supported
-from .utils.module_inspection import ModelInspector, get_layer_type, requires_grad
+from .utils.module_inspection import ModelInspector, get_layer_type
 
 
 class IncompatibleModuleException(Exception):
@@ -22,56 +22,42 @@ class DPModelInspector:
     Active checks are listed in :attr:`~torchdp.dp_model_inspector.DPModelInspector.inspectors` attribute.
     """
 
-    def __init__(self):
-        self.should_throw = True
-
-        def is_valid(module: nn.Module):
-            valid = (not requires_grad(module)) or is_supported(module)
-            if valid and isinstance(module, nn.Conv2d):
-                # pyre-fixme[16]: `Conv2d` has no attribute `in_channels`.
-                valid = module.groups == 1 or module.groups == module.in_channels
-            return valid
-
-        def no_batchnorm(module: nn.Module):
-            return not (
-                requires_grad(module)
-                and isinstance(module, nn.modules.batchnorm._BatchNorm)
-            )
-
-        def no_running_stats_instancenorm(module: nn.Module):
-            is_instancenorm = get_layer_type(module) in (
-                "InstanceNorm1d",
-                "InstanceNorm2d",
-                "InstanceNorm3d",
-            )
-
-            return (
-                not is_instancenorm
-                or not requires_grad(module)
-                # pyre-fixme[16]: `Module` has no attribute `track_running_stats`.
-                or not module.track_running_stats
-            )
+    def __init__(self, should_throw: bool = True):
+        r"""
+        Parameters
+        ----------
+        should_throw: bool, optional
+           Whether the inspector should throw an exception or return False in case of
+           validation error
+        """
+        self.should_throw = should_throw
 
         self.inspectors = [
             # Inspector to check model only consists of sub-modules we support
             ModelInspector(
                 name="validity",
-                predicate=is_valid,
+                predicate=_is_valid_check,
                 message="Some modules are not valid.",
             ),
             # Inspector to check for BatchNorms as they could be replaced with groupnorm
             ModelInspector(
                 name="batchnorm",
-                predicate=no_batchnorm,
+                predicate=_no_batchnorm_check,
                 message="Model contains BatchNorm layers. It is recommended"
                 "That they are replaced with GroupNorm.",
             ),
             # Inspector to check that instance norms doesn't track running stats
             ModelInspector(
                 name="running_stats",
-                predicate=no_running_stats_instancenorm,
+                predicate=_no_running_stats_instancenorm_check,
                 message="InstanceNorm layer initialised with track_running_stats=True."
                 "This is currently not supported",
+            ),
+            # Inspector to check the number of groups in Conv2d layers
+            ModelInspector(
+                name="conv_group_number",
+                predicate=_conv_group_number_check,
+                message="Number of groups in Conv2d layer must be either 1 or equal to number of channels",
             ),
         ]
 
@@ -121,3 +107,42 @@ class DPModelInspector:
                     message += f"\n{inspector.message}: {inspector.violators}"
             raise IncompatibleModuleException(message)
         return valid
+
+
+def _is_valid_check(module: nn.Module) -> bool:
+    r""" Checks if the `module`  is supported by `autograd_grad_sample`
+    """
+    return is_supported(module)
+
+
+def _conv_group_number_check(module: nn.Module) -> bool:
+    r""" Checks if number of groups in `nn.Conv2d` layer is valid
+    """
+    if isinstance(module, nn.Conv2d):
+        # pyre-fixme[16]: `Conv2d` has no attribute `in_channels`.
+        return module.groups == 1 or module.groups == module.in_channels
+
+    return True
+
+
+def _no_batchnorm_check(module: nn.Module) -> bool:
+    r""" Checks if the module is not BatchNorm.
+
+    This check overlaps with `_is_valid_check`, but provides more targeted remedy.
+    """
+    return not isinstance(module, nn.modules.batchnorm._BatchNorm)
+
+
+def _no_running_stats_instancenorm_check(module: nn.Module) -> bool:
+    r""" Checks that InstanceNorm layer has `track_running_stats` set to False
+    """
+    is_instancenorm = get_layer_type(module) in (
+        "InstanceNorm1d",
+        "InstanceNorm2d",
+        "InstanceNorm3d",
+    )
+
+    if is_instancenorm:
+        # pyre-fixme[16]: `Module` has no attribute `track_running_stats`.
+        return not module.track_running_stats
+    return True
