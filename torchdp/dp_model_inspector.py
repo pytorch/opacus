@@ -32,6 +32,13 @@ class DPModelInspector:
         """
         self.should_throw = should_throw
 
+        def no_lstm(module: nn.Module):
+            is_lstm = True if get_layer_type(module) == "LSTM" else False
+
+            return (
+                not is_lstm
+            )
+
         self.inspectors = [
             # Inspector to check model only consists of sub-modules we support
             ModelInspector(
@@ -59,6 +66,13 @@ class DPModelInspector:
                 predicate=_conv_group_number_check,
                 message="Number of groups in Conv2d layer must be either 1 or equal to number of channels",
             ),
+            # Inspector to check for LSTM as it can be replaced with DPLSTM
+            ModelInspector(
+                name="lstm",
+                predicate=no_lstm,
+                message="Model contains LSTM layers. It is recommended that they are"
+                "replaced with DPLSTM",
+            )
         ]
 
     def validate(self, model: nn.Module) -> bool:

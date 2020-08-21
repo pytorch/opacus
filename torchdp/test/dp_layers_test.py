@@ -3,8 +3,11 @@
 import unittest
 
 import torch
+from torch import nn
+from torch.nn import LSTM
 from torch.nn.modules.activation import MultiheadAttention
-from torchdp.layers import DPMultiheadAttention
+from torch.testing import assert_allclose
+from torchdp.layers import DPLSTM, DPMultiheadAttention
 
 
 class DPLayersTest(unittest.TestCase):
@@ -55,3 +58,93 @@ class DPLayersTest(unittest.TestCase):
             self._run_multihead_x(num_heads=num_heads, add_zero_attn=True)
 
             self._run_multihead_qkv(num_heads=num_heads, kdim=24, vdim=24)
+
+
+class DPLSTMTest(unittest.TestCase):
+    def setUp(self):
+        self.SEQ_LENGTH = 20
+        self.INPUT_DIM = 25
+        self.MINIBATCH_SIZE = 30
+        self.LSTM_OUT_DIM = 12
+
+        self.h_init = torch.randn(1, self.MINIBATCH_SIZE, self.LSTM_OUT_DIM)
+        self.c_init = torch.randn(1, self.MINIBATCH_SIZE, self.LSTM_OUT_DIM)
+        hidden = (self.h_init, self.c_init)
+
+        self.x = torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.INPUT_DIM)
+
+        self.original_lstm = LSTM(self.INPUT_DIM, self.LSTM_OUT_DIM, batch_first=True)
+        self.dp_lstm = DPLSTM(self.INPUT_DIM, self.LSTM_OUT_DIM, batch_first=True)
+
+        self.dp_lstm.initialize_weights(
+            [
+                self.original_lstm.weight_ih_l0,
+                self.original_lstm.weight_hh_l0,
+                self.original_lstm.bias_ih_l0,
+                self.original_lstm.bias_hh_l0,
+            ]
+        )
+
+        self.lstm_out, self.lstm_state = self.original_lstm(self.x, hidden)
+        self.dplstm_out, self.dplstm_state = self.dp_lstm(self.x, hidden)
+
+    def _reset_seeds(self):
+        torch.manual_seed(1337)
+        torch.cuda.manual_seed(1337)
+
+    def test_lstm_forward(self):
+        params_to_test = [
+            (self.lstm_out, self.dplstm_out, "LSTM and DPLSTM output"),
+            (self.lstm_state[0], self.dplstm_state[0], "LSTM and DPLSTM state `h`"),
+            (self.lstm_state[1], self.dplstm_state[1], "LSTM and DPLSTM state `c`"),
+        ]
+        for param, dp_param, message in params_to_test:
+            assert_allclose(
+                actual=param,
+                expected=dp_param,
+                atol=10e-5,
+                rtol=10e-3,
+                msg=f"Tensor value mismatch between {message}",
+            )
+
+    def test_lstm_backward(self):
+        y = torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.LSTM_OUT_DIM)
+        criterion = nn.MSELoss()
+
+        loss = criterion(y, self.lstm_out)
+        loss.backward()
+
+        dp_loss = criterion(y, self.dplstm_out)
+        dp_loss.backward()
+
+        params_to_test = [
+            (
+                self.original_lstm.weight_ih_l0.grad,
+                self.dp_lstm.weight_ih_l0.grad,
+                "LSTM and DPLSTM `weight_ih_l0` gradients",
+            ),
+            (
+                self.original_lstm.bias_ih_l0.grad,
+                self.dp_lstm.bias_ih_l0.grad,
+                "LSTM and DPLSTM `bias_ih_l0` gradients",
+            ),
+            (
+                self.original_lstm.weight_hh_l0.grad,
+                self.dp_lstm.weight_hh_l0.grad,
+                "LSTM and DPLSTM `weight_hh_l0` gradients",
+            ),
+            (
+                self.original_lstm.bias_hh_l0.grad,
+                self.dp_lstm.bias_hh_l0.grad,
+                "LSTM and DPLSTM `bias_hh_l0` gradients",
+            ),
+        ]
+
+        for param, dp_param, message in params_to_test:
+            assert_allclose(
+                actual=param,
+                expected=dp_param,
+                atol=10e-5,
+                rtol=10e-3,
+                msg=f"Tensor value mismatch between {message}",
+            )

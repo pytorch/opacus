@@ -74,6 +74,54 @@ def _compute_norm_grad_sample(layer, A, B, batch_dim=0):
             )
 
 
+def _compute_dplstm_grad_sample(layer, A, B, batch_dim=0):
+    lstm_params = [
+        layer.weight_ih_l0,
+        layer.weight_hh_l0,
+        layer.bias_ih_l0,
+        layer.bias_hh_l0,
+    ]
+    lstm_out_dim = layer.hidden_size
+
+    x = torch.unbind(A, dim=1)
+    hooks_delta = torch.unbind(B, dim=1)
+
+    SEQ_LENGTH = len(x)
+    BATCH_SIZE = B.shape[0]
+
+    h_init = torch.zeros(1, BATCH_SIZE, lstm_out_dim, device=A.device)
+    c_init = torch.zeros(1, BATCH_SIZE, lstm_out_dim, device=A.device)
+
+    delta_h = {}
+    delta_h[SEQ_LENGTH - 1] = 0
+    f_last = 0
+    dc_last = 0
+
+    for t in range(SEQ_LENGTH - 1, -1, -1):
+        f_next = f_last if t == SEQ_LENGTH - 1 else layer.cells[t + 1].f_t
+        dc_next = dc_last if t == SEQ_LENGTH - 1 else layer.cells[t + 1].dc_t
+        c_prev = c_init if t == 0 else layer.cells[t - 1].c_t
+        delta_h[t - 1] = layer.cells[t].backward(
+            x[t], delta_h[t], hooks_delta[t], f_next, dc_next, c_prev
+        )
+
+    grad_sample = {param: 0 for param in lstm_params}
+
+    for t in range(0, SEQ_LENGTH):
+        h_prev = h_init[0, :] if t == 0 else layer.cells[t - 1].h_t[0, :]
+        grad_sample[layer.weight_ih_l0] += torch.einsum(
+            "ij,ik->ijk", layer.cells[t].dgates_t, x[t]
+        )
+        grad_sample[layer.weight_hh_l0] += torch.einsum(
+            "ij,ik->ijk", layer.cells[t].dgates_t, h_prev
+        )
+        grad_sample[layer.bias_ih_l0] += layer.cells[t].dgates_t
+        grad_sample[layer.bias_hh_l0] += layer.cells[t].dgates_t
+
+    for param, grad_value in grad_sample.items():
+        _create_or_extend_grad_sample(param, grad_value, batch_dim)
+
+
 def _compute_conv_grad_sample(layer, A, B, batch_dim=0):
     n = A.shape[0]
     layer_type = get_layer_type(layer)
@@ -134,4 +182,5 @@ _supported_layers_grad_samplers = {
     "InstanceNorm2d": _compute_norm_grad_sample,
     "InstanceNorm3d": _compute_norm_grad_sample,
     "SequenceBias": _compute_sequence_bias_grad_sample,
+    "DPLSTM": _compute_dplstm_grad_sample,
 }  # Supported layer class types

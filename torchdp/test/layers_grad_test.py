@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torchdp import PerSampleGradientClipper
 from torchdp.dp_model_inspector import DPModelInspector
-from torchdp.layers import DPMultiheadAttention, SequenceBias
+from torchdp.layers import DPLSTM, DPMultiheadAttention, SequenceBias
 from torchdp.utils.clipping import ConstantFlatClipper
 
 
@@ -166,3 +166,25 @@ class LayersGradTest(unittest.TestCase):
         x2 = torch.randint(0, 255, (64,)).long()
         self._check_one_layer(layer, x1)
         self._check_one_layer(layer, x2)
+
+    def test_lstm_batch_first(self):
+        # input size : 25 output size : 12 minibatch : 30 sequence length : 20
+        h_init = torch.zeros(1, 30, 12)
+        c_init = torch.zeros(1, 30, 12)
+        hidden = (h_init, c_init)
+
+        # Test batch_first=True case
+        layer = DPLSTM(25, 12, 1, batch_first=True)
+        x = torch.randn(30, 20, 25)
+        self._check_one_layer(layer, x, hidden, batch_first=True)
+
+    def test_lstm_batch_second(self):
+        # input size : 25 output size : 12 minibatch : 30 sequence length : 20
+        h_init = torch.zeros(1, 30, 12)
+        c_init = torch.zeros(1, 30, 12)
+        hidden = (h_init, c_init)
+
+        # Test batch_first=False case
+        layer = DPLSTM(25, 12, 1, batch_first=False)
+        x = torch.randn(20, 30, 25)
+        self._check_one_layer(layer, x, hidden, batch_first=False)
