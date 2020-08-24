@@ -16,7 +16,7 @@ class ModelInspector:
 
     Example
     -------
-    >>>  inspector = ModelInspector('simple', lambda x: issubclass(x, Conv2d))
+    >>>  inspector = ModelInspector('simple', lambda x: isinstance(x, Conv2d))
     >>>  print(inspector.validate(nn.Conv2d(1, 1, 1)))
     True
     """

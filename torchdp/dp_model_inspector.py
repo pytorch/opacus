@@ -104,13 +104,13 @@ class DPModelInspector:
 
         Example
         -------
-            >>> insp = DPModelInspector()
+            >>> inspector = DPModelInspector()
             >>> valid_model = nn.Linear(16, 32)
-            >>> is_valid = inspector.validate(model)
+            >>> is_valid = inspector.validate(valid_model)
             >>> is_valid
             True
             >>> invalid_model = nn.BatchNorm1d(2)
-            >>> is_valid = inspector.validate(model)
+            >>> is_valid = inspector.validate(invalid_model)
             # IncompatibleModuleException is thrown.
         """
         valid = all(inspector.validate(model) for inspector in self.inspectors)

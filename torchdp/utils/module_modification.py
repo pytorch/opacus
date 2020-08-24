@@ -194,12 +194,12 @@ def convert_batchnorm_modules(
 
     Example
     -------
-    >>>  from torchvision.models import resnet18
+    >>>  from torchvision.models import resnet50
     >>>  from torch import nn
     >>>  model = resnet50()
     >>>  print(model.layer1[0].bn1)
     BatchNorm2d module details
-    >>>  model = convert_batchnorm_moduleta(model)
+    >>>  model = convert_batchnorm_modules(model)
     >>>  print(model.layer1[0].bn1)
     GroupNorm module details
     """

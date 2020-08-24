@@ -57,7 +57,7 @@ class Stat:
 
         >>> stat = Stat(StatType.CLIPPING, 'sample_stats', frequency=0.1)
         >>> for i in range(20):
-        >>>    stat.log(i)
+        >>>    stat.log({"val":i})
 
     If an instance of ``tensorboard.SummaryWriter`` exists it can be used
     for stat gathering by passing it like this:
@@ -66,7 +66,7 @@ class Stat:
 
     To add stats about test accuracy you can do:
 
-        >>> stats.add(stats.StatType.TEST, 'accuracy', frequency=0.1)
+        >>> stats.add(Stat(stats.StatType.TEST, 'accuracy', frequency=0.1))
 
     and then update the stat meter in the proper location using:
 
