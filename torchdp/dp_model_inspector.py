@@ -32,13 +32,6 @@ class DPModelInspector:
         """
         self.should_throw = should_throw
 
-        def no_lstm(module: nn.Module):
-            is_lstm = True if get_layer_type(module) == "LSTM" else False
-
-            return (
-                not is_lstm
-            )
-
         self.inspectors = [
             # Inspector to check model only consists of sub-modules we support
             ModelInspector(
@@ -69,7 +62,7 @@ class DPModelInspector:
             # Inspector to check for LSTM as it can be replaced with DPLSTM
             ModelInspector(
                 name="lstm",
-                predicate=no_lstm,
+                predicate=_no_lstm,
                 message="Model contains LSTM layers. It is recommended that they are"
                 "replaced with DPLSTM",
             )
@@ -160,3 +153,10 @@ def _no_running_stats_instancenorm_check(module: nn.Module) -> bool:
         # pyre-fixme[16]: `Module` has no attribute `track_running_stats`.
         return not module.track_running_stats
     return True
+
+def _no_lstm(module: nn.Module):
+    is_lstm = True if get_layer_type(module) == "LSTM" else False
+
+    return (
+        not is_lstm
+    )
