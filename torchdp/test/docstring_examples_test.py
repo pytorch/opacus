@@ -146,6 +146,7 @@ class DocstringExamplesTest(unittest.TestCase):
     def test_module_modification_replace_example(self):
         # IMPORTANT: When changing this code you also need to update
         # the docstring for torchdp.utils.module_modification.replace_all_modules()
+        # pyre-fixme[21]: Could not find name `resnet18` in `torchvision.models`.
         from torchvision.models import resnet18
 
         model = resnet18()
@@ -157,6 +158,7 @@ class DocstringExamplesTest(unittest.TestCase):
     def test_module_modification_convert_example(self):
         # IMPORTANT: When changing this code you also need to update
         # the docstring for torchdp.utils.module_modification.convert_batchnorm_modules()
+        # pyre-fixme[21]: Could not find name `resnet50` in `torchvision.models`.
         from torchvision.models import resnet50
 
         model = resnet50()
