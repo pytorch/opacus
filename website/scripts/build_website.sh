@@ -87,5 +87,5 @@ else
   echo "-----------------------------------"
   echo "Starting local server"
   echo "-----------------------------------"
-  yarn start --port 9091
+  yarn start
 fi

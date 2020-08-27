@@ -219,6 +219,7 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
+
   nightly:
     triggers:
       - schedule:
