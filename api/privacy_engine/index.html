@@ -1,0 +1,270 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>PyTorch-DP · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="PyTorch-DP · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://facebookresearch.github.io/pytorch-dp//"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp-icon.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp_logo.png"/><link rel="shortcut icon" href="/img/pytorch-dp.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/pytorch-dp_logo.png" alt="PyTorch-DP"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/facebookresearch/pytorch-dp" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<div class="section" id="module-torchdp.privacy_engine">
+<span id="privacyengine"></span><h1>PrivacyEngine<a class="headerlink" href="#module-torchdp.privacy_engine" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="torchdp.privacy_engine.PrivacyEngine">
+<em class="property">class </em><code class="sig-prename descclassname">torchdp.privacy_engine.</code><code class="sig-name descname">PrivacyEngine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em>, <em class="sig-param"><span class="n">batch_size</span></em>, <em class="sig-param"><span class="n">sample_size</span></em>, <em class="sig-param"><span class="n">alphas</span></em>, <em class="sig-param"><span class="n">noise_multiplier</span></em>, <em class="sig-param"><span class="n">max_grad_norm</span></em>, <em class="sig-param"><span class="n">grad_norm_type</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">target_delta</span><span class="o">=</span><span class="default_value">1e-06</span></em>, <em class="sig-param"><span class="n">loss_reduction</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">misc_settings</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/privacy_engine.html#PrivacyEngine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.privacy_engine.PrivacyEngine" title="Permalink to this definition">¶</a></dt>
+<dd><p>The main component of Pytorch DP is the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>.</p>
+<p>To train a model with differential privacy, all you need to do
+is to define a <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> and later attach it to your
+optimizer before running.</p>
+<p class="rubric">Example</p>
+<p>This example shows how to define a <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> and to attach
+it to your optimizer.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>  <span class="c1"># An example model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">,</span> <span class="n">alphas</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">32</span><span class="p">),</span> <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>  <span class="c1"># That's it! Now it's business as usual.</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<em>nn.Module</em>) – The Pytorch module to which we are attaching the privacy engine</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Batch size</p></li>
+<li><p><strong>sample_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – The size of the sample (dataset). Used in the privacy accountant.</p></li>
+<li><p><strong>alphas</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>]</em>) – A list of RDP orders</p></li>
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – The ratio of the standard deviation of the Gaussian noise to
+the L2-sensitivity of the function to which the noise is added</p></li>
+<li><p><strong>max_grad_norm</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>, </em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>]</em><em>]</em>) – The maximum norm of the per-sample gradients. Any gradient with norm
+higher than this will be clipped to this value.</p></li>
+<li><p><strong>grad_norm_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – The order of the norm. For instance, 2 represents L-2 norm, while
+1 represents L-1 norm.</p></li>
+<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Flag to indicate if the input tensor to the corresponding module
+has the first dimension representing the batch. If set to True,
+dimensions on input tensor will be <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">...,</span> <span class="pre">...]</span></code>.</p></li>
+<li><p><strong>target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – The target delta</p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – Indicates if the loss reduction (for aggregating the gradients)
+is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
+<li><p><strong>**misc_settings</strong> – Other arguments to the init</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="torchdp.privacy_engine.PrivacyEngine.attach">
+<code class="sig-name descname">attach</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optimizer</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/privacy_engine.html#PrivacyEngine.attach"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.privacy_engine.PrivacyEngine.attach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attaches the privacy engine to the optimizer.</p>
+<p>Attaches to the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> an optimizer object,and injects
+itself into the optimizer’s step. To do that it,</p>
+<ol class="arabic simple">
+<li><p>Validates that the model does not have unsupported layers.</p></li>
+<li><p>Adds a pointer to this object (the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>) inside the optimizer.</p></li>
+<li><p>Moves optimizer’s original <code class="docutils literal notranslate"><span class="pre">step()</span></code> function to <code class="docutils literal notranslate"><span class="pre">original_step()</span></code>.</p></li>
+</ol>
+<p>4. Monkeypatches the optimizer’s <code class="docutils literal notranslate"><span class="pre">step()</span></code> function to call <code class="docutils literal notranslate"><span class="pre">step()</span></code> on
+the query engine automatically whenever it would call <code class="docutils literal notranslate"><span class="pre">step()</span></code> for itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>optimizer</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.optim.Optimizer</em></a>) – The optimizer to which the privacy engine will attach</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="torchdp.privacy_engine.PrivacyEngine.detach">
+<code class="sig-name descname">detach</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/privacy_engine.html#PrivacyEngine.detach"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.privacy_engine.PrivacyEngine.detach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detaches the privacy engine from optimizer.</p>
+<p>To detach the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> from optimizer, this method returns
+the model and the optimizer to their original states (i.e. all
+added attributes/methods will be removed).</p>
+</dd></dl>
+<dl class="py method">
+<dt id="torchdp.privacy_engine.PrivacyEngine.get_privacy_spent">
+<code class="sig-name descname">get_privacy_spent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_delta</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/privacy_engine.html#PrivacyEngine.get_privacy_spent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.privacy_engine.PrivacyEngine.get_privacy_spent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the (epsilon, delta) privacy budget spent so far.</p>
+<p>This method converts from an (alpha, epsilon)-DP guarantee for all alphas that
+the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> was initialized with. It returns the optimal alpha together
+with the best epsilon.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>target_delta</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>]</em>) – The Target delta. If None, it will default to the privacy engine’s target delta.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pair of epsilon and optimal order alpha.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="torchdp.privacy_engine.PrivacyEngine.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/privacy_engine.html#PrivacyEngine.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.privacy_engine.PrivacyEngine.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a step for the privacy engine.</p>
+<p class="rubric">Notes</p>
+<p>You should not call this method directly. Rather, by attaching your
+<code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> to the optimizer, the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> would have the
+optimizer call this method for you.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.8)"><strong>ValueError</strong></a> – If the last batch of training epoch is greater than others.
+    This ensures the clipper consumed the right amount of gradients.
+    In the last batch of a training epoch, we might get a batch that is
+    smaller than others but we should never get a batch that is too large</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="torchdp.privacy_engine.PrivacyEngine.to">
+<code class="sig-name descname">to</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">device</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/privacy_engine.html#PrivacyEngine.to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.privacy_engine.PrivacyEngine.to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Moves the privacy engine to the target device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>device</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em>, </em><em>torch.device</em><em>]</em>) – The device on which Pytorch Tensors are allocated.
+See: <a class="reference external" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device">https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device</a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>This example shows the usage of this method, on how to move the model
+after instantiating the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>  <span class="c1"># An example model. Default device is CPU</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">,</span> <span class="n">alphas</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">64</span><span class="p">),</span> <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="s2">"cuda:3"</span>  <span class="c1"># GPU</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># If we move the model to GPU, we should call the to() method of the privacy engine (next line)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>This privacy engine</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchdp.privacy_engine.PrivacyEngine" title="torchdp.privacy_engine.PrivacyEngine">PrivacyEngine</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="torchdp.privacy_engine.PrivacyEngine.virtual_step">
+<code class="sig-name descname">virtual_step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/privacy_engine.html#PrivacyEngine.virtual_step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.privacy_engine.PrivacyEngine.virtual_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a virtual step.</p>
+<p>Virtual batches enable training with arbitrary large batch sizes, while
+keeping the memory consumption constant. This is beneficial, when training
+models with larger batch sizes than standard models.</p>
+<p class="rubric">Example</p>
+<p>Imagine you want to train a model with batch size of 2048, but you can only
+fit batch size of 128 in your GPU. Then, you can do the following:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">16</span> <span class="o">==</span> <span class="mi">15</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>    <span class="c1"># this will call privacy engine's step()</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">else</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span>   <span class="c1"># this will call privacy engine's virtual_step()</span>
+</pre></div>
+</div>
+<p>The rough idea of virtual step is as follows:</p>
+<p>1. Calling <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code> repeatedly stores the per-sample gradients
+for all mini-batches. If we call <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code> <code class="docutils literal notranslate"><span class="pre">N</span></code> times on
+mini-batches of size <code class="docutils literal notranslate"><span class="pre">B</span></code>, then each weight’s <code class="docutils literal notranslate"><span class="pre">.grad_sample</span></code> field will
+contain <code class="docutils literal notranslate"><span class="pre">NxB</span></code> gradients. Then, when calling <code class="docutils literal notranslate"><span class="pre">step()</span></code>, the privacy engine
+clips all <code class="docutils literal notranslate"><span class="pre">NxB</span></code> gradients and computes the average gradient for an effective
+batch of size <code class="docutils literal notranslate"><span class="pre">NxB</span></code>. A call to <code class="docutils literal notranslate"><span class="pre">optimizer.zero_grad()</span></code> erases the
+per-sample gradients.</p>
+<p>2. By calling <code class="docutils literal notranslate"><span class="pre">virtual_step()</span></code> after <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code>,the <code class="docutils literal notranslate"><span class="pre">B</span></code>
+per-sample gradients for this mini-batch are clipped and summed up into a
+gradient accumulator. The per-sample gradients can then be discarded. After
+<code class="docutils literal notranslate"><span class="pre">N</span></code> iterations (alternating calls to <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">virtual_step()</span></code>), a call to <code class="docutils literal notranslate"><span class="pre">step()</span></code> will compute the average gradient
+for an effective batch of size <code class="docutils literal notranslate"><span class="pre">NxB</span></code>.</p>
+<p>The advantage here is that this is memory-efficient: it discards the per-sample
+gradients after every mini-batch. We can thus handle batches of arbitrary size.</p>
+</dd></dl>
+</dd></dl>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyTorch-DP</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PrivacyEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">PerSampleGradientClipper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autograd_grad_sample.html">Autograd Grad Sample</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compute_dp_sgd_privacy.html">Compute DP-SGD Privacy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dp_multihead_attention.html">DPMultiheadAttention</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tensor_utils.html">Tensor Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stats.html">Stats</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+<li>Previous: <a href="index.html" title="previous chapter">PyTorch-DP API Reference</a></li>
+<li>Next: <a href="privacy_analysis.html" title="next chapter">Privacy Analysis</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/pytorch-dp" data-count-href="https://github.com/facebookresearch/pytorch-dp/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star PyTorch-DP on GitHub">pytorch-dp</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/pytorch-dp/';
+              if (window.location.origin !== 'https://facebookresearch.github.io/pytorch-dp/') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://facebookresearch.github.io/pytorch-dp//' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'pytorch-dp',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

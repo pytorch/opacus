@@ -1,0 +1,182 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>PyTorch-DP · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="PyTorch-DP · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://facebookresearch.github.io/pytorch-dp//"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp-icon.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp_logo.png"/><link rel="shortcut icon" href="/img/pytorch-dp.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/pytorch-dp_logo.png" alt="PyTorch-DP"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/facebookresearch/pytorch-dp" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<div class="section" id="module-torchdp.layers.dp_multihead_attention">
+<span id="dpmultiheadattention"></span><h1>DPMultiheadAttention<a class="headerlink" href="#module-torchdp.layers.dp_multihead_attention" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="torchdp.layers.dp_multihead_attention.SequenceBias">
+<em class="property">class </em><code class="sig-prename descclassname">torchdp.layers.dp_multihead_attention.</code><code class="sig-name descname">SequenceBias</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">embed_dim</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/layers/dp_multihead_attention.html#SequenceBias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.layers.dp_multihead_attention.SequenceBias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds one bias element to the end of the sequence.
+so if the input has a shape <code class="docutils literal notranslate"><span class="pre">(L,</span> <span class="pre">N,</span> <span class="pre">E)</span></code>, where
+<code class="docutils literal notranslate"><span class="pre">L</span></code> is the sequence length, <code class="docutils literal notranslate"><span class="pre">N</span></code> is the batch size, and <code class="docutils literal notranslate"><span class="pre">E</span></code> is
+the embedding dimension, the output will have a shape
+<code class="docutils literal notranslate"><span class="pre">(L+1,</span> <span class="pre">N,</span> <span class="pre">E)</span></code>.</p>
+<dl class="py attribute">
+<dt id="torchdp.layers.dp_multihead_attention.SequenceBias.bias">
+<code class="sig-name descname">bias</code><a class="headerlink" href="#torchdp.layers.dp_multihead_attention.SequenceBias.bias" title="Permalink to this definition">¶</a></dt>
+<dd><p>the learnable bias of the module of shape <code class="docutils literal notranslate"><span class="pre">(E)</span></code>,
+where <code class="docutils literal notranslate"><span class="pre">E</span></code> is the embedding dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.parameter.Parameter</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">SequenceBias</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">m</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+<span class="go">torch.Size([21, 4, 16])</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>embed_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Embedding dimension</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="torchdp.layers.dp_multihead_attention.SequenceBias.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/layers/dp_multihead_attention.html#SequenceBias.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.layers.dp_multihead_attention.SequenceBias.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="torchdp.layers.dp_multihead_attention.DPMultiheadAttention">
+<em class="property">class </em><code class="sig-prename descclassname">torchdp.layers.dp_multihead_attention.</code><code class="sig-name descname">DPMultiheadAttention</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">embed_dim</span></em>, <em class="sig-param"><span class="n">num_heads</span></em>, <em class="sig-param"><span class="n">dropout</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">bias</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">add_bias_kv</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">add_zero_attn</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">kdim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">vdim</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/layers/dp_multihead_attention.html#DPMultiheadAttention"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.layers.dp_multihead_attention.DPMultiheadAttention" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is DP-friendly implementation of nn.MultiheadAttention.
+For full reference see original module refer to
+<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html#torch.nn.MultiheadAttention" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.MultiheadAttention</span></code></a>.</p>
+<p>Current implementation leverages pytorch modules as building blocks
+to allow DP engine to calculate per-sample gradients.
+This is in contrast with original implementation based on nn.functional.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="torchdp.layers.dp_multihead_attention.DPMultiheadAttention.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query</span></em>, <em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">key_padding_mask</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">need_weights</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">attn_mask</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/layers/dp_multihead_attention.html#DPMultiheadAttention.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.layers.dp_multihead_attention.DPMultiheadAttention.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+<dl class="py method">
+<dt id="torchdp.layers.dp_multihead_attention.DPMultiheadAttention.load_state_dict">
+<code class="sig-name descname">load_state_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/layers/dp_multihead_attention.html#DPMultiheadAttention.load_state_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.layers.dp_multihead_attention.DPMultiheadAttention.load_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads module from previously saved state.</p>
+<p>Supports loading from both <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html#torch.nn.MultiheadAttention" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.MultiheadAttention</span></code></a> and
+<a class="reference internal" href="#torchdp.layers.dp_multihead_attention.DPMultiheadAttention" title="torchdp.layers.dp_multihead_attention.DPMultiheadAttention"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchdp.layers.dp_multihead_attention.DPMultiheadAttention</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>state_dict</strong> – Please refer to
+<a class="reference external" href="https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html">https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html</a>.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyTorch-DP</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">PrivacyEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">PerSampleGradientClipper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autograd_grad_sample.html">Autograd Grad Sample</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compute_dp_sgd_privacy.html">Compute DP-SGD Privacy</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">DPMultiheadAttention</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tensor_utils.html">Tensor Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stats.html">Stats</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+<li>Previous: <a href="compute_dp_sgd_privacy.html" title="previous chapter">Compute DP-SGD Privacy</a></li>
+<li>Next: <a href="tensor_utils.html" title="next chapter">Tensor Utils</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/pytorch-dp" data-count-href="https://github.com/facebookresearch/pytorch-dp/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star PyTorch-DP on GitHub">pytorch-dp</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/pytorch-dp/';
+              if (window.location.origin !== 'https://facebookresearch.github.io/pytorch-dp/') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://facebookresearch.github.io/pytorch-dp//' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'pytorch-dp',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

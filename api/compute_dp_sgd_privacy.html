@@ -1,0 +1,140 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>PyTorch-DP · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="PyTorch-DP · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://facebookresearch.github.io/pytorch-dp//"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp-icon.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp_logo.png"/><link rel="shortcut icon" href="/img/pytorch-dp.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/pytorch-dp_logo.png" alt="PyTorch-DP"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/facebookresearch/pytorch-dp" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<div class="section" id="module-torchdp.scripts.compute_dp_sgd_privacy">
+<span id="compute-dp-sgd-privacy"></span><h1>Compute DP-SGD Privacy<a class="headerlink" href="#module-torchdp.scripts.compute_dp_sgd_privacy" title="Permalink to this headline">¶</a></h1>
+<p>Command-line script for computing privacy of a model trained with DP-SGD.
+The script applies the RDP accountant to estimate privacy budget of an iterated
+Sampled Gaussian Mechanism.</p>
+<p>The code is mainly based on Google’s TF Privacy:
+<a class="reference external" href="https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/compute_dp_sgd_privacy.py">https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/compute_dp_sgd_privacy.py</a></p>
+<p class="rubric">Example</p>
+<p>To call this script from command line, you can enter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span> <span class="n">python</span> <span class="n">compute_dp_sgd_privacy</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">dataset</span><span class="o">-</span><span class="n">size</span><span class="o">=</span><span class="mi">60000</span> <span class="o">--</span><span class="n">batch</span><span class="o">-</span><span class="n">size</span><span class="o">=</span><span class="mi">256</span> <span class="o">--</span><span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">1.12</span> <span class="o">--</span><span class="n">epochs</span><span class="o">=</span><span class="mi">60</span> <span class="o">--</span><span class="n">delta</span><span class="o">=</span><span class="mf">1e-5</span> <span class="o">--</span><span class="n">a</span> <span class="mi">10</span> <span class="mi">20</span> <span class="mi">100</span>
+</pre></div>
+</div>
+<p>The training process with these parameters satisfies (epsilon,delta)-DP of (2.95, 1e-5).</p>
+<dl class="py function">
+<dt id="torchdp.scripts.compute_dp_sgd_privacy.compute_dp_sgd_privacy">
+<code class="sig-prename descclassname">torchdp.scripts.compute_dp_sgd_privacy.</code><code class="sig-name descname">compute_dp_sgd_privacy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sample_size</span></em>, <em class="sig-param"><span class="n">batch_size</span></em>, <em class="sig-param"><span class="n">noise_multiplier</span></em>, <em class="sig-param"><span class="n">epochs</span></em>, <em class="sig-param"><span class="n">delta</span></em>, <em class="sig-param"><span class="n">alphas</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/scripts/compute_dp_sgd_privacy.html#compute_dp_sgd_privacy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.scripts.compute_dp_sgd_privacy.compute_dp_sgd_privacy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs the DP-SGD privacy analysis.</p>
+<p>Finds sample rate and number of steps based on the input parameters, and calls
+DP-SGD privacy analysis to find the privacy loss epsilon and optimal order alpha.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – The size of the sample (dataset)</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Batch size</p></li>
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – The ratio of the standard deviation of the Gaussian noise to
+the L2-sensitivity of the function to which the noise is added</p></li>
+<li><p><strong>epochs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Number of epochs</p></li>
+<li><p><strong>delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – Target delta.</p></li>
+<li><p><strong>alphas</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>]</em>) – A list of RDP orders</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a><em>, </em><em>optional</em>) – If enabled, will print the results of DP-SGD analysis; by default True</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pair of privacy loss epsilon and optimal order alpha</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a>]</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.8)"><strong>ValueError</strong></a> – When batch size is greater than sample size</p>
+</dd>
+</dl>
+</dd></dl>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyTorch-DP</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">PrivacyEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">PerSampleGradientClipper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autograd_grad_sample.html">Autograd Grad Sample</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Compute DP-SGD Privacy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dp_multihead_attention.html">DPMultiheadAttention</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tensor_utils.html">Tensor Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stats.html">Stats</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+<li>Previous: <a href="autograd_grad_sample.html" title="previous chapter">Autograd Grad Sample</a></li>
+<li>Next: <a href="dp_multihead_attention.html" title="next chapter">DPMultiheadAttention</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/pytorch-dp" data-count-href="https://github.com/facebookresearch/pytorch-dp/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star PyTorch-DP on GitHub">pytorch-dp</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/pytorch-dp/';
+              if (window.location.origin !== 'https://facebookresearch.github.io/pytorch-dp/') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://facebookresearch.github.io/pytorch-dp//' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'pytorch-dp',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
