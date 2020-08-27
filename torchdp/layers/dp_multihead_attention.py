@@ -157,6 +157,7 @@ class DPMultiheadAttention(nn.Module):
 
         super(DPMultiheadAttention, self).load_state_dict(state_dict)
 
+    # flake8: noqa C901
     def forward(
         self,
         query,
@@ -193,7 +194,10 @@ class DPMultiheadAttention(nn.Module):
 
         if attn_mask is not None:
             if attn_mask.dtype not in (
-                torch.float32, torch.float64, torch.uint8, torch.bool
+                torch.float32,
+                torch.float64,
+                torch.uint8,
+                torch.bool,
             ):
                 raise ValueError(
                     f"Only float, byte, and bool types are supported for attn_mask, "

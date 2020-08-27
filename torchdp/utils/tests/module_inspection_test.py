@@ -18,9 +18,7 @@ class utils_ModelInspector_test(unittest.TestCase):
             return not isinstance(module, (nn.BatchNorm2d, nn.BatchNorm3d))
 
         def pred_requires_grad(module):
-            return all(
-                p.requires_grad for p in module.parameters(recurse=False)
-            )
+            return all(p.requires_grad for p in module.parameters(recurse=False))
 
         self.pred_supported = pred_supported
         self.pred_not_unsupported = pred_not_unsupported

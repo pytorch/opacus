@@ -13,9 +13,8 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import balanced_accuracy_score
 from torchdp import PrivacyEngine
-from tqdm import tqdm
-
 from torchdp.layers import DPLSTM
+from tqdm import tqdm
 
 
 parser = argparse.ArgumentParser(
