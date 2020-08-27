@@ -1,8 +1,8 @@
 {
   "Using Pytorch DP": [
-     {
-      "id": "sample_tutorial",
-      "title": "Getting started with Pytorch DP"
+    {
+      "id": "building_text_classifier",
+      "title": "Building text classifier with Differential Privacy"
     }
   ]
 }
