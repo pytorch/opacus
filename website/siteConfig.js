@@ -19,7 +19,7 @@ const users = [];
 const siteConfig = {
   title: 'PyTorch-DP',
   tagline: 'Train PyTorch models with Differential Privacy',
-  url: 'https://facebookresearch.github.io/pytorch-dp/',
+  url: 'https://facebookresearch.github.io/pytorch-dp',
   baseUrl: baseUrl,
   cleanUrl: true, // No .html extensions for paths
 
