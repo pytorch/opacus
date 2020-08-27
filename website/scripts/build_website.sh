@@ -73,6 +73,7 @@ echo "-----------------------------------"
 echo "Generating tutorials"
 echo "-----------------------------------"
 mkdir -p "website/static/files"
+mkdir "website/tutorials"
 python website/scripts/parse_tutorials.py -w "${cwd}"
 
 cd website || exit

@@ -53,6 +53,29 @@ commands:
           name: "Mypy checks"
           command: ./scripts/run_mypy.sh
 
+  configure_docusaurus_bot:
+    description: "Configure Docusaurus GitHub bot"
+    steps:
+      - run:
+          name: "Configure Docusaurus GitHub bot"
+          command: |
+              git config --global user.email "docusaurus-bot@users.noreply.github.com"
+              git config --global user.name "PyTorch-DP website deployment script"
+              echo "machine github.com login docusaurus-bot password $DOCUSAURUS_GITHUB_TOKEN" > ~/.netrc
+
+  deploy_site:
+    description: "Deploy website to GitHub Pages"
+    steps:
+      - run:
+          name: "Deploy website to GitHub Pages"
+            # TODO: make the installation above conditional on there being relevant changes (no need to install if there are none)
+          command: |
+              mkdir -p website/static/.circleci && cp -a .circleci/. website/static/.circleci/.
+              cd website
+              ./scripts/build_website.sh -b
+              GIT_USER=docusaurus-bot yarn run publish-gh-pages
+
+
   unit_tests:
     description: "Run unit tests"
     steps:
@@ -158,6 +181,17 @@ jobs:
       - mnist_integration_test:
         device: "cuda"
 
+  auto_deploy_site:
+    docker:
+      - image: circleci/python:3.7.9
+    steps:
+      - checkout
+      - pip_dev_install:
+          args: "-n -d"
+      - configure_docusaurus_bot
+      - deploy_site
+
+
 aliases:
 
   - &exclude_ghpages
@@ -200,3 +234,7 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
+
+  website_deployment:
+    jobs:
+      - auto_deploy_site
