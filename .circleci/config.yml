@@ -1,79 +1,190 @@
 version: 2.1
 
-setup_venv: &setup_venv
-  name: Sets up the virtualenv
-  no_output_timeout: 5h
-  command: |
-    python3 -m venv ~/pytorch-privacy-test
-    . ~/pytorch-privacy-test/bin/activate
-    pip3 install --upgrade pip
-    pip3 install -r requirements.txt
+# -------------------------------------------------------------------------------------
+# Commands
+# -------------------------------------------------------------------------------------
+
+
+commands:
+
+  pip_install:
+    description: "Simple install via pip with no extra deps to build the website."
+    steps:
+      - run:
+          name: "Simple PIP install"
+          command: python -m pip install -e .
+
+  pip_dev_install:
+    description: "Install dependencies via pip, including extra deps. Also supports more options, such as building on top of PyTorch nightly."
+    parameters:
+      args:
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: "Install dependencies via pip"
+          command: ./scripts/install_via_pip.sh << parameters.args >>
+
+  lint_flake8:
+    description: "Lint with flake8"
+    steps:
+      - run:
+          name: "Lint with flake8"
+          command: flake8 --config ./.circleci/flake8_config.ini
+
+  lint_black:
+    description: "Lint with black"
+    steps:
+      - run:
+          name: "Lint with black"
+          command: black --check --diff .
+
+  isort:
+    description: "Check import order with isort"
+    steps:
+      - run:
+          name: "Check import order with isort"
+          command: isort -v -l 90 -o torchdp --lines-after-imports 2 -m 3 --trailing-comma --check-only .
+
+  mypy_check:
+    description: "Static type checking with mypy"
+    steps:
+      - run:
+          name: "Mypy checks"
+          command: ./scripts/run_mypy.sh
+
+  unit_tests:
+    description: "Run unit tests"
+    steps:
+      - run:
+          name: "Unit tests"
+          no_output_timeout: 1h
+          command: |
+            mkdir unittest-reports
+            python -m pytest --junitxml=unittest-reports/junit.xml
+
+      - store_test_results:
+          path: unittest-reports
+      - store_artifacts:
+          path: unittest-reports
+
+  mnist_integration_test:
+    description: "Runs MNIST end to end"
+    parameters:
+      device:
+        default: "cpu"
+        type: string
+    steps:
+      - run:
+          name: MNIST example
+          command: |
+            mkdir mnist-test-reports
+            PYTHONPATH=. python3 examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 16 --epochs 2 --data-root . --n-runs 1 --device <<parameters.device>>
+      - store_test_results:
+          path: mnist-test-reports
+      - store_artifacts:
+          path: mnist-test-reports
+
+  py_3_7_setup:
+    description: "Set python version to 3.7 and install pip and pytest"
+    steps:
+      - run:
+          name: "Switch to Python v3.7"
+          command: |
+            pyenv versions
+            pyenv global 3.7.0
+            sudo python -m pip install --upgrade pip
+            sudo python -m pip install pytest
 
 # -------------------------------------------------------------------------------------
 # Jobs
 # -------------------------------------------------------------------------------------
+
 jobs:
-  rununittests:
+
+  lint_py37_torch_release:
     docker:
-      - image: circleci/python:3.7.4-buster
-    resource_class: 2xlarge+
-    working_directory: ~/pytorch-dp
+      - image: circleci/python:3.7.9
     steps:
       - checkout
-      - run:
-          <<: *setup_venv
-      - run:
-          name: Unit tests
-          no_output_timeout: 1h
-          command: |
-            . ~/pytorch-privacy-test/bin/activate
-            mkdir unittest-reports
-            pytest --junitxml=unittest-reports/junit.xml
+      - pip_dev_install
+      - lint_flake8
+      - lint_black
+      - isort
+      # - mypy_check  TODO re-enable
 
-      - store_test_results:
-          path: unittest-reports
-      - store_artifacts:
-          path: unittest-reports
-
-
-  runmnistexample:
+  unittest_py37_torch_release:
     docker:
-      - image: circleci/python:3.7.4-buster
-    resource_class: 2xlarge+
-    working_directory: ~/pytorch-dp
+      - image: circleci/python:3.7.9
     steps:
       - checkout
-      - run:
-          <<: *setup_venv
-      - run:
-          name: MNIST example
-          command: |
-            . ~/pytorch-privacy-test/bin/activate
-            mkdir mnist-test-reports
-            PYTHONPATH=. python3 examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 16 --epochs 2 --data-root . --n-runs 1 --device cpu
-      - store_test_results:
-          path: mnist-test-reports
-      - store_artifacts:
-          path: mnist-test-reports
+      - pip_install
+      - unit_tests
 
+  unittest_py38_torch_release:
+    docker:
+      - image: circleci/python:3.8.5
+    steps:
+      - checkout
+      - pip_install
+      - unit_tests
+
+  unittest_py38_torch_nightly:
+    docker:
+      - image: circleci/python:3.8.5
+    steps:
+      - checkout
+      - pip_dev_install:
+          args: "-n"
+      - unit_tests
+
+  integrationtest_py37_torch_release_cpu:
+    docker:
+      - image: circleci/python:3.7.9
+    steps:
+      - checkout
+      - pip_install
+      - mnist_integration_test:
+        device: "cpu"
+
+  integrationtest_py37_torch_release_cuda:
+    machine:
+      resource_class: gpu.nvidia.small
+      image: ubuntu-1604-cuda-10.1:201909-23
+    steps:
+      - checkout
+      - py_3_7_setup
+      - pip_install
+      - mnist_integration_test:
+        device: "cuda"
+
+aliases:
+
+  - &exclude_ghpages
+    branches:
+      ignore:
+        - gh-pages
 
 # -------------------------------------------------------------------------------------
 # Workflows
 # -------------------------------------------------------------------------------------
+
+
 workflows:
-  version: 2.1
   commit:
     jobs:
-      - rununittests:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - runmnistexample:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
+      - lint_py37_torch_release:
+          filters: *exclude_ghpages
+      - unittest_py37_torch_release:
+          filters: *exclude_ghpages
+      - unittest_py38_torch_release:
+          filters: *exclude_ghpages
+      - unittest_py38_torch_nightly:
+          filters: *exclude_ghpages
+      - integrationtest_py37_torch_release_cpu:
+          filters: *exclude_ghpages
+      - integrationtest_py37_torch_release_cuda:
+          filters: *exclude_ghpages
   nightly:
     triggers:
       - schedule:
@@ -83,13 +194,9 @@ workflows:
               only:
                 - master
     jobs:
-      - rununittests:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - runmnistexample:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
+      - unittest_py38_torch_nightly:
+          filters: *exclude_ghpages
+      - integrationtest_py37_torch_release_cpu:
+          filters: *exclude_ghpages
+      - integrationtest_py37_torch_release_cuda:
+          filters: *exclude_ghpages
