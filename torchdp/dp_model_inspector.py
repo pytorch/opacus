@@ -65,7 +65,7 @@ class DPModelInspector:
                 predicate=_no_lstm,
                 message="Model contains LSTM layers. It is recommended that they are"
                 "replaced with DPLSTM",
-            )
+            ),
         ]
 
     def validate(self, model: nn.Module) -> bool:
@@ -154,9 +154,8 @@ def _no_running_stats_instancenorm_check(module: nn.Module) -> bool:
         return not module.track_running_stats
     return True
 
+
 def _no_lstm(module: nn.Module):
     is_lstm = True if get_layer_type(module) == "LSTM" else False
 
-    return (
-        not is_lstm
-    )
+    return not is_lstm

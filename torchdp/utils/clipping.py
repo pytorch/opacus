@@ -5,7 +5,7 @@ import math
 from abc import ABC
 from enum import IntEnum
 from itertools import cycle
-from typing import List, Iterator, Union
+from typing import Iterator, List, Union
 
 import torch
 
@@ -40,10 +40,7 @@ def _mean_plus_r_var(data: torch.Tensor, ratio: float = 0, **kwargs) -> float:
         The result of the function.
 
     """
-    return max(
-        data.min().item(),
-        data.mean().item() + ratio * data.std().item() + 1e-8
-    )
+    return max(data.min().item(), data.mean().item() + ratio * data.std().item() + 1e-8)
 
 
 def _pvalue(data: torch.Tensor, ratio: float = 0.25, **kwargs) -> torch.Tensor:
@@ -170,7 +167,9 @@ class NormClipper(ABC):
     An abstract class to calculate the clipping factor
     """
 
-    def calc_clipping_factors(self, norms: List[torch.Tensor]) -> Union[List[torch.Tensor], Iterator[torch.Tensor]]:
+    def calc_clipping_factors(
+        self, norms: List[torch.Tensor]
+    ) -> Union[List[torch.Tensor], Iterator[torch.Tensor]]:
         """
         Calculates the clipping factor(s) based on the given
         parameters. A concrete subclass must implement this.
@@ -228,7 +227,9 @@ class ConstantFlatClipper(NormClipper):
         """
         self.flat_value = float(flat_value)
 
-    def calc_clipping_factors(self, norms: List[torch.Tensor]) -> Iterator[torch.Tensor]:
+    def calc_clipping_factors(
+        self, norms: List[torch.Tensor]
+    ) -> Iterator[torch.Tensor]:
         """
         Calculates the clipping factor based on the given
         norm of gradients for all layers, so that the new
@@ -381,6 +382,7 @@ class _Dynamic_Clipper_(NormClipper):
     -----
         This clipper breaks DP guarantees [use only for experimentation]
     """
+
     def __init__(
         self,
         flat_values: List[float],
@@ -420,7 +422,9 @@ class _Dynamic_Clipper_(NormClipper):
         self.ratio = ratio
         self.thresh = [0.0]
 
-    def calc_clipping_factors(self, norms: List[torch.Tensor]) -> Union[List[torch.Tensor], Iterator[torch.Tensor]]:
+    def calc_clipping_factors(
+        self, norms: List[torch.Tensor]
+    ) -> Union[List[torch.Tensor], Iterator[torch.Tensor]]:
         """
         Calculates separate clipping factors for each layer based on
         stats such as a threshold determined by Otsu's method, combinations

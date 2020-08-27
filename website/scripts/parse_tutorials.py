@@ -6,7 +6,8 @@ import os
 
 import nbformat
 from bs4 import BeautifulSoup
-from nbconvert import HTMLExporter, ScriptExporter
+from nbconvert import HTMLExporter
+
 
 TEMPLATE = """const CWD = process.cwd();
 

@@ -21,8 +21,8 @@ The training process with these parameters satisfies (epsilon,delta)-DP of (2.95
 """
 import argparse
 import math
-
 from typing import List, Tuple
+
 from torchdp import privacy_analysis as tf_privacy
 
 
@@ -30,9 +30,9 @@ def _apply_dp_sgd_analysis(
     sample_rate: float,
     noise_multiplier: float,
     steps: int,
-    alphas : List[float],
-    delta : float,
-    verbose : bool = True,
+    alphas: List[float],
+    delta: float,
+    verbose: bool = True,
 ) -> Tuple[float, float]:
     """
     Performs the DP-SGD privacy analysis based on sample rate and steps.
@@ -83,13 +83,13 @@ def _apply_dp_sgd_analysis(
 
 
 def compute_dp_sgd_privacy(
-    sample_size : int,
-    batch_size : int,
-    noise_multiplier : float,
-    epochs : int,
-    delta : float,
-    alphas : List[float],
-    verbose : bool = True,
+    sample_size: int,
+    batch_size: int,
+    noise_multiplier: float,
+    epochs: int,
+    delta: float,
+    alphas: List[float],
+    verbose: bool = True,
 ) -> Tuple[float, float]:
     """
     Performs the DP-SGD privacy analysis.

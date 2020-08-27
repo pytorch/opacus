@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
+from collections import defaultdict
 
 import numpy as np
 import torch
 import torch.nn as nn
-from collections import defaultdict
 from torchdp import PrivacyEngine, privacy_analysis
 from torchdp.dp_model_inspector import DPModelInspector, IncompatibleModuleException
 from torchdp.layers.dp_multihead_attention import SequenceBias
-from torchdp.utils.module_inspection import ModelInspector
-from torchdp.utils.module_modification import replace_all_modules, convert_batchnorm_modules
-from torchdp.utils.tensor_utils import calc_sample_norms, sum_over_all_but_batch_and_last_n
 from torchdp.utils import stats
+from torchdp.utils.module_inspection import ModelInspector
+from torchdp.utils.module_modification import (
+    convert_batchnorm_modules,
+    replace_all_modules,
+)
+from torchdp.utils.tensor_utils import (
+    calc_sample_norms,
+    sum_over_all_but_batch_and_last_n,
+)
 
 
 class DocstringExamplesTest(unittest.TestCase):
@@ -124,10 +130,10 @@ class DocstringExamplesTest(unittest.TestCase):
             loss = criterion(logits, y)
             loss.backward()
             if i % 16 == 15:
-                optimizer.step()    # this will call privacy engine's step()
+                optimizer.step()  # this will call privacy engine's step()
                 optimizer.zero_grad()
             else:
-                optimizer.virtual_step()   # this will call privacy engine's virtual_step()
+                optimizer.virtual_step()  # this will call privacy engine's virtual_step()
 
     def test_sequence_bias_example(self):
         # IMPORTANT: When changing this code you also need to update
@@ -140,7 +146,7 @@ class DocstringExamplesTest(unittest.TestCase):
     def test_module_inspection_example(self):
         # IMPORTANT: When changing this code you also need to update
         # the docstring for torchdp.utils.module_inspection.ModelInspector
-        inspector = ModelInspector('simple', lambda x: isinstance(x, nn.Conv2d))
+        inspector = ModelInspector("simple", lambda x: isinstance(x, nn.Conv2d))
         self.assertTrue(inspector.validate(nn.Conv2d(1, 1, 1)))
 
     def test_module_modification_replace_example(self):
@@ -175,14 +181,13 @@ class DocstringExamplesTest(unittest.TestCase):
         t2 = torch.rand((2, 5))
 
         self.assertTrue(
-            calc_sample_norms([("1", t1), ("2", t2)])[0].shape,
-            torch.Size([1, 2])
+            calc_sample_norms([("1", t1), ("2", t2)])[0].shape, torch.Size([1, 2])
         )
 
         tensor = torch.ones(1, 2, 3, 4, 5)
         self.assertTrue(
             sum_over_all_but_batch_and_last_n(tensor, n_dims=2).shape,
-            torch.Size([1, 4, 5])
+            torch.Size([1, 4, 5]),
         )
 
     def test_stats_example(self):
@@ -198,11 +203,11 @@ class DocstringExamplesTest(unittest.TestCase):
         mock_summary_writer = MockSummaryWriter()
         stats.set_global_summary_writer(mock_summary_writer)
 
-        stat = stats.Stat(stats.StatType.CLIPPING, 'sample_stats', frequency=0.1)
+        stat = stats.Stat(stats.StatType.CLIPPING, "sample_stats", frequency=0.1)
         for i in range(21):
             stat.log({"val": i})
 
         self.assertEqual(len(mock_summary_writer.logs["CLIPPING:sample_stats/val"]), 2)
 
-        stats.add(stats.Stat(stats.StatType.TEST, 'accuracy', frequency=1.0))
+        stats.add(stats.Stat(stats.StatType.TEST, "accuracy", frequency=1.0))
         stats.update(stats.StatType.TEST, acc1=1.0)

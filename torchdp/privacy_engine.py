@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from __future__ import annotations
+
 import os
 import types
 import warnings
@@ -196,7 +197,9 @@ class PrivacyEngine:
         )
         return rdp
 
-    def get_privacy_spent(self, target_delta: Optional[float] = None) -> Tuple[float, float]:
+    def get_privacy_spent(
+        self, target_delta: Optional[float] = None
+    ) -> Tuple[float, float]:
         """
         Computes the (epsilon, delta) privacy budget spent so far.
 
