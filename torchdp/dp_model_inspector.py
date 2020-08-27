@@ -17,9 +17,10 @@ class IncompatibleModuleException(Exception):
 
 
 class DPModelInspector:
-    r""" Class to validate if a given module meets the requirements for attaching :class:`~torchdp.privacy_engine.PrivacyEngine`.
+    r"""
+    Class to validate if a given module meets the requirements for attaching ``PrivacyEngine``.
 
-    Active checks are listed in :attr:`~torchdp.dp_model_inspector.DPModelInspector.inspectors` attribute.
+    Active checks are listed in the ``DPModelInspector.inspectors`` attribute.
     """
 
     def __init__(self, should_throw: bool = True):
@@ -65,11 +66,12 @@ class DPModelInspector:
                 predicate=_no_lstm,
                 message="Model contains LSTM layers. It is recommended that they are"
                 "replaced with DPLSTM",
-            )
+            ),
         ]
 
     def validate(self, model: nn.Module) -> bool:
-        r"""Runs the validation on the model and all its submodules.
+        r"""
+        Runs the validation on the model and all its submodules.
 
 
         Validation comprises a series of individual :class:`ModelInspectors <torchdp.utils.module_inspection.ModelInspector>`,
@@ -117,13 +119,15 @@ class DPModelInspector:
 
 
 def _is_valid_check(module: nn.Module) -> bool:
-    r""" Checks if the `module`  is supported by `autograd_grad_sample`
+    r"""
+    Checks if the ``module``  is supported by ``autograd_grad_sample``
     """
     return is_supported(module)
 
 
 def _conv_group_number_check(module: nn.Module) -> bool:
-    r""" Checks if number of groups in `nn.Conv2d` layer is valid
+    r"""
+    Checks if number of groups in `nn.Conv2d` layer is valid
     """
     if isinstance(module, nn.Conv2d):
         # pyre-fixme[16]: `Conv2d` has no attribute `in_channels`.
@@ -133,7 +137,8 @@ def _conv_group_number_check(module: nn.Module) -> bool:
 
 
 def _no_batchnorm_check(module: nn.Module) -> bool:
-    r""" Checks if the module is not BatchNorm.
+    r"""
+    Checks if the module is not BatchNorm.
 
     This check overlaps with `_is_valid_check`, but provides more targeted remedy.
     """
@@ -141,7 +146,8 @@ def _no_batchnorm_check(module: nn.Module) -> bool:
 
 
 def _no_running_stats_instancenorm_check(module: nn.Module) -> bool:
-    r""" Checks that InstanceNorm layer has `track_running_stats` set to False
+    r"""
+    Checks that InstanceNorm layer has `track_running_stats` set to False
     """
     is_instancenorm = get_layer_type(module) in (
         "InstanceNorm1d",
@@ -154,9 +160,8 @@ def _no_running_stats_instancenorm_check(module: nn.Module) -> bool:
         return not module.track_running_stats
     return True
 
+
 def _no_lstm(module: nn.Module):
     is_lstm = True if get_layer_type(module) == "LSTM" else False
 
-    return (
-        not is_lstm
-    )
+    return not is_lstm

@@ -55,7 +55,9 @@ class ModelInspector:
         """
         self.name = name
         if check_leaf_nodes_only:
-            self.predicate = lambda x: has_no_param(x) or not requires_grad(x) or predicate(x)
+            self.predicate = (
+                lambda x: has_no_param(x) or not requires_grad(x) or predicate(x)
+            )
         else:
             self.predicate = predicate
         self.message = message

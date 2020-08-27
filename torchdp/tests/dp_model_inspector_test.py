@@ -84,11 +84,17 @@ class dp_model_inspector_test(unittest.TestCase):
         inspector = dp_inspector.DPModelInspector(should_throw=False)
 
         self.assertTrue(
-            inspector.validate(nn.Conv2d(in_channels=3, out_channels=6, kernel_size=1, groups=1))
+            inspector.validate(
+                nn.Conv2d(in_channels=3, out_channels=6, kernel_size=1, groups=1)
+            )
         )
         self.assertTrue(
-            inspector.validate(nn.Conv2d(in_channels=3, out_channels=6, kernel_size=1, groups=3))
+            inspector.validate(
+                nn.Conv2d(in_channels=3, out_channels=6, kernel_size=1, groups=3)
+            )
         )
         self.assertFalse(
-            inspector.validate(nn.Conv2d(in_channels=6, out_channels=6, kernel_size=1, groups=2))
+            inspector.validate(
+                nn.Conv2d(in_channels=6, out_channels=6, kernel_size=1, groups=2)
+            )
         )

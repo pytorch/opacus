@@ -9,8 +9,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchdp import PrivacyEngine
-from torchdp.utils import module_modification as mm
 from torchdp.dp_model_inspector import IncompatibleModuleException
+from torchdp.utils import module_modification as mm
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
@@ -21,7 +21,8 @@ class replace_all_modules_test(unittest.TestCase):
             # pyre-fixme[6]: Expected `Union[typing.Type[typing.Any],
             #  typing.Tuple[typing.Type[typing.Any], ...]]` for 2nd param but got
             #  `Any`.
-            isinstance(module, targetclass) for module in root.modules()
+            isinstance(module, targetclass)
+            for module in root.modules()
         )
         self.assertTrue(result)
 

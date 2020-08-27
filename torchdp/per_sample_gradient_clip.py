@@ -43,7 +43,8 @@ from .utils.tensor_utils import calc_sample_norms
 
 
 class PerSampleGradientClipper:
-    r""" Class to define a per-sample gradient clipper for a module. Per-sample gradient clipping
+    r"""
+    Class to define a per-sample gradient clipper for a module. Per-sample gradient clipping
     bounds the sensitivity of the computation before applying the Gaussian mechanism.
     """
 
@@ -210,7 +211,9 @@ class PerSampleGradientClipper:
             summed_grad = self._weighted_sum(
                 clip_factor, p.grad_sample  # pyre-ignore[16]
             )
-            clipping_thresh = self.norm_clipper.thresholds[i if len(self.norm_clipper.thresholds) > 1 else 0]
+            clipping_thresh = self.norm_clipper.thresholds[
+                i if len(self.norm_clipper.thresholds) > 1 else 0
+            ]
             per_sample_norm = all_norms[i if len(all_norms) > 1 else 0]
             # accumulate the summed gradient for this mini-batch
             if hasattr(p, "summed_grad"):
