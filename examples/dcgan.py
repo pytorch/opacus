@@ -20,8 +20,8 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
-from torchdp import PrivacyEngine, autograd_grad_sample
-from torchdp.utils.module_modification import convert_batchnorm_modules
+from opacus import PrivacyEngine, autograd_grad_sample
+from opacus.utils.module_modification import convert_batchnorm_modules
 
 
 parser = argparse.ArgumentParser()

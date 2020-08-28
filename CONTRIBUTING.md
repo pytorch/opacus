@@ -1,6 +1,6 @@
-# Contributing to pytorch-dp
+# Contributing to Opacus
 
-We want to make contributing to pytorch-dp is as easy and transparent as possible.
+We want to make contributing to Opacus is as easy and transparent as possible.
 
 
 ## Development installation
@@ -8,8 +8,8 @@ We want to make contributing to pytorch-dp is as easy and transparent as possibl
 To get the development installation with all the necessary dependencies for
 linting, testing, and building the documentation, run the following:
 ```bash
-git clone https://github.com/facebookresearch/pytorch-dp.git
-cd pytorch-dp
+git clone https://github.com/pytorch/opacus.git
+cd opacus
 pip install -e .[dev]
 ```
 
@@ -18,7 +18,7 @@ pip install -e .[dev]
 
 #### Code Style
 
-pytorch-dp uses the [black](https://github.com/ambv/black) code formatter to
+Opacus uses the [black](https://github.com/ambv/black) code formatter to
 enforce a common code style across the code base. black is installed easily via
 pip using `pip install black`, and run locally by calling
 ```bash
@@ -34,7 +34,7 @@ Travis will fail on your PR if it does not adhere to the black formatting style.
 
 #### Type Hints
 
-pytorch-dp is fully typed using python 3.6+
+Opacus is fully typed using python 3.6+
 [type hints](https://www.python.org/dev/peps/pep-0484/).
 We expect any contributions to also use proper type annotations. While we
 currently do not enforce full consistency of these in our continuous integration
@@ -85,5 +85,5 @@ outlined on that page and do not file a public issue.
 
 ## License
 
-By contributing to pytorch-dp, you agree that your contributions will be licensed
+By contributing to Opacus, you agree that your contributions will be licensed
 under the LICENSE file in the root directory of this source tree.

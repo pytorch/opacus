@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torchdp import PrivacyEngine
+from opacus import PrivacyEngine
 from torchvision import datasets, transforms
 from tqdm import tqdm
 

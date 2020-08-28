@@ -7,10 +7,10 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
+from opacus import PrivacyEngine
+from opacus.dp_model_inspector import IncompatibleModuleException
+from opacus.utils import module_modification as mm
 from torch.utils.data import DataLoader
-from torchdp import PrivacyEngine
-from torchdp.dp_model_inspector import IncompatibleModuleException
-from torchdp.utils import module_modification as mm
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 

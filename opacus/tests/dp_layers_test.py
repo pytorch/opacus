@@ -3,11 +3,11 @@
 import unittest
 
 import torch
+from opacus.layers import DPLSTM, DPMultiheadAttention
 from torch import nn
 from torch.nn import LSTM
 from torch.nn.modules.activation import MultiheadAttention
 from torch.testing import assert_allclose
-from torchdp.layers import DPLSTM, DPMultiheadAttention
 
 
 class DPLayersTest(unittest.TestCase):

@@ -64,8 +64,8 @@ class PerSampleGradientClipper:
         module: nn.Module
             Module to which backward hooks are added and for which per-sample gradients are clipped
 
-        norm_clipper: torchdp.utils.clipping.NormClipper
-            A norm clipper object of class :class:`~torchdp.utils.clipping.NormClipper`
+        norm_clipper: opacus.utils.clipping.NormClipper
+            A norm clipper object of class :class:`~opacus.utils.clipping.NormClipper`
             which encapsulated different clipping strategies
             (such as flat clipping for the entire model, or per-layer clipping)
 
@@ -148,7 +148,7 @@ class PerSampleGradientClipper:
         r"""
         Prepares the ``.grad`` field of the parameters and provides statistics on the
         maximum gradient norm which should be used to scale noise in the privacy engine
-        (:class:``~torchdp.privacy_engine.PrivacyEngine``). This function is called before
+        (:class:``~opacus.privacy_engine.PrivacyEngine``). This function is called before
         the optimizer ``step()``.
 
         Returns
@@ -182,7 +182,7 @@ class PerSampleGradientClipper:
         r"""
         Clips and sums up per-sample gradients into an accumulator. When this function is called
         ``N >= 1`` times on mini-batches of size ``B`` (could be smaller on final batch), a call to
-        :meth:`~torchdp.per_sample_gradient_clip.PerSampleGradientClipper.pre_step`
+        :meth:`~opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step`
         will populate the ``.grad`` field with the average gradient over the entire batch of size
         ``(N-1)* B + b`` with ``b <= B``.
         """

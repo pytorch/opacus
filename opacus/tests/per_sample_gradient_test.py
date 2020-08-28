@@ -4,9 +4,9 @@ import unittest
 
 import torch
 import torch.nn as nn
-from torchdp import PerSampleGradientClipper
-from torchdp.layers import SequenceBias
-from torchdp.utils.clipping import ConstantFlatClipper
+from opacus import PerSampleGradientClipper
+from opacus.layers import SequenceBias
+from opacus.utils.clipping import ConstantFlatClipper
 
 
 class PerSampleGradientTest(unittest.TestCase):

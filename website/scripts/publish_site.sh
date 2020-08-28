@@ -3,7 +3,7 @@
 usage() {
   echo "Usage: $0 [-b]"
   echo ""
-  echo "Build and push updated PyTorch-DP site. Will either update latest or bump stable version."
+  echo "Build and push updated Opacus site. Will either update latest or bump stable version."
   echo ""
   echo "  -v    Build site for new library version. If not specified, will update latest."
   echo ""
@@ -43,8 +43,8 @@ WORK_DIR=$(mktemp -d)
 cd "${WORK_DIR}" || exit
 
 # Clone both master & gh-pages branches
-git clone git@github.com:pytorch/pytorch-dp.git pytorch-dp-master
-git clone --branch gh-pages git@github.com:pytorch/pytorch-dp.git pytorch-dp-gh-pages
+git clone git@github.com:pytorch/opacus.git opacus-master
+git clone --branch gh-pages git@github.com:pytorch/opacus.git opacus-gh-pages
 
 # A few notes about the script below:
 # * Docusaurus versioning was designed to *only* version the markdown
@@ -87,14 +87,14 @@ if [[ $VERSION == false ]]; then
   # use versions.js for latest build, but we do need versions.js
   # in website/pages in order to use docusaurus-versions)
   CMD="import os, json; "
-  CMD+="vs = [v for v in os.listdir('pytorch-dp-gh-pages/versions') if v != 'latest' and not v.startswith('.')]; "
+  CMD+="vs = [v for v in os.listdir('opacus-gh-pages/versions') if v != 'latest' and not v.startswith('.')]; "
   CMD+="print(json.dumps(vs))"
-  python3 -c "$CMD" > pytorch-dp-master/website/_versions.json
+  python3 -c "$CMD" > opacus-master/website/_versions.json
 
   # Move versions.js to website subdirectory.
   # This is the page you see when click on version in navbar.
-  cp pytorch-dp-master/scripts/versions.js pytorch-dp-master/website/pages/en/versions.js
-  cd pytorch-dp-master/website || exit
+  cp opacus-master/scripts/versions.js opacus-master/website/pages/en/versions.js
+  cd opacus-master/website || exit
 
   # Build site, tagged with "latest" version; baseUrl set to /versions/latest/
   yarn
@@ -106,19 +106,19 @@ if [[ $VERSION == false ]]; then
 
   cd .. || exit
   ./scripts/build_docs.sh -b
-  rm -rf website/build/pytorch-dp/docs/next  # don't need this
+  rm -rf website/build/opacus/docs/next  # don't need this
 
   # Move built site to gh-pages (but keep old versions.js)
   cd "${WORK_DIR}" || exit
-  cp pytorch-dp-gh-pages/versions/latest/versions.html versions.html
-  rm -rf pytorch-dp-gh-pages/versions/latest
-  mv pytorch-dp-master/website/build/pytorch-dp pytorch-dp-gh-pages/versions/latest
+  cp opacus-gh-pages/versions/latest/versions.html versions.html
+  rm -rf opacus-gh-pages/versions/latest
+  mv opacus-master/website/build/opacus opacus-gh-pages/versions/latest
   # versions.html goes both in top-level and under en/ (default language)
-  cp versions.html pytorch-dp-gh-pages/versions/latest/versions.html
-  cp versions.html pytorch-dp-gh-pages/versions/latest/en/versions.html
+  cp versions.html opacus-gh-pages/versions/latest/versions.html
+  cp versions.html opacus-gh-pages/versions/latest/en/versions.html
 
   # Push changes to gh-pages
-  cd pytorch-dp-gh-pages || exit
+  cd opacus-gh-pages || exit
   git add .
   git commit -m 'Update latest version of site'
   git push
@@ -129,7 +129,7 @@ else
   echo "-----------------------------------------"
 
   # Checkout master branch with specified tag
-  cd pytorch-dp-master || exit
+  cd opacus-master || exit
   git fetch --tags
   git checkout "${VERSION}"
 
@@ -140,7 +140,7 @@ else
   # Note that this script doesn't allow building a version of the site that
   # is already on gh-pages.
   CMD="import os, json; "
-  CMD+="vs = [v for v in os.listdir('../pytorch-dp-gh-pages/versions') if v != 'latest' and not v.startswith('.')]; "
+  CMD+="vs = [v for v in os.listdir('../opacus-gh-pages/versions') if v != 'latest' and not v.startswith('.')]; "
   CMD+="assert '${VERSION}' not in vs, '${VERSION} is already on gh-pages.'; "
   CMD+="vs.append('${VERSION}'); "
   CMD+="print(json.dumps(vs))"
@@ -160,15 +160,15 @@ else
   # Move built site to new folder (new-site) & carry over old versions
   # from existing gh-pages
   cd "${WORK_DIR}" || exit
-  rm -rf pytorch-dp-master/website/build/pytorch-dp/docs/next  # don't need this
-  mv pytorch-dp-master/website/build/pytorch-dp new-site
-  mv pytorch-dp-gh-pages/versions new-site/versions
+  rm -rf opacus-master/website/build/opacus/docs/next  # don't need this
+  mv opacus-master/website/build/opacus new-site
+  mv opacus-gh-pages/versions new-site/versions
 
   # Build new version of site (to be placed in versions/$VERSION/)
   # the only thing that changes here is the baseUrl (for nav purposes)
   # we build this now so that in the future, we can just bump version and not move
   # previous stable to versions
-  cd pytorch-dp-master/website || exit
+  cd opacus-master/website || exit
   sed -i '' "s/baseUrl = '\/'/baseUrl = '\/versions\/${VERSION}\/'/g" siteConfig.js
 
   # disable search for non-stable version (can't use sed b/c of newline)
@@ -177,9 +177,9 @@ else
   yarn run version "${VERSION}"
   cd .. || exit
   ./scripts/build_docs.sh -b
-  rm -rf website/build/pytorch-dp/docs/next  # don't need this
-  rm -rf website/build/pytorch-dp/docs/stable  # or this
-  mv website/build/pytorch-dp "../new-site/versions/${VERSION}"
+  rm -rf website/build/opacus/docs/next  # don't need this
+  rm -rf website/build/opacus/docs/stable  # or this
+  mv website/build/opacus "../new-site/versions/${VERSION}"
 
   # Need to run script to update versions.js for previous versions in
   # new-site/versions with the newly built versions.js. Otherwise,
@@ -188,14 +188,14 @@ else
   # newer versions. This is the only part of the old versions that
   # needs to be updated when a new version is built.
   cd "${WORK_DIR}" || exit
-  python3 pytorch-dp-master/scripts/update_versions_html.py -p "${WORK_DIR}"
+  python3 opacus-master/scripts/update_versions_html.py -p "${WORK_DIR}"
 
   # Init as Git repo and push to gh-pages
   cd new-site || exit
   git init
   git add --all
   git commit -m "Publish version ${VERSION} of site"
-  git push --force "https://github.com/facebookresearch/pytorch-dp" master:gh-pages
+  git push --force "https://github.com/pytorch/opacus" master:gh-pages
 
 fi
 

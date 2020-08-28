@@ -12,8 +12,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchtext
+from opacus import PrivacyEngine
 from torch.functional import F
-from torchdp import PrivacyEngine
 from torchtext.data.utils import get_tokenizer
 from tqdm import tqdm
 

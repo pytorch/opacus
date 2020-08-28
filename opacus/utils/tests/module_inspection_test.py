@@ -5,7 +5,7 @@
 import unittest
 
 import torch.nn as nn
-from torchdp.utils import module_inspection as mi
+from opacus.utils import module_inspection as mi
 from torchvision import models
 
 

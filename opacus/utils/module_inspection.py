@@ -69,7 +69,7 @@ class ModelInspector:
     def validate(self, model: nn.Module) -> bool:
         """
         Checks if the provided module satisfies the predicate specified
-        upon creation of the :class:`~torchdp.utils.ModelInspector`.
+        upon creation of the :class:`~opacus.utils.ModelInspector`.
 
         Parameters
         ----------

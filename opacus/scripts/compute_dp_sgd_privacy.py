@@ -23,7 +23,7 @@ import argparse
 import math
 from typing import List, Tuple
 
-from torchdp import privacy_analysis as tf_privacy
+from opacus import privacy_analysis as tf_privacy
 
 
 def _apply_dp_sgd_analysis(

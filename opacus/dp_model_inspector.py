@@ -74,12 +74,12 @@ class DPModelInspector:
         Runs the validation on the model and all its submodules.
 
 
-        Validation comprises a series of individual :class:`ModelInspectors <torchdp.utils.module_inspection.ModelInspector>`,
+        Validation comprises a series of individual :class:`ModelInspectors <opacus.utils.module_inspection.ModelInspector>`,
         each checking one predicate.
         Depending on ``should_throw`` flag in the constructor, will either return
-        False or throw :class:`~torchdp.dp_model_inspector.IncompatibleModuleException` in case of validation failure.
+        False or throw :class:`~opacus.dp_model_inspector.IncompatibleModuleException` in case of validation failure.
 
-        Note, that this method is called within :meth:`torchdp.privacy_engine.PrivacyEngine.attach`.
+        Note, that this method is called within :meth:`opacus.privacy_engine.PrivacyEngine.attach`.
 
         Parameters
         ----------

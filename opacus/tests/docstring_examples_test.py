@@ -6,16 +6,16 @@ from collections import defaultdict
 import numpy as np
 import torch
 import torch.nn as nn
-from torchdp import PrivacyEngine, privacy_analysis
-from torchdp.dp_model_inspector import DPModelInspector, IncompatibleModuleException
-from torchdp.layers.dp_multihead_attention import SequenceBias
-from torchdp.utils import stats
-from torchdp.utils.module_inspection import ModelInspector
-from torchdp.utils.module_modification import (
+from opacus import PrivacyEngine, privacy_analysis
+from opacus.dp_model_inspector import DPModelInspector, IncompatibleModuleException
+from opacus.layers.dp_multihead_attention import SequenceBias
+from opacus.utils import stats
+from opacus.utils.module_inspection import ModelInspector
+from opacus.utils.module_modification import (
     convert_batchnorm_modules,
     replace_all_modules,
 )
-from torchdp.utils.tensor_utils import (
+from opacus.utils.tensor_utils import (
     calc_sample_norms,
     sum_over_all_but_batch_and_last_n,
 )
@@ -35,7 +35,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_dp_model_inspector_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.dp_model_inspector.DPModelInspector.validate()
+        # the docstring for opacus.dp_model_inspector.DPModelInspector.validate()
 
         inspector = DPModelInspector()
         valid_model = nn.Linear(16, 32)
@@ -48,7 +48,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_privacy_analysis_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.privacy_analysis module
+        # the docstring for opacus.privacy_analysis module
         parameters = [(1e-5, 1.0, 10), (1e-4, 3.0, 4)]
         delta = 1e-5
 
@@ -62,7 +62,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_privacy_engine_class_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.privacy_engine.PrivacyEngine
+        # the docstring for opacus.privacy_engine.PrivacyEngine
         batch_size = 8
         sample_size = 64
 
@@ -80,7 +80,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_privacy_engine_to_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.privacy_engine.PrivacyEngine.to()
+        # the docstring for opacus.privacy_engine.PrivacyEngine.to()
         batch_size = 8
         sample_size = 64
 
@@ -101,7 +101,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_privacy_engine_virtual_step_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.privacy_engine.PrivacyEngine.virtual_step()
+        # the docstring for opacus.privacy_engine.PrivacyEngine.virtual_step()
         model = nn.Linear(16, 2)
         dataloader = []
         batch_size = 64
@@ -137,7 +137,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_sequence_bias_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.layers.dp_multihead_attention.SequenceBias
+        # the docstring for opacus.layers.dp_multihead_attention.SequenceBias
         m = SequenceBias(16)
         input = torch.randn(20, 4, 16)
         output = m(input)
@@ -145,13 +145,13 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_module_inspection_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.utils.module_inspection.ModelInspector
+        # the docstring for opacus.utils.module_inspection.ModelInspector
         inspector = ModelInspector("simple", lambda x: isinstance(x, nn.Conv2d))
         self.assertTrue(inspector.validate(nn.Conv2d(1, 1, 1)))
 
     def test_module_modification_replace_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.utils.module_modification.replace_all_modules()
+        # the docstring for opacus.utils.module_modification.replace_all_modules()
         # pyre-fixme[21]: Could not find name `resnet18` in `torchvision.models`.
         from torchvision.models import resnet18
 
@@ -163,7 +163,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_module_modification_convert_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstring for torchdp.utils.module_modification.convert_batchnorm_modules()
+        # the docstring for opacus.utils.module_modification.convert_batchnorm_modules()
         # pyre-fixme[21]: Could not find name `resnet50` in `torchvision.models`.
         from torchvision.models import resnet50
 
@@ -175,7 +175,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_tensor_utils_examples(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstrings for torchdp.utils.tensor_utils
+        # the docstrings for opacus.utils.tensor_utils
 
         t1 = torch.rand((2, 5))
         t2 = torch.rand((2, 5))
@@ -192,7 +192,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
     def test_stats_example(self):
         # IMPORTANT: When changing this code you also need to update
-        # the docstrings for torchdp.utils.stats.Stat
+        # the docstrings for opacus.utils.stats.Stat
         class MockSummaryWriter:
             def __init__(self):
                 self.logs = defaultdict(dict)

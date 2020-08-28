@@ -181,7 +181,7 @@ def convert_batchnorm_modules(
     converter: Callable[[torch.nn.modules.batchnorm._BatchNorm], torch.nn.Module]
         Function or a lambda that converts an instance of a
         Batchnorm to another nn.Module. Defaults to
-        :meth:`~torchdp.utils.module_modification._batchnorm_to_groupnorm`.
+        :meth:`~opacus.utils.module_modification._batchnorm_to_groupnorm`.
 
     Returns
     -------

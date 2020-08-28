@@ -4,10 +4,10 @@ import unittest
 
 import torch
 import torch.nn as nn
-from torchdp import PerSampleGradientClipper
-from torchdp.dp_model_inspector import DPModelInspector
-from torchdp.layers import DPLSTM, DPMultiheadAttention, SequenceBias
-from torchdp.utils.clipping import ConstantFlatClipper
+from opacus import PerSampleGradientClipper
+from opacus.dp_model_inspector import DPModelInspector
+from opacus.layers import DPLSTM, DPMultiheadAttention, SequenceBias
+from opacus.utils.clipping import ConstantFlatClipper
 
 
 class LayersGradTest(unittest.TestCase):
