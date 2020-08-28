@@ -421,6 +421,7 @@ class _Dynamic_Clipper_(NormClipper):
         self.clipping_method = clipping_method
         self.ratio = ratio
         self.thresh = [0.0]
+        self.init = False
 
     def calc_clipping_factors(
         self, norms: List[torch.Tensor]
@@ -444,21 +445,28 @@ class _Dynamic_Clipper_(NormClipper):
             Singleton list specifying a common clippng factor for all layers,
             or an iterator of tensors specifying a clipping factor per layer
         """
-        if len(self.flat_values) == 1:
-            current_threshs = self.flat_values * (
-                len(norms) if self.clip_per_layer else 1
-            )
+
+        if not self.init:
+            self.init = True
+            if len(self.flat_values) == 1:
+                current_threshs = self.flat_values * (
+                    len(norms) if self.clip_per_layer else 1
+                )
+            else:
+                current_threshs = self.flat_values
+        else:
+            current_threshs = self.thresh
+
         clipping_factor = []
         self.thresh = []
 
-        if len(norms) != len(current_threshs):  # pyre-ignore
+        if len(norms) != len(current_threshs):
             raise ValueError(
-                # pyre-fixme[6]: Expected `Sized` for 1st param but got `int`.
-                f"Provided grad norm max's size {len(current_threshs)}"  # pyre-ignore
+                f"Provided grad norm max's size {len(current_threshs)}"
                 f" does not match the number of layers {len(norms)}"
             )
 
-        for norm, current_thresh in zip(norms, current_threshs):  # pyre-ignore
+        for norm, current_thresh in zip(norms, current_threshs):
             thresh = _calculate_thresh_value(
                 norm, current_thresh, self.clipping_method, self.ratio
             )
