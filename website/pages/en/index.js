@@ -145,8 +145,8 @@ privacy_engine.attach(optimizer)
               <MarkdownBlock>{bash`pip install pytorch-dp`}</MarkdownBlock>
               <a>From source:</a>
               <MarkdownBlock>{bash`
-git clone https://github.com/facebookresearch/pytorch-dp.git
-cd pytorch-dp
+git clone https://github.com/pytorch/opacus.git
+cd opacus
 pip install -e .
                 `}</MarkdownBlock>
             </li>

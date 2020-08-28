@@ -11,21 +11,21 @@
 // site configuration options.
 
 // Define this so it can be easily modified in scripts (to host elsewhere)
-const baseUrl = '/';
+const baseUrl = '/opacus/';
 
 // List of projects/orgs using your project for the users page.
 const users = [];
 
 const siteConfig = {
-  title: 'PyTorch-DP',
+  title: 'Opacus',
   tagline: 'Train PyTorch models with Differential Privacy',
-  url: 'https://facebookresearch.github.io/pytorch-dp',
+  url: 'https://pytorch.github.io',
   baseUrl: baseUrl,
   cleanUrl: true, // No .html extensions for paths
 
   // used for publishing and more
   organizationName: 'pytorch',
-  projectName: 'pytorch-dp',
+  projectName: 'opacus',
 
   // Google analytics
   gaTrackingId: 'UA-139570076-2',
@@ -35,7 +35,7 @@ const siteConfig = {
     {doc: 'introduction', label: 'Getting Started'},
     {href: `${baseUrl}tutorials/`, label: 'Tutorials'},
     {href: `${baseUrl}api/`, label: 'API Reference'},
-    {href: 'https://github.com/facebookresearch/pytorch-dp', label: 'GitHub'},
+    {href: 'https://github.com/pytorch/opacus', label: 'GitHub'},
     {search: true}, // position search box to the very right
   ],
 
@@ -88,7 +88,7 @@ const siteConfig = {
   docsSideNavCollapsible: true,
 
   // URL for editing docs
-  editUrl: 'https://github.com/facebookresearch/pytorch-dp/tree/master/docs/',
+  editUrl: 'https://github.com/pytorch/opacus/tree/master/docs/',
 
   // Disable logo text so we can just show the logo
   disableHeaderTitle: true,
