@@ -44,7 +44,7 @@ commands:
     steps:
       - run:
           name: "Check import order with isort"
-          command: isort -v -l 90 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
+          command: isort -v -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
 
   mypy_check:
     description: "Static type checking with mypy"
