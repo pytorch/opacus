@@ -1,6 +1,5 @@
 Stats
 =====
 
-.. automodule:: torchdp.utils.stats
+.. automodule:: opacus.utils.stats
     :members:
-

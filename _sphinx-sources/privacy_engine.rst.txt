@@ -1,7 +1,7 @@
 PrivacyEngine
 =============
 
-.. automodule:: torchdp.privacy_engine
+.. automodule:: opacus.privacy_engine
 
 .. autoclass:: PrivacyEngine
     :members:

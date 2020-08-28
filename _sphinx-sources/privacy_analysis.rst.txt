@@ -1,5 +1,5 @@
 Privacy Analysis
 ================
 
-.. automodule:: torchdp.privacy_analysis
+.. automodule:: opacus.privacy_analysis
     :members:

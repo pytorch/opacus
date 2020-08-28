@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>PyTorch-DP · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="PyTorch-DP · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://facebookresearch.github.io/pytorch-dp/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp-icon.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp_logo.png"/><link rel="shortcut icon" href="/img/pytorch-dp.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://pytorch.github.io/opacus/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://pytorch.github.io/opacus/img/opacus_logo.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://pytorch.github.io/opacus/img/opacus_logo.png"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/pytorch-dp_logo.png" alt="PyTorch-DP"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/facebookresearch/pytorch-dp" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.png" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./"
   src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
@@ -24,7 +24,7 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<h1>Source code for torchdp.utils.stats</h1><div class="highlight"><pre>
+<h1>Source code for opacus.utils.stats</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
 
@@ -43,7 +43,7 @@
             <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="StatType"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.StatType">[docs]</a><span class="k">class</span> <span class="nc">StatType</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
+<div class="viewcode-block" id="StatType"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.StatType">[docs]</a><span class="k">class</span> <span class="nc">StatType</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    This enum covers all the stat types we currently support.</span>
 
@@ -60,7 +60,7 @@
     <span class="n">TEST</span> <span class="o">=</span> <span class="mi">5</span></div>
 
 
-<div class="viewcode-block" id="Stat"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.Stat">[docs]</a><span class="k">class</span> <span class="nc">Stat</span><span class="p">:</span>
+<div class="viewcode-block" id="Stat"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.Stat">[docs]</a><span class="k">class</span> <span class="nc">Stat</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Wrapper around tensorboard's ``SummaryWriter.add_scalar``, allowing for sampling</span>
 <span class="sd">    and easier interface.</span>
@@ -69,7 +69,7 @@
 <span class="sd">    differential privacy parameters, and to observe how clipping and noising affects the training process</span>
 <span class="sd">    (loss, accuracy, etc).</span>
 
-<span class="sd">    We have already implemented some common ones inside ``torchdp.utils.stat.StatType``.</span>
+<span class="sd">    We have already implemented some common ones inside ``opacus.utils.stat.StatType``.</span>
 
 <span class="sd">    Internal Privacy metrics (such as ``StatType.PRIVACY`` and ``StatType.CLIPPING``)</span>
 <span class="sd">    are already added to the code and need only be activated by adding the stat</span>
@@ -135,14 +135,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">named_values</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
 
-<div class="viewcode-block" id="Stat.reset"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.Stat.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Stat.reset"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.Stat.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        Resets the accumulated metrics.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">named_value</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">iter</span> <span class="o">=</span> <span class="mi">0</span></div>
 
-<div class="viewcode-block" id="Stat.log"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.Stat.log">[docs]</a>    <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">named_value</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<div class="viewcode-block" id="Stat.log"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.Stat.log">[docs]</a>    <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">named_value</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Logs a metrics to tensorboard.</span>
 
@@ -183,7 +183,7 @@
 <span class="n">Stats</span> <span class="o">=</span> <span class="p">[]</span>
 
 
-<div class="viewcode-block" id="set_global_summary_writer"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.set_global_summary_writer">[docs]</a><span class="k">def</span> <span class="nf">set_global_summary_writer</span><span class="p">(</span><span class="n">summary_writer</span><span class="p">:</span> <span class="n">SummaryWriter</span><span class="p">):</span>
+<div class="viewcode-block" id="set_global_summary_writer"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.set_global_summary_writer">[docs]</a><span class="k">def</span> <span class="nf">set_global_summary_writer</span><span class="p">(</span><span class="n">summary_writer</span><span class="p">:</span> <span class="n">SummaryWriter</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Sets this object's TensorBoard SummaryWriter to an externally provided one.</span>
 
@@ -196,7 +196,7 @@
     <span class="n">Stat</span><span class="o">.</span><span class="n">summary_writer</span> <span class="o">=</span> <span class="n">summary_writer</span></div>
 
 
-<div class="viewcode-block" id="add"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.add">[docs]</a><span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Stat</span><span class="p">):</span>
+<div class="viewcode-block" id="add"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.add">[docs]</a><span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Stat</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Adds statistics gathering to the process.</span>
 
@@ -208,14 +208,14 @@
     <span class="p">[</span><span class="n">Stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stat</span><span class="p">)</span> <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="clear"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.clear">[docs]</a><span class="k">def</span> <span class="nf">clear</span><span class="p">():</span>
+<div class="viewcode-block" id="clear"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.clear">[docs]</a><span class="k">def</span> <span class="nf">clear</span><span class="p">():</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Clears all stats and stops collecting statistics.</span>
 <span class="sd">    """</span>
     <span class="n">Stats</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="remove"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.remove">[docs]</a><span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="remove"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.remove">[docs]</a><span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Removes the Stat of name ``name`` from the global statistics gathering.</span>
 
@@ -228,7 +228,7 @@
     <span class="n">Stats</span> <span class="o">=</span> <span class="p">[</span><span class="n">stat</span> <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">Stats</span> <span class="k">if</span> <span class="n">stat</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">name</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="reset"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.reset">[docs]</a><span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="n">stat_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StatType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="reset"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.reset">[docs]</a><span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="n">stat_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StatType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Resets the stat with given `name` and `stat_type`</span>
 
@@ -247,7 +247,7 @@
     <span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="update"><a class="viewcode-back" href="../../../stats.html#torchdp.utils.stats.update">[docs]</a><span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+<div class="viewcode-block" id="update"><a class="viewcode-back" href="../../../stats.html#opacus.utils.stats.update">[docs]</a><span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
     <span class="n">stat_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StatType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">named_values</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -278,7 +278,7 @@
 </div>
 <div aria-label="main navigation" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">PyTorch-DP</a></h1>
+<h1 class="logo"><a href="../../../index.html">Opacus</a></h1>
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -313,13 +313,13 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/pytorch-dp" data-count-href="https://github.com/facebookresearch/pytorch-dp/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star PyTorch-DP on GitHub">pytorch-dp</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/opacus" data-count-href="https://github.com/facebookresearch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
-              var BAD_BASE = '/pytorch-dp/';
-              if (window.location.origin !== 'https://facebookresearch.github.io/pytorch-dp') {
+              var BAD_BASE = '/opacus/';
+              if (window.location.origin !== 'https://pytorch.github.io/opacus') {
                 var pathname = window.location.pathname;
                 var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
-                var newLocation = 'https://facebookresearch.github.io/pytorch-dp/' + newPathname;
+                var newLocation = 'https://pytorch.github.io/opacus/' + newPathname;
                 console.log('redirecting to ' + newLocation);
                 window.location.href = newLocation;
               }
@@ -339,7 +339,7 @@
               var search = docsearch({
                 
                 apiKey: '207c27d819f967749142d8611de7cb19',
-                indexName: 'pytorch-dp',
+                indexName: 'opacus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>PyTorch-DP · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="PyTorch-DP · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://facebookresearch.github.io/pytorch-dp/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp-icon.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp_logo.png"/><link rel="shortcut icon" href="/img/pytorch-dp.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://pytorch.github.io/opacus/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://pytorch.github.io/opacus/img/opacus_logo.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://pytorch.github.io/opacus/img/opacus_logo.png"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/pytorch-dp_logo.png" alt="PyTorch-DP"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/facebookresearch/pytorch-dp" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.png" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./"
   src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
@@ -24,8 +24,8 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="module-torchdp.autograd_grad_sample">
-<span id="autograd-grad-sample"></span><h1>Autograd Grad Sample<a class="headerlink" href="#module-torchdp.autograd_grad_sample" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-opacus.autograd_grad_sample">
+<span id="autograd-grad-sample"></span><h1>Autograd Grad Sample<a class="headerlink" href="#module-opacus.autograd_grad_sample" title="Permalink to this headline">¶</a></h1>
 <p><em>Based on</em> <a class="reference external" href="https://github.com/cybertronai/autograd-hacks">https://github.com/cybertronai/autograd-hacks</a></p>
 <p>This module provides functions to capture per-sample gradients by using hooks.</p>
 <p class="rubric">Notes</p>
@@ -33,10 +33,10 @@
 <a class="reference external" href="https://github.com/pytorch/pytorch/issues/598">https://github.com/pytorch/pytorch/issues/598</a>. However, it is the only known
 way of implementing this as of now (your suggestions and contributions are
 very welcome). The behaviour has been verified to be correct for the layers
-currently supported by pytorch-dp.</p>
+currently supported by opacus.</p>
 <dl class="py function">
-<dt id="torchdp.autograd_grad_sample.add_hooks">
-<code class="sig-prename descclassname">torchdp.autograd_grad_sample.</code><code class="sig-name descname">add_hooks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">loss_reduction</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/autograd_grad_sample.html#add_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.autograd_grad_sample.add_hooks" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.autograd_grad_sample.add_hooks">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">add_hooks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">loss_reduction</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#add_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.add_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds hooks to model to save activations and backprop values.
 The hooks will</p>
 <ol class="arabic simple">
@@ -62,18 +62,18 @@ Default value is <code class="docutils literal notranslate"><span class="pre">Tr
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt id="torchdp.autograd_grad_sample.disable_hooks">
-<code class="sig-prename descclassname">torchdp.autograd_grad_sample.</code><code class="sig-name descname">disable_hooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/autograd_grad_sample.html#disable_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.autograd_grad_sample.disable_hooks" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.autograd_grad_sample.disable_hooks">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">disable_hooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#disable_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.disable_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Globally disables all hooks installed by this library.</p>
 </dd></dl>
 <dl class="py function">
-<dt id="torchdp.autograd_grad_sample.enable_hooks">
-<code class="sig-prename descclassname">torchdp.autograd_grad_sample.</code><code class="sig-name descname">enable_hooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/autograd_grad_sample.html#enable_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.autograd_grad_sample.enable_hooks" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.autograd_grad_sample.enable_hooks">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">enable_hooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#enable_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.enable_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Globally enables all hooks installed by this library.</p>
 </dd></dl>
 <dl class="py function">
-<dt id="torchdp.autograd_grad_sample.is_supported">
-<code class="sig-prename descclassname">torchdp.autograd_grad_sample.</code><code class="sig-name descname">is_supported</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">layer</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/autograd_grad_sample.html#is_supported"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.autograd_grad_sample.is_supported" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.autograd_grad_sample.is_supported">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">is_supported</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">layer</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#is_supported"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.is_supported" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks if the <code class="docutils literal notranslate"><span class="pre">layer</span></code> is supported by this library.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -89,8 +89,8 @@ per-sample gradients is available.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt id="torchdp.autograd_grad_sample.remove_hooks">
-<code class="sig-prename descclassname">torchdp.autograd_grad_sample.</code><code class="sig-name descname">remove_hooks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/autograd_grad_sample.html#remove_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.autograd_grad_sample.remove_hooks" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.autograd_grad_sample.remove_hooks">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">remove_hooks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#remove_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.remove_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes hooks added by <code class="docutils literal notranslate"><span class="pre">add_hooks()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -104,7 +104,7 @@ per-sample gradients is available.</p>
 </div>
 <div aria-label="main navigation" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">PyTorch-DP</a></h1>
+<h1 class="logo"><a href="index.html">Opacus</a></h1>
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -139,13 +139,13 @@ per-sample gradients is available.</p>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/pytorch-dp" data-count-href="https://github.com/facebookresearch/pytorch-dp/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star PyTorch-DP on GitHub">pytorch-dp</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/opacus" data-count-href="https://github.com/facebookresearch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
-              var BAD_BASE = '/pytorch-dp/';
-              if (window.location.origin !== 'https://facebookresearch.github.io/pytorch-dp') {
+              var BAD_BASE = '/opacus/';
+              if (window.location.origin !== 'https://pytorch.github.io/opacus') {
                 var pathname = window.location.pathname;
                 var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
-                var newLocation = 'https://facebookresearch.github.io/pytorch-dp/' + newPathname;
+                var newLocation = 'https://pytorch.github.io/opacus/' + newPathname;
                 console.log('redirecting to ' + newLocation);
                 window.location.href = newLocation;
               }
@@ -165,7 +165,7 @@ per-sample gradients is available.</p>
               var search = docsearch({
                 
                 apiKey: '207c27d819f967749142d8611de7cb19',
-                indexName: 'pytorch-dp',
+                indexName: 'opacus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>

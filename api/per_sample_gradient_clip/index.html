@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>PyTorch-DP · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="PyTorch-DP · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://facebookresearch.github.io/pytorch-dp/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp-icon.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://facebookresearch.github.io/pytorch-dp/img/pytorch-dp_logo.png"/><link rel="shortcut icon" href="/img/pytorch-dp.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://pytorch.github.io/opacus/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://pytorch.github.io/opacus/img/opacus_logo.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://pytorch.github.io/opacus/img/opacus_logo.png"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/pytorch-dp_logo.png" alt="PyTorch-DP"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/facebookresearch/pytorch-dp" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.png" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./"
   src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
@@ -24,8 +24,8 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="module-torchdp.per_sample_gradient_clip">
-<span id="persamplegradientclipper"></span><h1>PerSampleGradientClipper<a class="headerlink" href="#module-torchdp.per_sample_gradient_clip" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-opacus.per_sample_gradient_clip">
+<span id="persamplegradientclipper"></span><h1>PerSampleGradientClipper<a class="headerlink" href="#module-opacus.per_sample_gradient_clip" title="Permalink to this headline">¶</a></h1>
 <p>The process of adding differential privacy to a model involves bounds its sensitivity prior to
 applying the Gaussian mechanism. This is achieved by clipping the per-sample gradients.
 Normally for a parameterized layer if you have a tensor of parameters of size <code class="docutils literal notranslate"><span class="pre">[m,</span> <span class="pre">n]</span></code>,
@@ -50,8 +50,8 @@ go back to the per-sample gradients, clip them, and accumulate them in <code cla
 <p>Note: there is only a single .backward() call as the second pass just works on top of
 the stored grad_sample.</p>
 <dl class="py class">
-<dt id="torchdp.per_sample_gradient_clip.PerSampleGradientClipper">
-<em class="property">class </em><code class="sig-prename descclassname">torchdp.per_sample_gradient_clip.</code><code class="sig-name descname">PerSampleGradientClipper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em>, <em class="sig-param"><span class="n">norm_clipper</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">loss_reduction</span><span class="o">=</span><span class="default_value">'mean'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/per_sample_gradient_clip.html#PerSampleGradientClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.per_sample_gradient_clip.PerSampleGradientClipper" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.per_sample_gradient_clip.</code><code class="sig-name descname">PerSampleGradientClipper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em>, <em class="sig-param"><span class="n">norm_clipper</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">loss_reduction</span><span class="o">=</span><span class="default_value">'mean'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class to define a per-sample gradient clipper for a module. Per-sample gradient clipping
 bounds the sensitivity of the computation before applying the Gaussian mechanism.</p>
 <p>Attaches to a module, and clips all grad_sample in the backward
@@ -60,7 +60,7 @@ pass. It then puts them in each parameter’s <code class="docutils literal notr
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>nn.Module</em>) – Module to which backward hooks are added and for which per-sample gradients are clipped</p></li>
-<li><p><strong>norm_clipper</strong> (<em>torchdp.utils.clipping.NormClipper</em>) – A norm clipper object of class <code class="xref py py-class docutils literal notranslate"><span class="pre">NormClipper</span></code>
+<li><p><strong>norm_clipper</strong> (<em>opacus.utils.clipping.NormClipper</em>) – A norm clipper object of class <code class="xref py py-class docutils literal notranslate"><span class="pre">NormClipper</span></code>
 which encapsulated different clipping strategies
 (such as flat clipping for the entire model, or per-layer clipping)</p></li>
 <li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Flag to indicate if the input tensor to the corresponding module
@@ -74,11 +74,11 @@ is a sum or a mean operation. Can take values <code class="docutils literal notr
 </dd>
 </dl>
 <dl class="py method">
-<dt id="torchdp.per_sample_gradient_clip.PerSampleGradientClipper.clip_and_accumulate">
-<code class="sig-name descname">clip_and_accumulate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/per_sample_gradient_clip.html#PerSampleGradientClipper.clip_and_accumulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.per_sample_gradient_clip.PerSampleGradientClipper.clip_and_accumulate" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.clip_and_accumulate">
+<code class="sig-name descname">clip_and_accumulate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.clip_and_accumulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.clip_and_accumulate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clips and sums up per-sample gradients into an accumulator. When this function is called
 <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code> times on mini-batches of size <code class="docutils literal notranslate"><span class="pre">B</span></code> (could be smaller on final batch), a call to
-<a class="reference internal" href="#torchdp.per_sample_gradient_clip.PerSampleGradientClipper.pre_step" title="torchdp.per_sample_gradient_clip.PerSampleGradientClipper.pre_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pre_step()</span></code></a>
+<a class="reference internal" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step" title="opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pre_step()</span></code></a>
 will populate the <code class="docutils literal notranslate"><span class="pre">.grad</span></code> field with the average gradient over the entire batch of size
 <code class="docutils literal notranslate"><span class="pre">(N-1)*</span> <span class="pre">B</span> <span class="pre">+</span> <span class="pre">b</span></code> with <code class="docutils literal notranslate"><span class="pre">b</span> <span class="pre">&lt;=</span> <span class="pre">B</span></code>.</p>
 <dl class="field-list simple">
@@ -88,8 +88,8 @@ will populate the <code class="docutils literal notranslate"><span class="pre">.
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt id="torchdp.per_sample_gradient_clip.PerSampleGradientClipper.close">
-<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/per_sample_gradient_clip.html#PerSampleGradientClipper.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.per_sample_gradient_clip.PerSampleGradientClipper.close" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes backward hooks from the module</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
@@ -98,11 +98,11 @@ will populate the <code class="docutils literal notranslate"><span class="pre">.
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt id="torchdp.per_sample_gradient_clip.PerSampleGradientClipper.pre_step">
-<code class="sig-name descname">pre_step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/per_sample_gradient_clip.html#PerSampleGradientClipper.pre_step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.per_sample_gradient_clip.PerSampleGradientClipper.pre_step" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step">
+<code class="sig-name descname">pre_step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.pre_step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prepares the <code class="docutils literal notranslate"><span class="pre">.grad</span></code> field of the parameters and provides statistics on the
 maximum gradient norm which should be used to scale noise in the privacy engine
-(:class:<code class="docutils literal notranslate"><span class="pre">~torchdp.privacy_engine.PrivacyEngine</span></code>). This function is called before
+(:class:<code class="docutils literal notranslate"><span class="pre">~opacus.privacy_engine.PrivacyEngine</span></code>). This function is called before
 the optimizer <code class="docutils literal notranslate"><span class="pre">step()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -115,8 +115,8 @@ as a tensor) and the batch size</p>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt id="torchdp.per_sample_gradient_clip.PerSampleGradientClipper.set_on_batch_clip_func">
-<code class="sig-name descname">set_on_batch_clip_func</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">on_batch_clip_func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchdp/per_sample_gradient_clip.html#PerSampleGradientClipper.set_on_batch_clip_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#torchdp.per_sample_gradient_clip.PerSampleGradientClipper.set_on_batch_clip_func" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.set_on_batch_clip_func">
+<code class="sig-name descname">set_on_batch_clip_func</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">on_batch_clip_func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.set_on_batch_clip_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.set_on_batch_clip_func" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the function to be called after clipping to the input callable parameter
 (for example clipping stats collection)</p>
 <dl class="field-list simple">
@@ -135,7 +135,7 @@ as a tensor) and the batch size</p>
 </div>
 <div aria-label="main navigation" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">PyTorch-DP</a></h1>
+<h1 class="logo"><a href="index.html">Opacus</a></h1>
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -170,13 +170,13 @@ as a tensor) and the batch size</p>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/pytorch-dp" data-count-href="https://github.com/facebookresearch/pytorch-dp/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star PyTorch-DP on GitHub">pytorch-dp</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/facebookresearch/opacus" data-count-href="https://github.com/facebookresearch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
-              var BAD_BASE = '/pytorch-dp/';
-              if (window.location.origin !== 'https://facebookresearch.github.io/pytorch-dp') {
+              var BAD_BASE = '/opacus/';
+              if (window.location.origin !== 'https://pytorch.github.io/opacus') {
                 var pathname = window.location.pathname;
                 var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
-                var newLocation = 'https://facebookresearch.github.io/pytorch-dp/' + newPathname;
+                var newLocation = 'https://pytorch.github.io/opacus/' + newPathname;
                 console.log('redirecting to ' + newLocation);
                 window.location.href = newLocation;
               }
@@ -196,7 +196,7 @@ as a tensor) and the batch size</p>
               var search = docsearch({
                 
                 apiKey: '207c27d819f967749142d8611de7cb19',
-                indexName: 'pytorch-dp',
+                indexName: 'opacus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>
