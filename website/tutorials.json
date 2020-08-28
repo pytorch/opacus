@@ -3,6 +3,10 @@
      {
       "id": "building_text_classifier",
       "title": "Building text classifier with Differential Privacy"
+    },
+    {
+      "id": "building_image_classifier",
+      "title": "Building image classifier with Differential Privacy"
     }
   ]
 }
