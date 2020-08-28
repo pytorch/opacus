@@ -11,7 +11,7 @@
 // site configuration options.
 
 // Define this so it can be easily modified in scripts (to host elsewhere)
-const baseUrl = '/opacus/';
+const baseUrl = '/';
 
 // List of projects/orgs using your project for the users page.
 const users = [];
@@ -19,9 +19,10 @@ const users = [];
 const siteConfig = {
   title: 'Opacus',
   tagline: 'Train PyTorch models with Differential Privacy',
-  url: 'https://pytorch.github.io',
+  url: 'https://opacus.ai',
   baseUrl: baseUrl,
   cleanUrl: true, // No .html extensions for paths
+  cname: 'opacus.ai',
 
   // used for publishing and more
   organizationName: 'pytorch',
