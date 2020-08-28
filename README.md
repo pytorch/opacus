@@ -1,26 +1,26 @@
-# opacus: Train PyTorch models with Differential Privacy
+![Opacus Logo](./website/static/img/opacus_logo.png)
 
-Main build: [![facebookresearch](https://circleci.com/gh/pytorch/opacus.svg?style=svg&circle-token=247aedbb579492ef94652ea93bbee4e169457795)](https://circleci.com/gh/pytorch/opacus)
+<hr/>
 
-Release build: [![facebookresearch](https://circleci.com/gh/pytorch/opacus/tree/v0.1-beta.1.svg?style=svg&circle-token=247aedbb579492ef94652ea93bbee4e169457795)](https://circleci.com/gh/pytorch/opacus/tree/v0.1-beta.1) (v0.1-beta.1)
+[![CircleCI](https://circleci.com/gh/pytorch/opacus.svg?style=svg)](https://circleci.com/gh/pytorch/opacus)
 
-opacus is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment.
+Opacus is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment.
 
-*Opacus is currently a preview beta and under active development!*
+*Opacus is currently in beta phase and under active development!*
 
 ### Target audience
 This code release is aimed at two target audiences:
-1. ML practicioners will find this code a gentle introduction to training a model with differential privacy as it requires minimal code changes.
-2. Differential Privacy scientists will find this code easy to experiment and tinker with, allowing them to focus on what matters.
+1. ML practitioners will find this to be a gentle introduction to training a model with differential privacy as it requires minimal code changes.
+2. Differential Privacy scientists will find this easy to experiment and tinker with, allowing them to focus on what matters.
 
 
 ## Installation
-pip:
+The latest release of Opacus can be installed via `pip`:
 ```bash
 pip install opacus
 ```
 
-From source:
+You can also install directly from the source for the latest features (along with its quirks and potentially ocassional bugs):
 ```bash
 git clone https://github.com/pytorch/opacus.git
 cd opacus
@@ -44,13 +44,16 @@ privacy_engine = PrivacyEngine(
 privacy_engine.attach(optimizer)
 # Now it's business as usual
 ```
-The [MNIST example](examples/mnist.py) contains an end to end run.
+
+The [MNIST example](examples/mnist.py) shows an end-to-end run using opacus. The [examples](examples/) folder contains more such examples.
+
+## FAQ
+Checkout the [FAQ](docs/faq.md) page for answers to some of the most frequently asked questions about Differential Privacy and Opacus.
 
 ## Contributing
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
 
 ## References
-
 * [Mironov, Ilya. "Rényi differential privacy." 2017 IEEE 30th Computer Security Foundations Symposium (CSF). IEEE, 2017.](https://arxiv.org/abs/1702.07476)
 * [Abadi, Martin, et al. "Deep learning with differential privacy." Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security. ACM, 2016.](https://arxiv.org/abs/1607.00133)
 * [Mironov, Ilya, Kunal Talwar, and Li Zhang. "R\'enyi Differential Privacy of the Sampled Gaussian Mechanism." arXiv preprint arXiv:1908.10530 (2019).](https://arxiv.org/abs/1908.10530)
