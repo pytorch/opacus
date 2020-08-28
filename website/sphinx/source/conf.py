@@ -13,7 +13,7 @@ import os
 import sys
 
 
-base_path = os.path.abspath(os.path.join(__file__, "..", "..", "..", "..", "torchdp"))
+base_path = os.path.abspath(os.path.join(__file__, "..", "..", "..", "..", "opacus"))
 
 sys.path.append(base_path)
 
@@ -25,9 +25,9 @@ print("path is", base_path)
 
 # -- Project information -----------------------------------------------------
 
-project = "PyTorch-DP"
+project = "Opacus"
 copyright = "2020, Facebook, Inc."
-author = "The PyTorch-DP Team"
+author = "The Opacus Team"
 
 """
 # get version string from setup.py
@@ -153,16 +153,14 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, "pytorch-dp.tex", "PyTorch-DP", "Facebook, Inc.", "manual")
-]
+latex_documents = [(master_doc, "opacus.tex", "Opacus", "Facebook, Inc.", "manual")]
 
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "pytorch-dp", "PyTorch-DP Documentation", [author], 1)]
+man_pages = [(master_doc, "opacus", "Opacus Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -173,10 +171,10 @@ man_pages = [(master_doc, "pytorch-dp", "PyTorch-DP Documentation", [author], 1)
 texinfo_documents = [
     (
         master_doc,
-        "pytorch-dp",
-        "PyTorch-DP Documentation",
+        "opacus",
+        "Opacus Documentation",
         author,
-        "PyTorch-DP",
+        "Opacus",
         "Train PyTorch models with Differential Privacy",
         "Miscellaneous",
     )

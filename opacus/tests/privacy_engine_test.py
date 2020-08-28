@@ -6,10 +6,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from opacus import PrivacyEngine
+from opacus.dp_model_inspector import IncompatibleModuleException
+from opacus.utils.module_inspection import get_layer_type, requires_grad
 from torch.utils.data import DataLoader
-from torchdp import PrivacyEngine
-from torchdp.dp_model_inspector import IncompatibleModuleException
-from torchdp.utils.module_inspection import get_layer_type, requires_grad
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 

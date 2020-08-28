@@ -317,7 +317,7 @@ class ConstantPerLayerClipper(NormClipper):
         its corresponding norm of gradients, such that its new norm is
         at most equal to the flat value specified for that layer when
         instantiating the object of
-        :class:`~torchdp.utils.clipping.ConstantPerLayerClipper`.
+        :class:`~opacus.utils.clipping.ConstantPerLayerClipper`.
 
         Parameters
         ----------

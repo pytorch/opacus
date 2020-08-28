@@ -1,12 +1,12 @@
-# pytorch-dp: Train PyTorch models with Differential Privacy
+# opacus: Train PyTorch models with Differential Privacy
 
-Main build: [![facebookresearch](https://circleci.com/gh/facebookresearch/pytorch-dp.svg?style=svg&circle-token=247aedbb579492ef94652ea93bbee4e169457795)](https://circleci.com/gh/facebookresearch/pytorch-dp)
+Main build: [![facebookresearch](https://circleci.com/gh/pytorch/opacus.svg?style=svg&circle-token=247aedbb579492ef94652ea93bbee4e169457795)](https://circleci.com/gh/pytorch/opacus)
 
-Release build: [![facebookresearch](https://circleci.com/gh/facebookresearch/pytorch-dp/tree/v0.1-beta.1.svg?style=svg&circle-token=247aedbb579492ef94652ea93bbee4e169457795)](https://circleci.com/gh/facebookresearch/pytorch-dp/tree/v0.1-beta.1) (v0.1-beta.1)
+Release build: [![facebookresearch](https://circleci.com/gh/pytorch/opacus/tree/v0.1-beta.1.svg?style=svg&circle-token=247aedbb579492ef94652ea93bbee4e169457795)](https://circleci.com/gh/pytorch/opacus/tree/v0.1-beta.1) (v0.1-beta.1)
 
-pytorch-dp is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment.
+opacus is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment.
 
-*PyTorch-DP is currently a preview beta and under active development!*
+*Opacus is currently a preview beta and under active development!*
 
 ### Target audience
 This code release is aimed at two target audiences:
@@ -17,13 +17,13 @@ This code release is aimed at two target audiences:
 ## Installation
 pip:
 ```bash
-pip install pytorch-dp
+pip install opacus
 ```
 
 From source:
 ```bash
-git clone https://github.com/facebookresearch/pytorch-dp.git
-cd pytorch-dp
+git clone https://github.com/pytorch/opacus.git
+cd opacus
 pip install -e .
 ```
 

@@ -4,4 +4,4 @@ title: FAQ
 ---
 
 
-### **This is an example FAQ for PyTorch-DP**
+### **This is an example FAQ for Opacus**

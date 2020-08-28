@@ -23,7 +23,7 @@ function SocialFooter(props) {
           data-count-href={`${repoUrl}/stargazers`}
           data-show-count="true"
           data-count-aria-label="# stargazers on GitHub"
-          aria-label="Star PyTorch-DP on GitHub">
+          aria-label="Star Opacus on GitHub">
           {props.config.projectName}
         </a>
       </div>
@@ -96,7 +96,7 @@ class Footer extends React.Component {
             dangerouslySetInnerHTML={{
               __html: `
             (function() {
-              var BAD_BASE = '/pytorch-dp/';
+              var BAD_BASE = '/opacus/';
               if (window.location.origin !== '${this.props.config.url}') {
                 var pathname = window.location.pathname;
                 var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);

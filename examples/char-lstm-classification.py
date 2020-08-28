@@ -11,9 +11,9 @@ import unicodedata
 
 import torch
 import torch.nn as nn
+from opacus import PrivacyEngine
+from opacus.layers import DPLSTM
 from sklearn.metrics import balanced_accuracy_score
-from torchdp import PrivacyEngine
-from torchdp.layers import DPLSTM
 from tqdm import tqdm
 
 

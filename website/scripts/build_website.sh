@@ -5,7 +5,7 @@
 usage() {
   echo "Usage: $0 [-b]"
   echo ""
-  echo "Build PyTorch-DP documentation."
+  echo "Build Opacus documentation."
   echo ""
   echo "  -b   Build static version of documentation (otherwise start server)"
   echo ""
@@ -36,7 +36,7 @@ make html
 cd .. || exit
 
 echo "-----------------------------------"
-echo "Building PyTorch-DP Docusaurus site"
+echo "Building Opacus Docusaurus site"
 echo "-----------------------------------"
 yarn || exit
 

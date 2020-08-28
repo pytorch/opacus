@@ -6,8 +6,8 @@ import unittest
 
 import torch
 import torch.nn as nn
-from torchdp import dp_model_inspector as dp_inspector
-from torchdp.utils.module_modification import convert_batchnorm_modules
+from opacus import dp_model_inspector as dp_inspector
+from opacus.utils.module_modification import convert_batchnorm_modules
 from torchvision import models
 
 

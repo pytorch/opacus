@@ -44,7 +44,7 @@ commands:
     steps:
       - run:
           name: "Check import order with isort"
-          command: isort -v -l 90 -o torchdp --lines-after-imports 2 -m 3 --trailing-comma --check-only .
+          command: isort -v -l 90 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
 
   mypy_check:
     description: "Static type checking with mypy"
@@ -60,7 +60,7 @@ commands:
           name: "Configure Docusaurus GitHub bot"
           command: |
               git config --global user.email "docusaurus-bot@users.noreply.github.com"
-              git config --global user.name "PyTorch-DP website deployment script"
+              git config --global user.name "Opacus website deployment script"
               echo "machine github.com login docusaurus-bot password $DOCUSAURUS_GITHUB_TOKEN" > ~/.netrc
 
   deploy_site:

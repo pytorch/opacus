@@ -111,7 +111,7 @@ class DPMultiheadAttention(nn.Module):
         Loads module from previously saved state.
 
         Supports loading from both :class:`torch.nn.MultiheadAttention` and
-        :class:`torchdp.layers.dp_multihead_attention.DPMultiheadAttention`.
+        :class:`opacus.layers.dp_multihead_attention.DPMultiheadAttention`.
 
         Parameters
         ----------

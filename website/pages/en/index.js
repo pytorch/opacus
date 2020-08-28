@@ -67,7 +67,7 @@ class HomeSplash extends React.Component {
 
     return (
       <SplashContainer>
-        <div className="productTitle">PyTorch-DP</div>
+        <div className="productTitle">Opacus</div>
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
@@ -105,7 +105,7 @@ class Index extends React.Component {
           {
             content:
               'This is another description of how this project is useful',
-            image: `${baseUrl}img/pytorch-dp-icon.png`,
+            image: `${baseUrl}img/opacus_logo.png`,
             imageAlign: 'right',
             title: 'Description',
           },
@@ -140,13 +140,13 @@ privacy_engine.attach(optimizer)
         <Container>
           <ol>
             <li>
-              <h4>Installing PyTorch-DP:</h4>
+              <h4>Installing Opacus:</h4>
               <a>Via pip:</a>
-              <MarkdownBlock>{bash`pip install pytorch-dp`}</MarkdownBlock>
+              <MarkdownBlock>{bash`pip install opacus`}</MarkdownBlock>
               <a>From source:</a>
               <MarkdownBlock>{bash`
-git clone https://github.com/facebookresearch/pytorch-dp.git
-cd pytorch-dp
+git clone https://github.com/pytorch/opacus.git
+cd opacus
 pip install -e .
                 `}</MarkdownBlock>
             </li>

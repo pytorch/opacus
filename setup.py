@@ -44,13 +44,13 @@ with open("requirements.txt", encoding="utf8") as f:
 
 
 setup(
-    name="pytorch-dp",
-    version="0.1-beta.1",
-    author="PyTorch Team",
+    name="opacus",
+    version="0.1",
+    author="The Opacus Team",
     description="Train PyTorch models with Differential Privacy",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/facebookresearch/pytorch-dp",
+    url="https://github.com/pytorch/opacus",
     license="Apache-2.0",
     install_requires=required,
     extras_require={"dev": DEV_REQUIRES},
@@ -73,5 +73,5 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
 )

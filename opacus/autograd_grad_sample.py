@@ -11,7 +11,7 @@ The ``register_backward_hook()`` function has a known issue being tracked at
 https://github.com/pytorch/pytorch/issues/598. However, it is the only known
 way of implementing this as of now (your suggestions and contributions are
 very welcome). The behaviour has been verified to be correct for the layers
-currently supported by pytorch-dp.
+currently supported by opacus.
 """
 
 from functools import partial

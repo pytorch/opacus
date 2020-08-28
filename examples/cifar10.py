@@ -18,8 +18,8 @@ import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
 import torchvision.models as models
 import torchvision.transforms as transforms
-from torchdp import PrivacyEngine, utils
-from torchdp.utils import stats
+from opacus import PrivacyEngine, utils
+from opacus.utils import stats
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 

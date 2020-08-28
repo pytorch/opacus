@@ -42,7 +42,7 @@ class Stat:
     differential privacy parameters, and to observe how clipping and noising affects the training process
     (loss, accuracy, etc).
 
-    We have already implemented some common ones inside ``torchdp.utils.stat.StatType``.
+    We have already implemented some common ones inside ``opacus.utils.stat.StatType``.
 
     Internal Privacy metrics (such as ``StatType.PRIVACY`` and ``StatType.CLIPPING``)
     are already added to the code and need only be activated by adding the stat

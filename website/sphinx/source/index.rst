@@ -1,6 +1,6 @@
-:github_url: https://github.com/facebookresearch/pytorch-dp
+:github_url: https://github.com/pytorch/opacus
 
-PyTorch-DP API Reference
+Opacus API Reference
 ========================
 
 .. toctree::
