@@ -238,7 +238,7 @@ workflows:
 
   website_deployment:
     jobs:
-      - auto_deploy_site
+      - auto_deploy_site:
           filters:
             branches:
               only:
