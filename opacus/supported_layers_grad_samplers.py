@@ -72,7 +72,9 @@ def _compute_linear_grad_sample(
     if layer.bias is not None:
 
         _create_or_extend_grad_sample(
-            layer.bias, torch.einsum("n...k->nk", B), batch_dim # pyre-ignore[6] We know layer.bias is not None
+            layer.bias,  # pyre-ignore[6] We know layer.bias is not None
+            torch.einsum("n...k->nk", B),
+            batch_dim,
         )
 
 
