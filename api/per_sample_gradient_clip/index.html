@@ -24,8 +24,111 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="persamplegradientclipper">
-<h1>PerSampleGradientClipper<a class="headerlink" href="#persamplegradientclipper" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-opacus.per_sample_gradient_clip">
+<span id="persamplegradientclipper"></span><h1>PerSampleGradientClipper<a class="headerlink" href="#module-opacus.per_sample_gradient_clip" title="Permalink to this headline">¶</a></h1>
+<p>The process of adding differential privacy to a model involves bounds its sensitivity prior to
+applying the Gaussian mechanism. This is achieved by clipping the per-sample gradients.
+Normally for a parameterized layer if you have a tensor of parameters of size <code class="docutils literal notranslate"><span class="pre">[m,</span> <span class="pre">n]</span></code>,
+the size of the gradients will match it. This means that they get aggregated over the batch.
+Here, we will keep them per-sample i.e., we will have a tensor of size <code class="docutils literal notranslate"><span class="pre">[b_sz,</span> <span class="pre">m,</span> <span class="pre">n]</span></code>, where
+the slice <code class="docutils literal notranslate"><span class="pre">[i,</span> <span class="pre">:,</span> <span class="pre">:]</span></code> corresponds to the per-example gradients for the i-th example in the batch.</p>
+<p>Per-sample gradient clipping has to be achieved under the following constraints:</p>
+<p>1. The norm of the grad_sample of the loss with respect to all model parameters has
+to be clipped so that if they were to be put in a single vector together. If <code class="docutils literal notranslate"><span class="pre">C</span></code> is the clipping
+threshold, this ensures the total norm will be at most <code class="docutils literal notranslate"><span class="pre">C</span></code>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">T</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()])</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">T</span></code> will have shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">N_TOTAL_PARAMS]</span></code>. The total L2 norm of each row of <code class="docutils literal notranslate"><span class="pre">T</span></code>
+cannot be greater than <code class="docutils literal notranslate"><span class="pre">C</span></code>.</p>
+<p>2. This clipping should not backpropagate. This means that clipping in the layer <code class="docutils literal notranslate"><span class="pre">i+1</span></code>
+should not affect computing the gradient of layer <code class="docutils literal notranslate"><span class="pre">i</span></code>. To make sure this is followed
+we will first compute the grad_sample of all layers <strong>without clipping</strong>. In a second pass, we will
+go back to the per-sample gradients, clip them, and accumulate them in <code class="docutils literal notranslate"><span class="pre">.grad</span></code>
+(thus replacing the “real” gradients).</p>
+<p>Note: there is only a single .backward() call as the second pass just works on top of
+the stored grad_sample.</p>
+<dl class="py class">
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.per_sample_gradient_clip.</code><code class="sig-name descname">PerSampleGradientClipper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em>, <em class="sig-param"><span class="n">norm_clipper</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">loss_reduction</span><span class="o">=</span><span class="default_value">'mean'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to define a per-sample gradient clipper for a module. Per-sample gradient clipping
+bounds the sensitivity of the computation before applying the Gaussian mechanism.</p>
+<p>Attaches to a module, and clips all grad_sample in the backward
+pass. It then puts them in each parameter’s <code class="docutils literal notranslate"><span class="pre">.grad</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<em>nn.Module</em>) – Module to which backward hooks are added and for which per-sample gradients are clipped</p></li>
+<li><p><strong>norm_clipper</strong> (<em>opacus.utils.clipping.NormClipper</em>) – A norm clipper object of class <code class="xref py py-class docutils literal notranslate"><span class="pre">NormClipper</span></code>
+which encapsulated different clipping strategies
+(such as flat clipping for the entire model, or per-layer clipping)</p></li>
+<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Flag to indicate if the input tensor to the corresponding module
+has the first dimension represent the batch, for example of shape
+[batch_size, …, …]. Set to True if batch appears in first
+dimension else set to False (batch_first=False implies that the batch
+is always in the second dimension).</p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – Indicates if the loss reduction (for aggregating the gradients)
+is a sum or a mean operation. Can take values <code class="docutils literal notranslate"><span class="pre">sum</span></code> or <code class="docutils literal notranslate"><span class="pre">mean</span></code></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.clip_and_accumulate">
+<code class="sig-name descname">clip_and_accumulate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.clip_and_accumulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.clip_and_accumulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clips and sums up per-sample gradients into an accumulator. When this function is called
+<code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code> times on mini-batches of size <code class="docutils literal notranslate"><span class="pre">B</span></code> (could be smaller on final batch), a call to
+<a class="reference internal" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step" title="opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pre_step()</span></code></a>
+will populate the <code class="docutils literal notranslate"><span class="pre">.grad</span></code> field with the average gradient over the entire batch of size
+<code class="docutils literal notranslate"><span class="pre">(N-1)*</span> <span class="pre">B</span> <span class="pre">+</span> <span class="pre">b</span></code> with <code class="docutils literal notranslate"><span class="pre">b</span> <span class="pre">&lt;=</span> <span class="pre">B</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes backward hooks from the module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step">
+<code class="sig-name descname">pre_step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.pre_step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepares the <code class="docutils literal notranslate"><span class="pre">.grad</span></code> field of the parameters and provides statistics on the
+maximum gradient norm which should be used to scale noise in the privacy engine
+(:class:<code class="docutils literal notranslate"><span class="pre">~opacus.privacy_engine.PrivacyEngine</span></code>). This function is called before
+the optimizer <code class="docutils literal notranslate"><span class="pre">step()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Returns the maximum gradient norm per batch (repeated in batch dimension
+as a tensor) and the batch size</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Tuple[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.Tensor</a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.set_on_batch_clip_func">
+<code class="sig-name descname">set_on_batch_clip_func</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">on_batch_clip_func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.set_on_batch_clip_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.set_on_batch_clip_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the function to be called after clipping to the input callable parameter
+(for example clipping stats collection)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>on_batch_clip_func</strong> (<em>Callable</em><em>[</em><em>..</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a><em>]</em>) – Function to be called after clipping</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </div>
 </div>
 </div>

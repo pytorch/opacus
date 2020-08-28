@@ -24,8 +24,80 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="autograd-grad-sample">
-<h1>Autograd Grad Sample<a class="headerlink" href="#autograd-grad-sample" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-opacus.autograd_grad_sample">
+<span id="autograd-grad-sample"></span><h1>Autograd Grad Sample<a class="headerlink" href="#module-opacus.autograd_grad_sample" title="Permalink to this headline">¶</a></h1>
+<p><em>Based on</em> <a class="reference external" href="https://github.com/cybertronai/autograd-hacks">https://github.com/cybertronai/autograd-hacks</a></p>
+<p>This module provides functions to capture per-sample gradients by using hooks.</p>
+<p class="rubric">Notes</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">register_backward_hook()</span></code> function has a known issue being tracked at
+<a class="reference external" href="https://github.com/pytorch/pytorch/issues/598">https://github.com/pytorch/pytorch/issues/598</a>. However, it is the only known
+way of implementing this as of now (your suggestions and contributions are
+very welcome). The behaviour has been verified to be correct for the layers
+currently supported by opacus.</p>
+<dl class="py function">
+<dt id="opacus.autograd_grad_sample.add_hooks">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">add_hooks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">loss_reduction</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#add_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.add_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds hooks to model to save activations and backprop values.
+The hooks will</p>
+<ol class="arabic simple">
+<li><p>save activations into <code class="docutils literal notranslate"><span class="pre">param.activations</span></code> during forward pass.</p></li>
+</ol>
+<p>2. compute per-sample gradients and save them in <code class="docutils literal notranslate"><span class="pre">param.grad_sample</span></code>
+during backward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>nn.Module</em>) – Model to which hooks are added.</p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – Indicates if the loss reduction (for aggregating the gradients)
+is a sum or a mean operation. Can take values <code class="docutils literal notranslate"><span class="pre">sum</span></code> or <code class="docutils literal notranslate"><span class="pre">mean</span></code>.
+Default value is <code class="docutils literal notranslate"><span class="pre">mean</span></code>.</p></li>
+<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Flag to indicate if the input tensor to the corresponding module
+has the first dimension represent the batch, for example of shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">...,</span> <span class="pre">...]</span></code>. Set to True if batch appears in first
+dimension else set to False (<code class="docutils literal notranslate"><span class="pre">batch_first=False</span></code> implies that the
+batch is always in the second dimension).
+Default value is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt id="opacus.autograd_grad_sample.disable_hooks">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">disable_hooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#disable_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.disable_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Globally disables all hooks installed by this library.</p>
+</dd></dl>
+<dl class="py function">
+<dt id="opacus.autograd_grad_sample.enable_hooks">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">enable_hooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#enable_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.enable_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Globally enables all hooks installed by this library.</p>
+</dd></dl>
+<dl class="py function">
+<dt id="opacus.autograd_grad_sample.is_supported">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">is_supported</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">layer</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#is_supported"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.is_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the <code class="docutils literal notranslate"><span class="pre">layer</span></code> is supported by this library.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>layer</strong> (<em>nn.Module</em>) – Layer for which we need to determine if the support for capturing
+per-sample gradients is available.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Whether the <code class="docutils literal notranslate"><span class="pre">layer</span></code> is supported by this library.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt id="opacus.autograd_grad_sample.remove_hooks">
+<code class="sig-prename descclassname">opacus.autograd_grad_sample.</code><code class="sig-name descname">remove_hooks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#remove_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.autograd_grad_sample.remove_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes hooks added by <code class="docutils literal notranslate"><span class="pre">add_hooks()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>nn.Module</em>) – Model from which hooks are to be removed.</p>
+</dd>
+</dl>
+</dd></dl>
 </div>
 </div>
 </div>

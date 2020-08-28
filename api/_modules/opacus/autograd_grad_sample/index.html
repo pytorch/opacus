@@ -1,0 +1,340 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://opacus.ai/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://opacus.ai/img/opacus_logo.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://opacus.ai/img/opacus_logo.png"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.png" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Getting Started</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for opacus.autograd_grad_sample</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">*Based on* https://github.com/cybertronai/autograd-hacks</span>
+
+<span class="sd">This module provides functions to capture per-sample gradients by using hooks.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">The ``register_backward_hook()`` function has a known issue being tracked at</span>
+<span class="sd">https://github.com/pytorch/pytorch/issues/598. However, it is the only known</span>
+<span class="sd">way of implementing this as of now (your suggestions and contributions are</span>
+<span class="sd">very welcome). The behaviour has been verified to be correct for the layers</span>
+<span class="sd">currently supported by opacus.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="kn">from</span> <span class="nn">.supported_layers_grad_samplers</span> <span class="kn">import</span> <span class="n">_supported_layers_grad_samplers</span>
+<span class="kn">from</span> <span class="nn">.utils.module_inspection</span> <span class="kn">import</span> <span class="n">get_layer_type</span><span class="p">,</span> <span class="n">requires_grad</span>
+
+
+<span class="c1"># work-around for https://github.com/pytorch/pytorch/issues/25723</span>
+<span class="n">_hooks_disabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="add_hooks"><a class="viewcode-back" href="../../autograd_grad_sample.html#opacus.autograd_grad_sample.add_hooks">[docs]</a><span class="k">def</span> <span class="nf">add_hooks</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span> <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Adds hooks to model to save activations and backprop values.</span>
+<span class="sd">    The hooks will</span>
+
+<span class="sd">    1. save activations into ``param.activations`` during forward pass.</span>
+<span class="sd">    2. compute per-sample gradients and save them in ``param.grad_sample``</span>
+<span class="sd">    during backward pass.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model: nn.Module</span>
+<span class="sd">        Model to which hooks are added.</span>
+<span class="sd">    loss_reduction: str</span>
+<span class="sd">        Indicates if the loss reduction (for aggregating the gradients)</span>
+<span class="sd">        is a sum or a mean operation. Can take values ``sum`` or ``mean``.</span>
+<span class="sd">        Default value is ``mean``.</span>
+<span class="sd">    batch_first: bool</span>
+<span class="sd">        Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">        has the first dimension represent the batch, for example of shape</span>
+<span class="sd">        ``[batch_size, ..., ...]``. Set to True if batch appears in first</span>
+<span class="sd">        dimension else set to False (``batch_first=False`` implies that the</span>
+<span class="sd">        batch is always in the second dimension).</span>
+<span class="sd">        Default value is ``True``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Trying to add hooks twice to the same model"</span><span class="p">)</span>
+
+    <span class="k">global</span> <span class="n">_hooks_disabled</span>
+    <span class="n">_hooks_disabled</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">handles</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="c1"># pyre-fixme[16]: `Module` has no attribute `register_forward_hook`.</span>
+            <span class="n">handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">_capture_activations</span><span class="p">))</span>
+
+            <span class="n">handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="c1"># pyre-fixme[16]: `Module` has no attribute `register_backward_hook`.</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">register_backward_hook</span><span class="p">(</span>
+                    <span class="n">partial</span><span class="p">(</span>
+                        <span class="n">_capture_backprops</span><span class="p">,</span>
+                        <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+                        <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"autograd_grad_sample_hooks"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">handles</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="remove_hooks"><a class="viewcode-back" href="../../autograd_grad_sample.html#opacus.autograd_grad_sample.remove_hooks">[docs]</a><span class="k">def</span> <span class="nf">remove_hooks</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Removes hooks added by ``add_hooks()``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model: nn.Module</span>
+<span class="sd">        Model from which hooks are to be removed.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Asked to remove hooks, but no hooks found"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># pyre-fixme[16]: `Module` has no attribute `autograd_grad_sample_hooks`.</span>
+        <span class="k">for</span> <span class="n">handle</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">model</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span></div>
+
+
+<div class="viewcode-block" id="disable_hooks"><a class="viewcode-back" href="../../autograd_grad_sample.html#opacus.autograd_grad_sample.disable_hooks">[docs]</a><span class="k">def</span> <span class="nf">disable_hooks</span><span class="p">():</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Globally disables all hooks installed by this library.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_hooks_disabled</span>
+    <span class="n">_hooks_disabled</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="enable_hooks"><a class="viewcode-back" href="../../autograd_grad_sample.html#opacus.autograd_grad_sample.enable_hooks">[docs]</a><span class="k">def</span> <span class="nf">enable_hooks</span><span class="p">():</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Globally enables all hooks installed by this library.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_hooks_disabled</span>
+    <span class="n">_hooks_disabled</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="is_supported"><a class="viewcode-back" href="../../autograd_grad_sample.html#opacus.autograd_grad_sample.is_supported">[docs]</a><span class="k">def</span> <span class="nf">is_supported</span><span class="p">(</span><span class="n">layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Checks if the ``layer`` is supported by this library.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    layer: nn.Module</span>
+<span class="sd">        Layer for which we need to determine if the support for capturing</span>
+<span class="sd">        per-sample gradients is available.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        Whether the ``layer`` is supported by this library.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">_capture_activations</span><span class="p">(</span>
+    <span class="n">layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">outputs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span>
+<span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Forward hook handler captures and saves activations flowing into the</span>
+<span class="sd">    ``layer`` in ``layer.activations`` during forward pass.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    layer: nn.Module</span>
+<span class="sd">        Layer to capture the activations in.</span>
+<span class="sd">    inputs: List[torch.Tensor]</span>
+<span class="sd">        Inputs to the ``layer``.</span>
+<span class="sd">    outputs: List[torch.Tensor]</span>
+<span class="sd">        Outputs of the ``layer``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">_hooks_disabled</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Hook installed on unsupported layer"</span><span class="p">)</span>
+
+    <span class="c1"># pyre-fixme[16]: `Module` has no attribute `activations`.</span>
+    <span class="n">layer</span><span class="o">.</span><span class="n">activations</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">_capture_backprops</span><span class="p">(</span>
+    <span class="n">layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Backward hook handler captures backpropagated gradients during</span>
+<span class="sd">    backward pass, and computes and stores per-sample gradients.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    layer: nn.Module</span>
+<span class="sd">        Layer to capture gradients in.</span>
+<span class="sd">    inputs: List[torch.Tensor]</span>
+<span class="sd">        Gradients of the tensor on which ``.backward()`` is called with respect</span>
+<span class="sd">        to the inputs to the ``layer``.</span>
+<span class="sd">    outputs: List[torch.Tensor]</span>
+<span class="sd">        Gradients of the tensor on which ``.backward()`` is called with respect</span>
+<span class="sd">        to the outputs of the ``layer``.</span>
+<span class="sd">    loss_reduction: str</span>
+<span class="sd">        Indicates if the loss reduction (for aggregating the gradients)</span>
+<span class="sd">        is a sum or a mean operation. Can take values ``sum`` or ``mean``.</span>
+<span class="sd">    batch_first: bool</span>
+<span class="sd">        Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">        has the first dimension represent the batch, for example of shape</span>
+<span class="sd">        ``[batch_size, ..., ...]``. Set to True if batch appears in first</span>
+<span class="sd">        dimension else set to False (``batch_first=False`` implies that the</span>
+<span class="sd">        batch is always in the second dimension).</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="n">_hooks_disabled</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">backprops</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+    <span class="n">_compute_grad_sample</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">backprops</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="p">,</span> <span class="n">batch_first</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_compute_grad_sample</span><span class="p">(</span>
+    <span class="n">layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">backprops</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Computes per-sample gradients with respect to the parameters of the</span>
+<span class="sd">    ``layer`` (if supported), and saves them in ``param.grad_sample``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    layer: nn.Module</span>
+<span class="sd">        Layer to capture per-sample gradients in.</span>
+<span class="sd">    backprops: torch.Tensor</span>
+<span class="sd">        Back propagated gradients captured by the backward hook.</span>
+<span class="sd">    loss_reduction: str</span>
+<span class="sd">        Indicates if the loss reduction (for aggregating the gradients)</span>
+<span class="sd">        is a sum or a mean operation. Can take values ``sum`` or ``mean``.</span>
+<span class="sd">    batch_first: bool</span>
+<span class="sd">        Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">        has the first dimension represent the batch, for example of shape</span>
+<span class="sd">        ``[batch_size, ..., ...]``. Set to True if batch appears in first</span>
+<span class="sd">        dimension else set to False (``batch_first=False`` implies that the</span>
+<span class="sd">        batch is always in the second dimension).</span>
+<span class="sd">    """</span>
+    <span class="n">layer_type</span> <span class="o">=</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="ow">not</span> <span class="n">requires_grad</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="n">layer_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">"activations"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"No activations detected for </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span><span class="si">}</span><span class="s2">,"</span>
+            <span class="s2">" run forward after add_hooks(model)"</span>
+        <span class="p">)</span>
+
+    <span class="n">batch_dim</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">batch_first</span> <span class="k">else</span> <span class="mi">1</span>
+
+    <span class="c1"># pyre-fixme[16]: `Module` has no attribute `activations`.</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">activations</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_dim</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">backprops</span> <span class="o">*</span> <span class="n">n</span>
+    <span class="k">elif</span> <span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"sum"</span><span class="p">:</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">backprops</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"loss_reduction = </span><span class="si">{</span><span class="n">loss_reduction</span><span class="si">}</span><span class="s2">. Only 'sum' and 'mean' losses are supported"</span>
+        <span class="p">)</span>
+
+    <span class="c1"># rearrange the blob dimensions</span>
+    <span class="k">if</span> <span class="n">batch_dim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">permute</span><span class="p">([</span><span class="n">batch_dim</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">dim</span><span class="p">())</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">batch_dim</span><span class="p">])</span>
+        <span class="c1"># pyre-fixme[6]: Expected `int` for 1st param but got `List[int]`.</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">permute</span><span class="p">([</span><span class="n">batch_dim</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">dim</span><span class="p">())</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">batch_dim</span><span class="p">])</span>
+    <span class="c1"># compute grad sample for  individual layers</span>
+    <span class="n">compute_layer_grad_sample</span> <span class="o">=</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">compute_layer_grad_sample</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Opacus</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../privacy_engine.html">PrivacyEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../privacy_analysis.html">Privacy Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../per_sample_gradient_clip.html">PerSampleGradientClipper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autograd_grad_sample.html">Autograd Grad Sample</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../compute_dp_sgd_privacy.html">Compute DP-SGD Privacy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dp_multihead_attention.html">DPMultiheadAttention</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tensor_utils.html">Tensor Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../stats.html">Stats</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../index.html">Documentation overview</a><ul>
+<li><a href="../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'opacus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
