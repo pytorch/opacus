@@ -15,10 +15,10 @@ _supported_layers_grad_samplers: Dict[str, Callable]
 from typing import Union
 
 import torch
-from torch import nn
-from torch.functional import F
 from opacus.layers.dp_lstm import DPLSTM
 from opacus.layers.dp_multihead_attention import SequenceBias
+from torch import nn
+from torch.functional import F
 
 from .utils.module_inspection import get_layer_type
 from .utils.tensor_utils import sum_over_all_but_batch_and_last_n
@@ -72,7 +72,9 @@ def _compute_linear_grad_sample(
     if layer.bias is not None:
 
         _create_or_extend_grad_sample(
-            layer.bias, torch.einsum("n...k->nk", B), batch_dim # pyre-ignore[6] We know layer.bias is not None
+            layer.bias,
+            torch.einsum("n...k->nk", B),
+            batch_dim,  # pyre-ignore[6] We know layer.bias is not None
         )
 
 

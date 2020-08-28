@@ -239,3 +239,7 @@ workflows:
   website_deployment:
     jobs:
       - auto_deploy_site
+          filters:
+            branches:
+              only:
+                - master
