@@ -53,6 +53,7 @@ const siteConfig = {
   headerIcon: 'img/opacus_logo.png',
   // footerIcon: 'img/opacus-icon.png',
   favicon: 'img/opacus_favicon.svg',
+  logo: 'img/opacus_logo_vertical.svg',
 
   // colors for website
   colors: {

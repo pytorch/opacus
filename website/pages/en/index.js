@@ -67,7 +67,7 @@ class HomeSplash extends React.Component {
 
     return (
       <SplashContainer>
-        <div className="productTitle">Opacus</div>
+        <Logo img_src={siteConfig.logo} />
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>

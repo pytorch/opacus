@@ -1,4 +1,4 @@
-![Opacus Logo](./website/static/img/opacus_logo.png)
+![Opacus Logo](./website/static/img/opacus_logo_vertical.svg)
 
 <hr/>
 
