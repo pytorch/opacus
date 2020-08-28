@@ -19,6 +19,7 @@ Opacus API Reference
    dp_multihead_attention
    tensor_utils
    stats
+   supported_layers_grad_samplers
 
 Indices and Tables
 ==================
