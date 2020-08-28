@@ -1,8 +1,24 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+r"""
+This module is a collection of grad samplers - methods to calculate per sample gradients
+for a layer given two tensors: activations (module inputs) and
+backpropagations (gradient values propagated from downstream layers).
+
+Attributes
+----------
+_supported_layers_grad_samplers: Dict[str, Callable]
+    Mapping from layer name to corresponding grad sampler
+"""
+
+from typing import Union
+
 import torch
+from torch import nn
 from torch.functional import F
+from torchdp.layers.dp_lstm import DPLSTM
+from torchdp.layers.dp_multihead_attention import SequenceBias
 
 from .utils.module_inspection import get_layer_type
 from .utils.tensor_utils import sum_over_all_but_batch_and_last_n
@@ -12,8 +28,17 @@ def _create_or_extend_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
 ) -> None:
     """
-    Create a 'grad_sample' attribute in the given parameter, or append to it
-    if the 'grad_sample' attribute already exists.
+    Creates a ``grad_sample`` attribute in the given parameter, or appends to it
+    if the ``grad_sample`` attribute already exists.
+
+    Parameters
+    ----------
+    param : torch.Tensor
+        Parameter to which ``grad_sample`` will be added
+    grad_sample : torch.Tensor
+        Per sample gradients tensor. Must be of the same shape as ``param`` with extra batch dimension
+    batch_dim : int
+        Position of the batch dimension in the shape of ``grad_sample``
     """
 
     if hasattr(param, "grad_sample"):
@@ -23,22 +48,83 @@ def _create_or_extend_grad_sample(
         param.grad_sample = grad_sample
 
 
-def _compute_linear_grad_sample(layer, A, B, batch_dim=0):
+def _compute_linear_grad_sample(
+    layer: nn.Linear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
+) -> None:
+    """
+    Computes per sample gradients for ``nn.Linear`` layer
+
+    Parameters
+    ----------
+    layer : nn.Linear
+        Layer
+    A : torch.Tensor
+        Activations
+    B : torch.Tensor
+        Backpropagations
+    batch_dim : int, optional
+        Batch dimension position
+    """
     gs = torch.einsum("n...i,n...j->n...ij", B, A)
     _create_or_extend_grad_sample(
         layer.weight, torch.einsum("n...ij->nij", gs), batch_dim
     )
     if layer.bias is not None:
+
         _create_or_extend_grad_sample(
-            layer.bias, torch.einsum("n...k->nk", B), batch_dim
+            layer.bias, torch.einsum("n...k->nk", B), batch_dim # pyre-ignore[6] We know layer.bias is not None
         )
 
 
-def _compute_sequence_bias_grad_sample(layer, A, B, batch_dim=0):
+def _compute_sequence_bias_grad_sample(
+    layer: SequenceBias, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
+) -> None:
+    """
+    Computes per sample gradients for ``SequenceBias`` layer
+
+    Parameters
+    ----------
+    layer : torchdp.layers.dp_multihead_attention.SequenceBias
+        Layer
+    A : torch.Tensor
+        Activations
+    B : torch.Tensor
+        Backpropagations
+    batch_dim : int, optional
+        Batch dimension position
+    """
     _create_or_extend_grad_sample(layer.bias, B[:, -1], batch_dim)
 
 
-def _compute_norm_grad_sample(layer, A, B, batch_dim=0):
+def _compute_norm_grad_sample(
+    # for some reason pyre doesn't understand that
+    # nn.LayerNorm and nn.modules.normalization.LayerNorm is the same thing
+    # pyre-ignore[11]
+    layer: Union[
+        nn.LayerNorm,
+        nn.GroupNorm,
+        nn.InstanceNorm1d,
+        nn.InstanceNorm2d,
+        nn.InstanceNorm3d,
+    ],
+    A: torch.Tensor,
+    B: torch.Tensor,
+    batch_dim: int = 0,
+) -> None:
+    """
+    Computes per sample gradients for normalization layers
+
+    Parameters
+    ----------
+    layer : Union[nn.LayerNorm, nn.GroupNorm, nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d]
+        Layer
+    A : torch.Tensor
+        Activations
+    B : torch.Tensor
+        Backpropagations
+    batch_dim : int, optional
+        Batch dimension position
+    """
     layer_type = get_layer_type(layer)
     if layer_type == "LayerNorm":
         _create_or_extend_grad_sample(
@@ -74,7 +160,23 @@ def _compute_norm_grad_sample(layer, A, B, batch_dim=0):
             )
 
 
-def _compute_dplstm_grad_sample(layer, A, B, batch_dim=0):
+def _compute_dplstm_grad_sample(
+    layer: DPLSTM, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
+) -> None:
+    """
+    Computes per sample gradients for ``DPLSTM`` layer
+
+    Parameters
+    ----------
+    layer : torchdp.layers.dp_lstm.DPLSTM
+        Layer
+    A : torch.Tensor
+        Activations
+    B : torch.Tensor
+        Backpropagations
+    batch_dim : int, optional
+        Batch dimension position
+    """
     lstm_params = [
         layer.weight_ih_l0,
         layer.weight_hh_l0,
@@ -119,10 +221,33 @@ def _compute_dplstm_grad_sample(layer, A, B, batch_dim=0):
         grad_sample[layer.bias_hh_l0] += layer.cells[t].dgates_t
 
     for param, grad_value in grad_sample.items():
+        # pyre-ignore[6]
         _create_or_extend_grad_sample(param, grad_value, batch_dim)
 
 
-def _compute_conv_grad_sample(layer, A, B, batch_dim=0):
+def _compute_conv_grad_sample(
+    # for some reason pyre doesn't understand that
+    # nn.Conv1d and nn.modules.conv.Conv1d is the same thing
+    # pyre-ignore[11]
+    layer: Union[nn.Conv2d, nn.Conv1d],
+    A: torch.Tensor,
+    B: torch.Tensor,
+    batch_dim: int = 0,
+) -> None:
+    """
+    Computes per sample gradients for convolutional layers
+
+    Parameters
+    ----------
+    layer : Union[nn.Conv1d, nn.Conv2d]
+        Layer
+    A : torch.Tensor
+        Activations
+    B : torch.Tensor
+        Backpropagations
+    batch_dim : int, optional
+        Batch dimension position
+    """
     n = A.shape[0]
     layer_type = get_layer_type(layer)
     # get A and B in shape depending on the Conv layer
@@ -162,7 +287,23 @@ def _compute_conv_grad_sample(layer, A, B, batch_dim=0):
         _create_or_extend_grad_sample(layer.bias, torch.sum(B, dim=2), batch_dim)
 
 
-def _compute_embedding_grad_sample(layer, A, B, batch_dim=0):
+def _compute_embedding_grad_sample(
+    layer: nn.Embedding, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
+) -> None:
+    """
+    Computes per sample gradients for ``nn.Embedding`` layer
+
+    Parameters
+    ----------
+    layer : nn.Embedding
+        Layer
+    A : torch.Tensor
+        Activations
+    B : torch.Tensor
+        Backpropagations
+    batch_dim : int, optional
+        Batch dimension position
+    """
     one_hot = F.one_hot(A, num_classes=layer.weight.shape[0])
     gs = torch.einsum("n...i,n...j->n...ij", one_hot, B)
 
