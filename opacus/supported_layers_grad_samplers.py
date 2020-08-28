@@ -17,8 +17,8 @@ from typing import Union
 import torch
 from torch import nn
 from torch.functional import F
-from torchdp.layers.dp_lstm import DPLSTM
-from torchdp.layers.dp_multihead_attention import SequenceBias
+from opacus.layers.dp_lstm import DPLSTM
+from opacus.layers.dp_multihead_attention import SequenceBias
 
 from .utils.module_inspection import get_layer_type
 from .utils.tensor_utils import sum_over_all_but_batch_and_last_n
@@ -84,7 +84,7 @@ def _compute_sequence_bias_grad_sample(
 
     Parameters
     ----------
-    layer : torchdp.layers.dp_multihead_attention.SequenceBias
+    layer : opacus.layers.dp_multihead_attention.SequenceBias
         Layer
     A : torch.Tensor
         Activations
@@ -168,7 +168,7 @@ def _compute_dplstm_grad_sample(
 
     Parameters
     ----------
-    layer : torchdp.layers.dp_lstm.DPLSTM
+    layer : opacus.layers.dp_lstm.DPLSTM
         Layer
     A : torch.Tensor
         Activations
