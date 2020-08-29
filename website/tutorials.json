@@ -7,6 +7,10 @@
     {
       "id": "building_image_classifier",
       "title": "Building image classifier with Differential Privacy"
+    },
+    {
+      "id": "building_lstm_name_classifier.ipynb",
+      "title": "Training a differentially private LSTM model for name classification"
     }
   ]
 }
