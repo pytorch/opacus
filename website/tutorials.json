@@ -1,5 +1,5 @@
 {
-  "Using Pytorch DP": [
+  "Using Opacus": [
      {
       "id": "building_text_classifier",
       "title": "Building text classifier with Differential Privacy"
@@ -9,7 +9,7 @@
       "title": "Building image classifier with Differential Privacy"
     },
     {
-      "id": "building_lstm_name_classifier.ipynb",
+      "id": "building_lstm_name_classifier",
       "title": "Training a differentially private LSTM model for name classification"
     }
   ]
