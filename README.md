@@ -1,4 +1,4 @@
-![Opacus Logo](./website/static/img/opacus_logo_vertical.svg)
+![Opacus Logo](./website/static/img/opacus_logo_vertical.svg =434x380)
 
 <hr/>
 
