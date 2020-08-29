@@ -1,4 +1,4 @@
-![Opacus Logo](./website/static/img/opacus_logo_vertical.svg =434x380)
+<p align="center"><img src="./website/static/img/opacus_logo.svg" alt="Opacus Logo" width="500"/></p>
 
 <hr/>
 
