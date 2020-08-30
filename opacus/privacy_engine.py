@@ -18,7 +18,7 @@ from .utils import clipping
 
 class PrivacyEngine:
     r"""
-    The main component of Pytorch DP is the ``PrivacyEngine``.
+    The main component of Opacus is the ``PrivacyEngine``.
 
     To train a model with differential privacy, all you need to do
     is to define a ``PrivacyEngine`` and later attach it to your
