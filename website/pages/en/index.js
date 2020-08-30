@@ -98,20 +98,6 @@ class Index extends React.Component {
         />
       </Container>
     );
-
-    const Description = () => (
-      <Block background="light">
-        {[
-          {
-            content:
-              'This is another description of how this project is useful',
-            image: `${baseUrl}img/opacus_logo.png`,
-            imageAlign: 'right',
-            title: 'Description',
-          },
-        ]}
-      </Block>
-    );
     // getStartedSection
     const pre = '```';
     // Example for model fitting
