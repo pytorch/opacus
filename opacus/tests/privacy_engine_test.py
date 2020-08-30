@@ -379,10 +379,10 @@ class PrivacyEngine_test(unittest.TestCase):
         for p0, p1 in zip(first_model_params, second_model_params):
             self.assertTrue(torch.allclose(p0, p1))
 
-        optimizer1.privacy_engine._set_seed(10)
+        optimizer1.privacy_engine._set_seed_warning_unsecure(10)
         self.setUp_model_step(model1, optimizer1)
 
-        optimizer2.privacy_engine._set_seed(10)
+        optimizer2.privacy_engine._set_seed_warning_unsecure(10)
         self.setUp_model_step(model2, optimizer2)
         # assert the models are identical after we did one step
         first_model_params = (p for p in model1.parameters() if p.requires_grad)
@@ -405,7 +405,7 @@ class PrivacyEngine_test(unittest.TestCase):
         self.setUp_model_step(model, optimizer)  # do one step so we have gradiants
         model_params = [p for p in model.parameters() if p.requires_grad]
 
-        optimizer.privacy_engine._set_seed(20)
+        optimizer.privacy_engine._set_seed_warning_unsecure(20)
         noise_generated_before = [
             optimizer.privacy_engine._generate_noise(max_norm, p).detach().numpy()
             for p in model_params
@@ -414,7 +414,7 @@ class PrivacyEngine_test(unittest.TestCase):
         for _ in range(3):
             self.setUp_model_step(model, optimizer)
 
-        optimizer.privacy_engine._set_seed(20)
+        optimizer.privacy_engine._set_seed_warning_unsecure(20)
         noise_generated_after = [
             optimizer.privacy_engine._generate_noise(max_norm, p).detach().numpy()
             for p in model_params

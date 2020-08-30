@@ -2,12 +2,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from __future__ import annotations
 
-import os
 import types
 import warnings
 from typing import List, Optional, Tuple, Union
 
 import torch
+import torchcsprng as csprng
 from torch import nn
 
 from . import privacy_analysis as tf_privacy
@@ -95,7 +95,9 @@ class PrivacyEngine:
         self.batch_first = batch_first
         self.target_delta = target_delta
 
-        self._set_seed(None)
+        self.random_number_generator = csprng.create_random_device_generator(
+            "/dev/urandom"
+        )
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
         self.misc_settings = misc_settings
@@ -169,25 +171,19 @@ class PrivacyEngine:
             self.privacy_engine.step()
             self.original_step(closure)
 
-        # pyre-fixme[16]: `Optimizer` has no attribute `privacy_engine`.
-        optimizer.privacy_engine = self
-        # pyre-fixme[16]: `Optimizer` has no attribute `original_step`.
-        optimizer.original_step = optimizer.step
-        # pyre-fixme[8]: Attribute has type
-        #  `BoundMethod[typing.Callable(torch.optim.Optimizer.step)[[Named(self,
-        #  torch.optim.Optimizer), Named(closure, typing.Optional[typing.Callable[[],
-        #  torch.Tensor]], default)], typing.Optional[torch.Tensor]],
-        #  torch.optim.Optimizer]`; used as `MethodType`.
-        optimizer.step = types.MethodType(dp_step, optimizer)
+        # Pyre doesn't like monkeypatching. But we'll do it anyway :)
+        optimizer.privacy_engine = self  # pyre-ignore
+        optimizer.original_step = optimizer.step  # pyre-ignore
+        optimizer.step = types.MethodType(dp_step, optimizer)  # pyre-ignore
 
         def virtual_step(self):
             self.privacy_engine.virtual_step()
 
-        # pyre-fixme[16]: `Optimizer` has no attribute `virtual_step`.
+        # pyre-ignore
         optimizer.virtual_step = types.MethodType(virtual_step, optimizer)
 
-        # pyre-fixme[16]: `PrivacyEngine` has no attribute `optimizer`.
-        self.optimizer = optimizer  # create a cross reference for detaching
+        # create a cross reference for detaching
+        self.optimizer = optimizer  # pyre-ignore
 
     def get_renyi_divergence(self):
         rdp = torch.tensor(
@@ -371,39 +367,32 @@ class PrivacyEngine:
                 # pyre-fixme[16]: nn.parameter.Parameter has no attribute grad
                 reference.grad.shape,
                 device=self.device,
-                generator=self.secure_generator,
+                generator=self.random_number_generator,
             )
-        # pyre-fixme[7]: Expected `Tensor` but got `float`.
-        return 0.0
+        return torch.zeros(reference.grad.shape, device=self.device)
 
-    def _set_seed(self, secure_seed: Optional[int]):
+    def _set_seed_warning_unsecure(self, unsecure_seed: int):
         r"""
-        Allows to manually set the seed allowing for a deterministic run.
+        Allows to manually set the seed allowing for a deterministic run. Useful if you want to
+        debug.
 
         WARNING: MANUALLY SETTING THE SEED BREAKS THE GUARANTEE OF A SECURE SEED.
-        If you elect to do that, your application will own guaranteeing the safety
-        of your pseudo-random number generator.
+        If you elect to do that, your application will NOT be secure, as we will default to
+        the standard PyTorch random generation algorithm, which is a Mersenne Twister.
 
         Parameters
         ----------
-        secure_seed : int
-            The secure seed
+        unsecure_seed : int
+            The **unsecure** seed
         """
-        if secure_seed is not None:
-            warnings.warn(
-                "Seed was manually set. This prevents us from generating "
-                "a cryptographically secure pseudorandom number generator "
-                "seed. Hence, we cannot guarantee the safety of random "
-                "number generation process."
-            )
-            # pyre-fixme[16]: `PrivacyEngine` has no attribute `secure_seed`.
-            self.secure_seed = secure_seed
-        else:
-            self.secure_seed = int.from_bytes(
-                os.urandom(8), byteorder="big", signed=True
-            )
-        self.secure_generator = (
-            torch.random.manual_seed(self.secure_seed)
+        warnings.warn(
+            "Seed was manually set. This DISABLES our cryptographically secure "
+            "pseudorandom number generator. Hence, from now on we cannot guarantee the safety "
+            "of the number generation process. To get it back, instantiate a new PrivacyEngine."
+        )
+
+        self.random_number_generator = (
+            torch.random.manual_seed(unsecure_seed)
             if self.device.type == "cpu"
-            else torch.cuda.manual_seed(self.secure_seed)
+            else torch.cuda.manual_seed(unsecure_seed)
         )
