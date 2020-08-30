@@ -19,6 +19,7 @@
 <h1>Source code for opacus.privacy_engine</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
+
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">os</span>
@@ -27,6 +28,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torchcsprng</span> <span class="k">as</span> <span class="nn">csprng</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">privacy_analysis</span> <span class="k">as</span> <span class="n">tf_privacy</span>
@@ -64,6 +66,7 @@
         <span class="n">alphas</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">max_grad_norm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="n">secure_rng</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">grad_norm_type</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
         <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">target_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
@@ -76,7 +79,7 @@
 <span class="sd">        module : nn.Module</span>
 <span class="sd">            The Pytorch module to which we are attaching the privacy engine</span>
 <span class="sd">        batch_size : int</span>
-<span class="sd">            Batch size</span>
+<span class="sd">            Training batch size. Used in the privacy accountant.</span>
 <span class="sd">        sample_size : int</span>
 <span class="sd">            The size of the sample (dataset). Used in the privacy accountant.</span>
 <span class="sd">        alphas : List[float]</span>
@@ -87,6 +90,10 @@
 <span class="sd">        max_grad_norm : Union[float, List[float]]</span>
 <span class="sd">            The maximum norm of the per-sample gradients. Any gradient with norm</span>
 <span class="sd">            higher than this will be clipped to this value.</span>
+<span class="sd">        secure_rng: bool</span>
+<span class="sd">            If on, it will use ``torchcsprng`` for secure random number generation. Comes with</span>
+<span class="sd">            a significant performance cost, therefore it's recommended that you turn it off when</span>
+<span class="sd">            just experimenting.</span>
 <span class="sd">        grad_norm_type : int</span>
 <span class="sd">            The order of the norm. For instance, 2 represents L-2 norm, while</span>
 <span class="sd">            1 represents L-1 norm.</span>
@@ -104,6 +111,7 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span> <span class="o">=</span> <span class="n">secure_rng</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span> <span class="o">=</span> <span class="n">alphas</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
@@ -114,7 +122,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span> <span class="o">=</span> <span class="n">target_delta</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_seed</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">random_number_generator</span> <span class="o">=</span> <span class="n">csprng</span><span class="o">.</span><span class="n">create_random_device_generator</span><span class="p">(</span>
+                <span class="s2">"/dev/urandom"</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"Secure RNG turned off. This is perfectly fine for experimentation as it allows "</span>
+                <span class="s2">"for much faster training performance, but remember to turn it on and retrain "</span>
+                <span class="s2">"one last time before production with ``secure_rng`` turned on."</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">"big"</span><span class="p">,</span> <span class="n">signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">random_number_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">validator</span> <span class="o">=</span> <span class="n">DPModelInspector</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># lazy initialization in attach</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span> <span class="o">=</span> <span class="n">misc_settings</span>
@@ -188,25 +211,19 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">original_step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
 
-        <span class="c1"># pyre-fixme[16]: `Optimizer` has no attribute `privacy_engine`.</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="bp">self</span>
-        <span class="c1"># pyre-fixme[16]: `Optimizer` has no attribute `original_step`.</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">original_step</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span>
-        <span class="c1"># pyre-fixme[8]: Attribute has type</span>
-        <span class="c1">#  `BoundMethod[typing.Callable(torch.optim.Optimizer.step)[[Named(self,</span>
-        <span class="c1">#  torch.optim.Optimizer), Named(closure, typing.Optional[typing.Callable[[],</span>
-        <span class="c1">#  torch.Tensor]], default)], typing.Optional[torch.Tensor]],</span>
-        <span class="c1">#  torch.optim.Optimizer]`; used as `MethodType`.</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+        <span class="c1"># Pyre doesn't like monkeypatching. But we'll do it anyway :)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="bp">self</span>  <span class="c1"># pyre-ignore</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">original_step</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span>  <span class="c1"># pyre-ignore</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>  <span class="c1"># pyre-ignore</span>
 
         <span class="k">def</span> <span class="nf">virtual_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span>
 
-        <span class="c1"># pyre-fixme[16]: `Optimizer` has no attribute `virtual_step`.</span>
+        <span class="c1"># pyre-ignore</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">virtual_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 
-        <span class="c1"># pyre-fixme[16]: `PrivacyEngine` has no attribute `optimizer`.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>  <span class="c1"># create a cross reference for detaching</span></div>
+        <span class="c1"># create a cross reference for detaching</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>  <span class="c1"># pyre-ignore</span></div>
 
     <span class="k">def</span> <span class="nf">get_renyi_divergence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">rdp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
@@ -390,41 +407,36 @@
                 <span class="c1"># pyre-fixme[16]: nn.parameter.Parameter has no attribute grad</span>
                 <span class="n">reference</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
                 <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-                <span class="n">generator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_generator</span><span class="p">,</span>
+                <span class="n">generator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_number_generator</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="c1"># pyre-fixme[7]: Expected `Tensor` but got `float`.</span>
-        <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">reference</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_set_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">secure_seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="nf">_set_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Allows to manually set the seed allowing for a deterministic run.</span>
+<span class="sd">        Allows to manually set the seed allowing for a deterministic run. Useful if you want to</span>
+<span class="sd">        debug.</span>
 
-<span class="sd">        WARNING: MANUALLY SETTING THE SEED BREAKS THE GUARANTEE OF A SECURE SEED.</span>
-<span class="sd">        If you elect to do that, your application will own guaranteeing the safety</span>
-<span class="sd">        of your pseudo-random number generator.</span>
+<span class="sd">        WARNING: MANUALLY SETTING THE SEED BREAKS THE GUARANTEE OF SECURE RNG.</span>
+<span class="sd">        For this reason, this method will raise a ValueError if you had ``secure_rng`` turned on.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        secure_seed : int</span>
-<span class="sd">            The secure seed</span>
+<span class="sd">        seed : int</span>
+<span class="sd">            The **unsecure** seed</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">secure_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s2">"Seed was manually set. This prevents us from generating "</span>
-                <span class="s2">"a cryptographically secure pseudorandom number generator "</span>
-                <span class="s2">"seed. Hence, we cannot guarantee the safety of random "</span>
-                <span class="s2">"number generation process."</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Seed was manually set on a ``PrivacyEngine`` with ``secure_rng`` turned on."</span>
+                <span class="s2">"This fundamentally breaks secure_rng, and cannot be allowed. "</span>
+                <span class="s2">"If you do need reproducibility with a fixed seed, first instantiate the PrivacyEngine "</span>
+                <span class="s2">"with ``secure_seed`` turned off."</span>
             <span class="p">)</span>
-            <span class="c1"># pyre-fixme[16]: `PrivacyEngine` has no attribute `secure_seed`.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">secure_seed</span> <span class="o">=</span> <span class="n">secure_seed</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">secure_seed</span> <span class="o">=</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">"big"</span><span class="p">,</span> <span class="n">signed</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">secure_generator</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cpu"</span>
-            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_seed</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
         <span class="p">)</span></div>
 </pre></div>
 </div>
