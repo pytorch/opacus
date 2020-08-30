@@ -45,6 +45,7 @@ sudo pip install -e .[dev]
 # install pytorch nightly if asked for
 if [[ $PYTORCH_NIGHTLY == true ]]; then
   sudo pip install --upgrade --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+  sudo pip install --upgrade --pre torchcsprng -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
 else
   # If no version specified, upgrade to latest release.
   if [[ $CHOSEN_TORCH_VERSION == -1 ]]; then

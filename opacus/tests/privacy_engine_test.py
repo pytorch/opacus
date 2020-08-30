@@ -99,7 +99,11 @@ class PrivacyEngine_test(unittest.TestCase):
         self.private_grads_norms = self.setUp_model_step(
             self.private_model, self.private_optimizer
         )
-        self.privacy_default_params = {"noise_multiplier": 1.0, "max_grad_norm": 1}
+        self.privacy_default_params = {
+            "noise_multiplier": 1.0,
+            "max_grad_norm": 1,
+            "secure_rng": False,
+        }
 
     def setUp_data(self):
         self.ds = FakeData(
@@ -392,7 +396,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
     def test_deterministic_noise_generation(self):
         """
-        Tests that when secure seed is set for a model, the sequence
+        Tests that when a seed is set for a model, the sequence
         of the generated noise is the same.
         It performs the following test:
         1- Initiate a model, do one step, set the seed, and save the noise sequence
@@ -402,7 +406,7 @@ class PrivacyEngine_test(unittest.TestCase):
         """
         max_norm = 5
         model, optimizer = self.setUp_init_model(private=True)
-        self.setUp_model_step(model, optimizer)  # do one step so we have gradiants
+        self.setUp_model_step(model, optimizer)  # do one step so we have gradients
         model_params = [p for p in model.parameters() if p.requires_grad]
 
         optimizer.privacy_engine._set_seed(20)
@@ -421,3 +425,40 @@ class PrivacyEngine_test(unittest.TestCase):
         ]
 
         np.testing.assert_equal(noise_generated_before, noise_generated_after)
+
+    def test_raises_seed_set_on_secure_rng(self):
+        """
+        Tests that when a seed is set on a secure PrivacyEngine, we raise a ValueError
+        """
+        model, optimizer = self.setUp_init_model(
+            private=True, secure_rng=True, noise_multiplier=1.3, max_grad_norm=1.0
+        )
+        with self.assertRaises(ValueError):
+            optimizer.privacy_engine._set_seed(20)
+
+    def test_noise_changes_every_time_secure_rng(self):
+        """
+        Test that adding noise results in ever different model params.
+        We disable clipping in this test by setting it to a very high threshold.
+        """
+        model, optimizer = self.setUp_init_model(
+            private=True,
+            state_dict=self.original_model.state_dict(),
+            noise_multiplier=1.3,
+            max_grad_norm=999,
+            secure_rng=True,
+        )
+        self.setUp_model_step(model, optimizer)
+        first_run_params = (p for p in model.parameters() if p.requires_grad)
+
+        model, optimizer = self.setUp_init_model(
+            private=True,
+            state_dict=self.original_model.state_dict(),
+            noise_multiplier=1.3,
+            max_grad_norm=999,
+            secure_rng=True,
+        )
+        self.setUp_model_step(model, optimizer)
+        second_run_params = (p for p in model.parameters() if p.requires_grad)
+        for p0, p1 in zip(first_run_params, second_run_params):
+            self.assertFalse(torch.allclose(p0, p1))

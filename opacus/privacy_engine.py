@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 from __future__ import annotations
 
 import os
@@ -8,6 +9,7 @@ import warnings
 from typing import List, Optional, Tuple, Union
 
 import torch
+import torchcsprng as csprng
 from torch import nn
 
 from . import privacy_analysis as tf_privacy
@@ -45,6 +47,7 @@ class PrivacyEngine:
         alphas: List[float],
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
+        secure_rng: bool = False,
         grad_norm_type: int = 2,
         batch_first: bool = True,
         target_delta: float = 1e-6,
@@ -57,7 +60,7 @@ class PrivacyEngine:
         module : nn.Module
             The Pytorch module to which we are attaching the privacy engine
         batch_size : int
-            Batch size
+            Training batch size. Used in the privacy accountant.
         sample_size : int
             The size of the sample (dataset). Used in the privacy accountant.
         alphas : List[float]
@@ -68,6 +71,10 @@ class PrivacyEngine:
         max_grad_norm : Union[float, List[float]]
             The maximum norm of the per-sample gradients. Any gradient with norm
             higher than this will be clipped to this value.
+        secure_rng: bool
+            If on, it will use ``torchcsprng`` for secure random number generation. Comes with
+            a significant performance cost, therefore it's recommended that you turn it off when
+            just experimenting.
         grad_norm_type : int
             The order of the norm. For instance, 2 represents L-2 norm, while
             1 represents L-1 norm.
@@ -85,6 +92,7 @@ class PrivacyEngine:
         """
         self.steps = 0
         self.module = module
+        self.secure_rng = secure_rng
         self.alphas = alphas
         self.device = next(module.parameters()).device
         self.batch_size = batch_size
@@ -95,7 +103,22 @@ class PrivacyEngine:
         self.batch_first = batch_first
         self.target_delta = target_delta
 
-        self._set_seed(None)
+        if self.secure_rng:
+            self.seed = None
+            self.random_number_generator = csprng.create_random_device_generator(
+                "/dev/urandom"
+            )
+        else:
+            warnings.warn(
+                "Secure RNG turned off. This is perfectly fine for experimentation as it allows "
+                "for much faster training performance, but remember to turn it on and retrain "
+                "one last time before production with ``secure_rng`` turned on."
+            )
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self.seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
+                self.random_number_generator = self._set_seed(self.seed)
+
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
         self.misc_settings = misc_settings
@@ -169,25 +192,19 @@ class PrivacyEngine:
             self.privacy_engine.step()
             self.original_step(closure)
 
-        # pyre-fixme[16]: `Optimizer` has no attribute `privacy_engine`.
-        optimizer.privacy_engine = self
-        # pyre-fixme[16]: `Optimizer` has no attribute `original_step`.
-        optimizer.original_step = optimizer.step
-        # pyre-fixme[8]: Attribute has type
-        #  `BoundMethod[typing.Callable(torch.optim.Optimizer.step)[[Named(self,
-        #  torch.optim.Optimizer), Named(closure, typing.Optional[typing.Callable[[],
-        #  torch.Tensor]], default)], typing.Optional[torch.Tensor]],
-        #  torch.optim.Optimizer]`; used as `MethodType`.
-        optimizer.step = types.MethodType(dp_step, optimizer)
+        # Pyre doesn't like monkeypatching. But we'll do it anyway :)
+        optimizer.privacy_engine = self  # pyre-ignore
+        optimizer.original_step = optimizer.step  # pyre-ignore
+        optimizer.step = types.MethodType(dp_step, optimizer)  # pyre-ignore
 
         def virtual_step(self):
             self.privacy_engine.virtual_step()
 
-        # pyre-fixme[16]: `Optimizer` has no attribute `virtual_step`.
+        # pyre-ignore
         optimizer.virtual_step = types.MethodType(virtual_step, optimizer)
 
-        # pyre-fixme[16]: `PrivacyEngine` has no attribute `optimizer`.
-        self.optimizer = optimizer  # create a cross reference for detaching
+        # create a cross reference for detaching
+        self.optimizer = optimizer  # pyre-ignore
 
     def get_renyi_divergence(self):
         rdp = torch.tensor(
@@ -371,39 +388,34 @@ class PrivacyEngine:
                 # pyre-fixme[16]: nn.parameter.Parameter has no attribute grad
                 reference.grad.shape,
                 device=self.device,
-                generator=self.secure_generator,
+                generator=self.random_number_generator,
             )
-        # pyre-fixme[7]: Expected `Tensor` but got `float`.
-        return 0.0
+        return torch.zeros(reference.grad.shape, device=self.device)
 
-    def _set_seed(self, secure_seed: Optional[int]):
+    def _set_seed(self, seed: int):
         r"""
-        Allows to manually set the seed allowing for a deterministic run.
+        Allows to manually set the seed allowing for a deterministic run. Useful if you want to
+        debug.
 
-        WARNING: MANUALLY SETTING THE SEED BREAKS THE GUARANTEE OF A SECURE SEED.
-        If you elect to do that, your application will own guaranteeing the safety
-        of your pseudo-random number generator.
+        WARNING: MANUALLY SETTING THE SEED BREAKS THE GUARANTEE OF SECURE RNG.
+        For this reason, this method will raise a ValueError if you had ``secure_rng`` turned on.
 
         Parameters
         ----------
-        secure_seed : int
-            The secure seed
+        seed : int
+            The **unsecure** seed
         """
-        if secure_seed is not None:
-            warnings.warn(
-                "Seed was manually set. This prevents us from generating "
-                "a cryptographically secure pseudorandom number generator "
-                "seed. Hence, we cannot guarantee the safety of random "
-                "number generation process."
+        if self.secure_rng:
+            raise ValueError(
+                "Seed was manually set on a ``PrivacyEngine`` with ``secure_rng`` turned on."
+                "This fundamentally breaks secure_rng, and cannot be allowed. "
+                "If you do need reproducibility with a fixed seed, first instantiate the PrivacyEngine "
+                "with ``secure_seed`` turned off."
             )
-            # pyre-fixme[16]: `PrivacyEngine` has no attribute `secure_seed`.
-            self.secure_seed = secure_seed
-        else:
-            self.secure_seed = int.from_bytes(
-                os.urandom(8), byteorder="big", signed=True
-            )
-        self.secure_generator = (
-            torch.random.manual_seed(self.secure_seed)
+        self.seed = seed
+
+        return (
+            torch.random.manual_seed(self.seed)
             if self.device.type == "cpu"
-            else torch.cuda.manual_seed(self.secure_seed)
+            else torch.cuda.manual_seed(self.seed)
         )
