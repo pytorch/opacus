@@ -4,11 +4,11 @@
 
 [![CircleCI](https://circleci.com/gh/pytorch/opacus.svg?style=svg)](https://circleci.com/gh/pytorch/opacus)
 
-Opacus is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment.
+[Opacus](https://opacus.ai) is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment.
 
 *Opacus is currently in beta phase and under active development!*
 
-### Target audience
+## Target audience
 This code release is aimed at two target audiences:
 1. ML practitioners will find this to be a gentle introduction to training a model with differential privacy as it requires minimal code changes.
 2. Differential Privacy scientists will find this easy to experiment and tinker with, allowing them to focus on what matters.

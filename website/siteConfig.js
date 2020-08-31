@@ -34,6 +34,7 @@ const siteConfig = {
   // links that will be used in the header navigation bar
   headerLinks: [
     {doc: 'introduction', label: 'Introduction'},
+    {doc: 'faq', label: 'FAQ'},
     {href: `${baseUrl}tutorials/`, label: 'Tutorials'},
     {href: `${baseUrl}api/`, label: 'API Reference'},
     {href: 'https://github.com/pytorch/opacus', label: 'GitHub'},

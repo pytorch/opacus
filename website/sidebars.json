@@ -1,6 +1,5 @@
 {
   "docs": {
-    "About": ["introduction"],
-    "General": ["faq", "readme"]
+    "About": ["introduction", "faq"]
   }
 }
