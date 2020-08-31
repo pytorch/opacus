@@ -1,5 +1,5 @@
 # Changelog
 
-## v0.1-beta.1
+## v0.9.0
 ### New Features
 * Initial commit
