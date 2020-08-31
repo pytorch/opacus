@@ -29,7 +29,7 @@ const siteConfig = {
   projectName: 'opacus',
 
   // Google analytics
-  gaTrackingId: '',
+  gaTrackingId: 'UA-117752657-3',
 
   // links that will be used in the header navigation bar
   headerLinks: [
