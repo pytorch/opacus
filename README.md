@@ -6,8 +6,6 @@
 
 [Opacus](https://opacus.ai) is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment.
 
-*Opacus is currently in beta phase and under active development!*
-
 ## Target audience
 This code release is aimed at two target audiences:
 1. ML practitioners will find this to be a gentle introduction to training a model with differential privacy as it requires minimal code changes.
@@ -28,7 +26,7 @@ pip install -e .
 ```
 
 ## Getting started
-To train your model with differential privacy, all you need to do is to declare a PrivacyEngine and attach it to your optimizer before running, eg:
+To train your model with differential privacy, all you need to do is to declare a `PrivacyEngine` and attach it to your optimizer before running, eg:
 
 ```python
 model = Net()
