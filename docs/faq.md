@@ -21,7 +21,7 @@ Thank you for your interest in contributing to Opacus! Submit your contributions
 
 ## What is DP-SGD?
 
-DP-SGD is an algorithm described in this [paper](https://arxiv.org/pdf/1607.00133.pdf); Opacus is its Pytorch implementation. Please refer to [this blog post](bit.ly/dp-sgd-algorithm-explained) to read more about DP-SGD.
+DP-SGD is an algorithm described in this [paper](https://arxiv.org/pdf/1607.00133.pdf); Opacus is its Pytorch implementation. Please refer to [this blog post](https://bit.ly/dp-sgd-algorithm-explained) to read more about DP-SGD.
 
 ## How do I attach the privacy engine?
 
@@ -64,7 +64,7 @@ Dealing with per-sample gradients will inevitably put more pressure on your memo
 
 ## What does epsilon=1.1 really mean? How about delta?
 
-The (epsilon, delta) pair quantifies the privacy properties of the DP-SGD algorithm (see the [blog post](bit.ly/dp-sgd-algorithm-explained)). A model trained with (epsilon, delta)-differential privacy (DP) protects privacy of any one training example, no matter how strange, ill-fitting, or perfect this example is.
+The (epsilon, delta) pair quantifies the privacy properties of the DP-SGD algorithm (see the [blog post](https://bit.ly/dp-sgd-algorithm-explained)). A model trained with (epsilon, delta)-differential privacy (DP) protects privacy of any one training example, no matter how strange, ill-fitting, or perfect this example is.
 
 Formally, (epsilon, delta)-DP statement implies that the probabilities of outputting a model *W* trained on two datasets *D* and *D*′ that differ in a single example are close:
 ![epsilon-delta-dp](https://raw.githubusercontent.com/pytorch/opacus/master/docs/img/epsilon-delta-dp.png)
