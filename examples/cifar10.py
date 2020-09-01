@@ -18,8 +18,9 @@ import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
 import torchvision.models as models
 import torchvision.transforms as transforms
-from opacus import PrivacyEngine, utils
+from opacus import PrivacyEngine
 from opacus.utils import stats
+from opacus.utils.module_modification import convert_batchnorm_modules
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 
@@ -30,21 +31,8 @@ def save_checkpoint(state, is_best, filename="checkpoint.tar"):
         shutil.copyfile(filename, "model_best.pth.tar")
 
 
-def topk_accuracy(output, target, topk=(1,)):
-    """Computes the accuracy over the k top predictions for the specified values of k"""
-    with torch.no_grad():
-        maxk = max(topk)
-        batch_size = target.size(0)
-
-        _, pred = output.topk(maxk, 1, True, True)
-        pred = pred.t()
-        correct = pred.eq(target.view(1, -1).expand_as(pred))
-
-        res = []
-        for k in topk:
-            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
-            res.append(correct_k.mul_(100.0 / batch_size))
-        return res
+def accuracy(preds, labels):
+    return (preds == labels).mean()
 
 
 def train(args, model, train_loader, optimizer, epoch, device):
@@ -53,7 +41,6 @@ def train(args, model, train_loader, optimizer, epoch, device):
 
     losses = []
     top1_acc = []
-    top5_acc = []
 
     for i, (images, target) in enumerate(tqdm(train_loader)):
 
@@ -63,14 +50,15 @@ def train(args, model, train_loader, optimizer, epoch, device):
         # compute output
         output = model(images)
         loss = criterion(output, target)
+        preds = np.argmax(output.detach().cpu().numpy(), axis=1)
+        labels = target.detach().cpu().numpy()
 
         # measure accuracy and record loss
-        acc1, acc5 = topk_accuracy(output, target, topk=(1, 5))
+        acc1 = accuracy(preds, labels)
 
         losses.append(loss.item())
-        top1_acc.append(acc1.item())
-        top5_acc.append(acc5.item())
-        stats.update(stats.StatType.TRAIN, acc1=acc1.item(), acc5=acc5.item())
+        top1_acc.append(acc1)
+        stats.update(stats.StatType.TRAIN, acc1=acc1)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -92,7 +80,6 @@ def train(args, model, train_loader, optimizer, epoch, device):
                     f"\tTrain Epoch: {epoch} \t"
                     f"Loss: {np.mean(losses):.6f} "
                     f"Acc@1: {np.mean(top1_acc):.6f} "
-                    f"Acc@5: {np.mean(top5_acc):.6f} "
                     f"(ε = {epsilon:.2f}, δ = {args.delta}) for α = {best_alpha}"
                 )
             else:
@@ -100,7 +87,6 @@ def train(args, model, train_loader, optimizer, epoch, device):
                     f"\tTrain Epoch: {epoch} \t"
                     f"Loss: {np.mean(losses):.6f} "
                     f"Acc@1: {np.mean(top1_acc):.6f} "
-                    f"Acc@5: {np.mean(top5_acc):.6f} "
                 )
 
 
@@ -109,7 +95,6 @@ def test(args, model, test_loader, device):
     criterion = nn.CrossEntropyLoss()
     losses = []
     top1_acc = []
-    top5_acc = []
 
     with torch.no_grad():
         for images, target in tqdm(test_loader):
@@ -118,22 +103,17 @@ def test(args, model, test_loader, device):
 
             output = model(images)
             loss = criterion(output, target)
-            acc1, acc5 = topk_accuracy(output, target, topk=(1, 5))
+            preds = np.argmax(output.detach().cpu().numpy(), axis=1)
+            labels = target.detach().cpu().numpy()
+            acc1 = accuracy(preds, labels)
 
             losses.append(loss.item())
-            top1_acc.append(acc1.item())
-            top5_acc.append(acc5.item())
+            top1_acc.append(acc1)
 
     top1_avg = np.mean(top1_acc)
-    top5_avg = np.mean(top5_acc)
-    stats.update(stats.StatType.TEST, acc1=top1_avg, acc5=top5_avg)
+    stats.update(stats.StatType.TEST, acc1=top1_avg)
 
-    print(
-        f"\tTest set:"
-        f"Loss: {np.mean(losses):.6f} "
-        f"Acc@1: {top1_avg :.6f} "
-        f"Acc@5: {top5_avg :.6f} "
-    )
+    print(f"\tTest set:" f"Loss: {np.mean(losses):.6f} " f"Acc@1: {top1_avg :.6f} ")
     return np.mean(top1_acc)
 
 
@@ -344,7 +324,7 @@ def main():
 
     best_acc1 = 0
     device = torch.device(args.device)
-    model = utils.convert_batchnorm_modules(models.resnet18(num_classes=10))
+    model = convert_batchnorm_modules(models.resnet18(num_classes=10))
     model = model.to(device)
 
     if args.optim == "SGD":
