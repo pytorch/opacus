@@ -1,5 +1,5 @@
-PrivacyEngine
-=============
+Privacy Engine
+==============
 
 .. automodule:: opacus.privacy_engine
 
