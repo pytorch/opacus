@@ -33,19 +33,6 @@ class DocstringExamplesTest(unittest.TestCase):
     def setUp(self):
         self.validator = DPModelInspector()
 
-    def test_dp_model_inspector_example(self):
-        # IMPORTANT: When changing this code you also need to update
-        # the docstring for opacus.dp_model_inspector.DPModelInspector.validate()
-
-        inspector = DPModelInspector()
-        valid_model = nn.Linear(16, 32)
-        is_valid = inspector.validate(valid_model)
-        self.assertTrue(is_valid)
-
-        invalid_model = nn.BatchNorm1d(2)
-        with self.assertRaises(IncompatibleModuleException):
-            is_valid = inspector.validate(invalid_model)
-
     def test_privacy_analysis_example(self):
         # IMPORTANT: When changing this code you also need to update
         # the docstring for opacus.privacy_analysis module
@@ -142,36 +129,6 @@ class DocstringExamplesTest(unittest.TestCase):
         input = torch.randn(20, 4, 16)
         output = m(input)
         self.assertEqual(output.size(), (21, 4, 16))
-
-    def test_module_inspection_example(self):
-        # IMPORTANT: When changing this code you also need to update
-        # the docstring for opacus.utils.module_inspection.ModelInspector
-        inspector = ModelInspector("simple", lambda x: isinstance(x, nn.Conv2d))
-        self.assertTrue(inspector.validate(nn.Conv2d(1, 1, 1)))
-
-    def test_module_modification_replace_example(self):
-        # IMPORTANT: When changing this code you also need to update
-        # the docstring for opacus.utils.module_modification.replace_all_modules()
-        # pyre-fixme[21]: Could not find name `resnet18` in `torchvision.models`.
-        from torchvision.models import resnet18
-
-        model = resnet18()
-        self.assertTrue(isinstance(model.layer1[0].bn1, nn.BatchNorm2d))
-
-        model = replace_all_modules(model, nn.BatchNorm2d, lambda _: nn.Identity())
-        self.assertTrue(isinstance(model.layer1[0].bn1, nn.Identity))
-
-    def test_module_modification_convert_example(self):
-        # IMPORTANT: When changing this code you also need to update
-        # the docstring for opacus.utils.module_modification.convert_batchnorm_modules()
-        # pyre-fixme[21]: Could not find name `resnet50` in `torchvision.models`.
-        from torchvision.models import resnet50
-
-        model = resnet50()
-        self.assertTrue(isinstance(model.layer1[0].bn1, nn.BatchNorm2d))
-
-        model = convert_batchnorm_modules(model)
-        self.assertTrue(isinstance(model.layer1[0].bn1, nn.GroupNorm))
 
     def test_tensor_utils_examples(self):
         # IMPORTANT: When changing this code you also need to update
