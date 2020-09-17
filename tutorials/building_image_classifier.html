@@ -1,0 +1,759 @@
+<!DOCTYPE html><html lang=""><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://opacus.ai/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://opacus.ai/img/opacus_logo.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://opacus.ai/img/opacus_logo.svg"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-117752657-3', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.svg" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Introduction</a></li><li class=""><a href="/docs/faq" target="_self">FAQ</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span></span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/tutorials/">Overview</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using Opacus</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/tutorials/building_image_classifier">Building image classifier with Differential Privacy</a></li><li class="navListItem"><a class="navItem" href="/tutorials/building_text_classifier">Building text classifier with Differential Privacy</a></li><li class="navListItem"><a class="navItem" href="/tutorials/building_lstm_name_classifier">Training a differentially private LSTM model for name classification</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="tutorialBody">
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js">
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js">
+</script>
+<div class="notebook">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><h1>Table of Contents<span class="tocSkip"></span></h1></p>
+<div class="toc"><ul class="toc-item"><li><span><a data-toc-modified-id="Building-an-Image-Classifier-with-Differential-Privacy-1" href="#Building-an-Image-Classifier-with-Differential-Privacy">Building an Image Classifier with Differential Privacy</a></span><ul class="toc-item"><li><span><a data-toc-modified-id="Overview-1.1" href="#Overview">Overview</a></span></li><li><span><a data-toc-modified-id="Hyper-parameters-1.2" href="#Hyper-parameters">Hyper-parameters</a></span></li><li><span><a data-toc-modified-id="Data-1.3" href="#Data">Data</a></span></li><li><span><a data-toc-modified-id="Model-1.4" href="#Model">Model</a></span></li><li><span><a data-toc-modified-id="Prepare-for-Training-1.5" href="#Prepare-for-Training">Prepare for Training</a></span></li><li><span><a data-toc-modified-id="Train-the-network-1.6" href="#Train-the-network">Train the network</a></span></li><li><span><a data-toc-modified-id="Test-the-network-on-test-data-1.7" href="#Test-the-network-on-test-data">Test the network on test data</a></span></li><li><span><a data-toc-modified-id="Tips-and-Tricks-1.8" href="#Tips-and-Tricks">Tips and Tricks</a></span></li><li><span><a data-toc-modified-id="Private-Model-vs-Non-Private-Model-Performance-1.9" href="#Private-Model-vs-Non-Private-Model-Performance">Private Model vs Non-Private Model Performance</a></span></li></ul></li></ul></div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Building-an-Image-Classifier-with-Differential-Privacy">Building an Image Classifier with Differential Privacy<a class="anchor-link" href="#Building-an-Image-Classifier-with-Differential-Privacy">¶</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Overview">Overview<a class="anchor-link" href="#Overview">¶</a></h2><p>In this tutorial we will learn to do the following:</p>
+<ol>
+<li>Learn about privacy specific hyper-parameters related to DP-SGD </li>
+<li>Learn about ModelInspector, incompatible layers, and use model rewriting utility. </li>
+<li>Train a differentially private ResNet18 for image classification.</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Hyper-parameters">Hyper-parameters<a class="anchor-link" href="#Hyper-parameters">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To train a model with Opacus there are three privacy-specific hyper-parameters that must be tuned for better performance:</p>
+<ul>
+<li>Max Grad Norm: The maximum L2 norm of per-sample gradients before they are aggregated by the averaging step.</li>
+<li>Noise Multiplier: The amount of noise sampled and added to the average of the gradients in a batch.</li>
+<li>Delta: The target δ of the (ϵ,δ)-differential privacy guarantee. Generally, it should be set to be less than the inverse of the size of the training dataset. In this tutorial, it is set to $10^{−5}$ as the CIFAR10 dataset has 50,000 training points.</li>
+</ul>
+<p>We use the hyper-parameter values below to obtain results in the last section:</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [1]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">MAX_GRAD_NORM</span> <span class="o">=</span> <span class="mf">1.2</span>
+<span class="n">NOISE_MULTIPLIER</span> <span class="o">=</span> <span class="o">.</span><span class="mi">38</span>
+<span class="n">DELTA</span> <span class="o">=</span> <span class="mf">1e-5</span>
+
+<span class="n">LR</span> <span class="o">=</span> <span class="mf">1e-3</span>
+<span class="n">NUM_WORKERS</span> <span class="o">=</span> <span class="mi">2</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>There's another constraint we should be mindful of—memory. To balance peak memory requirement, which is proportional to <code>batch_size^2</code>, and training performance, we use virtual batches. With virtual batches we can separate physical steps (gradient computation) and logical steps (noise addition and parameter updates): use larger batches for training, while keeping memory footprint low. Below we will specify two constants:</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [2]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">VIRTUAL_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">512</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data">Data<a class="anchor-link" href="#Data">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now, let's load the CIFAR10 dataset. We don't use data augmentation here because, in our experiments, we found that data augmentation lowers utility when training with DP.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [3]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torchvision</span>
+<span class="kn">import</span> <span class="nn">torchvision.transforms</span> <span class="k">as</span> <span class="nn">transforms</span>
+
+<span class="c1"># These values, specific to the CIFAR10 dataset, are assumed to be known.</span>
+<span class="c1"># If necessary, they can be computed with modest privacy budget.</span>
+<span class="n">CIFAR10_MEAN</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.4914</span><span class="p">,</span> <span class="mf">0.4822</span><span class="p">,</span> <span class="mf">0.4465</span><span class="p">)</span>
+<span class="n">CIFAR10_STD_DEV</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.2023</span><span class="p">,</span> <span class="mf">0.1994</span><span class="p">,</span> <span class="mf">0.2010</span><span class="p">)</span>
+
+<span class="n">transform</span> <span class="o">=</span> <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span>
+    <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+    <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">CIFAR10_MEAN</span><span class="p">,</span> <span class="n">CIFAR10_STD_DEV</span><span class="p">),</span>
+<span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Using torchvision datasets, we can load CIFAR10 and transform the PILImage images to Tensors of normalized range [-1, 1]</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [ ]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision.datasets</span> <span class="kn">import</span> <span class="n">CIFAR10</span>
+
+<span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="s1">'../cifar10'</span>
+
+<span class="n">train_dataset</span> <span class="o">=</span> <span class="n">CIFAR10</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">)</span>
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span>
+    <span class="n">train_dataset</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">NUM_WORKERS</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">test_dataset</span> <span class="o">=</span> <span class="n">CIFAR10</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">)</span>
+
+<span class="n">test_loader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span>
+    <span class="n">test_dataset</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">NUM_WORKERS</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model">Model<a class="anchor-link" href="#Model">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [5]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">resnet18</span><span class="p">(</span><span class="n">num_classes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now, let’s check if the model is compatible with Opacus. Opacus does not support all type of Pytorch layers. To check if your model is compatible with the privacy engine, we have provided a util class to validate your model.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If you run these commands, you will get the following error:</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [6]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.dp_model_inspector</span> <span class="kn">import</span> <span class="n">DPModelInspector</span>
+
+<span class="n">inspector</span> <span class="o">=</span> <span class="n">DPModelInspector</span><span class="p">()</span>
+<span class="n">inspector</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_text output_error">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">IncompatibleModuleException</span>               Traceback (most recent call last)
+<span class="ansi-green-fg">&lt;ipython-input-11-c3648acc319a&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
+<span class="ansi-green-intense-fg ansi-bold">      2</span> 
+<span class="ansi-green-intense-fg ansi-bold">      3</span> inspector <span class="ansi-blue-fg">=</span> DPModelInspector<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">)</span>
+<span class="ansi-green-fg">----&gt; 4</span><span class="ansi-red-fg"> </span>inspector<span class="ansi-blue-fg">.</span>validate<span class="ansi-blue-fg">(</span>model<span class="ansi-blue-fg">)</span>
+
+<span class="ansi-green-fg">/mnt/xarfuse/uid-179429/a7a74ae2-seed-nspid4026531836-ns-4026531840/opacus/dp_model_inspector.py</span> in <span class="ansi-cyan-fg">validate</span><span class="ansi-blue-fg">(self, model)</span>
+<span class="ansi-green-intense-fg ansi-bold">    115</span>                 <span class="ansi-green-fg">if</span> inspector<span class="ansi-blue-fg">.</span>violators<span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">    116</span>                     message <span class="ansi-blue-fg">+=</span> <span class="ansi-blue-fg">f"\n{inspector.message}: {inspector.violators}"</span>
+<span class="ansi-green-fg">--&gt; 117</span><span class="ansi-red-fg">             </span><span class="ansi-green-fg">raise</span> IncompatibleModuleException<span class="ansi-blue-fg">(</span>message<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    118</span>         <span class="ansi-green-fg">return</span> valid
+<span class="ansi-green-intense-fg ansi-bold">    119</span> 
+
+<span class="ansi-red-fg">IncompatibleModuleException</span>: Model contains incompatible modules.
+Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn2', 'Main.layer1.1.bn1', 'Main.layer1.1.bn2', 'Main.layer2.0.bn1', 'Main.layer2.0.bn2', 'Main.layer2.0.downsample.1', 'Main.layer2.1.bn1', 'Main.layer2.1.bn2', 'Main.layer3.0.bn1', 'Main.layer3.0.bn2', 'Main.layer3.0.downsample.1', 'Main.layer3.1.bn1', 'Main.layer3.1.bn2', 'Main.layer4.0.bn1', 'Main.layer4.0.bn2', 'Main.layer4.0.downsample.1', 'Main.layer4.1.bn1', 'Main.layer4.1.bn2']</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let us modify the model to work with Opacus. From the output above, you can see that the BatchNorm layers are not supported because they compute the mean and variance across the batch, creating a dependency between samples in a batch, a privacy violation. One way to modify our model is to replace all the BatchNorm layers with <a href="https://arxiv.org/pdf/1803.08494.pdf">GroupNorm</a> using the <code>convert_batchnorm_modules</code> util function.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [7]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.utils</span> <span class="kn">import</span> <span class="n">module_modification</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">module_modification</span><span class="o">.</span><span class="n">convert_batchnorm_modules</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">inspector</span> <span class="o">=</span> <span class="n">DPModelInspector</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Is the model valid? </span><span class="si">{</span><span class="n">inspector</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Is the model valid? True
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>For maximal speed, we can check if CUDA is available and supported by the PyTorch installation. If GPU is available, set the <code>device</code> variable to your CUDA-compatible device. We can then transfer the neural network onto that device.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [8]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We then define our optimizer and loss function. Opacus’ privacy engine can attach to any (first-order) optimizer.  You can use your favorite—Adam, Adagrad, RMSprop—as long as it has an implementation derived from <a href="https://pytorch.org/docs/stable/optim.html">torch.optim.Optimizer</a>. In this tutorial, we're going to use <a href="https://pytorch.org/docs/stable/optim.html">RMSprop</a>.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [36]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
+
+<span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">RMSprop</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">LR</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Prepare-for-Training">Prepare for Training<a class="anchor-link" href="#Prepare-for-Training">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We will define a util function to calculate accuracy</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [10]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">accuracy</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">preds</span> <span class="o">==</span> <span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We now attach the privacy engine initialized with the privacy hyperparameters defined earlier. There’s also the enigmatic-looking parameter <code>alphas</code>, which we won’t touch for the time being.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [11]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus</span> <span class="kn">import</span> <span class="n">PrivacyEngine</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using sigma=</span><span class="si">{</span><span class="n">NOISE_MULTIPLIER</span><span class="si">}</span><span class="s2"> and C=</span><span class="si">{</span><span class="n">MAX_GRAD_NORM</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">VIRTUAL_BATCH_SIZE</span><span class="p">,</span>
+    <span class="n">sample_size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">),</span>
+    <span class="n">alphas</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">64</span><span class="p">)),</span>
+    <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">NOISE_MULTIPLIER</span><span class="p">,</span>
+    <span class="n">max_grad_norm</span><span class="o">=</span><span class="n">MAX_GRAD_NORM</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">privacy_engine</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Using sigma=0.38 and C=1.2
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We will then define our train function. This function will train the model for one epoch.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [13]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">assert</span> <span class="n">VIRTUAL_BATCH_SIZE</span> <span class="o">%</span> <span class="n">BATCH_SIZE</span> <span class="o">==</span> <span class="mi">0</span> <span class="c1"># VIRTUAL_BATCH_SIZE should be divisible by BATCH_SIZE</span>
+<span class="n">virtual_batch_rate</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">VIRTUAL_BATCH_SIZE</span> <span class="o">/</span> <span class="n">BATCH_SIZE</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [12]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+
+    <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">top1_acc</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>        
+        <span class="n">images</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># compute output</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        
+        <span class="c1"># measure accuracy and record loss</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="n">accuracy</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+        <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">top1_acc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acc</span><span class="p">)</span>
+        
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        	
+        <span class="c1"># take a real optimizer step after N_VIRTUAL_STEP steps t</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">virtual_batch_rate</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="p">)):</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span> <span class="c1"># take a virtual step</span>
+
+        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">200</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">epsilon</span><span class="p">,</span> <span class="n">best_alpha</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="n">DELTA</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="s2">Train Epoch: </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s2"> </span><span class="se">\t</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"Loss: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"Acc@1: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">top1_acc</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"(ε = </span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, δ = </span><span class="si">{</span><span class="n">DELTA</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Next, we will define our test function to validate our model on our test dataset.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [14]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+    <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">top1_acc</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">images</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">test_loader</span><span class="p">:</span>
+            <span class="n">images</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">acc</span> <span class="o">=</span> <span class="n">accuracy</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+            <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">top1_acc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acc</span><span class="p">)</span>
+
+    <span class="n">top1_avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">top1_acc</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="s2">Test set:"</span>
+        <span class="sa">f</span><span class="s2">"Loss: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="sa">f</span><span class="s2">"Acc: </span><span class="si">{</span><span class="n">top1_avg</span> <span class="o">*</span> <span class="mi">100</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">top1_acc</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Train-the-network">Train the network<a class="anchor-link" href="#Train-the-network">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [ ]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm_notebook</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">tqdm_notebook</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Epoch"</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">"epoch"</span><span class="p">):</span>
+    <span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_widget_view" id="2f26a0af-8658-4d2b-a411-65b3c8941eb2">
+<script type="text/javascript">
+var element = $('#2f26a0af-8658-4d2b-a411-65b3c8941eb2');
+</script>
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id": "a0521999fa9d45219724acf70b3b4469", "version_major": 2, "version_minor": 0}
+</script>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>	Train Epoch: 1 	Loss: 2.732535 Acc@1: 7.812500 (ε = 0.19, δ = 1e-05)
+	Train Epoch: 1 	Loss: 2.782132 Acc@1: 14.128576 (ε = 16.04, δ = 1e-05)
+	Train Epoch: 2 	Loss: 1.730190 Acc@1: 36.718750 (ε = 18.66, δ = 1e-05)
+	Train Epoch: 2 	Loss: 1.761741 Acc@1: 38.355100 (ε = 20.83, δ = 1e-05)
+	Train Epoch: 3 	Loss: 1.542238 Acc@1: 50.781250 (ε = 22.43, δ = 1e-05)
+	Train Epoch: 3 	Loss: 1.723531 Acc@1: 45.565143 (ε = 23.96, δ = 1e-05)
+	Train Epoch: 4 	Loss: 1.949715 Acc@1: 42.187500 (ε = 25.43, δ = 1e-05)
+	Train Epoch: 4 	Loss: 1.720563 Acc@1: 49.109919 (ε = 26.85, δ = 1e-05)
+	Train Epoch: 5 	Loss: 1.774229 Acc@1: 51.562500 (ε = 27.92, δ = 1e-05)
+	Train Epoch: 5 	Loss: 1.714577 Acc@1: 51.698539 (ε = 29.03, δ = 1e-05)
+	Train Epoch: 6 	Loss: 1.405191 Acc@1: 60.156250 (ε = 30.10, δ = 1e-05)
+	Train Epoch: 6 	Loss: 1.675316 Acc@1: 53.976213 (ε = 31.21, δ = 1e-05)
+	Train Epoch: 7 	Loss: 1.554456 Acc@1: 52.343750 (ε = 32.28, δ = 1e-05)
+	Train Epoch: 7 	Loss: 1.685776 Acc@1: 54.909049 (ε = 33.39, δ = 1e-05)
+	Train Epoch: 8 	Loss: 1.778377 Acc@1: 53.125000 (ε = 34.46, δ = 1e-05)
+	Train Epoch: 8 	Loss: 1.696506 Acc@1: 56.012904 (ε = 35.36, δ = 1e-05)
+	Train Epoch: 9 	Loss: 1.904890 Acc@1: 54.687500 (ε = 36.17, δ = 1e-05)
+	Train Epoch: 9 	Loss: 1.639168 Acc@1: 57.668688 (ε = 37.00, δ = 1e-05)
+	Train Epoch: 10 	Loss: 1.614231 Acc@1: 53.906250 (ε = 37.81, δ = 1e-05)
+	Train Epoch: 10 	Loss: 1.641604 Acc@1: 58.652052 (ε = 38.65, δ = 1e-05)
+	Train Epoch: 11 	Loss: 1.678383 Acc@1: 55.468750 (ε = 39.45, δ = 1e-05)
+	Train Epoch: 11 	Loss: 1.627174 Acc@1: 59.343905 (ε = 40.29, δ = 1e-05)
+	Train Epoch: 12 	Loss: 1.534639 Acc@1: 62.500000 (ε = 41.09, δ = 1e-05)
+	Train Epoch: 12 	Loss: 1.627389 Acc@1: 59.732587 (ε = 41.93, δ = 1e-05)
+	Train Epoch: 13 	Loss: 1.565778 Acc@1: 63.281250 (ε = 42.74, δ = 1e-05)
+	Train Epoch: 13 	Loss: 1.611232 Acc@1: 60.743159 (ε = 43.58, δ = 1e-05)
+	Train Epoch: 14 	Loss: 1.529223 Acc@1: 62.500000 (ε = 44.38, δ = 1e-05)
+	Train Epoch: 14 	Loss: 1.614406 Acc@1: 60.886971 (ε = 45.22, δ = 1e-05)
+	Train Epoch: 15 	Loss: 1.445196 Acc@1: 66.406250 (ε = 46.02, δ = 1e-05)
+	Train Epoch: 15 	Loss: 1.589295 Acc@1: 61.427239 (ε = 46.86, δ = 1e-05)
+	Train Epoch: 16 	Loss: 1.733013 Acc@1: 59.375000 (ε = 47.67, δ = 1e-05)
+	Train Epoch: 16 	Loss: 1.577568 Acc@1: 61.866449 (ε = 48.46, δ = 1e-05)
+	Train Epoch: 17 	Loss: 1.845230 Acc@1: 55.468750 (ε = 49.09, δ = 1e-05)
+	Train Epoch: 17 	Loss: 1.578402 Acc@1: 62.010261 (ε = 49.73, δ = 1e-05)
+	Train Epoch: 18 	Loss: 1.565229 Acc@1: 64.843750 (ε = 50.35, δ = 1e-05)
+	Train Epoch: 18 	Loss: 1.542843 Acc@1: 63.432836 (ε = 51.00, δ = 1e-05)
+	Train Epoch: 19 	Loss: 1.447579 Acc@1: 65.625000 (ε = 51.62, δ = 1e-05)
+	Train Epoch: 19 	Loss: 1.541139 Acc@1: 63.219061 (ε = 52.27, δ = 1e-05)
+	Train Epoch: 20 	Loss: 1.561364 Acc@1: 65.625000 (ε = 52.89, δ = 1e-05)
+	Train Epoch: 20 	Loss: 1.576318 Acc@1: 62.624378 (ε = 53.54, δ = 1e-05)
+
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Test-the-network-on-test-data">Test the network on test data<a class="anchor-link" href="#Test-the-network-on-test-data">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [41]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">top1_acc</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>	Test set:Loss: 2.015386 Acc: 56.615902 
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Tips-and-Tricks">Tips and Tricks<a class="anchor-link" href="#Tips-and-Tricks">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>Generally speaking, differentially private training is enough of a regularizer by itself. Adding any more regularization (such as dropouts or data augmentation) is unnecessary and typically hurts performance.</li>
+<li>Tuning MAX_GRAD_NORM is very important. Start with a low noise multiplier like .1, this should give comparable performance to a non-private model. Then do a grid search for the optimal MAX_GRAD_NORM value. The grid can be in the range [.1, 10]</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Private-Model-vs-Non-Private-Model-Performance">Private Model vs Non-Private Model Performance<a class="anchor-link" href="#Private-Model-vs-Non-Private-Model-Performance">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now let us compare how our private model compares with the non-private ResNet18.</p>
+<p>We trained a non-private ResNet18 model for 20 epochs using the same hyper-parameters as above and with BatchNorm replaced with GroupNorm. The results of that training and the training that is discussed in this tutorial are summarized in the table below:</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<table>
+<thead><tr>
+<th>Model</th>
+<th>Top 1 Accuracy (%)</th>
+<th>ϵ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ResNet</td>
+<td>76</td>
+<td>∞</td>
+</tr>
+<tr>
+<td>Private ResNet</td>
+<td>56.61</td>
+<td>53.54</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="https://github.com/pytorch/opacus/blob/master/tutorials/building_image_classifier.ipynb" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Jupyter Notebook</a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'opacus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
