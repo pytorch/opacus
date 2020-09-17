@@ -48,7 +48,7 @@ cd ..
 mkdir -p "website/pages/api/"
 
 cwd=$(pwd)
-python website/scripts/parse_sphinx.py -i "${cwd}/website/sphinx/build/html/" -o "${cwd}/website/pages/api/"
+python website/scripts/parse_sphinx.py -i "${cwd}/website/sphinx/build/html/" -o "${cwd}/website/pages/api/" || exit 1
 
 SPHINX_JS_DIR='website/sphinx/build/html/_static/'
 DOCUSAURUS_JS_DIR='website/static/js/'
@@ -74,7 +74,7 @@ echo "Generating tutorials"
 echo "-----------------------------------"
 mkdir -p "website/static/files"
 mkdir "website/tutorials"
-python website/scripts/parse_tutorials.py -w "${cwd}"
+python website/scripts/parse_tutorials.py -w "${cwd}" || exit 1
 
 cd website || exit
 
