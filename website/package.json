@@ -12,6 +12,7 @@
     "docusaurus": "^1.9.0"
   },
   "dependencies": {
-    "prismjs": "^1.21.0"
+    "prismjs": "^1.21.0",
+    "bl": "^1.2.3"
   }
 }
