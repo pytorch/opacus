@@ -381,7 +381,7 @@ class PrivacyEngine:
             the generated noise with noise zero and standard
             deviation of ``noise_multiplier x max_grad_norm ``
         """
-        if self.noise_multiplier > 0:
+        if self.noise_multiplier > 0 and max_grad_norm > 0:
             return torch.normal(
                 0,
                 self.noise_multiplier * max_grad_norm,
