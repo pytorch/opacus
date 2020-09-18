@@ -408,7 +408,7 @@
 <span class="sd">            the generated noise with noise zero and standard</span>
 <span class="sd">            deviation of ``noise_multiplier x max_grad_norm ``</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">max_grad_norm</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
                 <span class="mi">0</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">*</span> <span class="n">max_grad_norm</span><span class="p">,</span>
