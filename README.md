@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/pytorch/opacus/tree/master/website/static/img/opacus_logo.svg" alt="Opacus" width="500"/></p>
+<p align="center"><img src="https://github.com/pytorch/opacus/blob/master/website/static/img/opacus_logo.svg" alt="Opacus" width="500"/></p>
 
 <hr/>
 
