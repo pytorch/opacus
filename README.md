@@ -1,4 +1,4 @@
-<p align="center"><img src="./website/static/img/opacus_logo.svg" alt="Opacus Logo" width="500"/></p>
+<p align="center"><img src="https://github.com/pytorch/opacus/tree/master/website/static/img/opacus_logo.svg" alt="Opacus" width="500"/></p>
 
 <hr/>
 
@@ -35,7 +35,7 @@ privacy_engine = PrivacyEngine(
     model,
     batch_size,
     sample_size,
-    alphas=[1, 10, 100],
+    alphas=[10, 100],
     noise_multiplier=1.3,
     max_grad_norm=1.0,
 )
@@ -43,13 +43,13 @@ privacy_engine.attach(optimizer)
 # Now it's business as usual
 ```
 
-The [MNIST example](examples/mnist.py) shows an end-to-end run using opacus. The [examples](examples/) folder contains more such examples.
+The [MNIST example](https://github.com/pytorch/opacus/tree/master/examples/mnist.py) shows an end-to-end run using opacus. The [examples](https://github.com/pytorch/opacus/tree/master/examples/) folder contains more such examples.
 
 ## FAQ
-Checkout the [FAQ](docs/faq.md) page for answers to some of the most frequently asked questions about Differential Privacy and Opacus.
+Checkout the [FAQ](https://opacus.ai/docs/faq) page for answers to some of the most frequently asked questions about Differential Privacy and Opacus.
 
 ## Contributing
-See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
+See the [CONTRIBUTING](https://github.com/pytorch/opacus/tree/master/CONTRIBUTING.md) file for how to help out.
 
 ## References
 * [Mironov, Ilya. "Rényi differential privacy." 2017 IEEE 30th Computer Security Foundations Symposium (CSF). IEEE, 2017.](https://arxiv.org/abs/1702.07476)
@@ -59,4 +59,4 @@ See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
 * [McMahan, H. Brendan, and Galen Andrew. "A general approach to adding differential privacy to iterative training procedures." arXiv preprint arXiv:1812.06210 (2018).](https://arxiv.org/abs/1812.06210)
 
 ## License
-This code is released under Apache 2.0, as found in the [LICENSE](LICENSE) file.
+This code is released under Apache 2.0, as found in the [LICENSE](https://github.com/pytorch/opacus/tree/master/LICENSE) file.

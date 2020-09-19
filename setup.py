@@ -50,7 +50,11 @@ setup(
     description="Train PyTorch models with Differential Privacy",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pytorch/opacus",
+    url="https://opacus.ai",
+    project_urls={
+        "Documentation": "https://opacus.ai/api",
+        "Source": "https://github.com/pytorch/opacus",
+    },
     license="Apache-2.0",
     install_requires=required,
     extras_require={"dev": DEV_REQUIRES},
@@ -73,5 +77,5 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
 )
