@@ -8,18 +8,21 @@ from setuptools import find_packages, setup
 
 
 REQUIRED_MAJOR = 3
-REQUIRED_MINOR = 7
+REQUIRED_MINOR = 6
+REQUIRED_MICRO = 9
 
 # Check for python version
-if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
+if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR, REQUIRED_MICRO):
     error = (
-        "Your version of python ({major}.{minor}) is too old. You need "
-        "python >= {required_major}.{required_minor}."
+        "Your version of python ({major}.{minor}.{micro}) is too old. You need "
+        "python >= {required_major}.{required_minor}.{required_micro}"
     ).format(
         major=sys.version_info.major,
         minor=sys.version_info.minor,
-        required_minor=REQUIRED_MINOR,
+        micro=sys.version_info.micro,
         required_major=REQUIRED_MAJOR,
+        required_minor=REQUIRED_MINOR,
+        required_micro=REQUIRED_MICRO,
     )
     sys.exit(error)
 
@@ -77,5 +80,5 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.6.9",
 )

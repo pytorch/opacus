@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from __future__ import annotations
-
 import os
 import types
 import warnings
@@ -284,7 +282,7 @@ class PrivacyEngine:
                 noise /= batch_size
             p.grad += noise
 
-    def to(self, device: Union[str, torch.device]) -> PrivacyEngine:
+    def to(self, device: Union[str, torch.device]):
         """
         Moves the privacy engine to the target device.
 
