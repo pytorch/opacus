@@ -102,7 +102,7 @@ class DPLSTM(nn.Module):
 
     def _rearrange_batch_dim(self, x):
         if self.batch_first:  # batch is by default in second dimension
-            return x.permute(1, 0, 2)
+            x = x.transpose(0, 1)
         return x
 
     def initialize_weights(self, weight_params):
@@ -113,9 +113,9 @@ class DPLSTM(nn.Module):
             self.bias_hh_l0,
         ] = weight_params
 
-    def forward(self, x, state_init):
+    def forward(self, x, state_init=None):
         x = self._rearrange_batch_dim(x)
-        seq_length = x.shape[0]
+        seq_length, batch_sz, _ = x.shape
         if not self.cells_initialized:
             for t in range(0, seq_length):
                 self.cells.append(DPLSTMCell(self.input_size, self.hidden_size))
@@ -131,7 +131,12 @@ class DPLSTM(nn.Module):
 
         x = torch.unbind(x, dim=0)
         h = [None] * seq_length
-        h_init, c_init = state_init
+
+        if state_init:
+            h_init, c_init = state_init
+        else:
+            h_init = torch.zeros(self.num_layers, batch_sz, self.hidden_size)
+            c_init = torch.zeros(self.num_layers, batch_sz, self.hidden_size)
 
         h[0] = self.cells[0](x[0].unsqueeze(0), h_init, c_init)
         for t in range(1, seq_length):
