@@ -48,7 +48,7 @@ with open("requirements.txt", encoding="utf8") as f:
 
 setup(
     name="opacus",
-    version="0.9.0",
+    version="0.9.1",
     author="The Opacus Team",
     description="Train PyTorch models with Differential Privacy",
     long_description=long_description,
