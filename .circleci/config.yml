@@ -4,15 +4,30 @@ version: 2.1
 # Commands
 # -------------------------------------------------------------------------------------
 
-
 commands:
+
+  py_3_6_setup:
+    description: "Install and switch to Python 3.6.9; also install pip and pytest."
+    steps:
+      - run:
+          name: "Setup Python v3.6.9 environment"
+          command: |
+            pyenv install -s 3.6.9
+            pyenv global 3.6.9
+            pyenv local 3.6.9
+            pyenv versions
+            echo "In venv: $(pyenv local) - $(python -V), $(pip -V)"
+            sudo "$(which python)" -m pip install --upgrade pip
+            sudo "$(which python)" -m pip install pytest
 
   pip_install:
     description: "Simple install via pip with no extra deps to build the website."
     steps:
       - run:
           name: "Simple PIP install"
-          command: python -m pip install -e .
+          command: |
+            echo "Using $(python -V) ($(which python))"
+            sudo "$(which python)" -m pip install -e .
 
   pip_dev_install:
     description: "Install dependencies via pip, including extra deps. Also supports more options, such as building on top of PyTorch nightly."
@@ -108,26 +123,15 @@ commands:
       - store_artifacts:
           path: mnist-test-reports
 
-  py_3_7_setup:
-    description: "Set python version to 3.7 and install pip and pytest"
-    steps:
-      - run:
-          name: "Switch to Python v3.7"
-          command: |
-            pyenv versions
-            pyenv global 3.7.0
-            sudo python -m pip install --upgrade pip
-            sudo python -m pip install pytest
-
 # -------------------------------------------------------------------------------------
 # Jobs
 # -------------------------------------------------------------------------------------
 
 jobs:
 
-  lint_py37_torch_release:
+  lint_py36_torch_release:
     docker:
-      - image: circleci/python:3.7.9
+      - image: circleci/python:3.6.9
     steps:
       - checkout
       - pip_dev_install
@@ -135,6 +139,14 @@ jobs:
       - lint_black
       - isort
       # - mypy_check  TODO re-enable
+
+  unittest_py36_torch_release:
+    docker:
+      - image: circleci/python:3.6.9
+    steps:
+      - checkout
+      - pip_install
+      - unit_tests
 
   unittest_py37_torch_release:
     docker:
@@ -161,29 +173,29 @@ jobs:
           args: "-n"
       - unit_tests
 
-  integrationtest_py37_torch_release_cpu:
+  integrationtest_py36_torch_release_cpu:
     docker:
-      - image: circleci/python:3.7.9
+      - image: circleci/python:3.6.9
     steps:
       - checkout
       - pip_install
       - mnist_integration_test:
         device: "cpu"
 
-  integrationtest_py37_torch_release_cuda:
+  integrationtest_py36_torch_release_cuda:
     machine:
       resource_class: gpu.nvidia.small
       image: ubuntu-1604-cuda-10.1:201909-23
     steps:
       - checkout
-      - py_3_7_setup
+      - py_3_6_setup
       - pip_install
       - mnist_integration_test:
         device: "cuda"
 
   auto_deploy_site:
     docker:
-      - image: circleci/python:3.7.9
+      - image: circleci/python:3.6.9
     steps:
       - checkout
       - pip_dev_install:
@@ -203,11 +215,12 @@ aliases:
 # Workflows
 # -------------------------------------------------------------------------------------
 
-
 workflows:
   commit:
     jobs:
-      - lint_py37_torch_release:
+      - lint_py36_torch_release:
+          filters: *exclude_ghpages
+      - unittest_py36_torch_release:
           filters: *exclude_ghpages
       - unittest_py37_torch_release:
           filters: *exclude_ghpages
@@ -215,9 +228,9 @@ workflows:
           filters: *exclude_ghpages
       - unittest_py38_torch_nightly:
           filters: *exclude_ghpages
-      - integrationtest_py37_torch_release_cpu:
+      - integrationtest_py36_torch_release_cpu:
           filters: *exclude_ghpages
-      - integrationtest_py37_torch_release_cuda:
+      - integrationtest_py36_torch_release_cuda:
           filters: *exclude_ghpages
 
   nightly:
@@ -231,9 +244,9 @@ workflows:
     jobs:
       - unittest_py38_torch_nightly:
           filters: *exclude_ghpages
-      - integrationtest_py37_torch_release_cpu:
+      - integrationtest_py36_torch_release_cpu:
           filters: *exclude_ghpages
-      - integrationtest_py37_torch_release_cuda:
+      - integrationtest_py36_torch_release_cuda:
           filters: *exclude_ghpages
 
   website_deployment:
