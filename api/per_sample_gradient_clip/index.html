@@ -60,7 +60,7 @@ pass. It then puts them in each parameter’s <code class="docutils literal notr
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>nn.Module</em>) – Module to which backward hooks are added and for which per-sample gradients are clipped</p></li>
-<li><p><strong>norm_clipper</strong> (<em>opacus.utils.clipping.NormClipper</em>) – A norm clipper object of class <code class="xref py py-class docutils literal notranslate"><span class="pre">NormClipper</span></code>
+<li><p><strong>norm_clipper</strong> (<a class="reference internal" href="clipping.html#opacus.utils.clipping.NormClipper" title="opacus.utils.clipping.NormClipper"><em>opacus.utils.clipping.NormClipper</em></a>) – A norm clipper object of class <a class="reference internal" href="clipping.html#opacus.utils.clipping.NormClipper" title="opacus.utils.clipping.NormClipper"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormClipper</span></code></a>
 which encapsulated different clipping strategies
 (such as flat clipping for the entire model, or per-layer clipping)</p></li>
 <li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Flag to indicate if the input tensor to the corresponding module

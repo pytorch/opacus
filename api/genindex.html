@@ -34,9 +34,11 @@
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
@@ -75,6 +77,13 @@
 <h2 id="C">C</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="clipping.html#opacus.utils.clipping.ConstantFlatClipper.calc_clipping_factors">calc_clipping_factors() (opacus.utils.clipping.ConstantFlatClipper method)</a>
+<ul>
+<li><a href="clipping.html#opacus.utils.clipping.ConstantPerLayerClipper.calc_clipping_factors">(opacus.utils.clipping.ConstantPerLayerClipper method)</a>
+</li>
+<li><a href="clipping.html#opacus.utils.clipping.NormClipper.calc_clipping_factors">(opacus.utils.clipping.NormClipper method)</a>
+</li>
+</ul></li>
 <li><a href="tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms">calc_sample_norms() (in module opacus.utils.tensor_utils)</a>
 </li>
 <li><a href="stats.html#opacus.utils.stats.clear">clear() (in module opacus.utils.stats)</a>
@@ -83,11 +92,19 @@
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="clipping.html#opacus.utils.clipping.ClippingMethod">ClippingMethod (class in opacus.utils.clipping)</a>
+</li>
 <li><a href="per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper.close">close() (opacus.per_sample_gradient_clip.PerSampleGradientClipper method)</a>
 </li>
 <li><a href="compute_dp_sgd_privacy.html#opacus.scripts.compute_dp_sgd_privacy.compute_dp_sgd_privacy">compute_dp_sgd_privacy() (in module opacus.scripts.compute_dp_sgd_privacy)</a>
 </li>
 <li><a href="privacy_analysis.html#opacus.privacy_analysis.compute_rdp">compute_rdp() (in module opacus.privacy_analysis)</a>
+</li>
+<li><a href="clipping.html#opacus.utils.clipping.ConstantFlatClipper">ConstantFlatClipper (class in opacus.utils.clipping)</a>
+</li>
+<li><a href="clipping.html#opacus.utils.clipping.ConstantPerLayerClipper">ConstantPerLayerClipper (class in opacus.utils.clipping)</a>
+</li>
+<li><a href="module_modification.html#opacus.utils.module_modification.convert_batchnorm_modules">convert_batchnorm_modules() (in module opacus.utils.module_modification)</a>
 </li>
 </ul></td>
 </tr></table>
@@ -124,6 +141,10 @@
 <h2 id="G">G</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="module_inspection.html#opacus.utils.module_inspection.get_layer_type">get_layer_type() (in module opacus.utils.module_inspection)</a>
+</li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="privacy_analysis.html#opacus.privacy_analysis.get_privacy_spent">get_privacy_spent() (in module opacus.privacy_analysis)</a>
 <ul>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_privacy_spent">(opacus.privacy_engine.PrivacyEngine method)</a>
@@ -131,8 +152,24 @@
 </ul></li>
 </ul></td>
 </tr></table>
+<h2 id="H">H</h2>
+<table class="indextable genindextable" style="width: 100%"><tr>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="module_inspection.html#opacus.utils.module_inspection.has_no_param">has_no_param() (in module opacus.utils.module_inspection)</a>
+</li>
+</ul></td>
+</tr></table>
 <h2 id="I">I</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="clipping.html#opacus.utils.clipping.ConstantFlatClipper.is_per_layer">is_per_layer() (opacus.utils.clipping.ConstantFlatClipper property)</a>
+<ul>
+<li><a href="clipping.html#opacus.utils.clipping.ConstantPerLayerClipper.is_per_layer">(opacus.utils.clipping.ConstantPerLayerClipper property)</a>
+</li>
+<li><a href="clipping.html#opacus.utils.clipping.NormClipper.is_per_layer">(opacus.utils.clipping.NormClipper property)</a>
+</li>
+</ul></li>
+</ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="per_sample_gradients.html#opacus.autograd_grad_sample.is_supported">is_supported() (in module opacus.autograd_grad_sample)</a>
 </li>
@@ -152,6 +189,8 @@
 <h2 id="M">M</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="module_inspection.html#opacus.utils.module_inspection.ModelInspector">ModelInspector (class in opacus.utils.module_inspection)</a>
+</li>
 <li>
     module
 
@@ -170,11 +209,28 @@
 </li>
 <li><a href="per_sample_gradients.html#module-opacus.supported_layers_grad_samplers">opacus.supported_layers_grad_samplers</a>
 </li>
+<li><a href="clipping.html#module-opacus.utils.clipping">opacus.utils.clipping</a>
+</li>
+<li><a href="module_inspection.html#module-opacus.utils.module_inspection">opacus.utils.module_inspection</a>
+</li>
+<li><a href="module_modification.html#module-opacus.utils.module_modification">opacus.utils.module_modification</a>
+</li>
 <li><a href="stats.html#module-opacus.utils.stats">opacus.utils.stats</a>
 </li>
 <li><a href="tensor_utils.html#module-opacus.utils.tensor_utils">opacus.utils.tensor_utils</a>
 </li>
 </ul></li>
+</ul></td>
+</tr></table>
+<h2 id="N">N</h2>
+<table class="indextable genindextable" style="width: 100%"><tr>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="clipping.html#opacus.utils.clipping.NormClipper">NormClipper (class in opacus.utils.clipping)</a>
+</li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="module_modification.html#opacus.utils.module_modification.nullify_batchnorm_modules">nullify_batchnorm_modules() (in module opacus.utils.module_modification)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="O">O</h2>
@@ -215,8 +271,6 @@
 <li><a href="privacy_engine.html#module-opacus.privacy_engine">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     opacus.scripts.compute_dp_sgd_privacy
 
@@ -224,11 +278,34 @@
 <li><a href="compute_dp_sgd_privacy.html#module-opacus.scripts.compute_dp_sgd_privacy">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     opacus.supported_layers_grad_samplers
 
       <ul>
 <li><a href="per_sample_gradients.html#module-opacus.supported_layers_grad_samplers">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.utils.clipping
+
+      <ul>
+<li><a href="clipping.html#module-opacus.utils.clipping">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.utils.module_inspection
+
+      <ul>
+<li><a href="module_inspection.html#module-opacus.utils.module_inspection">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.utils.module_modification
+
+      <ul>
+<li><a href="module_modification.html#module-opacus.utils.module_modification">module</a>
 </li>
 </ul></li>
 <li>
@@ -267,8 +344,12 @@
 </li>
 <li><a href="per_sample_gradients.html#opacus.autograd_grad_sample.remove_hooks">remove_hooks() (in module opacus.autograd_grad_sample)</a>
 </li>
+<li><a href="module_modification.html#opacus.utils.module_modification.replace_all_modules">replace_all_modules() (in module opacus.utils.module_modification)</a>
+</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="module_inspection.html#opacus.utils.module_inspection.requires_grad">requires_grad() (in module opacus.utils.module_inspection)</a>
+</li>
 <li><a href="stats.html#opacus.utils.stats.reset">reset() (in module opacus.utils.stats)</a>
 <ul>
 <li><a href="stats.html#opacus.utils.stats.Stat.reset">(opacus.utils.stats.Stat method)</a>
@@ -300,6 +381,15 @@
 <h2 id="T">T</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="clipping.html#opacus.utils.clipping.ConstantFlatClipper.thresholds">thresholds() (opacus.utils.clipping.ConstantFlatClipper property)</a>
+<ul>
+<li><a href="clipping.html#opacus.utils.clipping.ConstantPerLayerClipper.thresholds">(opacus.utils.clipping.ConstantPerLayerClipper property)</a>
+</li>
+<li><a href="clipping.html#opacus.utils.clipping.NormClipper.thresholds">(opacus.utils.clipping.NormClipper property)</a>
+</li>
+</ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.to">to() (opacus.privacy_engine.PrivacyEngine method)</a>
 </li>
 </ul></td>
@@ -313,6 +403,10 @@
 </tr></table>
 <h2 id="V">V</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="module_inspection.html#opacus.utils.module_inspection.ModelInspector.validate">validate() (opacus.utils.module_inspection.ModelInspector method)</a>
+</li>
+</ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.virtual_step">virtual_step() (opacus.privacy_engine.PrivacyEngine method)</a>
 </li>

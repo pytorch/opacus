@@ -1,0 +1,283 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://opacus.ai/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://opacus.ai/img/opacus_logo.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://opacus.ai/img/opacus_logo.svg"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-117752657-3', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.svg" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Introduction</a></li><li class=""><a href="/docs/faq" target="_self">FAQ</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<div class="section" id="module-opacus.utils.clipping">
+<span id="clipping-utils"></span><h1>Clipping Utils<a class="headerlink" href="#module-opacus.utils.clipping" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="opacus.utils.clipping.ClippingMethod">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.utils.clipping.</code><code class="sig-name descname">ClippingMethod</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ClippingMethod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ClippingMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+</dd></dl>
+<dl class="py class">
+<dt id="opacus.utils.clipping.ConstantFlatClipper">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.utils.clipping.</code><code class="sig-name descname">ConstantFlatClipper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flat_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantFlatClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper" title="Permalink to this definition">¶</a></dt>
+<dd><p>A clipper that clips all gradients in such a way that their norm is
+at most equal to a specified value. This value is shared for all
+layers in a model. Note that the process of clipping really involves
+multiplying all gradients by a scaling factor. If this scaling factor
+is &gt; 1.0, it is instead capped at 1.0. The net effect is that the final
+norm of the scaled gradients will be less than the specified value in
+such a case. Thus it is better to think of the specified value as an
+upper bound on the norm of final clipped gradients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>flat_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – Constant value that is used to normalize gradients
+such that their norm equals this value before clipping.
+This threshold value is used for all layers.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="opacus.utils.clipping.ConstantFlatClipper.calc_clipping_factors">
+<code class="sig-name descname">calc_clipping_factors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">norms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantFlatClipper.calc_clipping_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the clipping factor based on the given
+norm of gradients for all layers, so that the new
+norm of clipped gradients is at most equal to
+<code class="docutils literal notranslate"><span class="pre">self.flat_value</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>norms</strong> (<em>List</em><em>[</em><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.Tensor</em></a><em>]</em>) – List containing a single tensor of dimension (1,)
+with the norm of all gradients.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tensor containing the single threshold value to
+be used for all layers.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Iterator[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.Tensor</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.utils.clipping.ConstantFlatClipper.is_per_layer">
+<em class="property">property </em><code class="sig-name descname">is_per_layer</code><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns indicator as to whether different clipping is applied
+to each layer in the model. For this clipper, it is False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Flag with value False</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.utils.clipping.ConstantFlatClipper.thresholds">
+<em class="property">property </em><code class="sig-name descname">thresholds</code><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.thresholds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns singleton tensor of dimension (1,) containing
+the common threshold value used for clipping all
+layers in the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Threshold values</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.Tensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="opacus.utils.clipping.ConstantPerLayerClipper">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.utils.clipping.</code><code class="sig-name descname">ConstantPerLayerClipper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flat_values</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantPerLayerClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper" title="Permalink to this definition">¶</a></dt>
+<dd><p>A clipper that clips all gradients in such a way that their norm is
+at most equal to a specified value. This value is specified for each
+layer in a model. Note that the process of clipping really involves
+multiplying all gradients by a scaling factor. If this scaling factor
+is &gt; 1.0, it is instead capped at 1.0. The net effect is that the final
+norm of the scaled gradients will be less than the specified value in
+such a case. Thus it is better to think of the specified value as an
+upper bound on the norm of final clipped gradients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>flat_values</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>]</em>) – List of values that is used to normalize gradients for each
+layer such that the norm equals the corresponding value
+before clipping.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="opacus.utils.clipping.ConstantPerLayerClipper.calc_clipping_factors">
+<code class="sig-name descname">calc_clipping_factors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">norms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantPerLayerClipper.calc_clipping_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates separate clipping factors for each layer based on
+its corresponding norm of gradients, such that its new norm is
+at most equal to the flat value specified for that layer when
+instantiating the object of
+<a class="reference internal" href="#opacus.utils.clipping.ConstantPerLayerClipper" title="opacus.utils.clipping.ConstantPerLayerClipper"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstantPerLayerClipper</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>norms</strong> (<em>List</em><em>[</em><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.Tensor</em></a><em>]</em>) – List containing the desired norm of gradients for each layer.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of tensors, each containing a single value specifying the
+clipping factor per layer.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.Tensor</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.utils.clipping.ConstantPerLayerClipper.is_per_layer">
+<em class="property">property </em><code class="sig-name descname">is_per_layer</code><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns indicator as to whether different clipping is applied
+to each layer in the model. For this clipper, it is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Flag with value True</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.utils.clipping.ConstantPerLayerClipper.thresholds">
+<em class="property">property </em><code class="sig-name descname">thresholds</code><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.thresholds" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>returns: List of values that is used to normalize gradients</dt><dd><p>for each layer such that the norm at most equals the
+corresponding value before clipping.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.Tensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="opacus.utils.clipping.NormClipper">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.utils.clipping.</code><code class="sig-name descname">NormClipper</code><a class="reference internal" href="_modules/opacus/utils/clipping.html#NormClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.NormClipper" title="Permalink to this definition">¶</a></dt>
+<dd><p>An abstract class to calculate the clipping factor</p>
+<dl class="py method">
+<dt id="opacus.utils.clipping.NormClipper.calc_clipping_factors">
+<code class="sig-name descname">calc_clipping_factors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">norms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#NormClipper.calc_clipping_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.NormClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the clipping factor(s) based on the given
+parameters. A concrete subclass must implement this.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.utils.clipping.NormClipper.is_per_layer">
+<em class="property">property </em><code class="sig-name descname">is_per_layer</code><a class="headerlink" href="#opacus.utils.clipping.NormClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Depending on type of clipper, returns indicator as to whether
+different clipping is applied to each layer in the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Flag indicator as to whether different clipping is applied
+to each layer in the model.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="opacus.utils.clipping.NormClipper.thresholds">
+<em class="property">property </em><code class="sig-name descname">thresholds</code><a class="headerlink" href="#opacus.utils.clipping.NormClipper.thresholds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Depending on the type of clipper, returns threshold values
+that may be used in different ways.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Tensor containing the threshold values</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.Tensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Opacus</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">Privacy Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">Gradient Clipping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="per_sample_gradients.html">Per Sample Gradients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">DP Layers</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="utils.html">Utils</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tensor_utils.html">Tensor Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stats.html">Stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_inspection.html">Module Inspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_modification.html">Module Modification</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Clipping Utils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+<li><a href="utils.html">Utils</a><ul>
+<li>Previous: <a href="module_modification.html" title="previous chapter">Module Modification</a></li>
+<li>Next: <a href="scripts.html" title="next chapter">Scripts</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'opacus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
