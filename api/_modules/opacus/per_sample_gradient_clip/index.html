@@ -150,7 +150,7 @@
 <span class="sd">        the batch size and zero tensors for the per-layer thresholds</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_aggr_batch_size</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aggr_thresh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm_clipper</span><span class="o">.</span><span class="n">thresholds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aggr_thresh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_aggregated_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
         <span class="sa">r</span><span class="sd">"""</span>

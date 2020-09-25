@@ -390,7 +390,7 @@
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipping_method</span> <span class="o">=</span> <span class="n">clipping_method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span> <span class="o">=</span> <span class="n">ratio</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">thresh</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thresh</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">calc_clipping_factors</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">norms</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span>
@@ -410,21 +410,27 @@
 <span class="sd">            Singleton list specifying a common clippng factor for all layers,</span>
 <span class="sd">            or an iterator of tensors specifying a clipping factor per layer</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">current_threshs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_values</span> <span class="o">*</span> <span class="p">(</span>
-                <span class="nb">len</span><span class="p">(</span><span class="n">norms</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_per_layer</span> <span class="k">else</span> <span class="mi">1</span>
-            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thresh</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">current_threshs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_values</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_per_layer</span><span class="p">:</span>
+                <span class="c1"># a constant clipping factor applied to all non-rozen layers</span>
+                <span class="c1"># need to replicate it by the number of number of those layers</span>
+                <span class="c1"># (= number of norms).</span>
+                <span class="n">current_threshs</span> <span class="o">*=</span> <span class="nb">len</span><span class="p">(</span><span class="n">norms</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">current_threshs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresh</span>
+
         <span class="n">clipping_factor</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thresh</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">norms</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_threshs</span><span class="p">):</span>  <span class="c1"># pyre-ignore</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">norms</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_threshs</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="c1"># pyre-fixme[6]: Expected `Sized` for 1st param but got `int`.</span>
-                <span class="sa">f</span><span class="s2">"Provided grad norm max's size </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">current_threshs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>  <span class="c1"># pyre-ignore</span>
+                <span class="sa">f</span><span class="s2">"Provided grad norm max's size </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">current_threshs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
                 <span class="sa">f</span><span class="s2">" does not match the number of layers </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">norms</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">norm</span><span class="p">,</span> <span class="n">current_thresh</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">norms</span><span class="p">,</span> <span class="n">current_threshs</span><span class="p">):</span>  <span class="c1"># pyre-ignore</span>
+        <span class="k">for</span> <span class="n">norm</span><span class="p">,</span> <span class="n">current_thresh</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">norms</span><span class="p">,</span> <span class="n">current_threshs</span><span class="p">):</span>
             <span class="n">thresh</span> <span class="o">=</span> <span class="n">_calculate_thresh_value</span><span class="p">(</span>
                 <span class="n">norm</span><span class="p">,</span> <span class="n">current_thresh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipping_method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span>
             <span class="p">)</span>
