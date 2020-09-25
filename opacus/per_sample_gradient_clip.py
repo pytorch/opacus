@@ -123,7 +123,7 @@ class PerSampleGradientClipper:
         the batch size and zero tensors for the per-layer thresholds
         """
         self._aggr_batch_size = 0
-        self._aggr_thresh = torch.zeros_like(self.norm_clipper.thresholds)
+        self._aggr_thresh = torch.zeros(1)
 
     def _get_aggregated_state(self) -> Tuple[torch.Tensor, int]:
         r"""
