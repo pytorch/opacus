@@ -41,13 +41,11 @@
 <span class="sd">to be clipped so that if they were to be put in a single vector together. If ``C`` is the clipping</span>
 <span class="sd">threshold, this ensures the total norm will be at most ``C``.</span>
 
-<span class="sd">Example</span>
-<span class="sd">-------</span>
+<span class="sd">Example:</span>
+<span class="sd">    &gt;&gt;&gt; T = torch.cat([p.grad_sample.flatten() for p in model.parameters()])</span>
 
-<span class="sd">&gt;&gt;&gt; T = torch.cat([p.grad_sample.flatten() for p in model.parameters()])</span>
-
-<span class="sd">``T`` will have shape ``[B, N_TOTAL_PARAMS]``. The total L2 norm of each row of ``T``</span>
-<span class="sd">cannot be greater than ``C``.</span>
+<span class="sd">    ``T`` will have shape ``[B, N_TOTAL_PARAMS]``. The total L2 norm of each row of ``T``</span>
+<span class="sd">    cannot be greater than ``C``.</span>
 
 <span class="sd">2. This clipping should not backpropagate. This means that clipping in the layer ``i+1``</span>
 <span class="sd">should not affect computing the gradient of layer ``i``. To make sure this is followed</span>
@@ -55,8 +53,9 @@
 <span class="sd">go back to the per-sample gradients, clip them, and accumulate them in ``.grad``</span>
 <span class="sd">(thus replacing the "real" gradients).</span>
 
-<span class="sd">Note: there is only a single .backward() call as the second pass just works on top of</span>
-<span class="sd">the stored grad_sample.</span>
+<span class="sd">Notes:</span>
+<span class="sd">    There is only a single .backward() call as the second pass just works on top of</span>
+<span class="sd">    the stored grad_sample.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -86,26 +85,23 @@
 <span class="sd">        Attaches to a module, and clips all grad_sample in the backward</span>
 <span class="sd">        pass. It then puts them in each parameter's ``.grad``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        -----------</span>
-<span class="sd">        module: nn.Module</span>
-<span class="sd">            Module to which backward hooks are added and for which per-sample gradients are clipped</span>
+<span class="sd">        Args:</span>
+<span class="sd">            module: Module to which backward hooks are added and for which per-sample</span>
+<span class="sd">                gradients are clipped</span>
 
-<span class="sd">        norm_clipper: opacus.utils.clipping.NormClipper</span>
-<span class="sd">            A norm clipper object of class :class:`~opacus.utils.clipping.NormClipper`</span>
-<span class="sd">            which encapsulated different clipping strategies</span>
-<span class="sd">            (such as flat clipping for the entire model, or per-layer clipping)</span>
+<span class="sd">            norm_clipper: A norm clipper object of class</span>
+<span class="sd">                :class:`~opacus.utils.clipping.NormClipper` which encapsulated different</span>
+<span class="sd">                clipping strategies (such as flat clipping for the entire model, or</span>
+<span class="sd">                per-layer clipping)</span>
 
-<span class="sd">        batch_first: bool</span>
-<span class="sd">            Flag to indicate if the input tensor to the corresponding module</span>
-<span class="sd">            has the first dimension represent the batch, for example of shape</span>
-<span class="sd">            [batch_size, ..., ...]. Set to True if batch appears in first</span>
-<span class="sd">            dimension else set to False (batch_first=False implies that the batch</span>
-<span class="sd">            is always in the second dimension).</span>
+<span class="sd">            batch_first: Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">                has the first dimension represent the batch, for example of shape</span>
+<span class="sd">                [batch_size, ..., ...]. Set to True if batch appears in first</span>
+<span class="sd">                dimension else set to False (batch_first=False implies that the batch</span>
+<span class="sd">                is always in the second dimension).</span>
 
-<span class="sd">        loss_reduction: str</span>
-<span class="sd">            Indicates if the loss reduction (for aggregating the gradients)</span>
-<span class="sd">            is a sum or a mean operation. Can take values ``sum`` or ``mean``</span>
+<span class="sd">            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
+<span class="sd">                is a sum or a mean operation. Can take values ``sum`` or ``mean``</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
         <span class="n">autograd_grad_sample</span><span class="o">.</span><span class="n">add_hooks</span><span class="p">(</span>
@@ -125,10 +121,8 @@
 <span class="sd">        Sets the function to be called after clipping to the input callable parameter</span>
 <span class="sd">        (for example clipping stats collection)</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        -----------</span>
-<span class="sd">        on_batch_clip_func: Callable[..., None]</span>
-<span class="sd">            Function to be called after clipping</span>
+<span class="sd">        Args:</span>
+<span class="sd">            on_batch_clip_func: Function to be called after clipping</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on_batch_clip_func</span> <span class="o">=</span> <span class="n">on_batch_clip_func</span></div>
 
@@ -164,9 +158,7 @@
 <span class="sd">        list of layer thresholds (for those providing gradient norms)</span>
 <span class="sd">        as well as the aggregate batch size</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        --------</span>
-<span class="sd">        Tuple[torch.Tensor, int]</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Aggregated state (layer thresholds and batch size)</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggr_thresh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggr_batch_size</span>
@@ -178,10 +170,8 @@
 <span class="sd">        (:class:``~opacus.privacy_engine.PrivacyEngine``). This function is called before</span>
 <span class="sd">        the optimizer ``step()``.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        --------</span>
-<span class="sd">        Tuple[torch.Tensor, int]</span>
-<span class="sd">            Returns the maximum gradient norm per batch (repeated in batch dimension</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The maximum gradient norm per batch (repeated in batch dimension</span>
 <span class="sd">            as a tensor) and the batch size</span>
 <span class="sd">        """</span>
 
@@ -266,9 +256,7 @@
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Helper function to get parameter with their names that require grad</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        --------</span>
-<span class="sd">        Iterator[Tuple[str, torch.nn.Parameter]]</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Iterator over parameters with their names</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
@@ -279,8 +267,6 @@
 <span class="sd">        that required grad.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">        --------</span>
-<span class="sd">        Iterator[Tuple[str, torch.Tensor]]</span>
 <span class="sd">            Iterator of parameter names and per-sample gradients</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -297,23 +283,17 @@
 <span class="sd">        if attribute ``loss_reduction`` is set to "mean", else it returns the input summed</span>
 <span class="sd">        gradient tensor.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        -----------</span>
-<span class="sd">        summed_grad: torch.Tensor</span>
-<span class="sd">            Summed gradient tensor which might be averaged depending on loss_reduction</span>
+<span class="sd">        Args:</span>
+<span class="sd">            summed_grad: Summed gradient tensor which might be averaged depending on loss_reduction</span>
 
-<span class="sd">        batch_size: int</span>
-<span class="sd">            Batch size of gradient tensor</span>
+<span class="sd">            batch_size: Batch size of gradient tensor</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        --------</span>
-<span class="sd">        torch.Tensor</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Summed gradient tensor if loss_reduction is set to sum else averaged over batch.</span>
 
-<span class="sd">        Raises</span>
-<span class="sd">        -------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            If the loss reduction is not defined to be either 'sum' or 'mean'</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError</span>
+<span class="sd">                If the loss reduction is not defined to be either 'sum' or 'mean'</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">summed_grad</span> <span class="o">/</span> <span class="n">batch_size</span>
@@ -331,17 +311,13 @@
 <span class="sd">        Helper function to calculate a weighted sum of tensor ``param``</span>
 <span class="sd">        along the batch dimension weighted by tensor ``batch_weight``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        -----------</span>
-<span class="sd">        batch_weight: torch.Tensor</span>
-<span class="sd">            Tensor of shape ``B`` (where ``B`` is the batch size) corresponding to weights along the</span>
-<span class="sd">            batch dimension. Each sample in the batch has its own weight.</span>
-<span class="sd">        param: torch.Tensor</span>
-<span class="sd">            Tensor to be weighted, is of shape ``[B,...]`` where ``B`` represents the batch size.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            batch_weight: Tensor of shape ``B`` (where ``B`` is the batch size) corresponding</span>
+<span class="sd">                to weights along the batch dimension. Each sample in the batch has its own weight.</span>
+<span class="sd">            param: Tensor to be weighted, is of shape ``[B,...]`` where ``B`` represents the</span>
+<span class="sd">                batch size.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        --------</span>
-<span class="sd">        torch.Tensor</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Weighted sum tensor for ``param`` along the batch dimension weighted by batch_weight.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"i,i..."</span><span class="p">,</span> <span class="n">batch_weight</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
@@ -361,24 +337,16 @@
 <span class="sd">        grants access to that function about current parameter state during the back propagation</span>
 <span class="sd">        of each batch.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        -----------</span>
-<span class="sd">        param_name: str</span>
-<span class="sd">            Name of the parameter, the parameter could be accessed by</span>
-<span class="sd">            ``self.module.state_dict()[param_name]``. A value of ``None``</span>
-<span class="sd">            indicates that all parameters have been processed.</span>
-<span class="sd">        clipping_factor: torch.Tensor</span>
-<span class="sd">            Scaling factor used in gradient clipping.</span>
-<span class="sd">        clipping_threshold: torch.Tensor</span>
-<span class="sd">            Threshold used in gradient clipping.</span>
-<span class="sd">        per_sample_norm: torch.Tensor</span>
-<span class="sd">            Per-sample gradient norms for clipping</span>
-<span class="sd">        per_sample_grad: torch.Tensor</span>
-<span class="sd">            Raw per sample gradients for parameter</span>
-<span class="sd">        grad_before_clip: torch.Tensor</span>
-<span class="sd">            Aggregated gradient before clipping (``= per_sample_grad.mean()``)</span>
-<span class="sd">        grad_after_clip: torch.Tensor</span>
-<span class="sd">            Aggregated gradients after clipping</span>
+<span class="sd">        Args:</span>
+<span class="sd">            param_name: Name of the parameter, the parameter could be accessed by</span>
+<span class="sd">                ``self.module.state_dict()[param_name]``. A value of ``None``</span>
+<span class="sd">                indicates that all parameters have been processed.</span>
+<span class="sd">            clipping_factor: Scaling factor used in gradient clipping.</span>
+<span class="sd">            clipping_threshold: Threshold used in gradient clipping.</span>
+<span class="sd">            per_sample_norm: Per-sample gradient norms for clipping</span>
+<span class="sd">            per_sample_grad: Raw per sample gradients for parameter</span>
+<span class="sd">            grad_before_clip: Aggregated gradient before clipping (``= per_sample_grad.mean()``)</span>
+<span class="sd">            grad_after_clip: Aggregated gradients after clipping</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_batch_clip_func</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">on_batch_clip_func</span><span class="p">(</span>

@@ -44,27 +44,21 @@
 <span class="sd">    This function calculates the overall norm of the given tensors for each sample,</span>
 <span class="sd">    assuming the each batch's dim is zero.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    named_params: Iterator[Tuple[str, torch.Tensor]]</span>
-<span class="sd">        An iterator of tuples &lt;name, param&gt; with name being a string</span>
-<span class="sd">        and param being a tensor of shape ``[B, ...]`` where ``B``</span>
-<span class="sd">        is the size of the batch and is the 0th dimension.</span>
-<span class="sd">    flat: bool</span>
-<span class="sd">        A flag, when set to `True` returns a flat norm over all</span>
-<span class="sd">        layers norms</span>
+<span class="sd">    Args:</span>
+<span class="sd">        named_params: An iterator of tuples &lt;name, param&gt; with name being a</span>
+<span class="sd">            string and param being a tensor of shape ``[B, ...]`` where ``B``</span>
+<span class="sd">            is the size of the batch and is the 0th dimension.</span>
+<span class="sd">        flat: A flag, when set to `True` returns a flat norm over all</span>
+<span class="sd">            layers norms</span>
 
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
+<span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; t1 = torch.rand((2, 5))</span>
 <span class="sd">        &gt;&gt;&gt; t2 = torch.rand((2, 5))</span>
 <span class="sd">        &gt;&gt;&gt; calc_sample_norms([("1", t1), ("2", t2)])</span>
 <span class="sd">            [tensor([1.5117, 1.0618])]</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">        List[torch.Tensor]</span>
-<span class="sd">            A list of tensor norms where length of the list is the number of layers</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of tensor norms where length of the list is the number of layers</span>
 <span class="sd">    """</span>
     <span class="n">norms</span> <span class="o">=</span> <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">param</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">named_params</span><span class="p">]</span>
     <span class="c1"># calc norm over all layer norms if flat = True</span>
@@ -82,27 +76,23 @@
     <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    Calculates the sum over all dimensions, except the first (batch dimension), and excluding the last n_dims.</span>
+<span class="sd">    Calculates the sum over all dimensions, except the first</span>
+<span class="sd">    (batch dimension), and excluding the last n_dims.</span>
 
-<span class="sd">    This function will ignore the first dimension and it will not aggregate over the last n_dims dimensions.</span>
+<span class="sd">    This function will ignore the first dimension and it will</span>
+<span class="sd">    not aggregate over the last n_dims dimensions.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    tensor: torch.Tensor</span>
-<span class="sd">        An input tensor of shape ``(B, ..., X[n_dims-1])``.</span>
-<span class="sd">    n_dims: int</span>
-<span class="sd">        Number of dimensions to keep.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        tensor: An input tensor of shape ``(B, ..., X[n_dims-1])``.</span>
+<span class="sd">        n_dims: Number of dimensions to keep.</span>
 
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
+<span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; tensor = torch.ones(1, 2, 3, 4, 5)</span>
 <span class="sd">        &gt;&gt;&gt; sum_over_all_but_batch_and_last_n(tensor, n_dims=2).shape</span>
 <span class="sd">        torch.Size([1, 4, 5])</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">        torch.Tensor</span>
-<span class="sd">            A tensor of shape ``(B, ..., X[n_dims-1])``</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of shape ``(B, ..., X[n_dims-1])``</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="n">n_dims</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">tensor</span>

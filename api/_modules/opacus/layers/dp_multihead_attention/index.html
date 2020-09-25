@@ -44,14 +44,11 @@
 <span class="sd">    the embedding dimension, the output will have a shape</span>
 <span class="sd">    ``(L+1, N, E)``.</span>
 
-<span class="sd">    Attributes</span>
-<span class="sd">    ------------</span>
-<span class="sd">    bias: :class:`torch.nn.parameter.Parameter`</span>
-<span class="sd">        the learnable bias of the module of shape ``(E)``,</span>
-<span class="sd">        where ``E`` is the embedding dimension.</span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        bias (:class:`torch.nn.parameter.Parameter`): the learnable bias of</span>
+<span class="sd">            the module of shape ``(E)``, where ``E`` is the embedding dimension.</span>
 
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
+<span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; m = SequenceBias(16)</span>
 <span class="sd">        &gt;&gt;&gt; input = torch.randn(20, 4, 16)</span>
 <span class="sd">        &gt;&gt;&gt; output = m(input)</span>
@@ -59,12 +56,10 @@
 <span class="sd">        torch.Size([21, 4, 16])</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        embed_dim: int</span>
-<span class="sd">            Embedding dimension</span>
+<span class="sd">        Args:</span>
+<span class="sd">            embed_dim: Embedding dimension</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">SequenceBias</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
@@ -140,11 +135,9 @@
 <span class="sd">        Supports loading from both :class:`torch.nn.MultiheadAttention` and</span>
 <span class="sd">        :class:`opacus.layers.dp_multihead_attention.DPMultiheadAttention`.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        state_dict</span>
-<span class="sd">            Please refer to</span>
-<span class="sd">            https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            state_dict: Please refer to</span>
+<span class="sd">                https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="s2">"in_proj_weight"</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="p">:</span>
             <span class="n">qweight</span><span class="p">,</span> <span class="n">kweight</span><span class="p">,</span> <span class="n">vweight</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"in_proj_weight"</span><span class="p">]</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>

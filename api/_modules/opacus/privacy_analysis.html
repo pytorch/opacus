@@ -35,15 +35,14 @@
 <span class="sd">Functionality for computing Renyi Differential Privacy (RDP) of an additive</span>
 <span class="sd">Sampled Gaussian Mechanism (SGM).</span>
 
-<span class="sd">Example</span>
-<span class="sd">-------</span>
-<span class="sd">Suppose that we have run an SGM applied to a function with L2-sensitivity of 1.</span>
+<span class="sd">Example:</span>
+<span class="sd">    Suppose that we have run an SGM applied to a function with L2-sensitivity of 1.</span>
 
-<span class="sd">Its parameters are given as a list of tuples</span>
-<span class="sd">``[(q_1, sigma_1, steps_1), ..., (q_k, sigma_k, steps_k)],``</span>
-<span class="sd">and we wish to compute epsilon for a given target delta.</span>
+<span class="sd">    Its parameters are given as a list of tuples</span>
+<span class="sd">    ``[(q_1, sigma_1, steps_1), ..., (q_k, sigma_k, steps_k)],``</span>
+<span class="sd">    and we wish to compute epsilon for a given target delta.</span>
 
-<span class="sd">The example code would be:</span>
+<span class="sd">    The example code would be:</span>
 
 <span class="sd">    &gt;&gt;&gt; max_order = 32</span>
 <span class="sd">    &gt;&gt;&gt; orders = range(2, max_order + 1)</span>
@@ -69,16 +68,11 @@
 <span class="k">def</span> <span class="nf">_log_add</span><span class="p">(</span><span class="n">logx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">logy</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Adds two numbers in the log space.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    logx: float</span>
-<span class="sd">        First term in log space.</span>
-<span class="sd">    logy: float</span>
-<span class="sd">        Second term in log space.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        logx: First term in log space.</span>
+<span class="sd">        logy: Second term in log space.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Sum of numbers in log space.</span>
 <span class="sd">    """</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">logx</span><span class="p">,</span> <span class="n">logy</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">logx</span><span class="p">,</span> <span class="n">logy</span><span class="p">)</span>
@@ -91,22 +85,16 @@
 <span class="k">def</span> <span class="nf">_log_sub</span><span class="p">(</span><span class="n">logx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">logy</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Subtracts two numbers in the log space.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    logx: float</span>
-<span class="sd">        First term in log space. Expected to be greater than the second term.</span>
-<span class="sd">    logy: float</span>
-<span class="sd">        First term in log space. Expected to be less than the first term.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        logx: First term in log space. Expected to be greater than the second term.</span>
+<span class="sd">        logy: First term in log space. Expected to be less than the first term.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Difference of numbers in log space.</span>
 
-<span class="sd">    Raises</span>
-<span class="sd">    ------</span>
-<span class="sd">    ValueError</span>
-<span class="sd">        If the result is negative.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the result is negative.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">logx</span> <span class="o">&lt;</span> <span class="n">logy</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The result of subtraction must be non-negative."</span><span class="p">)</span>
@@ -125,27 +113,21 @@
 <span class="k">def</span> <span class="nf">_compute_log_a_for_int_alpha</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Computes :math:`log(A_\alpha)` for integer ``alpha``.</span>
 
-<span class="sd">    Where,</span>
-<span class="sd">        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``.</span>
-<span class="sd">    Note that 0 &lt; ``q`` &lt; 1.</span>
+<span class="sd">    Notes:</span>
+<span class="sd">        Note that</span>
+<span class="sd">        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``,</span>
+<span class="sd">        and that 0 &lt; ``q`` &lt; 1.</span>
 
-<span class="sd">    Refer Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf for details.</span>
+<span class="sd">        Refer to Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf for details.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    q: float</span>
-<span class="sd">        Sampling rate of SGM.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        q: Sampling rate of SGM.</span>
+<span class="sd">        sigma: The standard deviation of the additive Gaussian noise.</span>
+<span class="sd">        alpha: The order at which RDP is computed.</span>
 
-<span class="sd">    sigma: float</span>
-<span class="sd">        The standard deviation of the additive Gaussian noise.</span>
-
-<span class="sd">    alpha: int</span>
-<span class="sd">        The order at which RDP is computed.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
-<span class="sd">        :math:`log(A_\alpha)` as defined in Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        :math:`log(A_\alpha)` as defined in Section 3.3 of</span>
+<span class="sd">        https://arxiv.org/pdf/1908.10530.pdf.</span>
 <span class="sd">    """</span>
 
     <span class="c1"># Initialize with 0 in the log space.</span>
@@ -167,27 +149,21 @@
 <span class="k">def</span> <span class="nf">_compute_log_a_for_frac_alpha</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Computes :math:`log(A_\alpha)` for fractional ``alpha``.</span>
 
-<span class="sd">    Where,</span>
-<span class="sd">        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``.</span>
-<span class="sd">    Note that 0 &lt; ``q`` &lt; 1.</span>
+<span class="sd">    Notes:</span>
+<span class="sd">        Note that</span>
+<span class="sd">        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``,</span>
+<span class="sd">        and that 0 &lt; ``q`` &lt; 1.</span>
 
-<span class="sd">    Refer Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf for details.</span>
+<span class="sd">        Refer to Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf for details.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    q: float</span>
-<span class="sd">        Sampling rate of SGM.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        q: Sampling rate of SGM.</span>
+<span class="sd">        sigma: The standard deviation of the additive Gaussian noise.</span>
+<span class="sd">        alpha: The order at which RDP is computed.</span>
 
-<span class="sd">    sigma: float</span>
-<span class="sd">        The standard deviation of the additive Gaussian noise.</span>
-
-<span class="sd">    alpha: float</span>
-<span class="sd">        The order at which RDP is computed.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
-<span class="sd">        :math:`log(A_\alpha)` as defined in Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        :math:`log(A_\alpha)` as defined in Section 3.3 of</span>
+<span class="sd">        https://arxiv.org/pdf/1908.10530.pdf.</span>
 <span class="sd">    """</span>
     <span class="c1"># The two parts of A_alpha, integrals over (-inf,z0] and [z0, +inf), are</span>
     <span class="c1"># initialized to 0 in the log space:</span>
@@ -227,26 +203,20 @@
 <span class="k">def</span> <span class="nf">_compute_log_a</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Computes :math:`log(A_\alpha)` for any positive finite ``alpha``.</span>
 
-<span class="sd">    Where,</span>
-<span class="sd">        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``.</span>
-<span class="sd">    Note that 0 &lt; ``q`` &lt; 1.</span>
+<span class="sd">    Notes:</span>
+<span class="sd">        Note that</span>
+<span class="sd">        :math:`A_\alpha` is real valued function of ``alpha`` and ``q``,</span>
+<span class="sd">        and that 0 &lt; ``q`` &lt; 1.</span>
 
-<span class="sd">    Refer Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf for details.</span>
+<span class="sd">        Refer to Section 3.3 of https://arxiv.org/pdf/1908.10530.pdf</span>
+<span class="sd">        for details.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    q: float</span>
-<span class="sd">        Sampling rate of SGM.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        q: Sampling rate of SGM.</span>
+<span class="sd">        sigma: The standard deviation of the additive Gaussian noise.</span>
+<span class="sd">        alpha: The order at which RDP is computed.</span>
 
-<span class="sd">    sigma: float</span>
-<span class="sd">        The standard deviation of the additive Gaussian noise.</span>
-
-<span class="sd">    alpha: float (including int)</span>
-<span class="sd">        The order at which RDP is computed.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        :math:`log(A_\alpha)` as defined in the paper mentioned above.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">is_integer</span><span class="p">():</span>
@@ -267,20 +237,12 @@
 <span class="k">def</span> <span class="nf">_compute_rdp</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Computes RDP of the Sampled Gaussian Mechanism at order ``alpha``.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    q: float</span>
-<span class="sd">        Sampling rate of SGM.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        q: Sampling rate of SGM.</span>
+<span class="sd">        sigma: The standard deviation of the additive Gaussian noise.</span>
+<span class="sd">        alpha: The order at which RDP is computed.</span>
 
-<span class="sd">    sigma: float</span>
-<span class="sd">        The standard deviation of the additive Gaussian noise.</span>
-
-<span class="sd">    alpha: int or float</span>
-<span class="sd">        The order at which RDP is computed.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        RDP at order ``alpha``; can be np.inf.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -305,27 +267,17 @@
     <span class="sa">r</span><span class="sd">"""Computes Renyi Differential Privacy (RDP) guarantees of the</span>
 <span class="sd">    Sampled Gaussian Mechanism (SGM) iterated ``steps`` times.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    q: float</span>
-<span class="sd">        Sampling rate of SGM.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        q: Sampling rate of SGM.</span>
+<span class="sd">        noise_multiplier: The ratio of the standard deviation of the</span>
+<span class="sd">            additive Gaussian noise to the L2-sensitivity of the function</span>
+<span class="sd">            to which it is added. Note that this is same as the standard</span>
+<span class="sd">            deviation of the additive Gaussian noise when the L2-sensitivity</span>
+<span class="sd">            of the function is 1.</span>
+<span class="sd">        steps: The number of iterations of the mechanism.</span>
+<span class="sd">        orders: An array (or a scalar) of RDP orders.</span>
 
-<span class="sd">    noise_multiplier: float</span>
-<span class="sd">        The ratio of the standard deviation of the additive Gaussian noise to</span>
-<span class="sd">        the L2-sensitivity of the function to which it is added.</span>
-
-<span class="sd">        Note that this is same as the standard deviation of the additive</span>
-<span class="sd">        Gaussian noise when the L2-sensitivity of the function is 1.</span>
-
-<span class="sd">    steps: int</span>
-<span class="sd">        The number of iterations of the mechanism.</span>
-
-<span class="sd">    orders: List[float] or float</span>
-<span class="sd">        An array (or a scalar) of RDP orders.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    List[float] or float:</span>
+<span class="sd">    Returns:</span>
 <span class="sd">      The RDP guarantees at all orders; can be np.inf.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">orders</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
@@ -342,26 +294,17 @@
     <span class="sa">r</span><span class="sd">"""Computes epsilon given a list of Renyi Differential Privacy (RDP) values at</span>
 <span class="sd">    multiple RDP orders and target ``delta``.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    orders: List[float] or float</span>
-<span class="sd">        An array (or a scalar) of orders (alphas).</span>
+<span class="sd">    Args:</span>
+<span class="sd">        orders: An array (or a scalar) of orders (alphas).</span>
+<span class="sd">        rdp: A list (or a scalar) of RDP guarantees.</span>
+<span class="sd">        delta: The target delta.</span>
 
-<span class="sd">    rdp: List[float] or float</span>
-<span class="sd">        A list (or a scalar) of RDP guarantees.</span>
-
-<span class="sd">    delta: float</span>
-<span class="sd">        The target delta.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    Tuple[float, float]</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Pair of epsilon and optimal order alpha.</span>
 
-<span class="sd">    Raises</span>
-<span class="sd">    ------</span>
-<span class="sd">    ValueError</span>
-<span class="sd">        If the lengths of ``orders`` and ``rdp`` are not equal.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the lengths of ``orders`` and ``rdp`` are not equal.</span>
 <span class="sd">    """</span>
     <span class="n">orders_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">orders</span><span class="p">)</span>
     <span class="n">rdp_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">rdp</span><span class="p">)</span>

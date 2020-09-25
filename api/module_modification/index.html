@@ -35,19 +35,18 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.nn.Module</em></a>) – Module instance, potentially with sub-modules</p></li>
-<li><p><strong>converter</strong> (<em>Callable</em><em>[</em><em>[</em><em>torch.nn.modules.batchnorm._BatchNorm</em><em>]</em><em>, </em><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.nn.Module</em></a><em>]</em>) – Function or a lambda that converts an instance of a
-Batchnorm to another nn.Module. Defaults to
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_batchnorm_to_groupnorm()</span></code>.</p></li>
+<li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Module instance, potentially with sub-modules</p></li>
+<li><p><strong>converter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">_BatchNorm</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Function or a lambda that converts an instance of a
+Batchnorm to another nn.Module.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Model with all the BatchNorm types replaced by another operation
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Model with all the BatchNorm types replaced by another operation
 by using the provided converter, defaulting to GroupNorm if one
 isn’t provided.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.nn.Module</a></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -69,14 +68,14 @@ isn’t provided.</p>
 <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html#torch.nn.BatchNorm2d" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.BatchNorm2d</span></code></a> etc.) in <code class="docutils literal notranslate"><span class="pre">root</span></code> with <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Identity.html#torch.nn.Identity" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Identity</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>root</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.nn.Module</em></a>) – Module for which to replace BatchNorm submodules.</p>
+<dd class="field-odd"><p><strong>root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Module for which to replace BatchNorm submodules.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Module with all the BatchNorm sub modules replaced with
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Module with all the BatchNorm sub modules replaced with
 Identity. <code class="docutils literal notranslate"><span class="pre">root</span></code> is modified and is equal to the return value.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.nn.Module</a></p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -94,18 +93,18 @@ supported by the Privacy Engine.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>root</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.nn.Module</em></a>) – Model instance, potentially with sub-modules</p></li>
-<li><p><strong>target_class</strong> (<em>Type</em><em>[</em><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.nn.Module</em></a><em>]</em>) – Target class that needs to be replaced.</p></li>
-<li><p><strong>converter</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.nn.Module</em></a><em>]</em><em>, </em><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.nn.Module</em></a><em>]</em>) – Function or a lambda that converts an instance of a given
-target_class to another nn.Module.</p></li>
+<li><p><strong>root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Model instance, potentially with sub-modules</p></li>
+<li><p><strong>target_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Type" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Target class that needs to be replaced.</p></li>
+<li><p><strong>converter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Function or a lambda that converts an instance
+of a given target_class to another nn.Module.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Module with all the target_class types replaced using the
-converter. root is modified and is equal to the return value.</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.nn.Module</a></p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Module with all the target_class types replaced using the
+converter. root is modified and is equal to the return value.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>

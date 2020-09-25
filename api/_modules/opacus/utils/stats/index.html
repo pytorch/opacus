@@ -76,26 +76,25 @@
 <span class="sd">    as shown in the example. Other stat types need to be added to the stat</span>
 <span class="sd">    and updated properly using ``update`` function.</span>
 
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    To get stats about clipping you can add the following line</span>
-<span class="sd">    to your main file. By default the samples are averaged and the average is</span>
-<span class="sd">    reported every ``1 / frequency`` times.</span>
+<span class="sd">    Examples:</span>
+<span class="sd">        To get stats about clipping you can add the following line</span>
+<span class="sd">        to your main file. By default the samples are averaged and the average is</span>
+<span class="sd">        reported every ``1 / frequency`` times.</span>
 
 <span class="sd">        &gt;&gt;&gt; stat = Stat(StatType.CLIPPING, 'sample_stats', frequency=0.1)</span>
 <span class="sd">        &gt;&gt;&gt; for i in range(20):</span>
 <span class="sd">        &gt;&gt;&gt;    stat.log({"val":i})</span>
 
-<span class="sd">    If an instance of ``tensorboard.SummaryWriter`` exists it can be used</span>
-<span class="sd">    for stat gathering by passing it like this:</span>
+<span class="sd">        If an instance of ``tensorboard.SummaryWriter`` exists it can be used</span>
+<span class="sd">        for stat gathering by passing it like this:</span>
 
 <span class="sd">        &gt;&gt;&gt; stats.set_global_summary_writer(tensorboard.SummaryWriter())</span>
 
-<span class="sd">    To add stats about test accuracy you can do:</span>
+<span class="sd">        To add stats about test accuracy you can do:</span>
 
 <span class="sd">        &gt;&gt;&gt; stats.add(Stat(stats.StatType.TEST, 'accuracy', frequency=0.1))</span>
 
-<span class="sd">    and then update the stat meter in the proper location using:</span>
+<span class="sd">        and then update the stat meter in the proper location using:</span>
 
 <span class="sd">        &gt;&gt;&gt; acc1_value = compute_accuracy(x, y)  # you can supply your metrics functions, and Stats later displays them</span>
 <span class="sd">        &gt;&gt;&gt; stats.update(stats.StatType.TEST, acc1=acc1_value)  # pass to Stats the result so that the result gets logged</span>
@@ -110,22 +109,17 @@
         <span class="n">reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"avg"</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        stat_type:</span>
-<span class="sd">            Type of the statistic from ``StatType``.</span>
-<span class="sd">        name:</span>
-<span class="sd">            Name of the stat that is used to identify this ``Stat``</span>
-<span class="sd">            for update or to view in tensorboard.</span>
-<span class="sd">        frequency:</span>
-<span class="sd">            The frequency of stat gathering. Its value is in [0, 1],</span>
-<span class="sd">            where e.g. 1 means report to tensorboard any time ``log`` is</span>
-<span class="sd">            called and 0.1 means report only 1 out of 10 times.</span>
-<span class="sd">        reduction:</span>
-<span class="sd">            The reduction strategy used for reporting, e.g. if</span>
-<span class="sd">            ``frequency = 0.1`` and ``reduction='avg'`` then ``log`` averages 10 samples</span>
-<span class="sd">            and reports to tensorboard this average once every 10 samples.</span>
-<span class="sd">            Current valid values are 'avg' and 'sample'.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            stat_type: Type of the statistic from ``StatType``.</span>
+<span class="sd">            name: Name of the stat that is used to identify this ``Stat``</span>
+<span class="sd">                for update or to view in tensorboard.</span>
+<span class="sd">            frequency: The frequency of stat gathering. Its value is in [0, 1],</span>
+<span class="sd">                where e.g. 1 means report to tensorboard any time ``log`` is</span>
+<span class="sd">                called and 0.1 means report only 1 out of 10 times.</span>
+<span class="sd">            reduction: The reduction strategy used for reporting, e.g. if</span>
+<span class="sd">                ``frequency = 0.1`` and ``reduction='avg'`` then ``log`` averages</span>
+<span class="sd">                10 samples and reports to tensorboard this average once every 10</span>
+<span class="sd">                samples. Current valid values are 'avg' and 'sample'.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">stat_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
@@ -148,10 +142,8 @@
 
 <span class="sd">        Generally not used directly (use ``update`` instead).</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        named_value</span>
-<span class="sd">            A dictionary of metrics to log</span>
+<span class="sd">        Args:</span>
+<span class="sd">            named_value: A dictionary of metrics to log</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -200,10 +192,8 @@
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Adds statistics gathering to the process.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    *args:</span>
-<span class="sd">        An iterable of statistics to add</span>
+<span class="sd">    Args:</span>
+<span class="sd">        *args: An iterable of statistics to add</span>
 <span class="sd">    """</span>
     <span class="p">[</span><span class="n">Stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stat</span><span class="p">)</span> <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span></div>
 
@@ -219,10 +209,8 @@
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Removes the Stat of name ``name`` from the global statistics gathering.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    name:</span>
-<span class="sd">        The name of stats to remove</span>
+<span class="sd">    Args:</span>
+<span class="sd">        name: The name of stats to remove</span>
 <span class="sd">    """</span>
     <span class="k">global</span> <span class="n">Stats</span>
     <span class="n">Stats</span> <span class="o">=</span> <span class="p">[</span><span class="n">stat</span> <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">Stats</span> <span class="k">if</span> <span class="n">stat</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">name</span><span class="p">]</span></div>
@@ -232,12 +220,9 @@
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Resets the stat with given `name` and `stat_type`</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    stat_type:</span>
-<span class="sd">        The stat_type to reset</span>
-<span class="sd">    name:</span>
-<span class="sd">        The name of stats to reset</span>
+<span class="sd">    Args:</span>
+<span class="sd">        stat_type: The stat_type to reset</span>
+<span class="sd">        name: The name of stats to reset</span>
 <span class="sd">    """</span>
     <span class="p">[</span>
         <span class="n">stat</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
@@ -255,16 +240,12 @@
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Updates the stat(s) with the given ``name`` and ``stat_type``</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">        stat_type:</span>
-<span class="sd">            The type of the stat from ``StatType``. Could be ``None``</span>
-<span class="sd">            if ``name`` is unique.</span>
-<span class="sd">        name:</span>
-<span class="sd">            The name of the stat. Could be ``None`` if there is only one</span>
-<span class="sd">            stat for the ``stat_type``</span>
-<span class="sd">        **named_values:</span>
-<span class="sd">            A set of values with their names</span>
+<span class="sd">    Args:</span>
+<span class="sd">        stat_type: The type of the stat from ``StatType``. Could be</span>
+<span class="sd">            ``None`` if ``name`` is unique.</span>
+<span class="sd">        name: The name of the stat. Could be ``None`` if there is only</span>
+<span class="sd">            one stat for the ``stat_type``</span>
+<span class="sd">        **named_values: A set of values with their names</span>
 <span class="sd">    """</span>
     <span class="p">[</span>
         <span class="n">stat</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">named_values</span><span class="p">)</span>

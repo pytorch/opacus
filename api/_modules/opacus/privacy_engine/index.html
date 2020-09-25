@@ -52,16 +52,15 @@
 <span class="sd">    optimizer before running.</span>
 
 
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
-<span class="sd">    This example shows how to define a ``PrivacyEngine`` and to attach</span>
-<span class="sd">    it to your optimizer.</span>
+<span class="sd">    Example:</span>
+<span class="sd">        This example shows how to define a ``PrivacyEngine`` and to attach</span>
+<span class="sd">        it to your optimizer.</span>
 
-<span class="sd">    &gt;&gt;&gt; import torch</span>
-<span class="sd">    &gt;&gt;&gt; model = torch.nn.Linear(16, 32)  # An example model</span>
-<span class="sd">    &gt;&gt;&gt; optimizer = torch.optim.SGD(model.parameters(), lr=0.05)</span>
-<span class="sd">    &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size, sample_size, alphas=range(2,32), noise_multiplier=1.3, max_grad_norm=1.0)</span>
-<span class="sd">    &gt;&gt;&gt; privacy_engine.attach(optimizer)  # That's it! Now it's business as usual.</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; model = torch.nn.Linear(16, 32)  # An example model</span>
+<span class="sd">        &gt;&gt;&gt; optimizer = torch.optim.SGD(model.parameters(), lr=0.05)</span>
+<span class="sd">        &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size, sample_size, alphas=range(2,32), noise_multiplier=1.3, max_grad_norm=1.0)</span>
+<span class="sd">        &gt;&gt;&gt; privacy_engine.attach(optimizer)  # That's it! Now it's business as usual.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -80,40 +79,27 @@
         <span class="o">**</span><span class="n">misc_settings</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        module : nn.Module</span>
-<span class="sd">            The Pytorch module to which we are attaching the privacy engine</span>
-<span class="sd">        batch_size : int</span>
-<span class="sd">            Training batch size. Used in the privacy accountant.</span>
-<span class="sd">        sample_size : int</span>
-<span class="sd">            The size of the sample (dataset). Used in the privacy accountant.</span>
-<span class="sd">        alphas : List[float]</span>
-<span class="sd">            A list of RDP orders</span>
-<span class="sd">        noise_multiplier : float</span>
-<span class="sd">            The ratio of the standard deviation of the Gaussian noise to</span>
-<span class="sd">            the L2-sensitivity of the function to which the noise is added</span>
-<span class="sd">        max_grad_norm : Union[float, List[float]]</span>
-<span class="sd">            The maximum norm of the per-sample gradients. Any gradient with norm</span>
-<span class="sd">            higher than this will be clipped to this value.</span>
-<span class="sd">        secure_rng: bool</span>
-<span class="sd">            If on, it will use ``torchcsprng`` for secure random number generation. Comes with</span>
-<span class="sd">            a significant performance cost, therefore it's recommended that you turn it off when</span>
-<span class="sd">            just experimenting.</span>
-<span class="sd">        grad_norm_type : int</span>
-<span class="sd">            The order of the norm. For instance, 2 represents L-2 norm, while</span>
-<span class="sd">            1 represents L-1 norm.</span>
-<span class="sd">        batch_first : bool</span>
-<span class="sd">            Flag to indicate if the input tensor to the corresponding module</span>
-<span class="sd">            has the first dimension representing the batch. If set to True,</span>
-<span class="sd">            dimensions on input tensor will be ``[batch_size, ..., ...]``.</span>
-<span class="sd">        target_delta : float</span>
-<span class="sd">            The target delta</span>
-<span class="sd">        loss_reduction : str</span>
-<span class="sd">            Indicates if the loss reduction (for aggregating the gradients)</span>
-<span class="sd">            is a sum or a mean operation. Can take values "sum" or "mean"</span>
-<span class="sd">        **misc_settings</span>
-<span class="sd">            Other arguments to the init</span>
+<span class="sd">        Args:</span>
+<span class="sd">            module: The Pytorch module to which we are attaching the privacy engine</span>
+<span class="sd">            batch_size: Training batch size. Used in the privacy accountant.</span>
+<span class="sd">            sample_size: The size of the sample (dataset). Used in the privacy accountant.</span>
+<span class="sd">            alphas: A list of RDP orders</span>
+<span class="sd">            noise_multiplier: The ratio of the standard deviation of the Gaussian noise to</span>
+<span class="sd">                the L2-sensitivity of the function to which the noise is added</span>
+<span class="sd">            max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm</span>
+<span class="sd">                higher than this will be clipped to this value.</span>
+<span class="sd">            secure_rng: If on, it will use ``torchcsprng`` for secure random number generation.</span>
+<span class="sd">                Comes with a significant performance cost, therefore it's recommended that you</span>
+<span class="sd">                turn it off when just experimenting.</span>
+<span class="sd">            grad_norm_type: The order of the norm. For instance, 2 represents L-2 norm, while</span>
+<span class="sd">                1 represents L-1 norm.</span>
+<span class="sd">            batch_first: Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">                has the first dimension representing the batch. If set to True, dimensions on</span>
+<span class="sd">                input tensor will be ``[batch_size, ..., ...]``.</span>
+<span class="sd">            target_delta: The target delta</span>
+<span class="sd">            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
+<span class="sd">                is a sum or a mean operation. Can take values "sum" or "mean"</span>
+<span class="sd">            **misc_settings: Other arguments to the init</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
@@ -180,10 +166,8 @@
 <span class="sd">        4. Monkeypatches the optimizer's ``step()`` function to call ``step()`` on</span>
 <span class="sd">        the query engine automatically whenever it would call ``step()`` for itself.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        optimizer : torch.optim.Optimizer</span>
-<span class="sd">            The optimizer to which the privacy engine will attach</span>
+<span class="sd">        Args:</span>
+<span class="sd">            optimizer: The optimizer to which the privacy engine will attach</span>
 <span class="sd">        """</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
@@ -249,14 +233,11 @@
 <span class="sd">        the ``PrivacyEngine`` was initialized with. It returns the optimal alpha together</span>
 <span class="sd">        with the best epsilon.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        target_delta : Optional[float]</span>
-<span class="sd">            The Target delta. If None, it will default to the privacy engine's target delta.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            target_delta: The Target delta. If None, it will default to the privacy</span>
+<span class="sd">                engine's target delta.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Tuple[float, float]</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Pair of epsilon and optimal order alpha.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">target_delta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -268,19 +249,16 @@
         <span class="sd">"""</span>
 <span class="sd">        Takes a step for the privacy engine.</span>
 
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">        You should not call this method directly. Rather, by attaching your</span>
-<span class="sd">        ``PrivacyEngine`` to the optimizer, the ``PrivacyEngine`` would have the</span>
-<span class="sd">        optimizer call this method for you.</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            You should not call this method directly. Rather, by attaching your</span>
+<span class="sd">            ``PrivacyEngine`` to the optimizer, the ``PrivacyEngine`` would have</span>
+<span class="sd">            the optimizer call this method for you.</span>
 
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            If the last batch of training epoch is greater than others.</span>
-<span class="sd">            This ensures the clipper consumed the right amount of gradients.</span>
-<span class="sd">            In the last batch of a training epoch, we might get a batch that is</span>
-<span class="sd">            smaller than others but we should never get a batch that is too large</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the last batch of training epoch is greater than others.</span>
+<span class="sd">                This ensures the clipper consumed the right amount of gradients.</span>
+<span class="sd">                In the last batch of a training epoch, we might get a batch that is</span>
+<span class="sd">                smaller than others but we should never get a batch that is too large</span>
 
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -313,27 +291,22 @@
         <span class="sd">"""</span>
 <span class="sd">        Moves the privacy engine to the target device.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        device : Union[str, torch.device]</span>
-<span class="sd">            The device on which Pytorch Tensors are allocated.</span>
-<span class="sd">            See: https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device</span>
+<span class="sd">        Args:</span>
+<span class="sd">            device : The device on which Pytorch Tensors are allocated.</span>
+<span class="sd">                See: https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device</span>
 
-<span class="sd">        Example</span>
-<span class="sd">        -------</span>
-<span class="sd">        This example shows the usage of this method, on how to move the model</span>
-<span class="sd">        after instantiating the ``PrivacyEngine``.</span>
+<span class="sd">        Example:</span>
+<span class="sd">            This example shows the usage of this method, on how to move the model</span>
+<span class="sd">            after instantiating the ``PrivacyEngine``.</span>
 
-<span class="sd">        &gt;&gt;&gt; model = torch.nn.Linear(16, 32)  # An example model. Default device is CPU</span>
-<span class="sd">        &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size, sample_size, alphas=range(5,64), noise_multiplier=0.8, max_grad_norm=0.5)</span>
-<span class="sd">        &gt;&gt;&gt; device = "cuda:3"  # GPU</span>
-<span class="sd">        &gt;&gt;&gt; model.to(device)  # If we move the model to GPU, we should call the to() method of the privacy engine (next line)</span>
-<span class="sd">        &gt;&gt;&gt; privacy_engine.to(device)</span>
+<span class="sd">            &gt;&gt;&gt; model = torch.nn.Linear(16, 32)  # An example model. Default device is CPU</span>
+<span class="sd">            &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size, sample_size, alphas=range(5,64), noise_multiplier=0.8, max_grad_norm=0.5)</span>
+<span class="sd">            &gt;&gt;&gt; device = "cuda:3"  # GPU</span>
+<span class="sd">            &gt;&gt;&gt; model.to(device)  # If we move the model to GPU, we should call the to() method of the privacy engine (next line)</span>
+<span class="sd">            &gt;&gt;&gt; privacy_engine.to(device)</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        PrivacyEngine</span>
-<span class="sd">            This privacy engine</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The current ``PrivacyEngine``</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
         <span class="k">return</span> <span class="bp">self</span></div>
@@ -346,40 +319,39 @@
 <span class="sd">        keeping the memory consumption constant. This is beneficial, when training</span>
 <span class="sd">        models with larger batch sizes than standard models.</span>
 
-<span class="sd">        Example</span>
-<span class="sd">        -------</span>
-<span class="sd">        Imagine you want to train a model with batch size of 2048, but you can only</span>
-<span class="sd">        fit batch size of 128 in your GPU. Then, you can do the following:</span>
+<span class="sd">        Example:</span>
+<span class="sd">            Imagine you want to train a model with batch size of 2048, but you can only</span>
+<span class="sd">            fit batch size of 128 in your GPU. Then, you can do the following:</span>
 
-<span class="sd">        &gt;&gt;&gt; for i, (X, y) in enumerate(dataloader):</span>
-<span class="sd">        &gt;&gt;&gt;     logits = model(X)</span>
-<span class="sd">        &gt;&gt;&gt;     loss = criterion(logits, y)</span>
-<span class="sd">        &gt;&gt;&gt;     loss.backward()</span>
-<span class="sd">        &gt;&gt;&gt;     if i % 16 == 15:</span>
-<span class="sd">        &gt;&gt;&gt;         optimizer.step()    # this will call privacy engine's step()</span>
-<span class="sd">        &gt;&gt;&gt;         optimizer.zero_grad()</span>
-<span class="sd">        &gt;&gt;&gt;     else:</span>
-<span class="sd">        &gt;&gt;&gt;         optimizer.virtual_step()   # this will call privacy engine's virtual_step()</span>
+<span class="sd">            &gt;&gt;&gt; for i, (X, y) in enumerate(dataloader):</span>
+<span class="sd">            &gt;&gt;&gt;     logits = model(X)</span>
+<span class="sd">            &gt;&gt;&gt;     loss = criterion(logits, y)</span>
+<span class="sd">            &gt;&gt;&gt;     loss.backward()</span>
+<span class="sd">            &gt;&gt;&gt;     if i % 16 == 15:</span>
+<span class="sd">            &gt;&gt;&gt;         optimizer.step()    # this will call privacy engine's step()</span>
+<span class="sd">            &gt;&gt;&gt;         optimizer.zero_grad()</span>
+<span class="sd">            &gt;&gt;&gt;     else:</span>
+<span class="sd">            &gt;&gt;&gt;         optimizer.virtual_step()   # this will call privacy engine's virtual_step()</span>
 
-<span class="sd">        The rough idea of virtual step is as follows:</span>
+<span class="sd">            The rough idea of virtual step is as follows:</span>
 
-<span class="sd">        1. Calling ``loss.backward()`` repeatedly stores the per-sample gradients</span>
-<span class="sd">        for all mini-batches. If we call ``loss.backward()`` ``N`` times on</span>
-<span class="sd">        mini-batches of size ``B``, then each weight's ``.grad_sample`` field will</span>
-<span class="sd">        contain ``NxB`` gradients. Then, when calling ``step()``, the privacy engine</span>
-<span class="sd">        clips all ``NxB`` gradients and computes the average gradient for an effective</span>
-<span class="sd">        batch of size ``NxB``. A call to ``optimizer.zero_grad()`` erases the</span>
-<span class="sd">        per-sample gradients.</span>
+<span class="sd">            1. Calling ``loss.backward()`` repeatedly stores the per-sample gradients</span>
+<span class="sd">            for all mini-batches. If we call ``loss.backward()`` ``N`` times on</span>
+<span class="sd">            mini-batches of size ``B``, then each weight's ``.grad_sample`` field will</span>
+<span class="sd">            contain ``NxB`` gradients. Then, when calling ``step()``, the privacy engine</span>
+<span class="sd">            clips all ``NxB`` gradients and computes the average gradient for an effective</span>
+<span class="sd">            batch of size ``NxB``. A call to ``optimizer.zero_grad()`` erases the</span>
+<span class="sd">            per-sample gradients.</span>
 
-<span class="sd">        2. By calling ``virtual_step()`` after ``loss.backward()``,the ``B``</span>
-<span class="sd">        per-sample gradients for this mini-batch are clipped and summed up into a</span>
-<span class="sd">        gradient accumulator. The per-sample gradients can then be discarded. After</span>
-<span class="sd">        ``N`` iterations (alternating calls to ``loss.backward()`` and</span>
-<span class="sd">        ``virtual_step()``), a call to ``step()`` will compute the average gradient</span>
-<span class="sd">        for an effective batch of size ``NxB``.</span>
+<span class="sd">            2. By calling ``virtual_step()`` after ``loss.backward()``,the ``B``</span>
+<span class="sd">            per-sample gradients for this mini-batch are clipped and summed up into a</span>
+<span class="sd">            gradient accumulator. The per-sample gradients can then be discarded. After</span>
+<span class="sd">            ``N`` iterations (alternating calls to ``loss.backward()`` and</span>
+<span class="sd">            ``virtual_step()``), a call to ``step()`` will compute the average gradient</span>
+<span class="sd">            for an effective batch of size ``NxB``.</span>
 
-<span class="sd">        The advantage here is that this is memory-efficient: it discards the per-sample</span>
-<span class="sd">        gradients after every mini-batch. We can thus handle batches of arbitrary size.</span>
+<span class="sd">            The advantage here is that this is memory-efficient: it discards the per-sample</span>
+<span class="sd">            gradients after every mini-batch. We can thus handle batches of arbitrary size.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">clip_and_accumulate</span><span class="p">()</span></div>
 
@@ -392,17 +364,12 @@
 <span class="sd">        The generated tensor has zero mean and standard deviation</span>
 <span class="sd">        sigma = ``noise_multiplier x max_grad_norm ``</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        max_grad_norm : float</span>
-<span class="sd">            The maximum norm of the per-sample gradients.</span>
-<span class="sd">        reference : torch.nn.parameter.Parameter</span>
-<span class="sd">            The reference, based on which the dimention of the noise tensor</span>
-<span class="sd">            will be determined</span>
+<span class="sd">        Args:</span>
+<span class="sd">            max_grad_norm : The maximum norm of the per-sample gradients.</span>
+<span class="sd">            reference : The reference, based on which the dimention of the</span>
+<span class="sd">                noise tensor will be determined</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        torch.Tensor</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            the generated noise with noise zero and standard</span>
 <span class="sd">            deviation of ``noise_multiplier x max_grad_norm ``</span>
 <span class="sd">        """</span>
@@ -425,10 +392,8 @@
 <span class="sd">        WARNING: MANUALLY SETTING THE SEED BREAKS THE GUARANTEE OF SECURE RNG.</span>
 <span class="sd">        For this reason, this method will raise a ValueError if you had ``secure_rng`` turned on.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        seed : int</span>
-<span class="sd">            The **unsecure** seed</span>
+<span class="sd">        Args:</span>
+<span class="sd">            seed : The **unsecure** seed</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>

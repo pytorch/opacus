@@ -46,24 +46,24 @@ it to your optimizer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>nn.Module</em>) – The Pytorch module to which we are attaching the privacy engine</p></li>
-<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Training batch size. Used in the privacy accountant.</p></li>
-<li><p><strong>sample_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – The size of the sample (dataset). Used in the privacy accountant.</p></li>
-<li><p><strong>alphas</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>]</em>) – A list of RDP orders</p></li>
-<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – The ratio of the standard deviation of the Gaussian noise to
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The Pytorch module to which we are attaching the privacy engine</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Training batch size. Used in the privacy accountant.</p></li>
+<li><p><strong>sample_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The size of the sample (dataset). Used in the privacy accountant.</p></li>
+<li><p><strong>alphas</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – A list of RDP orders</p></li>
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The ratio of the standard deviation of the Gaussian noise to
 the L2-sensitivity of the function to which the noise is added</p></li>
-<li><p><strong>max_grad_norm</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>, </em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>]</em><em>]</em>) – The maximum norm of the per-sample gradients. Any gradient with norm
+<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]) – The maximum norm of the per-sample gradients. Any gradient with norm
 higher than this will be clipped to this value.</p></li>
-<li><p><strong>secure_rng</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – If on, it will use <code class="docutils literal notranslate"><span class="pre">torchcsprng</span></code> for secure random number generation. Comes with
-a significant performance cost, therefore it’s recommended that you turn it off when
-just experimenting.</p></li>
-<li><p><strong>grad_norm_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – The order of the norm. For instance, 2 represents L-2 norm, while
+<li><p><strong>secure_rng</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If on, it will use <code class="docutils literal notranslate"><span class="pre">torchcsprng</span></code> for secure random number generation.
+Comes with a significant performance cost, therefore it’s recommended that you
+turn it off when just experimenting.</p></li>
+<li><p><strong>grad_norm_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The order of the norm. For instance, 2 represents L-2 norm, while
 1 represents L-1 norm.</p></li>
-<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Flag to indicate if the input tensor to the corresponding module
-has the first dimension representing the batch. If set to True,
-dimensions on input tensor will be <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">...,</span> <span class="pre">...]</span></code>.</p></li>
-<li><p><strong>target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – The target delta</p></li>
-<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – Indicates if the loss reduction (for aggregating the gradients)
+<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to indicate if the input tensor to the corresponding module
+has the first dimension representing the batch. If set to True, dimensions on
+input tensor will be <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">...,</span> <span class="pre">...]</span></code>.</p></li>
+<li><p><strong>target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The target delta</p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the gradients)
 is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
 <li><p><strong>**misc_settings</strong> – Other arguments to the init</p></li>
 </ul>
@@ -84,7 +84,7 @@ itself into the optimizer’s step. To do that it,</p>
 the query engine automatically whenever it would call <code class="docutils literal notranslate"><span class="pre">step()</span></code> for itself.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>optimizer</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.optim.Optimizer</em></a>) – The optimizer to which the privacy engine will attach</p>
+<dd class="field-odd"><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – The optimizer to which the privacy engine will attach</p>
 </dd>
 </dl>
 </dd></dl>
@@ -105,13 +105,14 @@ the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</
 with the best epsilon.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>target_delta</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em>]</em>) – The Target delta. If None, it will default to the privacy engine’s target delta.</p>
+<dd class="field-odd"><p><strong>target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – The Target delta. If None, it will default to the privacy
+engine’s target delta.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Pair of epsilon and optimal order alpha.</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Tuple[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a>]</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Pair of epsilon and optimal order alpha.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -121,8 +122,8 @@ with the best epsilon.</p>
 <dd><p>Takes a step for the privacy engine.</p>
 <p class="rubric">Notes</p>
 <p>You should not call this method directly. Rather, by attaching your
-<code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> to the optimizer, the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> would have the
-optimizer call this method for you.</p>
+<code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> to the optimizer, the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> would have
+the optimizer call this method for you.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.8)"><strong>ValueError</strong></a> – If the last batch of training epoch is greater than others.
@@ -138,7 +139,7 @@ optimizer call this method for you.</p>
 <dd><p>Moves the privacy engine to the target device.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>device</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em>, </em><em>torch.device</em><em>]</em>) – The device on which Pytorch Tensors are allocated.
+<dd class="field-odd"><p><strong>device</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code>]) – The device on which Pytorch Tensors are allocated.
 See: <a class="reference external" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device">https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device</a></p>
 </dd>
 </dl>
@@ -154,10 +155,7 @@ after instantiating the <code class="docutils literal notranslate"><span class="
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>This privacy engine</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="#opacus.privacy_engine.PrivacyEngine" title="opacus.privacy_engine.PrivacyEngine">PrivacyEngine</a></p>
+<dd class="field-odd"><p>The current <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code></p>
 </dd>
 </dl>
 </dd></dl>

@@ -32,13 +32,12 @@
 
 <span class="sd">This module provides functions to capture per-sample gradients by using hooks.</span>
 
-<span class="sd">Notes</span>
-<span class="sd">-----</span>
-<span class="sd">The ``register_backward_hook()`` function has a known issue being tracked at</span>
-<span class="sd">https://github.com/pytorch/pytorch/issues/598. However, it is the only known</span>
-<span class="sd">way of implementing this as of now (your suggestions and contributions are</span>
-<span class="sd">very welcome). The behaviour has been verified to be correct for the layers</span>
-<span class="sd">currently supported by opacus.</span>
+<span class="sd">Notes:</span>
+<span class="sd">    The ``register_backward_hook()`` function has a known issue being tracked at</span>
+<span class="sd">    https://github.com/pytorch/pytorch/issues/598. However, it is the only known</span>
+<span class="sd">    way of implementing this as of now (your suggestions and contributions are</span>
+<span class="sd">    very welcome). The behaviour has been verified to be correct for the layers</span>
+<span class="sd">    currently supported by opacus.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
@@ -61,24 +60,18 @@
 <span class="sd">    The hooks will</span>
 
 <span class="sd">    1. save activations into ``param.activations`` during forward pass.</span>
-<span class="sd">    2. compute per-sample gradients and save them in ``param.grad_sample``</span>
-<span class="sd">    during backward pass.</span>
+<span class="sd">    2. compute per-sample gradients and save them in ``param.grad_sample`` during backward pass.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    model: nn.Module</span>
-<span class="sd">        Model to which hooks are added.</span>
-<span class="sd">    loss_reduction: str</span>
-<span class="sd">        Indicates if the loss reduction (for aggregating the gradients)</span>
-<span class="sd">        is a sum or a mean operation. Can take values ``sum`` or ``mean``.</span>
-<span class="sd">        Default value is ``mean``.</span>
-<span class="sd">    batch_first: bool</span>
-<span class="sd">        Flag to indicate if the input tensor to the corresponding module</span>
-<span class="sd">        has the first dimension represent the batch, for example of shape</span>
-<span class="sd">        ``[batch_size, ..., ...]``. Set to True if batch appears in first</span>
-<span class="sd">        dimension else set to False (``batch_first=False`` implies that the</span>
-<span class="sd">        batch is always in the second dimension).</span>
-<span class="sd">        Default value is ``True``.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        model: Model to which hooks are added.</span>
+<span class="sd">        loss_reduction: Indicates if the loss reduction (for aggregating the</span>
+<span class="sd">            gradients) is a sum or a mean operation. Can take values ``sum`` or</span>
+<span class="sd">            ``mean``.</span>
+<span class="sd">        batch_first: Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">            has the first dimension represent the batch, for example of shape</span>
+<span class="sd">            ``[batch_size, ..., ...]``. Set to True if batch appears in first</span>
+<span class="sd">            dimension else set to False (``batch_first=False`` implies that the</span>
+<span class="sd">            batch is always in the second dimension).</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Trying to add hooks twice to the same model"</span><span class="p">)</span>
@@ -110,10 +103,8 @@
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Removes hooks added by ``add_hooks()``.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    model: nn.Module</span>
-<span class="sd">        Model from which hooks are to be removed.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        model: Model from which hooks are to be removed.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Asked to remove hooks, but no hooks found"</span><span class="p">)</span>
@@ -143,15 +134,11 @@
 <div class="viewcode-block" id="is_supported"><a class="viewcode-back" href="../../per_sample_gradients.html#opacus.autograd_grad_sample.is_supported">[docs]</a><span class="k">def</span> <span class="nf">is_supported</span><span class="p">(</span><span class="n">layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Checks if the ``layer`` is supported by this library.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    layer: nn.Module</span>
-<span class="sd">        Layer for which we need to determine if the support for capturing</span>
-<span class="sd">        per-sample gradients is available.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        layer: Layer for which we need to determine if the support for</span>
+<span class="sd">            capturing per-sample gradients is available.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    bool</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Whether the ``layer`` is supported by this library.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
@@ -163,14 +150,10 @@
     <span class="sa">r</span><span class="sd">"""Forward hook handler captures and saves activations flowing into the</span>
 <span class="sd">    ``layer`` in ``layer.activations`` during forward pass.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    layer: nn.Module</span>
-<span class="sd">        Layer to capture the activations in.</span>
-<span class="sd">    inputs: List[torch.Tensor]</span>
-<span class="sd">        Inputs to the ``layer``.</span>
-<span class="sd">    outputs: List[torch.Tensor]</span>
-<span class="sd">        Outputs of the ``layer``.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        layer: Layer to capture the activations in.</span>
+<span class="sd">        inputs: Inputs to the ``layer``.</span>
+<span class="sd">        outputs: Outputs of the ``layer``.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">_hooks_disabled</span><span class="p">:</span>
         <span class="k">return</span>
@@ -191,25 +174,19 @@
     <span class="sa">r</span><span class="sd">"""Backward hook handler captures backpropagated gradients during</span>
 <span class="sd">    backward pass, and computes and stores per-sample gradients.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    layer: nn.Module</span>
-<span class="sd">        Layer to capture gradients in.</span>
-<span class="sd">    inputs: List[torch.Tensor]</span>
-<span class="sd">        Gradients of the tensor on which ``.backward()`` is called with respect</span>
-<span class="sd">        to the inputs to the ``layer``.</span>
-<span class="sd">    outputs: List[torch.Tensor]</span>
-<span class="sd">        Gradients of the tensor on which ``.backward()`` is called with respect</span>
-<span class="sd">        to the outputs of the ``layer``.</span>
-<span class="sd">    loss_reduction: str</span>
-<span class="sd">        Indicates if the loss reduction (for aggregating the gradients)</span>
-<span class="sd">        is a sum or a mean operation. Can take values ``sum`` or ``mean``.</span>
-<span class="sd">    batch_first: bool</span>
-<span class="sd">        Flag to indicate if the input tensor to the corresponding module</span>
-<span class="sd">        has the first dimension represent the batch, for example of shape</span>
-<span class="sd">        ``[batch_size, ..., ...]``. Set to True if batch appears in first</span>
-<span class="sd">        dimension else set to False (``batch_first=False`` implies that the</span>
-<span class="sd">        batch is always in the second dimension).</span>
+<span class="sd">    Args:</span>
+<span class="sd">        layer: Layer to capture gradients in.</span>
+<span class="sd">        inputs: Gradients of the tensor on which ``.backward()`` is called with</span>
+<span class="sd">            respect to the inputs to the ``layer``.</span>
+<span class="sd">        outputs: Gradients of the tensor on which ``.backward()`` is called with</span>
+<span class="sd">            respect to the outputs of the ``layer``.</span>
+<span class="sd">        loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
+<span class="sd">            is a sum or a mean operation. Can take values ``sum`` or ``mean``.</span>
+<span class="sd">        batch_first: Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">            has the first dimension represent the batch, for example of shape</span>
+<span class="sd">            ``[batch_size, ..., ...]``. Set to True if batch appears in first</span>
+<span class="sd">            dimension else set to False (``batch_first=False`` implies that the</span>
+<span class="sd">            batch is always in the second dimension).</span>
 <span class="sd">    """</span>
 
     <span class="k">if</span> <span class="n">_hooks_disabled</span><span class="p">:</span>
@@ -225,21 +202,17 @@
     <span class="sa">r</span><span class="sd">"""Computes per-sample gradients with respect to the parameters of the</span>
 <span class="sd">    ``layer`` (if supported), and saves them in ``param.grad_sample``.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    layer: nn.Module</span>
-<span class="sd">        Layer to capture per-sample gradients in.</span>
-<span class="sd">    backprops: torch.Tensor</span>
-<span class="sd">        Back propagated gradients captured by the backward hook.</span>
-<span class="sd">    loss_reduction: str</span>
-<span class="sd">        Indicates if the loss reduction (for aggregating the gradients)</span>
-<span class="sd">        is a sum or a mean operation. Can take values ``sum`` or ``mean``.</span>
-<span class="sd">    batch_first: bool</span>
-<span class="sd">        Flag to indicate if the input tensor to the corresponding module</span>
-<span class="sd">        has the first dimension represent the batch, for example of shape</span>
-<span class="sd">        ``[batch_size, ..., ...]``. Set to True if batch appears in first</span>
-<span class="sd">        dimension else set to False (``batch_first=False`` implies that the</span>
-<span class="sd">        batch is always in the second dimension).</span>
+<span class="sd">    Args:</span>
+<span class="sd">        layer: Layer to capture per-sample gradients in.</span>
+<span class="sd">        backprops: Back propagated gradients captured by the backward hook.</span>
+<span class="sd">        loss_reduction: Indicates if the loss reduction (for aggregating the</span>
+<span class="sd">            gradients) is a sum or a mean operation. Can take values ``sum``</span>
+<span class="sd">            or ``mean``.</span>
+<span class="sd">        batch_first: Flag to indicate if the input tensor to the corresponding</span>
+<span class="sd">            module has the first dimension represent the batch, for example of</span>
+<span class="sd">            shape ``[batch_size, ..., ...]``. Set to True if batch appears in</span>
+<span class="sd">            first dimension else set to False (``batch_first=False`` implies</span>
+<span class="sd">            that the batch is always in the second dimension).</span>
 <span class="sd">    """</span>
     <span class="n">layer_type</span> <span class="o">=</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span>

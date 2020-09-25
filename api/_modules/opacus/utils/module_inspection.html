@@ -41,11 +41,10 @@
 <span class="sd">    An inspector of models given a specific predicate. If a module</span>
 <span class="sd">    has children the predicate is checked on all children recursively.</span>
 
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
-<span class="sd">    &gt;&gt;&gt;  inspector = ModelInspector('simple', lambda x: isinstance(x, Conv2d))</span>
-<span class="sd">    &gt;&gt;&gt;  print(inspector.validate(nn.Conv2d(1, 1, 1)))</span>
-<span class="sd">    True</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt;  inspector = ModelInspector('simple', lambda x: isinstance(x, Conv2d))</span>
+<span class="sd">        &gt;&gt;&gt;  print(inspector.validate(nn.Conv2d(1, 1, 1)))</span>
+<span class="sd">        True</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -56,29 +55,20 @@
         <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        name: str</span>
-<span class="sd">            String to represent the predicate.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: String to represent the predicate.</span>
+<span class="sd">            predicate: Callable boolean function which tests a hypothesis on a module.</span>
+<span class="sd">            check_leaf_nodes_only: Flag to check only leaf nodes of a module. Here</span>
+<span class="sd">                leaf nodes are the ones that have parameters of their own.</span>
+<span class="sd">            message: Optional value to hold a message about violating this predicate.</span>
 
-<span class="sd">        predicate: Callable[[torch.nn.Module], bool]</span>
-<span class="sd">            Callable boolean function which tests a hypothesis on a module.</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            The predicates will not be applied on non-leaf modules unless</span>
+<span class="sd">            ``check_leaf_nodes_only`` is set to False. E.g. A predicate like:</span>
 
-<span class="sd">        check_leaf_nodes_only: bool, optional</span>
-<span class="sd">            Flag to check only leaf nodes of a module. Here leaf nodes are the</span>
-<span class="sd">            ones that have parameters of their own.</span>
+<span class="sd">            ``lambda model: isinstance(model, nn.Sequential)``</span>
 
-<span class="sd">        message: Optional[str], optional</span>
-<span class="sd">            Optional value to hold a message about violating this predicate.</span>
-
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">        The predicates will not be applied on non-leaf modules unless</span>
-<span class="sd">        ``check_leaf_nodes_only`` is set to False. E.g. A predicate like:</span>
-
-<span class="sd">        ``lambda model: isinstance(model, nn.Sequential)``</span>
-
-<span class="sd">        will always return True unless ``check_leaf_nodes_only`` is set.</span>
+<span class="sd">            will always return True unless ``check_leaf_nodes_only`` is set.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="k">if</span> <span class="n">check_leaf_nodes_only</span><span class="p">:</span>
@@ -98,16 +88,12 @@
 <span class="sd">        Checks if the provided module satisfies the predicate specified</span>
 <span class="sd">        upon creation of the :class:`~opacus.utils.ModelInspector`.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        model: torch.nn.Module</span>
-<span class="sd">            PyTorch module on which the predicate must be evaluated</span>
-<span class="sd">            and satisfied.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            model: PyTorch module on which the predicate must be evaluated</span>
+<span class="sd">                and satisfied.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        bool</span>
-<span class="sd">            Boolean flag indicate if predicate is satisfied.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Flag indicate if predicate is satisfied.</span>
 <span class="sd">        """</span>
         <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="c1"># pyre-fixme[16]: `Module` has no attribute `named_modules`.</span>
@@ -122,15 +108,12 @@
     <span class="sd">"""</span>
 <span class="sd">    Checks if a module does not have any parameters.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    module: torch.nn.Module</span>
-<span class="sd">        The module on which this function is being evaluated.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module: The module on which this function is being evaluated.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    bool</span>
-<span class="sd">        Boolean flag indicating if the provided module does not have any parameters.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Flag indicating if the provided module does not have any</span>
+<span class="sd">        parameters.</span>
 <span class="sd">    """</span>
     <span class="n">has_params</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="n">recurse</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
     <span class="k">return</span> <span class="ow">not</span> <span class="n">has_params</span></div>
@@ -140,19 +123,13 @@
     <span class="sd">"""</span>
 <span class="sd">    Checks if any parameters in a specified module require gradients.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    module: torch.nn.Module</span>
-<span class="sd">        PyTorch module whose parameters are examined</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module: PyTorch module whose parameters are examined</span>
+<span class="sd">        recurse: Flag specifying if the gradient requirement check should</span>
+<span class="sd">            be applied recursively to sub-modules of the specified module</span>
 
-<span class="sd">    recurse: bool, optional</span>
-<span class="sd">        Flag specifying if the gradient requirement check should be</span>
-<span class="sd">        applied recursively to sub-modules of the specified module</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    bool</span>
-<span class="sd">        Boolean flag indicate if any parameters require gradients</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Flag indicate if any parameters require gradients</span>
 <span class="sd">    """</span>
     <span class="n">requires_grad</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="n">recurse</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">requires_grad</span></div>
@@ -162,15 +139,11 @@
     <span class="sd">"""</span>
 <span class="sd">    Returns the name of the type of the given layer.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    layer: torch.nn.Module</span>
-<span class="sd">        The module corresponding to the layer whose type</span>
-<span class="sd">        is being queried.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        layer: The module corresponding to the layer whose type</span>
+<span class="sd">            is being queried.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    str</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Name of the class of the layer</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">layer</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span></div>

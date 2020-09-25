@@ -51,19 +51,13 @@
 <span class="sd">    and returns the larger of this value and the smallest element in</span>
 <span class="sd">    the tensor (can happen when ratio is negative).</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    data: torch.Tensor</span>
-<span class="sd">        Pytorch tensor containing the data on which the mean and stdv.</span>
-<span class="sd">        is evaluated.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: Pytorch tensor containing the data on which the mean and stdv.</span>
+<span class="sd">            is evaluated.</span>
+<span class="sd">        ratio: Value of the scaling factor in the value calculated by the</span>
+<span class="sd">            function.</span>
 
-<span class="sd">    ratio: float, optional</span>
-<span class="sd">        Value of the scaling factor in the value calculated by the</span>
-<span class="sd">        function.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        The result of the function.</span>
 
 <span class="sd">    """</span>
@@ -74,19 +68,13 @@
     <span class="sd">"""</span>
 <span class="sd">    Finds the pth largest value in the tensor, where p = ratio x len(data).</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    data: torch.Tensor</span>
-<span class="sd">        Pytorch tensor against which the function is evaluated.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: Pytorch tensor against which the function is evaluated.</span>
+<span class="sd">        ratio: Value of the scaling factor in the value calculated by</span>
+<span class="sd">            the function.</span>
 
-<span class="sd">    ratio: float, optional</span>
-<span class="sd">        Value of the scaling factor in the value calculated by</span>
-<span class="sd">        the function.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    torch.Tensor</span>
-<span class="sd">        Tensor of dimension (1,) with the result of the function.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Tensor of dimension ``(1,)`` with the result of the function.</span>
 <span class="sd">    """</span>
     <span class="n">cut</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ratio</span><span class="p">)))</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">kthvalue</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cut</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
@@ -96,17 +84,11 @@
     <span class="sd">"""</span>
 <span class="sd">    Passes through the specified input ``current_threshold``.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    data: torch.Tensor</span>
-<span class="sd">        Pytorch tensor containing the data.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: Pytorch tensor containing the data.</span>
+<span class="sd">        current_thresh: The threshold value.</span>
 
-<span class="sd">    current_thresh: float</span>
-<span class="sd">        The threshold value.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        The threshold value.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">current_thresh</span>
@@ -122,14 +104,10 @@
 <span class="sd">    differences. The input data is shaped into a 2D image for the</span>
 <span class="sd">    purpose of evaluating the threshold value.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    data: torch.Tensor</span>
-<span class="sd">        Pytorch tensor containing the data.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: Pytorch tensor containing the data.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Threshold value determined via Otsu's method.</span>
 <span class="sd">    """</span>
     <span class="n">h</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="nb">int</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
@@ -167,23 +145,17 @@
 <span class="sd">    based on mean and variance of the norms, and threshold calculated</span>
 <span class="sd">    based on percentile values of the norms.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    data: torch.Tensor</span>
-<span class="sd">        1-D tensor.</span>
-<span class="sd">    current_thresh: float</span>
-<span class="sd">        Value of the current threshold.</span>
-<span class="sd">    clipping_method: ClippingMethod</span>
-<span class="sd">        Enum value defining the clipping strategy. Current options are STATIC,</span>
-<span class="sd">        PVALUE, MEAN, and OTSU.</span>
-<span class="sd">    ratio: float</span>
-<span class="sd">        Value that has different meaning for differnet strategies, it is the</span>
-<span class="sd">        percentile parameter for PVALUE, and a multiplier for standard deviation</span>
-<span class="sd">        for MEAN. It has no significance for OTSU and STATIC.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: Pytorch tensor containing the data</span>
+<span class="sd">        current_thresh: Value of the current threshold.</span>
+<span class="sd">        clipping_method: Enum value defining the clipping strategy. Current</span>
+<span class="sd">            options are STATIC, PVALUE, MEAN, and OTSU.</span>
+<span class="sd">        ratio: Value that has different meaning for differnet strategies, it</span>
+<span class="sd">            is the percentile parameter for PVALUE, and a multiplier for</span>
+<span class="sd">            standard deviation for MEAN. It has no significance for OTSU and</span>
+<span class="sd">            STATIC.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    float</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Clipping threshold value</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_thresh_</span><span class="p">[</span><span class="n">clipping_mehod</span><span class="p">](</span><span class="n">data</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="n">ratio</span><span class="p">,</span> <span class="n">current_thresh</span><span class="o">=</span><span class="n">current_thresh</span><span class="p">)</span>
@@ -200,19 +172,19 @@
         <span class="sd">"""</span>
 <span class="sd">        Calculates the clipping factor(s) based on the given</span>
 <span class="sd">        parameters. A concrete subclass must implement this.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The clipping factors</span>
 <span class="sd">        """</span>
         <span class="k">pass</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        Depending on the type of clipper, returns threshold values</span>
-<span class="sd">        that may be used in different ways.</span>
+<span class="sd">        Depending on the type of clipper, returns threshold values.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        torch.Tensor</span>
-<span class="sd">            Tensor containing the threshold values</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The threshold values</span>
 <span class="sd">        """</span>
         <span class="k">pass</span>
 
@@ -222,9 +194,7 @@
 <span class="sd">        Depending on type of clipper, returns indicator as to whether</span>
 <span class="sd">        different clipping is applied to each layer in the model.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        bool</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Flag indicator as to whether different clipping is applied</span>
 <span class="sd">            to each layer in the model.</span>
 <span class="sd">        """</span>
@@ -245,12 +215,10 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flat_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        flat_value: float</span>
-<span class="sd">            Constant value that is used to normalize gradients</span>
-<span class="sd">            such that their norm equals this value before clipping.</span>
-<span class="sd">            This threshold value is used for all layers.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            flat_value: Constant value that is used to normalize gradients</span>
+<span class="sd">                such that their norm equals this value before clipping.</span>
+<span class="sd">                This threshold value is used for all layers.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flat_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">flat_value</span><span class="p">)</span>
 
@@ -263,17 +231,13 @@
 <span class="sd">        norm of clipped gradients is at most equal to</span>
 <span class="sd">        ``self.flat_value``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        norms: List[torch.Tensor]</span>
-<span class="sd">            List containing a single tensor of dimension (1,)</span>
-<span class="sd">            with the norm of all gradients.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            norms: List containing a single tensor of dimension (1,)</span>
+<span class="sd">                with the norm of all gradients.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Iterator[torch.Tensor]</span>
-<span class="sd">            Tensor containing the single threshold value to</span>
-<span class="sd">            be used for all layers.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor containing the single threshold value to be used</span>
+<span class="sd">            for all layers.</span>
 <span class="sd">        """</span>
         <span class="c1"># Expects a list of size one.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">norms</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
@@ -294,9 +258,7 @@
 <span class="sd">        the common threshold value used for clipping all</span>
 <span class="sd">        layers in the model.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        torch.Tensor</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Threshold values</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_value</span><span class="p">])</span>
@@ -307,9 +269,7 @@
 <span class="sd">        Returns indicator as to whether different clipping is applied</span>
 <span class="sd">        to each layer in the model. For this clipper, it is False.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        bool</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Flag with value False</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">False</span></div>
@@ -329,12 +289,10 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flat_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
         <span class="sd">"""</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        flat_values: List[float]</span>
-<span class="sd">            List of values that is used to normalize gradients for each</span>
-<span class="sd">            layer such that the norm equals the corresponding value</span>
-<span class="sd">            before clipping.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            flat_values: List of values that is used to normalize gradients</span>
+<span class="sd">                for each layer such that the norm equals the corresponding</span>
+<span class="sd">                value before clipping.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flat_values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">fv</span><span class="p">)</span> <span class="k">for</span> <span class="n">fv</span> <span class="ow">in</span> <span class="n">flat_values</span><span class="p">]</span>
 
@@ -346,14 +304,10 @@
 <span class="sd">        instantiating the object of</span>
 <span class="sd">        :class:`~opacus.utils.clipping.ConstantPerLayerClipper`.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        norms: List[torch.Tensor]</span>
-<span class="sd">            List containing the desired norm of gradients for each layer.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            norms: List containing the desired norm of gradients for each layer.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        List[torch.Tensor]</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            List of tensors, each containing a single value specifying the</span>
 <span class="sd">            clipping factor per layer.</span>
 <span class="sd">        """</span>
@@ -376,12 +330,12 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        Returns</span>
-<span class="sd">        ----------</span>
-<span class="sd">        torch.Tensor</span>
-<span class="sd">            List of values that is used to normalize gradients</span>
-<span class="sd">            for each layer such that the norm at most equals the</span>
-<span class="sd">            corresponding value before clipping.</span>
+<span class="sd">        Returns a tensor of values that are used to normalize gradients for</span>
+<span class="sd">        each layer such that the norm at most equals the corresponding</span>
+<span class="sd">        value before clipping.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor of thresholds</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_values</span><span class="p">)</span>
 
@@ -391,9 +345,7 @@
 <span class="sd">        Returns indicator as to whether different clipping is applied</span>
 <span class="sd">        to each layer in the model. For this clipper, it is True.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        bool</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Flag with value True</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">True</span></div>
@@ -405,8 +357,7 @@
 <span class="sd">    The clipper uses different stats to find a clipping threshold</span>
 <span class="sd">    based on the given per sample norms.</span>
 
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
+<span class="sd">    Notes:</span>
 <span class="sd">        This clipper breaks DP guarantees [use only for experimentation]</span>
 <span class="sd">    """</span>
 
@@ -418,24 +369,16 @@
         <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        flat_value: List[float]</span>
-<span class="sd">            List of float values that is used to normalize gradients</span>
-<span class="sd">            for each layer such that the norm equals the corresponding</span>
-<span class="sd">            value before clipping.</span>
-
-<span class="sd">        clip_per_layer: bool</span>
-<span class="sd">            Flag indicating if a separate desired norm value is specified</span>
-<span class="sd">            per layer or if a single value is shared for all.</span>
-
-<span class="sd">        clipping_method: ClippingMethod</span>
-<span class="sd">            Value in the enum ClippingMethod that specifies one of the</span>
-<span class="sd">            currently supported clipping types.</span>
-
-<span class="sd">        ratio: float</span>
-<span class="sd">            Value that can be used to evaluate the clipping threshold</span>
-<span class="sd">            for certain clipping types.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            flat_value: List of float values that is used to normalize gradients</span>
+<span class="sd">                for each layer such that the norm equals the corresponding</span>
+<span class="sd">                value before clipping.</span>
+<span class="sd">            clip_per_layer: Flag indicating if a separate desired norm value is</span>
+<span class="sd">                specified per layer or if a single value is shared for all.</span>
+<span class="sd">            clipping_method: Value in the enum ClippingMethod that specifies one</span>
+<span class="sd">                of the currently supported clipping types.</span>
+<span class="sd">            ratio: Value that can be used to evaluate the clipping threshold</span>
+<span class="sd">                for certain clipping types.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flat_values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">float_value</span><span class="p">)</span> <span class="k">for</span> <span class="n">float_value</span> <span class="ow">in</span> <span class="n">flat_values</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clip_per_layer</span> <span class="o">=</span> <span class="n">clip_per_layer</span>
@@ -460,14 +403,10 @@
 <span class="sd">        This is experimental and does not guarantee privacy and is not recommended</span>
 <span class="sd">        for production use.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        norms: List[torch.Tensor]</span>
-<span class="sd">            List containing the desired norm of gradients for each layer.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            norms: List containing the desired norm of gradients for each layer.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        List[torch.Tensor] or Iterator[torch.Tensor]</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Singleton list specifying a common clippng factor for all layers,</span>
 <span class="sd">            or an iterator of tensors specifying a clipping factor per layer</span>
 <span class="sd">        """</span>
@@ -497,12 +436,12 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        Returns</span>
-<span class="sd">        ----------</span>
-<span class="sd">        torch.Tensor</span>
-<span class="sd">            Tensor of values that is used to normalize gradients</span>
-<span class="sd">            for each layer such that the norm at most equals the</span>
-<span class="sd">            corresponding value before clipping.</span>
+<span class="sd">        Returns a tensor of values that are used to normalize gradients</span>
+<span class="sd">        for each layer such that the norm at most equals the corresponding</span>
+<span class="sd">        value before clipping.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor of thresholds</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thresh</span><span class="p">)</span>
 
@@ -512,9 +451,7 @@
 <span class="sd">        Returns indicator as to whether different clipping is applied</span>
 <span class="sd">        to each layer in the model.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        bool</span>
+<span class="sd">        Returns:</span>
 <span class="sd">            Value of the flag</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_per_layer</span>

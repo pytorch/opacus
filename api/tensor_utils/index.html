@@ -36,10 +36,10 @@ assuming the each batch’s dim is zero.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>named_params</strong> (<em>Iterator</em><em>[</em><em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em>, </em><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.Tensor</em></a><em>]</em><em>]</em>) – An iterator of tuples &lt;name, param&gt; with name being a string
-and param being a tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">...]</span></code> where <code class="docutils literal notranslate"><span class="pre">B</span></code>
+<li><p><strong>named_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]) – An iterator of tuples &lt;name, param&gt; with name being a
+string and param being a tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">...]</span></code> where <code class="docutils literal notranslate"><span class="pre">B</span></code>
 is the size of the batch and is the 0th dimension.</p></li>
-<li><p><strong>flat</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – A flag, when set to <cite>True</cite> returns a flat norm over all
+<li><p><strong>flat</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – A flag, when set to <cite>True</cite> returns a flat norm over all
 layers norms</p></li>
 </ul>
 </dd>
@@ -52,24 +52,26 @@ layers norms</p></li>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A list of tensor norms where length of the list is the number of layers</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>List[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.Tensor</a>]</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of tensor norms where length of the list is the number of layers</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py function">
 <dt id="opacus.utils.tensor_utils.sum_over_all_but_batch_and_last_n">
 <code class="sig-prename descclassname">opacus.utils.tensor_utils.</code><code class="sig-name descname">sum_over_all_but_batch_and_last_n</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tensor</span></em>, <em class="sig-param"><span class="n">n_dims</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/tensor_utils.html#sum_over_all_but_batch_and_last_n"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.tensor_utils.sum_over_all_but_batch_and_last_n" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the sum over all dimensions, except the first (batch dimension), and excluding the last n_dims.</p>
-<p>This function will ignore the first dimension and it will not aggregate over the last n_dims dimensions.</p>
+<dd><p>Calculates the sum over all dimensions, except the first
+(batch dimension), and excluding the last n_dims.</p>
+<p>This function will ignore the first dimension and it will
+not aggregate over the last n_dims dimensions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tensor</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><em>torch.Tensor</em></a>) – An input tensor of shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">...,</span> <span class="pre">X[n_dims-1])</span></code>.</p></li>
-<li><p><strong>n_dims</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Number of dimensions to keep.</p></li>
+<li><p><strong>tensor</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – An input tensor of shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">...,</span> <span class="pre">X[n_dims-1])</span></code>.</p></li>
+<li><p><strong>n_dims</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Number of dimensions to keep.</p></li>
 </ul>
 </dd>
 </dl>
@@ -80,11 +82,11 @@ layers norms</p></li>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A tensor of shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">...,</span> <span class="pre">X[n_dims-1])</span></code></p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.6.0a0+4392e52 ))">torch.Tensor</a></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tensor of shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">...,</span> <span class="pre">X[n_dims-1])</span></code></p>
 </dd>
 </dl>
 </dd></dl>

@@ -43,17 +43,12 @@
 <span class="sd">    function, the root module and a string representing</span>
 <span class="sd">    the name of the submodule to be replaced.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    root: torch.nn.Module</span>
-<span class="sd">        Root module whose sub module must be replaced.</span>
-
-<span class="sd">    child_name: str</span>
-<span class="sd">        Name of submodule that must be replaced.</span>
-
-<span class="sd">    converter: Callable[[torch.nn.Module], torch.nn.Module]</span>
-<span class="sd">        Function or a lambda that takes a module (the submodule to</span>
-<span class="sd">        be replaced) and returns its replacement.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        root: Root module whose sub module must be replaced.</span>
+<span class="sd">        child_name: Name of submodule that must be replaced.</span>
+<span class="sd">        converter: Function or a lambda that takes a module</span>
+<span class="sd">            (the submodule to be replaced) and returns its</span>
+<span class="sd">            replacement.</span>
 <span class="sd">    """</span>
     <span class="c1"># find the immediate parent</span>
     <span class="n">parent</span> <span class="o">=</span> <span class="n">root</span>
@@ -77,32 +72,25 @@
 <span class="sd">    This method is useful for replacing modules that are not</span>
 <span class="sd">    supported by the Privacy Engine.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    root: torch.nn.Module</span>
-<span class="sd">        Model instance, potentially with sub-modules</span>
-<span class="sd">    target_class: Type[torch.nn.Module]</span>
-<span class="sd">        Target class that needs to be replaced.</span>
-<span class="sd">    converter: Callable[[torch.nn.Module], torch.nn.Module]</span>
-<span class="sd">        Function or a lambda that converts an instance of a given</span>
-<span class="sd">        target_class to another nn.Module.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        root: Model instance, potentially with sub-modules</span>
+<span class="sd">        target_class: Target class that needs to be replaced.</span>
+<span class="sd">        converter: Function or a lambda that converts an instance</span>
+<span class="sd">            of a given target_class to another nn.Module.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    torch.nn.Module</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Module with all the target_class types replaced using the</span>
 <span class="sd">        converter. root is modified and is equal to the return value.</span>
 
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
-<span class="sd">    &gt;&gt;&gt;  from torchvision.models import resnet18</span>
-<span class="sd">    &gt;&gt;&gt;  from torch import nn</span>
-<span class="sd">    &gt;&gt;&gt;  model = resnet18()</span>
-<span class="sd">    &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
-<span class="sd">    BatchNorm2d(64, eps=1e-05, ...</span>
-<span class="sd">    &gt;&gt;&gt;  model = replace_all_modules(model, nn.BatchNorm2d, lambda _: nn.Identity())</span>
-<span class="sd">    &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
-<span class="sd">    Identity()</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt;  from torchvision.models import resnet18</span>
+<span class="sd">        &gt;&gt;&gt;  from torch import nn</span>
+<span class="sd">        &gt;&gt;&gt;  model = resnet18()</span>
+<span class="sd">        &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
+<span class="sd">        BatchNorm2d(64, eps=1e-05, ...</span>
+<span class="sd">        &gt;&gt;&gt;  model = replace_all_modules(model, nn.BatchNorm2d, lambda _: nn.Identity())</span>
+<span class="sd">        &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
+<span class="sd">        Identity()</span>
 <span class="sd">    """</span>
     <span class="c1"># base case</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">target_class</span><span class="p">):</span>
@@ -118,14 +106,10 @@
     <span class="sd">"""</span>
 <span class="sd">    Converts a BatchNorm module to the corresponding InstanceNorm module</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    module: torch.nn.modules.batchnorm._BatchNorm</span>
-<span class="sd">        BatchNorm module to be replaced</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module: BatchNorm module to be replaced</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    torch.nn.Module</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        InstanceNorm module that can replace the BatchNorm module provided</span>
 <span class="sd">    """</span>
 
@@ -145,18 +129,13 @@
 <span class="sd">    Converts a BatchNorm ``module`` to GroupNorm module.</span>
 <span class="sd">    This is a helper function.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    module: torch.nn.modules.batchnorm._BatchNorm</span>
-<span class="sd">        BatchNorm module to be replaced</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module: BatchNorm module to be replaced</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    torch.nn.Module</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        GroupNorm module that can replace the BatchNorm module provided</span>
 
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
+<span class="sd">    Notes:</span>
 <span class="sd">        A default value of 32 is chosen for the number of groups based on the</span>
 <span class="sd">        paper *Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour*</span>
 <span class="sd">        https://arxiv.org/pdf/1706.02677.pdf</span>
@@ -169,19 +148,14 @@
 <span class="sd">    Replaces all the BatchNorm submodules (e.g. :class:`torch.nn.BatchNorm1d`,</span>
 <span class="sd">    :class:`torch.nn.BatchNorm2d` etc.) in ``root`` with :class:`torch.nn.Identity`.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    root: torch.nn.Module</span>
-<span class="sd">        Module for which to replace BatchNorm submodules.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        root: Module for which to replace BatchNorm submodules.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    torch.nn.Module</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Module with all the BatchNorm sub modules replaced with</span>
 <span class="sd">        Identity. ``root`` is modified and is equal to the return value.</span>
 
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
+<span class="sd">    Notes:</span>
 <span class="sd">        Most of the times replacing a BatchNorm module with Identity</span>
 <span class="sd">        will heavily affect convergence of the model.</span>
 <span class="sd">    """</span>
@@ -200,33 +174,25 @@
 <span class="sd">    Converts all BatchNorm modules to another module</span>
 <span class="sd">    (defaults to GroupNorm) that is privacy compliant.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    model: torch.nn.Module</span>
-<span class="sd">        Module instance, potentially with sub-modules</span>
+<span class="sd">    Args:</span>
+<span class="sd">        model: Module instance, potentially with sub-modules</span>
+<span class="sd">        converter: Function or a lambda that converts an instance of a</span>
+<span class="sd">            Batchnorm to another nn.Module.</span>
 
-<span class="sd">    converter: Callable[[torch.nn.modules.batchnorm._BatchNorm], torch.nn.Module]</span>
-<span class="sd">        Function or a lambda that converts an instance of a</span>
-<span class="sd">        Batchnorm to another nn.Module. Defaults to</span>
-<span class="sd">        :meth:`~opacus.utils.module_modification._batchnorm_to_groupnorm`.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    torch.nn.Module</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Model with all the BatchNorm types replaced by another operation</span>
 <span class="sd">        by using the provided converter, defaulting to GroupNorm if one</span>
 <span class="sd">        isn't provided.</span>
 
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
-<span class="sd">    &gt;&gt;&gt;  from torchvision.models import resnet50</span>
-<span class="sd">    &gt;&gt;&gt;  from torch import nn</span>
-<span class="sd">    &gt;&gt;&gt;  model = resnet50()</span>
-<span class="sd">    &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
-<span class="sd">    BatchNorm2d module details</span>
-<span class="sd">    &gt;&gt;&gt;  model = convert_batchnorm_modules(model)</span>
-<span class="sd">    &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
-<span class="sd">    GroupNorm module details</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt;  from torchvision.models import resnet50</span>
+<span class="sd">        &gt;&gt;&gt;  from torch import nn</span>
+<span class="sd">        &gt;&gt;&gt;  model = resnet50()</span>
+<span class="sd">        &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
+<span class="sd">        BatchNorm2d module details</span>
+<span class="sd">        &gt;&gt;&gt;  model = convert_batchnorm_modules(model)</span>
+<span class="sd">        &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
+<span class="sd">        GroupNorm module details</span>
 <span class="sd">    """</span>
     <span class="c1"># pyre-fixme[6]: Expected `Type[nn.Module]` for 2nd param but got</span>
     <span class="c1">#  `Type[nn.modules.batchnorm._BatchNorm]`.</span>

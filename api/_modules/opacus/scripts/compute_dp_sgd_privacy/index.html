@@ -37,14 +37,13 @@
 <span class="sd">https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/compute_dp_sgd_privacy.py</span>
 
 
-<span class="sd">Example</span>
-<span class="sd">-------</span>
+<span class="sd">Example:</span>
 
-<span class="sd">To call this script from command line, you can enter:</span>
+<span class="sd">    To call this script from command line, you can enter:</span>
 
-<span class="sd">&gt;&gt;&gt;  python compute_dp_sgd_privacy.py --dataset-size=60000 --batch-size=256 --noise_multiplier=1.12 --epochs=60 --delta=1e-5 --a 10 20 100</span>
+<span class="sd">    &gt;&gt;&gt;  python compute_dp_sgd_privacy.py --dataset-size=60000 --batch-size=256 --noise_multiplier=1.12 --epochs=60 --delta=1e-5 --a 10 20 100</span>
 
-<span class="sd">The training process with these parameters satisfies (epsilon,delta)-DP of (2.95, 1e-5).</span>
+<span class="sd">    The training process with these parameters satisfies (epsilon,delta)-DP of (2.95, 1e-5).</span>
 <span class="sd">"""</span>
 <span class="kn">import</span> <span class="nn">argparse</span>
 <span class="kn">import</span> <span class="nn">math</span>
@@ -62,30 +61,19 @@
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
     <span class="sd">"""</span>
-<span class="sd">    Performs the DP-SGD privacy analysis based on sample rate and steps.</span>
+<span class="sd">    Computes the privacy Epsilon at a given delta via RDP accounting and</span>
+<span class="sd">    converting to an (epsilon, delta) guarantee for a target Delta.</span>
 
-<span class="sd">    Performs the DP-SGD privacy analysis and computes privacy loss epsilon</span>
-<span class="sd">    and optimal order alpha.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        sample_rate : The sample rate in SGD</span>
+<span class="sd">        noise_multiplier : The ratio of the standard deviation of the Gaussian</span>
+<span class="sd">            noise to the L2-sensitivity of the function to which the noise is added</span>
+<span class="sd">        steps : The number of steps</span>
+<span class="sd">        alphas : A list of RDP orders</span>
+<span class="sd">        delta : Target delta</span>
+<span class="sd">        verbose : If enabled, will print the results of DP-SGD analysis</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    sample_rate : float</span>
-<span class="sd">        The sample rate in SGD</span>
-<span class="sd">    noise_multiplier : float</span>
-<span class="sd">        The ratio of the standard deviation of the Gaussian noise to</span>
-<span class="sd">        the L2-sensitivity of the function to which the noise is added</span>
-<span class="sd">    steps : int</span>
-<span class="sd">        The number of steps</span>
-<span class="sd">    alphas : List[float]</span>
-<span class="sd">        A list of RDP orders</span>
-<span class="sd">    delta : float</span>
-<span class="sd">        Target delta</span>
-<span class="sd">    verbose : bool, optional</span>
-<span class="sd">        If enabled, will print the results of DP-SGD analysis; by default True</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    Tuple[float, float]</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Pair of privacy loss epsilon and optimal order alpha</span>
 <span class="sd">    """</span>
     <span class="n">rdp</span> <span class="o">=</span> <span class="n">tf_privacy</span><span class="o">.</span><span class="n">compute_rdp</span><span class="p">(</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">alphas</span><span class="p">)</span>
@@ -124,33 +112,22 @@
 <span class="sd">    Finds sample rate and number of steps based on the input parameters, and calls</span>
 <span class="sd">    DP-SGD privacy analysis to find the privacy loss epsilon and optimal order alpha.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    sample_size : int</span>
-<span class="sd">        The size of the sample (dataset)</span>
-<span class="sd">    batch_size : int</span>
-<span class="sd">        Batch size</span>
-<span class="sd">    noise_multiplier : float</span>
-<span class="sd">        The ratio of the standard deviation of the Gaussian noise to</span>
-<span class="sd">        the L2-sensitivity of the function to which the noise is added</span>
-<span class="sd">    epochs : int</span>
-<span class="sd">        Number of epochs</span>
-<span class="sd">    delta : float</span>
-<span class="sd">        Target delta.</span>
-<span class="sd">    alphas : List[float]</span>
-<span class="sd">        A list of RDP orders</span>
-<span class="sd">    verbose : bool, optional</span>
-<span class="sd">         If enabled, will print the results of DP-SGD analysis; by default True</span>
+<span class="sd">    Args:</span>
+<span class="sd">        sample_size : The size of the sample (dataset)</span>
+<span class="sd">        batch_size : Batch size</span>
+<span class="sd">        noise_multiplier : The ratio of the standard deviation of the Gaussian noise</span>
+<span class="sd">            to the L2-sensitivity of the function to which the noise is added</span>
+<span class="sd">        epochs : Number of epochs</span>
+<span class="sd">        delta : Target delta</span>
+<span class="sd">        alphas : A list of RDP orders</span>
+<span class="sd">        verbose : If enabled, will print the results of DP-SGD analysis</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    Tuple[float, float]</span>
+<span class="sd">    Returns:</span>
 <span class="sd">        Pair of privacy loss epsilon and optimal order alpha</span>
 
-<span class="sd">    Raises</span>
-<span class="sd">    ------</span>
-<span class="sd">    ValueError</span>
-<span class="sd">        When batch size is greater than sample size</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            When batch size is greater than sample size</span>
 <span class="sd">    """</span>
     <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">/</span> <span class="n">sample_size</span>
     <span class="k">if</span> <span class="n">sample_rate</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>

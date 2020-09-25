@@ -72,9 +72,9 @@ for update or to view in tensorboard.</p></li>
 where e.g. 1 means report to tensorboard any time <code class="docutils literal notranslate"><span class="pre">log</span></code> is
 called and 0.1 means report only 1 out of 10 times.</p></li>
 <li><p><strong>reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The reduction strategy used for reporting, e.g. if
-<code class="docutils literal notranslate"><span class="pre">frequency</span> <span class="pre">=</span> <span class="pre">0.1</span></code> and <code class="docutils literal notranslate"><span class="pre">reduction='avg'</span></code> then <code class="docutils literal notranslate"><span class="pre">log</span></code> averages 10 samples
-and reports to tensorboard this average once every 10 samples.
-Current valid values are ‘avg’ and ‘sample’.</p></li>
+<code class="docutils literal notranslate"><span class="pre">frequency</span> <span class="pre">=</span> <span class="pre">0.1</span></code> and <code class="docutils literal notranslate"><span class="pre">reduction='avg'</span></code> then <code class="docutils literal notranslate"><span class="pre">log</span></code> averages
+10 samples and reports to tensorboard this average once every 10
+samples. Current valid values are ‘avg’ and ‘sample’.</p></li>
 </ul>
 </dd>
 </dl>
@@ -164,10 +164,10 @@ create another unnecessarily.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>stat_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="#opacus.utils.stats.StatType" title="opacus.utils.stats.StatType"><code class="xref py py-class docutils literal notranslate"><span class="pre">StatType</span></code></a>]) – The type of the stat from <code class="docutils literal notranslate"><span class="pre">StatType</span></code>. Could be <code class="docutils literal notranslate"><span class="pre">None</span></code>
-if <code class="docutils literal notranslate"><span class="pre">name</span></code> is unique.</p></li>
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – The name of the stat. Could be <code class="docutils literal notranslate"><span class="pre">None</span></code> if there is only one
-stat for the <code class="docutils literal notranslate"><span class="pre">stat_type</span></code></p></li>
+<li><p><strong>stat_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="#opacus.utils.stats.StatType" title="opacus.utils.stats.StatType"><code class="xref py py-class docutils literal notranslate"><span class="pre">StatType</span></code></a>]) – The type of the stat from <code class="docutils literal notranslate"><span class="pre">StatType</span></code>. Could be
+<code class="docutils literal notranslate"><span class="pre">None</span></code> if <code class="docutils literal notranslate"><span class="pre">name</span></code> is unique.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – The name of the stat. Could be <code class="docutils literal notranslate"><span class="pre">None</span></code> if there is only
+one stat for the <code class="docutils literal notranslate"><span class="pre">stat_type</span></code></p></li>
 <li><p><strong>**named_values</strong> – A set of values with their names</p></li>
 </ul>
 </dd>
