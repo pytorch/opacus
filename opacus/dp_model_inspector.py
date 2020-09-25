@@ -18,18 +18,17 @@ class IncompatibleModuleException(Exception):
 
 class DPModelInspector:
     r"""
-    Class to validate if a given module meets the requirements for attaching ``PrivacyEngine``.
+    Class to validate if a given module meets the requirements for attaching
+     ``PrivacyEngine``.
 
     Active checks are listed in the ``DPModelInspector.inspectors`` attribute.
     """
 
     def __init__(self, should_throw: bool = True):
         r"""
-        Parameters
-        ----------
-        should_throw: bool, optional
-           Whether the inspector should throw an exception or return False in case of
-           validation error
+        Args:
+            should_throw: Whether the inspector should throw an exception or
+                return False in case of validation error
         """
         self.should_throw = should_throw
 
@@ -74,31 +73,28 @@ class DPModelInspector:
         Runs the validation on the model and all its submodules.
 
 
-        Validation comprises a series of individual :class:`ModelInspectors <opacus.utils.module_inspection.ModelInspector>`,
-        each checking one predicate.
-        Depending on ``should_throw`` flag in the constructor, will either return
-        False or throw :class:`~opacus.dp_model_inspector.IncompatibleModuleException` in case of validation failure.
+        Validation comprises a series of individual
+        :class:`ModelInspectors <opacus.utils.module_inspection.ModelInspector>`,
+        each checking one predicate. Depending on ``should_throw`` flag in
+        the constructor, will either return False or throw
+        :class:`~opacus.dp_model_inspector.IncompatibleModuleException` in case of
+        validation failure.
 
-        Note, that this method is called within :meth:`opacus.privacy_engine.PrivacyEngine.attach`.
+        Notes:
+            This method is called in :meth:`opacus.privacy_engine.PrivacyEngine.attach`.
 
-        Parameters
-        ----------
-            model: torch.nn.Module
-                The model to validate.
+        Args:
+            model: The model to validate.
 
-        Returns
-        ----------
-        bool
+        Returns:
             True if successful. False if validation fails and ``should_throw == False``
 
-        Raises
-        ------
-        IncompatibleModuleException
-            If the validation fails and ``should_throw == True``. Exception message will
-            contain the details of validation failure reason.
+        Raises:
+            IncompatibleModuleException
+                If the validation fails and ``should_throw == True``. Exception message will
+                contain the details of validation failure reason.
 
-        Example
-        -------
+        Example:
             >>> inspector = DPModelInspector()
             >>> valid_model = nn.Linear(16, 32)
             >>> is_valid = inspector.validate(valid_model)

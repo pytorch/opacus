@@ -5,13 +5,12 @@ r"""
 
 This module provides functions to capture per-sample gradients by using hooks.
 
-Notes
------
-The ``register_backward_hook()`` function has a known issue being tracked at
-https://github.com/pytorch/pytorch/issues/598. However, it is the only known
-way of implementing this as of now (your suggestions and contributions are
-very welcome). The behaviour has been verified to be correct for the layers
-currently supported by opacus.
+Notes:
+    The ``register_backward_hook()`` function has a known issue being tracked at
+    https://github.com/pytorch/pytorch/issues/598. However, it is the only known
+    way of implementing this as of now (your suggestions and contributions are
+    very welcome). The behaviour has been verified to be correct for the layers
+    currently supported by opacus.
 """
 
 from functools import partial
@@ -34,24 +33,18 @@ def add_hooks(model: nn.Module, loss_reduction: str = "mean", batch_first: bool 
     The hooks will
 
     1. save activations into ``param.activations`` during forward pass.
-    2. compute per-sample gradients and save them in ``param.grad_sample``
-    during backward pass.
+    2. compute per-sample gradients and save them in ``param.grad_sample`` during backward pass.
 
-    Parameters
-    ----------
-    model: nn.Module
-        Model to which hooks are added.
-    loss_reduction: str
-        Indicates if the loss reduction (for aggregating the gradients)
-        is a sum or a mean operation. Can take values ``sum`` or ``mean``.
-        Default value is ``mean``.
-    batch_first: bool
-        Flag to indicate if the input tensor to the corresponding module
-        has the first dimension represent the batch, for example of shape
-        ``[batch_size, ..., ...]``. Set to True if batch appears in first
-        dimension else set to False (``batch_first=False`` implies that the
-        batch is always in the second dimension).
-        Default value is ``True``.
+    Args:
+        model: Model to which hooks are added.
+        loss_reduction: Indicates if the loss reduction (for aggregating the
+            gradients) is a sum or a mean operation. Can take values ``sum`` or
+            ``mean``.
+        batch_first: Flag to indicate if the input tensor to the corresponding module
+            has the first dimension represent the batch, for example of shape
+            ``[batch_size, ..., ...]``. Set to True if batch appears in first
+            dimension else set to False (``batch_first=False`` implies that the
+            batch is always in the second dimension).
     """
     if hasattr(model, "autograd_grad_sample_hooks"):
         raise ValueError("Trying to add hooks twice to the same model")
@@ -83,10 +76,8 @@ def remove_hooks(model: nn.Module):
     r"""
     Removes hooks added by ``add_hooks()``.
 
-    Parameters
-    ----------
-    model: nn.Module
-        Model from which hooks are to be removed.
+    Args:
+        model: Model from which hooks are to be removed.
     """
     if not hasattr(model, "autograd_grad_sample_hooks"):
         raise ValueError("Asked to remove hooks, but no hooks found")
@@ -116,15 +107,11 @@ def enable_hooks():
 def is_supported(layer: nn.Module) -> bool:
     r"""Checks if the ``layer`` is supported by this library.
 
-    Parameters
-    ----------
-    layer: nn.Module
-        Layer for which we need to determine if the support for capturing
-        per-sample gradients is available.
+    Args:
+        layer: Layer for which we need to determine if the support for
+            capturing per-sample gradients is available.
 
-    Returns
-    -------
-    bool
+    Returns:
         Whether the ``layer`` is supported by this library.
     """
     return get_layer_type(layer) in _supported_layers_grad_samplers.keys()
@@ -136,14 +123,10 @@ def _capture_activations(
     r"""Forward hook handler captures and saves activations flowing into the
     ``layer`` in ``layer.activations`` during forward pass.
 
-    Parameters
-    ----------
-    layer: nn.Module
-        Layer to capture the activations in.
-    inputs: List[torch.Tensor]
-        Inputs to the ``layer``.
-    outputs: List[torch.Tensor]
-        Outputs of the ``layer``.
+    Args:
+        layer: Layer to capture the activations in.
+        inputs: Inputs to the ``layer``.
+        outputs: Outputs of the ``layer``.
     """
     if _hooks_disabled:
         return
@@ -164,25 +147,19 @@ def _capture_backprops(
     r"""Backward hook handler captures backpropagated gradients during
     backward pass, and computes and stores per-sample gradients.
 
-    Parameters
-    ----------
-    layer: nn.Module
-        Layer to capture gradients in.
-    inputs: List[torch.Tensor]
-        Gradients of the tensor on which ``.backward()`` is called with respect
-        to the inputs to the ``layer``.
-    outputs: List[torch.Tensor]
-        Gradients of the tensor on which ``.backward()`` is called with respect
-        to the outputs of the ``layer``.
-    loss_reduction: str
-        Indicates if the loss reduction (for aggregating the gradients)
-        is a sum or a mean operation. Can take values ``sum`` or ``mean``.
-    batch_first: bool
-        Flag to indicate if the input tensor to the corresponding module
-        has the first dimension represent the batch, for example of shape
-        ``[batch_size, ..., ...]``. Set to True if batch appears in first
-        dimension else set to False (``batch_first=False`` implies that the
-        batch is always in the second dimension).
+    Args:
+        layer: Layer to capture gradients in.
+        inputs: Gradients of the tensor on which ``.backward()`` is called with
+            respect to the inputs to the ``layer``.
+        outputs: Gradients of the tensor on which ``.backward()`` is called with
+            respect to the outputs of the ``layer``.
+        loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+            is a sum or a mean operation. Can take values ``sum`` or ``mean``.
+        batch_first: Flag to indicate if the input tensor to the corresponding module
+            has the first dimension represent the batch, for example of shape
+            ``[batch_size, ..., ...]``. Set to True if batch appears in first
+            dimension else set to False (``batch_first=False`` implies that the
+            batch is always in the second dimension).
     """
 
     if _hooks_disabled:
@@ -198,21 +175,17 @@ def _compute_grad_sample(
     r"""Computes per-sample gradients with respect to the parameters of the
     ``layer`` (if supported), and saves them in ``param.grad_sample``.
 
-    Parameters
-    ----------
-    layer: nn.Module
-        Layer to capture per-sample gradients in.
-    backprops: torch.Tensor
-        Back propagated gradients captured by the backward hook.
-    loss_reduction: str
-        Indicates if the loss reduction (for aggregating the gradients)
-        is a sum or a mean operation. Can take values ``sum`` or ``mean``.
-    batch_first: bool
-        Flag to indicate if the input tensor to the corresponding module
-        has the first dimension represent the batch, for example of shape
-        ``[batch_size, ..., ...]``. Set to True if batch appears in first
-        dimension else set to False (``batch_first=False`` implies that the
-        batch is always in the second dimension).
+    Args:
+        layer: Layer to capture per-sample gradients in.
+        backprops: Back propagated gradients captured by the backward hook.
+        loss_reduction: Indicates if the loss reduction (for aggregating the
+            gradients) is a sum or a mean operation. Can take values ``sum``
+            or ``mean``.
+        batch_first: Flag to indicate if the input tensor to the corresponding
+            module has the first dimension represent the batch, for example of
+            shape ``[batch_size, ..., ...]``. Set to True if batch appears in
+            first dimension else set to False (``batch_first=False`` implies
+            that the batch is always in the second dimension).
     """
     layer_type = get_layer_type(layer)
     if (

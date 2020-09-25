@@ -14,13 +14,11 @@ Per-sample gradient clipping has to be achieved under the following constraints:
 to be clipped so that if they were to be put in a single vector together. If ``C`` is the clipping
 threshold, this ensures the total norm will be at most ``C``.
 
-Example
--------
+Example:
+    >>> T = torch.cat([p.grad_sample.flatten() for p in model.parameters()])
 
->>> T = torch.cat([p.grad_sample.flatten() for p in model.parameters()])
-
-``T`` will have shape ``[B, N_TOTAL_PARAMS]``. The total L2 norm of each row of ``T``
-cannot be greater than ``C``.
+    ``T`` will have shape ``[B, N_TOTAL_PARAMS]``. The total L2 norm of each row of ``T``
+    cannot be greater than ``C``.
 
 2. This clipping should not backpropagate. This means that clipping in the layer ``i+1``
 should not affect computing the gradient of layer ``i``. To make sure this is followed
@@ -28,8 +26,9 @@ we will first compute the grad_sample of all layers **without clipping**. In a s
 go back to the per-sample gradients, clip them, and accumulate them in ``.grad``
 (thus replacing the "real" gradients).
 
-Note: there is only a single .backward() call as the second pass just works on top of
-the stored grad_sample.
+Notes:
+    There is only a single .backward() call as the second pass just works on top of
+    the stored grad_sample.
 """
 
 from typing import Callable, Iterator, Optional, Tuple
@@ -59,26 +58,23 @@ class PerSampleGradientClipper:
         Attaches to a module, and clips all grad_sample in the backward
         pass. It then puts them in each parameter's ``.grad``.
 
-        Parameters
-        -----------
-        module: nn.Module
-            Module to which backward hooks are added and for which per-sample gradients are clipped
+        Args:
+            module: Module to which backward hooks are added and for which per-sample
+                gradients are clipped
 
-        norm_clipper: opacus.utils.clipping.NormClipper
-            A norm clipper object of class :class:`~opacus.utils.clipping.NormClipper`
-            which encapsulated different clipping strategies
-            (such as flat clipping for the entire model, or per-layer clipping)
+            norm_clipper: A norm clipper object of class
+                :class:`~opacus.utils.clipping.NormClipper` which encapsulated different
+                clipping strategies (such as flat clipping for the entire model, or
+                per-layer clipping)
 
-        batch_first: bool
-            Flag to indicate if the input tensor to the corresponding module
-            has the first dimension represent the batch, for example of shape
-            [batch_size, ..., ...]. Set to True if batch appears in first
-            dimension else set to False (batch_first=False implies that the batch
-            is always in the second dimension).
+            batch_first: Flag to indicate if the input tensor to the corresponding module
+                has the first dimension represent the batch, for example of shape
+                [batch_size, ..., ...]. Set to True if batch appears in first
+                dimension else set to False (batch_first=False implies that the batch
+                is always in the second dimension).
 
-        loss_reduction: str
-            Indicates if the loss reduction (for aggregating the gradients)
-            is a sum or a mean operation. Can take values ``sum`` or ``mean``
+            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+                is a sum or a mean operation. Can take values ``sum`` or ``mean``
         """
         self.module = module
         autograd_grad_sample.add_hooks(
@@ -98,10 +94,8 @@ class PerSampleGradientClipper:
         Sets the function to be called after clipping to the input callable parameter
         (for example clipping stats collection)
 
-        Parameters
-        -----------
-        on_batch_clip_func: Callable[..., None]
-            Function to be called after clipping
+        Args:
+            on_batch_clip_func: Function to be called after clipping
         """
         self.on_batch_clip_func = on_batch_clip_func
 
@@ -137,9 +131,7 @@ class PerSampleGradientClipper:
         list of layer thresholds (for those providing gradient norms)
         as well as the aggregate batch size
 
-        Returns
-        --------
-        Tuple[torch.Tensor, int]
+        Returns:
             Aggregated state (layer thresholds and batch size)
         """
         return self._aggr_thresh, self._aggr_batch_size
@@ -151,10 +143,8 @@ class PerSampleGradientClipper:
         (:class:``~opacus.privacy_engine.PrivacyEngine``). This function is called before
         the optimizer ``step()``.
 
-        Returns
-        --------
-        Tuple[torch.Tensor, int]
-            Returns the maximum gradient norm per batch (repeated in batch dimension
+        Returns:
+            The maximum gradient norm per batch (repeated in batch dimension
             as a tensor) and the batch size
         """
 
@@ -239,9 +229,7 @@ class PerSampleGradientClipper:
         r"""
         Helper function to get parameter with their names that require grad
 
-        Returns
-        --------
-        Iterator[Tuple[str, torch.nn.Parameter]]
+        Returns:
             Iterator over parameters with their names
         """
         return ((n, p) for n, p in self.module.named_parameters() if p.requires_grad)
@@ -252,8 +240,6 @@ class PerSampleGradientClipper:
         that required grad.
 
         Returns:
-        --------
-        Iterator[Tuple[str, torch.Tensor]]
             Iterator of parameter names and per-sample gradients
         """
         return (
@@ -270,23 +256,17 @@ class PerSampleGradientClipper:
         if attribute ``loss_reduction`` is set to "mean", else it returns the input summed
         gradient tensor.
 
-        Parameters
-        -----------
-        summed_grad: torch.Tensor
-            Summed gradient tensor which might be averaged depending on loss_reduction
+        Args:
+            summed_grad: Summed gradient tensor which might be averaged depending on loss_reduction
 
-        batch_size: int
-            Batch size of gradient tensor
+            batch_size: Batch size of gradient tensor
 
-        Returns
-        --------
-        torch.Tensor
+        Returns:
             Summed gradient tensor if loss_reduction is set to sum else averaged over batch.
 
-        Raises
-        -------
-        ValueError
-            If the loss reduction is not defined to be either 'sum' or 'mean'
+        Raises:
+            ValueError
+                If the loss reduction is not defined to be either 'sum' or 'mean'
         """
         if self.loss_reduction == "mean":
             return summed_grad / batch_size
@@ -304,17 +284,13 @@ class PerSampleGradientClipper:
         Helper function to calculate a weighted sum of tensor ``param``
         along the batch dimension weighted by tensor ``batch_weight``.
 
-        Parameters
-        -----------
-        batch_weight: torch.Tensor
-            Tensor of shape ``B`` (where ``B`` is the batch size) corresponding to weights along the
-            batch dimension. Each sample in the batch has its own weight.
-        param: torch.Tensor
-            Tensor to be weighted, is of shape ``[B,...]`` where ``B`` represents the batch size.
+        Args:
+            batch_weight: Tensor of shape ``B`` (where ``B`` is the batch size) corresponding
+                to weights along the batch dimension. Each sample in the batch has its own weight.
+            param: Tensor to be weighted, is of shape ``[B,...]`` where ``B`` represents the
+                batch size.
 
-        Returns
-        --------
-        torch.Tensor
+        Returns:
             Weighted sum tensor for ``param`` along the batch dimension weighted by batch_weight.
         """
         return torch.einsum("i,i...", batch_weight, param)
@@ -334,24 +310,16 @@ class PerSampleGradientClipper:
         grants access to that function about current parameter state during the back propagation
         of each batch.
 
-        Parameters
-        -----------
-        param_name: str
-            Name of the parameter, the parameter could be accessed by
-            ``self.module.state_dict()[param_name]``. A value of ``None``
-            indicates that all parameters have been processed.
-        clipping_factor: torch.Tensor
-            Scaling factor used in gradient clipping.
-        clipping_threshold: torch.Tensor
-            Threshold used in gradient clipping.
-        per_sample_norm: torch.Tensor
-            Per-sample gradient norms for clipping
-        per_sample_grad: torch.Tensor
-            Raw per sample gradients for parameter
-        grad_before_clip: torch.Tensor
-            Aggregated gradient before clipping (``= per_sample_grad.mean()``)
-        grad_after_clip: torch.Tensor
-            Aggregated gradients after clipping
+        Args:
+            param_name: Name of the parameter, the parameter could be accessed by
+                ``self.module.state_dict()[param_name]``. A value of ``None``
+                indicates that all parameters have been processed.
+            clipping_factor: Scaling factor used in gradient clipping.
+            clipping_threshold: Threshold used in gradient clipping.
+            per_sample_norm: Per-sample gradient norms for clipping
+            per_sample_grad: Raw per sample gradients for parameter
+            grad_before_clip: Aggregated gradient before clipping (``= per_sample_grad.mean()``)
+            grad_after_clip: Aggregated gradients after clipping
         """
         if self.on_batch_clip_func:
             self.on_batch_clip_func(

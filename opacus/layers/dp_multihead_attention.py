@@ -17,14 +17,11 @@ class SequenceBias(nn.Module):
     the embedding dimension, the output will have a shape
     ``(L+1, N, E)``.
 
-    Attributes
-    ------------
-    bias: :class:`torch.nn.parameter.Parameter`
-        the learnable bias of the module of shape ``(E)``,
-        where ``E`` is the embedding dimension.
+    Attributes:
+        bias (:class:`torch.nn.parameter.Parameter`): the learnable bias of
+            the module of shape ``(E)``, where ``E`` is the embedding dimension.
 
-    Example
-    -------
+    Example:
         >>> m = SequenceBias(16)
         >>> input = torch.randn(20, 4, 16)
         >>> output = m(input)
@@ -32,12 +29,10 @@ class SequenceBias(nn.Module):
         torch.Size([21, 4, 16])
     """
 
-    def __init__(self, embed_dim):
+    def __init__(self, embed_dim: int):
         r"""
-        Parameters
-        ----------
-        embed_dim: int
-            Embedding dimension
+        Args:
+            embed_dim: Embedding dimension
         """
         super(SequenceBias, self).__init__()
 
@@ -113,11 +108,9 @@ class DPMultiheadAttention(nn.Module):
         Supports loading from both :class:`torch.nn.MultiheadAttention` and
         :class:`opacus.layers.dp_multihead_attention.DPMultiheadAttention`.
 
-        Parameters
-        ----------
-        state_dict
-            Please refer to
-            https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html.
+        Args:
+            state_dict: Please refer to
+                https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html.
         """
         if "in_proj_weight" in state_dict:
             qweight, kweight, vweight = state_dict["in_proj_weight"].chunk(3, dim=0)

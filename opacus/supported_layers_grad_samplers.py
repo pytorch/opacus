@@ -6,10 +6,9 @@ This module is a collection of grad samplers - methods to calculate per sample g
 for a layer given two tensors: activations (module inputs) and
 backpropagations (gradient values propagated from downstream layers).
 
-Attributes
-----------
-_supported_layers_grad_samplers: Dict[str, Callable]
-    Mapping from layer name to corresponding grad sampler
+Attributes:
+    _supported_layers_grad_samplers (Dict[str, Callable]): Mapping
+        from layer name to corresponding grad sampler
 """
 
 from typing import Union
@@ -31,14 +30,12 @@ def _create_or_extend_grad_sample(
     Creates a ``grad_sample`` attribute in the given parameter, or appends to it
     if the ``grad_sample`` attribute already exists.
 
-    Parameters
-    ----------
-    param : torch.Tensor
-        Parameter to which ``grad_sample`` will be added
-    grad_sample : torch.Tensor
-        Per sample gradients tensor. Must be of the same shape as ``param`` with extra batch dimension
-    batch_dim : int
-        Position of the batch dimension in the shape of ``grad_sample``
+    Args:
+        param: Parameter to which ``grad_sample`` will be added
+        grad_sample: Per-sample gradients tensor. Must be of the same
+            shape as ``param`` with extra batch dimension
+        batch_dim: Position of the batch dimension in the shape of
+            ``grad_sample``
     """
 
     if hasattr(param, "grad_sample"):
@@ -54,16 +51,11 @@ def _compute_linear_grad_sample(
     """
     Computes per sample gradients for ``nn.Linear`` layer
 
-    Parameters
-    ----------
-    layer : nn.Linear
-        Layer
-    A : torch.Tensor
-        Activations
-    B : torch.Tensor
-        Backpropagations
-    batch_dim : int, optional
-        Batch dimension position
+    Args:
+        layer: Layer
+        A: Activations
+        B: Backpropagations
+        batch_dim: Batch dimension position
     """
     gs = torch.einsum("n...i,n...j->n...ij", B, A)
     _create_or_extend_grad_sample(
@@ -84,16 +76,11 @@ def _compute_sequence_bias_grad_sample(
     """
     Computes per sample gradients for ``SequenceBias`` layer
 
-    Parameters
-    ----------
-    layer : opacus.layers.dp_multihead_attention.SequenceBias
-        Layer
-    A : torch.Tensor
-        Activations
-    B : torch.Tensor
-        Backpropagations
-    batch_dim : int, optional
-        Batch dimension position
+    Args:
+        layer: Layer
+        A: Activations
+        B: Backpropagations
+        batch_dim: Batch dimension position
     """
     _create_or_extend_grad_sample(layer.bias, B[:, -1], batch_dim)
 
@@ -116,16 +103,11 @@ def _compute_norm_grad_sample(
     """
     Computes per sample gradients for normalization layers
 
-    Parameters
-    ----------
-    layer : Union[nn.LayerNorm, nn.GroupNorm, nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d]
-        Layer
-    A : torch.Tensor
-        Activations
-    B : torch.Tensor
-        Backpropagations
-    batch_dim : int, optional
-        Batch dimension position
+    Args:
+        layer: Layer
+        A: Activations
+        B: Backpropagations
+        batch_dim: Batch dimension position
     """
     layer_type = get_layer_type(layer)
     if layer_type == "LayerNorm":
@@ -168,16 +150,11 @@ def _compute_dplstm_grad_sample(
     """
     Computes per sample gradients for ``DPLSTM`` layer
 
-    Parameters
-    ----------
-    layer : opacus.layers.dp_lstm.DPLSTM
-        Layer
-    A : torch.Tensor
-        Activations
-    B : torch.Tensor
-        Backpropagations
-    batch_dim : int, optional
-        Batch dimension position
+    Args:
+        layer: Layer
+        A: Activations
+        B: Backpropagations
+        batch_dim: Batch dimension position
     """
     lstm_params = [
         layer.weight_ih_l0,
@@ -239,16 +216,11 @@ def _compute_conv_grad_sample(
     """
     Computes per sample gradients for convolutional layers
 
-    Parameters
-    ----------
-    layer : Union[nn.Conv1d, nn.Conv2d]
-        Layer
-    A : torch.Tensor
-        Activations
-    B : torch.Tensor
-        Backpropagations
-    batch_dim : int, optional
-        Batch dimension position
+    Args:
+        layer: Layer
+        A: Activations
+        B: Backpropagations
+        batch_dim: Batch dimension position
     """
     n = A.shape[0]
     layer_type = get_layer_type(layer)
@@ -295,16 +267,11 @@ def _compute_embedding_grad_sample(
     """
     Computes per sample gradients for ``nn.Embedding`` layer
 
-    Parameters
-    ----------
-    layer : nn.Embedding
-        Layer
-    A : torch.Tensor
-        Activations
-    B : torch.Tensor
-        Backpropagations
-    batch_dim : int, optional
-        Batch dimension position
+    Args:
+        layer: Layer
+        A: Activations
+        B: Backpropagations
+        batch_dim: Batch dimension position
     """
     one_hot = F.one_hot(A, num_classes=layer.weight.shape[0])
     gs = torch.einsum("n...i,n...j->n...ij", one_hot, B)

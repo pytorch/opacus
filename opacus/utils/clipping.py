@@ -24,19 +24,13 @@ def _mean_plus_r_var(data: torch.Tensor, ratio: float = 0, **kwargs) -> float:
     and returns the larger of this value and the smallest element in
     the tensor (can happen when ratio is negative).
 
-    Parameters
-    ----------
-    data: torch.Tensor
-        Pytorch tensor containing the data on which the mean and stdv.
-        is evaluated.
+    Args:
+        data: Pytorch tensor containing the data on which the mean and stdv.
+            is evaluated.
+        ratio: Value of the scaling factor in the value calculated by the
+            function.
 
-    ratio: float, optional
-        Value of the scaling factor in the value calculated by the
-        function.
-
-    Returns
-    -------
-    float
+    Returns:
         The result of the function.
 
     """
@@ -47,19 +41,13 @@ def _pvalue(data: torch.Tensor, ratio: float = 0.25, **kwargs) -> torch.Tensor:
     """
     Finds the pth largest value in the tensor, where p = ratio x len(data).
 
-    Parameters
-    ----------
-    data: torch.Tensor
-        Pytorch tensor against which the function is evaluated.
+    Args:
+        data: Pytorch tensor against which the function is evaluated.
+        ratio: Value of the scaling factor in the value calculated by
+            the function.
 
-    ratio: float, optional
-        Value of the scaling factor in the value calculated by
-        the function.
-
-    Returns
-    -------
-    torch.Tensor
-        Tensor of dimension (1,) with the result of the function.
+    Returns:
+        Tensor of dimension ``(1,)`` with the result of the function.
     """
     cut = max(1, int(data.numel() * (1 - ratio)))
     return torch.kthvalue(data, cut)[0].item()
@@ -69,17 +57,11 @@ def _static(data: torch.Tensor, current_thresh: float, **kwargs) -> float:
     """
     Passes through the specified input ``current_threshold``.
 
-    Parameters
-    ----------
-    data: torch.Tensor
-        Pytorch tensor containing the data.
+    Args:
+        data: Pytorch tensor containing the data.
+        current_thresh: The threshold value.
 
-    current_thresh: float
-        The threshold value.
-
-    Returns
-    -------
-    float
+    Returns:
         The threshold value.
     """
     return current_thresh
@@ -95,14 +77,10 @@ def _otsu(data: torch.Tensor, **kwargs) -> float:
     differences. The input data is shaped into a 2D image for the
     purpose of evaluating the threshold value.
 
-    Parameters
-    ----------
-    data: torch.Tensor
-        Pytorch tensor containing the data.
+    Args:
+        data: Pytorch tensor containing the data.
 
-    Returns
-    -------
-    float
+    Returns:
         Threshold value determined via Otsu's method.
     """
     h = 2 ** int(1 + math.log2(data.shape[0]) / 2)
@@ -140,23 +118,17 @@ def _calculate_thresh_value(
     based on mean and variance of the norms, and threshold calculated
     based on percentile values of the norms.
 
-    Parameters
-    ----------
-    data: torch.Tensor
-        1-D tensor.
-    current_thresh: float
-        Value of the current threshold.
-    clipping_method: ClippingMethod
-        Enum value defining the clipping strategy. Current options are STATIC,
-        PVALUE, MEAN, and OTSU.
-    ratio: float
-        Value that has different meaning for differnet strategies, it is the
-        percentile parameter for PVALUE, and a multiplier for standard deviation
-        for MEAN. It has no significance for OTSU and STATIC.
+    Args:
+        data: Pytorch tensor containing the data
+        current_thresh: Value of the current threshold.
+        clipping_method: Enum value defining the clipping strategy. Current
+            options are STATIC, PVALUE, MEAN, and OTSU.
+        ratio: Value that has different meaning for differnet strategies, it
+            is the percentile parameter for PVALUE, and a multiplier for
+            standard deviation for MEAN. It has no significance for OTSU and
+            STATIC.
 
-    Returns
-    -------
-    float
+    Returns:
         Clipping threshold value
     """
     return _thresh_[clipping_mehod](data, ratio=ratio, current_thresh=current_thresh)
@@ -173,19 +145,19 @@ class NormClipper(ABC):
         """
         Calculates the clipping factor(s) based on the given
         parameters. A concrete subclass must implement this.
+
+        Returns:
+            The clipping factors
         """
         pass
 
     @property
     def thresholds(self) -> torch.Tensor:
         """
-        Depending on the type of clipper, returns threshold values
-        that may be used in different ways.
+        Depending on the type of clipper, returns threshold values.
 
-        Returns
-        -------
-        torch.Tensor
-            Tensor containing the threshold values
+        Returns:
+            The threshold values
         """
         pass
 
@@ -195,9 +167,7 @@ class NormClipper(ABC):
         Depending on type of clipper, returns indicator as to whether
         different clipping is applied to each layer in the model.
 
-        Returns
-        -------
-        bool
+        Returns:
             Flag indicator as to whether different clipping is applied
             to each layer in the model.
         """
@@ -218,12 +188,10 @@ class ConstantFlatClipper(NormClipper):
 
     def __init__(self, flat_value: float):
         """
-        Parameters
-        ----------
-        flat_value: float
-            Constant value that is used to normalize gradients
-            such that their norm equals this value before clipping.
-            This threshold value is used for all layers.
+        Args:
+            flat_value: Constant value that is used to normalize gradients
+                such that their norm equals this value before clipping.
+                This threshold value is used for all layers.
         """
         self.flat_value = float(flat_value)
 
@@ -236,17 +204,13 @@ class ConstantFlatClipper(NormClipper):
         norm of clipped gradients is at most equal to
         ``self.flat_value``.
 
-        Parameters
-        ----------
-        norms: List[torch.Tensor]
-            List containing a single tensor of dimension (1,)
-            with the norm of all gradients.
+        Args:
+            norms: List containing a single tensor of dimension (1,)
+                with the norm of all gradients.
 
-        Returns
-        -------
-        Iterator[torch.Tensor]
-            Tensor containing the single threshold value to
-            be used for all layers.
+        Returns:
+            Tensor containing the single threshold value to be used
+            for all layers.
         """
         # Expects a list of size one.
         if len(norms) != 1:
@@ -267,9 +231,7 @@ class ConstantFlatClipper(NormClipper):
         the common threshold value used for clipping all
         layers in the model.
 
-        Returns
-        -------
-        torch.Tensor
+        Returns:
             Threshold values
         """
         return torch.tensor([self.flat_value])
@@ -280,9 +242,7 @@ class ConstantFlatClipper(NormClipper):
         Returns indicator as to whether different clipping is applied
         to each layer in the model. For this clipper, it is False.
 
-        Returns
-        -------
-        bool
+        Returns:
             Flag with value False
         """
         return False
@@ -302,12 +262,10 @@ class ConstantPerLayerClipper(NormClipper):
 
     def __init__(self, flat_values: List[float]):
         """
-        Parameters
-        ----------
-        flat_values: List[float]
-            List of values that is used to normalize gradients for each
-            layer such that the norm equals the corresponding value
-            before clipping.
+        Args:
+            flat_values: List of values that is used to normalize gradients
+                for each layer such that the norm equals the corresponding
+                value before clipping.
         """
         self.flat_values = [float(fv) for fv in flat_values]
 
@@ -319,14 +277,10 @@ class ConstantPerLayerClipper(NormClipper):
         instantiating the object of
         :class:`~opacus.utils.clipping.ConstantPerLayerClipper`.
 
-        Parameters
-        ----------
-        norms: List[torch.Tensor]
-            List containing the desired norm of gradients for each layer.
+        Args:
+            norms: List containing the desired norm of gradients for each layer.
 
-        Returns
-        -------
-        List[torch.Tensor]
+        Returns:
             List of tensors, each containing a single value specifying the
             clipping factor per layer.
         """
@@ -349,12 +303,12 @@ class ConstantPerLayerClipper(NormClipper):
     @property
     def thresholds(self) -> torch.Tensor:
         """
-        Returns
-        ----------
-        torch.Tensor
-            List of values that is used to normalize gradients
-            for each layer such that the norm at most equals the
-            corresponding value before clipping.
+        Returns a tensor of values that are used to normalize gradients for
+        each layer such that the norm at most equals the corresponding
+        value before clipping.
+
+        Returns:
+            Tensor of thresholds
         """
         return torch.tensor(self.flat_values)
 
@@ -364,9 +318,7 @@ class ConstantPerLayerClipper(NormClipper):
         Returns indicator as to whether different clipping is applied
         to each layer in the model. For this clipper, it is True.
 
-        Returns
-        -------
-        bool
+        Returns:
             Flag with value True
         """
         return True
@@ -378,8 +330,7 @@ class _Dynamic_Clipper_(NormClipper):
     The clipper uses different stats to find a clipping threshold
     based on the given per sample norms.
 
-    Notes
-    -----
+    Notes:
         This clipper breaks DP guarantees [use only for experimentation]
     """
 
@@ -391,24 +342,16 @@ class _Dynamic_Clipper_(NormClipper):
         ratio: float = 0.0,
     ):
         """
-        Parameters
-        ----------
-        flat_value: List[float]
-            List of float values that is used to normalize gradients
-            for each layer such that the norm equals the corresponding
-            value before clipping.
-
-        clip_per_layer: bool
-            Flag indicating if a separate desired norm value is specified
-            per layer or if a single value is shared for all.
-
-        clipping_method: ClippingMethod
-            Value in the enum ClippingMethod that specifies one of the
-            currently supported clipping types.
-
-        ratio: float
-            Value that can be used to evaluate the clipping threshold
-            for certain clipping types.
+        Args:
+            flat_value: List of float values that is used to normalize gradients
+                for each layer such that the norm equals the corresponding
+                value before clipping.
+            clip_per_layer: Flag indicating if a separate desired norm value is
+                specified per layer or if a single value is shared for all.
+            clipping_method: Value in the enum ClippingMethod that specifies one
+                of the currently supported clipping types.
+            ratio: Value that can be used to evaluate the clipping threshold
+                for certain clipping types.
         """
         self.flat_values = [float(float_value) for float_value in flat_values]
         self.clip_per_layer = clip_per_layer
@@ -433,14 +376,10 @@ class _Dynamic_Clipper_(NormClipper):
         This is experimental and does not guarantee privacy and is not recommended
         for production use.
 
-        Parameters
-        ----------
-        norms: List[torch.Tensor]
-            List containing the desired norm of gradients for each layer.
+        Args:
+            norms: List containing the desired norm of gradients for each layer.
 
-        Returns
-        -------
-        List[torch.Tensor] or Iterator[torch.Tensor]
+        Returns:
             Singleton list specifying a common clippng factor for all layers,
             or an iterator of tensors specifying a clipping factor per layer
         """
@@ -470,12 +409,12 @@ class _Dynamic_Clipper_(NormClipper):
     @property
     def thresholds(self) -> torch.Tensor:
         """
-        Returns
-        ----------
-        torch.Tensor
-            Tensor of values that is used to normalize gradients
-            for each layer such that the norm at most equals the
-            corresponding value before clipping.
+        Returns a tensor of values that are used to normalize gradients
+        for each layer such that the norm at most equals the corresponding
+        value before clipping.
+
+        Returns:
+            Tensor of thresholds
         """
         return torch.tensor(self.thresh)
 
@@ -485,9 +424,7 @@ class _Dynamic_Clipper_(NormClipper):
         Returns indicator as to whether different clipping is applied
         to each layer in the model.
 
-        Returns
-        -------
-        bool
+        Returns:
             Value of the flag
         """
         return self.clip_per_layer

@@ -49,26 +49,25 @@ class Stat:
     as shown in the example. Other stat types need to be added to the stat
     and updated properly using ``update`` function.
 
-    Examples
-    --------
-    To get stats about clipping you can add the following line
-    to your main file. By default the samples are averaged and the average is
-    reported every ``1 / frequency`` times.
+    Examples:
+        To get stats about clipping you can add the following line
+        to your main file. By default the samples are averaged and the average is
+        reported every ``1 / frequency`` times.
 
         >>> stat = Stat(StatType.CLIPPING, 'sample_stats', frequency=0.1)
         >>> for i in range(20):
         >>>    stat.log({"val":i})
 
-    If an instance of ``tensorboard.SummaryWriter`` exists it can be used
-    for stat gathering by passing it like this:
+        If an instance of ``tensorboard.SummaryWriter`` exists it can be used
+        for stat gathering by passing it like this:
 
         >>> stats.set_global_summary_writer(tensorboard.SummaryWriter())
 
-    To add stats about test accuracy you can do:
+        To add stats about test accuracy you can do:
 
         >>> stats.add(Stat(stats.StatType.TEST, 'accuracy', frequency=0.1))
 
-    and then update the stat meter in the proper location using:
+        and then update the stat meter in the proper location using:
 
         >>> acc1_value = compute_accuracy(x, y)  # you can supply your metrics functions, and Stats later displays them
         >>> stats.update(stats.StatType.TEST, acc1=acc1_value)  # pass to Stats the result so that the result gets logged
@@ -83,22 +82,17 @@ class Stat:
         reduction: str = "avg",
     ):
         r"""
-        Parameters
-        ----------
-        stat_type:
-            Type of the statistic from ``StatType``.
-        name:
-            Name of the stat that is used to identify this ``Stat``
-            for update or to view in tensorboard.
-        frequency:
-            The frequency of stat gathering. Its value is in [0, 1],
-            where e.g. 1 means report to tensorboard any time ``log`` is
-            called and 0.1 means report only 1 out of 10 times.
-        reduction:
-            The reduction strategy used for reporting, e.g. if
-            ``frequency = 0.1`` and ``reduction='avg'`` then ``log`` averages 10 samples
-            and reports to tensorboard this average once every 10 samples.
-            Current valid values are 'avg' and 'sample'.
+        Args:
+            stat_type: Type of the statistic from ``StatType``.
+            name: Name of the stat that is used to identify this ``Stat``
+                for update or to view in tensorboard.
+            frequency: The frequency of stat gathering. Its value is in [0, 1],
+                where e.g. 1 means report to tensorboard any time ``log`` is
+                called and 0.1 means report only 1 out of 10 times.
+            reduction: The reduction strategy used for reporting, e.g. if
+                ``frequency = 0.1`` and ``reduction='avg'`` then ``log`` averages
+                10 samples and reports to tensorboard this average once every 10
+                samples. Current valid values are 'avg' and 'sample'.
         """
         self.type = stat_type
         self.name = name
@@ -121,10 +115,8 @@ class Stat:
 
         Generally not used directly (use ``update`` instead).
 
-        Parameters
-        ----------
-        named_value
-            A dictionary of metrics to log
+        Args:
+            named_value: A dictionary of metrics to log
         """
         if self.iter % self.report == 0:
             for k, v in self.named_value.items():
@@ -173,10 +165,8 @@ def add(*args: Stat):
     r"""
     Adds statistics gathering to the process.
 
-    Parameters
-    ----------
-    *args:
-        An iterable of statistics to add
+    Args:
+        *args: An iterable of statistics to add
     """
     [Stats.append(stat) for stat in args]
 
@@ -192,10 +182,8 @@ def remove(name: str):
     r"""
     Removes the Stat of name ``name`` from the global statistics gathering.
 
-    Parameters
-    ----------
-    name:
-        The name of stats to remove
+    Args:
+        name: The name of stats to remove
     """
     global Stats
     Stats = [stat for stat in Stats if stat.name != name]
@@ -205,12 +193,9 @@ def reset(stat_type: Optional[StatType] = None, name: Optional[str] = None):
     r"""
     Resets the stat with given `name` and `stat_type`
 
-    Parameters
-    ----------
-    stat_type:
-        The stat_type to reset
-    name:
-        The name of stats to reset
+    Args:
+        stat_type: The stat_type to reset
+        name: The name of stats to reset
     """
     [
         stat.reset()
@@ -228,16 +213,12 @@ def update(
     r"""
     Updates the stat(s) with the given ``name`` and ``stat_type``
 
-    Parameters
-    ----------
-        stat_type:
-            The type of the stat from ``StatType``. Could be ``None``
-            if ``name`` is unique.
-        name:
-            The name of the stat. Could be ``None`` if there is only one
-            stat for the ``stat_type``
-        **named_values:
-            A set of values with their names
+    Args:
+        stat_type: The type of the stat from ``StatType``. Could be
+            ``None`` if ``name`` is unique.
+        name: The name of the stat. Could be ``None`` if there is only
+            one stat for the ``stat_type``
+        **named_values: A set of values with their names
     """
     [
         stat.log(named_values)

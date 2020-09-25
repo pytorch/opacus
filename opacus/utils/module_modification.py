@@ -16,17 +16,12 @@ def _replace_child(
     function, the root module and a string representing
     the name of the submodule to be replaced.
 
-    Parameters
-    ----------
-    root: torch.nn.Module
-        Root module whose sub module must be replaced.
-
-    child_name: str
-        Name of submodule that must be replaced.
-
-    converter: Callable[[torch.nn.Module], torch.nn.Module]
-        Function or a lambda that takes a module (the submodule to
-        be replaced) and returns its replacement.
+    Args:
+        root: Root module whose sub module must be replaced.
+        child_name: Name of submodule that must be replaced.
+        converter: Function or a lambda that takes a module
+            (the submodule to be replaced) and returns its
+            replacement.
     """
     # find the immediate parent
     parent = root
@@ -50,32 +45,25 @@ def replace_all_modules(
     This method is useful for replacing modules that are not
     supported by the Privacy Engine.
 
-    Parameters
-    ----------
-    root: torch.nn.Module
-        Model instance, potentially with sub-modules
-    target_class: Type[torch.nn.Module]
-        Target class that needs to be replaced.
-    converter: Callable[[torch.nn.Module], torch.nn.Module]
-        Function or a lambda that converts an instance of a given
-        target_class to another nn.Module.
+    Args:
+        root: Model instance, potentially with sub-modules
+        target_class: Target class that needs to be replaced.
+        converter: Function or a lambda that converts an instance
+            of a given target_class to another nn.Module.
 
-    Returns
-    -------
-    torch.nn.Module
+    Returns:
         Module with all the target_class types replaced using the
         converter. root is modified and is equal to the return value.
 
-    Example
-    -------
-    >>>  from torchvision.models import resnet18
-    >>>  from torch import nn
-    >>>  model = resnet18()
-    >>>  print(model.layer1[0].bn1)
-    BatchNorm2d(64, eps=1e-05, ...
-    >>>  model = replace_all_modules(model, nn.BatchNorm2d, lambda _: nn.Identity())
-    >>>  print(model.layer1[0].bn1)
-    Identity()
+    Example:
+        >>>  from torchvision.models import resnet18
+        >>>  from torch import nn
+        >>>  model = resnet18()
+        >>>  print(model.layer1[0].bn1)
+        BatchNorm2d(64, eps=1e-05, ...
+        >>>  model = replace_all_modules(model, nn.BatchNorm2d, lambda _: nn.Identity())
+        >>>  print(model.layer1[0].bn1)
+        Identity()
     """
     # base case
     if isinstance(root, target_class):
@@ -91,14 +79,10 @@ def _batchnorm_to_instancenorm(module: nn.modules.batchnorm._BatchNorm) -> nn.Mo
     """
     Converts a BatchNorm module to the corresponding InstanceNorm module
 
-    Parameters
-    ----------
-    module: torch.nn.modules.batchnorm._BatchNorm
-        BatchNorm module to be replaced
+    Args:
+        module: BatchNorm module to be replaced
 
-    Returns
-    -------
-    torch.nn.Module
+    Returns:
         InstanceNorm module that can replace the BatchNorm module provided
     """
 
@@ -118,18 +102,13 @@ def _batchnorm_to_groupnorm(module: nn.modules.batchnorm._BatchNorm) -> nn.Modul
     Converts a BatchNorm ``module`` to GroupNorm module.
     This is a helper function.
 
-    Parameters
-    ----------
-    module: torch.nn.modules.batchnorm._BatchNorm
-        BatchNorm module to be replaced
+    Args:
+        module: BatchNorm module to be replaced
 
-    Returns
-    -------
-    torch.nn.Module
+    Returns:
         GroupNorm module that can replace the BatchNorm module provided
 
-    Notes
-    -----
+    Notes:
         A default value of 32 is chosen for the number of groups based on the
         paper *Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour*
         https://arxiv.org/pdf/1706.02677.pdf
@@ -142,19 +121,14 @@ def nullify_batchnorm_modules(root: nn.Module) -> nn.Module:
     Replaces all the BatchNorm submodules (e.g. :class:`torch.nn.BatchNorm1d`,
     :class:`torch.nn.BatchNorm2d` etc.) in ``root`` with :class:`torch.nn.Identity`.
 
-    Parameters
-    ----------
-    root: torch.nn.Module
-        Module for which to replace BatchNorm submodules.
+    Args:
+        root: Module for which to replace BatchNorm submodules.
 
-    Returns
-    -------
-    torch.nn.Module
+    Returns:
         Module with all the BatchNorm sub modules replaced with
         Identity. ``root`` is modified and is equal to the return value.
 
-    Notes
-    -----
+    Notes:
         Most of the times replacing a BatchNorm module with Identity
         will heavily affect convergence of the model.
     """
@@ -173,33 +147,25 @@ def convert_batchnorm_modules(
     Converts all BatchNorm modules to another module
     (defaults to GroupNorm) that is privacy compliant.
 
-    Parameters
-    ----------
-    model: torch.nn.Module
-        Module instance, potentially with sub-modules
+    Args:
+        model: Module instance, potentially with sub-modules
+        converter: Function or a lambda that converts an instance of a
+            Batchnorm to another nn.Module.
 
-    converter: Callable[[torch.nn.modules.batchnorm._BatchNorm], torch.nn.Module]
-        Function or a lambda that converts an instance of a
-        Batchnorm to another nn.Module. Defaults to
-        :meth:`~opacus.utils.module_modification._batchnorm_to_groupnorm`.
-
-    Returns
-    -------
-    torch.nn.Module
+    Returns:
         Model with all the BatchNorm types replaced by another operation
         by using the provided converter, defaulting to GroupNorm if one
         isn't provided.
 
-    Example
-    -------
-    >>>  from torchvision.models import resnet50
-    >>>  from torch import nn
-    >>>  model = resnet50()
-    >>>  print(model.layer1[0].bn1)
-    BatchNorm2d module details
-    >>>  model = convert_batchnorm_modules(model)
-    >>>  print(model.layer1[0].bn1)
-    GroupNorm module details
+    Example:
+        >>>  from torchvision.models import resnet50
+        >>>  from torch import nn
+        >>>  model = resnet50()
+        >>>  print(model.layer1[0].bn1)
+        BatchNorm2d module details
+        >>>  model = convert_batchnorm_modules(model)
+        >>>  print(model.layer1[0].bn1)
+        GroupNorm module details
     """
     # pyre-fixme[6]: Expected `Type[nn.Module]` for 2nd param but got
     #  `Type[nn.modules.batchnorm._BatchNorm]`.
