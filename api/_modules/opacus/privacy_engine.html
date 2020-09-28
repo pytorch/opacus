@@ -114,6 +114,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span> <span class="o">=</span> <span class="n">target_delta</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"PrivacyEngine received a dataset sample size of </span><span class="si">{</span><span class="n">sample_size</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"but a batch of size </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">. For correct privacy accounting "</span>
+                <span class="sa">f</span><span class="s2">"the batch size must be less than the sample size."</span>
+            <span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">random_number_generator</span> <span class="o">=</span> <span class="n">csprng</span><span class="o">.</span><span class="n">create_random_device_generator</span><span class="p">(</span>
