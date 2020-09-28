@@ -87,6 +87,13 @@ class PrivacyEngine:
         self.batch_first = batch_first
         self.target_delta = target_delta
 
+        if self.sample_rate > 1.0:
+            raise ValueError(
+                f"PrivacyEngine received a dataset sample size of {sample_size} "
+                f"but a batch of size {batch_size}. For correct privacy accounting "
+                f"the batch size must be less than the sample size."
+            )
+
         if self.secure_rng:
             self.seed = None
             self.random_number_generator = csprng.create_random_device_generator(

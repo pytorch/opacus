@@ -462,3 +462,19 @@ class PrivacyEngine_test(unittest.TestCase):
         second_run_params = (p for p in model.parameters() if p.requires_grad)
         for p0, p1 in zip(first_run_params, second_run_params):
             self.assertFalse(torch.allclose(p0, p1))
+
+    def test_sampling_rate_less_than_one(self):
+        """
+        Tests that when the sampling rate in the privacy engine is less than 1.0
+        we raise a ValueError
+        """
+        self.BATCH_SIZE = 128
+        with self.assertRaises(ValueError):
+            PrivacyEngine(
+                SampleConvNet(),
+                batch_size=self.BATCH_SIZE,
+                sample_size=self.DATA_SIZE,
+                alphas=self.ALPHAS,
+                noise_multiplier=1.0,
+                max_grad_norm=1.0,
+            )
