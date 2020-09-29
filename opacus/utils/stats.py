@@ -2,9 +2,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import warnings
+from copy import deepcopy
 from enum import IntEnum
 from typing import Any, Dict, Optional
-from copy import deepcopy
 
 
 try:
