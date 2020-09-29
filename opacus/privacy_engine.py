@@ -170,7 +170,8 @@ class PrivacyEngine:
                 self.misc_settings.get(
                     "clipping_method", clipping.ClippingMethod.STATIC
                 ),
-                self.misc_settings.get("ratio", 0.0),
+                self.misc_settings.get("clipping_ratio", 0.0),
+                self.misc_settings.get("clipping_momentum", 0.0),
             )
 
         self.clipper = PerSampleGradientClipper(

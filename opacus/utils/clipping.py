@@ -108,7 +108,7 @@ def _calculate_thresh_value(
     data: torch.Tensor,
     current_thresh: float,
     clipping_mehod: ClippingMethod = ClippingMethod.STATIC,
-    ratio: float = -1,
+    clipping_ratio: float = -1,
 ) -> float:
     """
     Calculates a clipping threshold by looking at the layer norms
@@ -123,7 +123,7 @@ def _calculate_thresh_value(
         current_thresh: Value of the current threshold.
         clipping_method: Enum value defining the clipping strategy. Current
             options are STATIC, PVALUE, MEAN, and OTSU.
-        ratio: Value that has different meaning for differnet strategies, it
+        clipping_ratio: Value that has different meaning for differnet strategies, it
             is the percentile parameter for PVALUE, and a multiplier for
             standard deviation for MEAN. It has no significance for OTSU and
             STATIC.
@@ -131,7 +131,9 @@ def _calculate_thresh_value(
     Returns:
         Clipping threshold value
     """
-    return _thresh_[clipping_mehod](data, ratio=ratio, current_thresh=current_thresh)
+    return _thresh_[clipping_mehod](
+        data, ratio=clipping_ratio, current_thresh=current_thresh
+    )
 
 
 class NormClipper(ABC):
@@ -339,7 +341,8 @@ class _Dynamic_Clipper_(NormClipper):
         flat_values: List[float],
         clip_per_layer: bool = False,
         clipping_method: ClippingMethod = ClippingMethod.STATIC,
-        ratio: float = 0.0,
+        clipping_ratio: float = 0.0,
+        clipping_momentum: float = 0.9,
     ):
         """
         Args:
@@ -350,8 +353,11 @@ class _Dynamic_Clipper_(NormClipper):
                 specified per layer or if a single value is shared for all.
             clipping_method: Value in the enum ClippingMethod that specifies one
                 of the currently supported clipping types.
-            ratio: Value that can be used to evaluate the clipping threshold
+            clipping_ratio: Value that can be used to evaluate the clipping threshold
                 for certain clipping types.
+            clipping_momentum: value defines the decaing factor of an ubiased estimator
+                 of exponential averaging of clipping thresholds, i.e. weight used to
+                 combine the threshold from the current batch and the previous one.
         """
         self.flat_values = [float(float_value) for float_value in flat_values]
         self.clip_per_layer = clip_per_layer
@@ -362,7 +368,8 @@ class _Dynamic_Clipper_(NormClipper):
                 "indicative of a proper bound."
             )
         self.clipping_method = clipping_method
-        self.ratio = ratio
+        self.clipping_ratio = clipping_ratio
+        self.clipping_momentum = clipping_momentum
         self.thresh = []
 
     def calc_clipping_factors(
@@ -405,7 +412,11 @@ class _Dynamic_Clipper_(NormClipper):
 
         for norm, current_thresh in zip(norms, current_threshs):
             thresh = _calculate_thresh_value(
-                norm, current_thresh, self.clipping_method, self.ratio
+                norm, current_thresh, self.clipping_method, self.clipping_ratio
+            )
+            thresh = float(
+                (1 - self.clipping_momentum) * thresh
+                + self.clipping_momentum * current_thresh
             )
             self.thresh.append(thresh)
             per_sample_clip_factor = thresh / (norm + 1e-6)
