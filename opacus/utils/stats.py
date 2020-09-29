@@ -4,6 +4,7 @@
 import warnings
 from enum import IntEnum
 from typing import Any, Dict, Optional
+from copy import deepcopy
 
 
 try:
@@ -109,7 +110,7 @@ class Stat:
         self.named_value = {}
         self.iter = 0
 
-    def log(self, named_value: Dict[str, Any]):
+    def log(self, named_value: Dict[str, Any], hist: bool = False):
         r"""
         Logs a metrics to tensorboard.
 
@@ -118,9 +119,12 @@ class Stat:
         Args:
             named_value: A dictionary of metrics to log
         """
+        assert not (self.reduction == "avg" and hist)
         if self.iter % self.report == 0:
             for k, v in self.named_value.items():
-                self.writer.add_scalar(
+                self.writer.add_histogram(
+                    f"{self.type.name}:{self.name}/{k}", v, self.iter
+                ) if hist else self.writer.add_scalar(
                     f"{self.type.name}:{self.name}/{k}", v, self.iter
                 )
         self._aggregate(named_value)
@@ -133,7 +137,7 @@ class Stat:
             named_value: The value to aggregate
         """
         if self.reduction == "sample":
-            self.named_values = named_value
+            self.named_value = deepcopy(named_value)
         elif self.reduction == "avg":
             for k, v in named_value.items():
                 self.named_value[k] = (
@@ -208,6 +212,7 @@ def reset(stat_type: Optional[StatType] = None, name: Optional[str] = None):
 def update(
     stat_type: Optional[StatType] = None,
     name: Optional[str] = None,
+    hist: bool = False,
     **named_values: str,
 ):
     r"""
@@ -221,7 +226,7 @@ def update(
         **named_values: A set of values with their names
     """
     [
-        stat.log(named_values)
+        stat.log(named_values, hist)
         for stat in Stats
         if (stat_type is None or stat.type == stat_type)
         and (name is None or stat.name == name)
