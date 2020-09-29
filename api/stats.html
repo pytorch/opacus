@@ -35,7 +35,7 @@ and easier interface.</p>
 differential privacy parameters, and to observe how clipping and noising affects the training process
 (loss, accuracy, etc).</p>
 <p>We have already implemented some common ones inside <code class="docutils literal notranslate"><span class="pre">opacus.utils.stat.StatType</span></code>.</p>
-<p>Internal Privacy metrics (such as <code class="docutils literal notranslate"><span class="pre">StatType.PRIVACY</span></code> and <code class="docutils literal notranslate"><span class="pre">StatType.CLIPPING</span></code>)
+<p>Internal Privacy metrics (such as <code class="docutils literal notranslate"><span class="pre">StatType.PRIVACY</span></code> and <code class="docutils literal notranslate"><span class="pre">StatType.GRAD</span></code>)
 are already added to the code and need only be activated by adding the stat
 as shown in the example. Other stat types need to be added to the stat
 and updated properly using <code class="docutils literal notranslate"><span class="pre">update</span></code> function.</p>
@@ -43,7 +43,7 @@ and updated properly using <code class="docutils literal notranslate"><span clas
 <p>To get stats about clipping you can add the following line
 to your main file. By default the samples are averaged and the average is
 reported every <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">frequency</span></code> times.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">stat</span> <span class="o">=</span> <span class="n">Stat</span><span class="p">(</span><span class="n">StatType</span><span class="o">.</span><span class="n">CLIPPING</span><span class="p">,</span> <span class="s1">'sample_stats'</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">stat</span> <span class="o">=</span> <span class="n">Stat</span><span class="p">(</span><span class="n">StatType</span><span class="o">.</span><span class="n">GRAD</span><span class="p">,</span> <span class="s1">'sample_stats'</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
 <span class="gp">&gt;&gt;&gt; </span>   <span class="n">stat</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"val"</span><span class="p">:</span><span class="n">i</span><span class="p">})</span>
 </pre></div>
@@ -80,7 +80,7 @@ samples. Current valid values are ‘avg’ and ‘sample’.</p></li>
 </dl>
 <dl class="py method">
 <dt id="opacus.utils.stats.Stat.log">
-<code class="sig-name descname">log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">named_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/stats.html#Stat.log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.stats.Stat.log" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">named_value</span></em>, <em class="sig-param"><span class="n">hist</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/stats.html#Stat.log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.stats.Stat.log" title="Permalink to this definition">¶</a></dt>
 <dd><p>Logs a metrics to tensorboard.</p>
 <p>Generally not used directly (use <code class="docutils literal notranslate"><span class="pre">update</span></code> instead).</p>
 <dl class="field-list simple">
@@ -101,7 +101,7 @@ samples. Current valid values are ‘avg’ and ‘sample’.</p></li>
 <dd><p>This enum covers all the stat types we currently support.</p>
 <ol class="arabic simple">
 <li><p>LOSS: Monitors the training loss.</p></li>
-<li><p>CLIPPING: Monitors clipping by logging the norm of the gradients across iterations</p></li>
+<li><p>Grads: Monitors stats about the gradients across iterations</p></li>
 <li><p>PRIVACY: Logs Epsilon so you can see how it evolves during training</p></li>
 <li><p>TRAIN: This is a TB namespace where you can attach training metrics</p></li>
 <li><p>TEST: Similar to TRAIN, just another TB namespace to log things under</p></li>
@@ -159,7 +159,7 @@ create another unnecessarily.</p>
 </dd></dl>
 <dl class="py function">
 <dt id="opacus.utils.stats.update">
-<code class="sig-prename descclassname">opacus.utils.stats.</code><code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stat_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">named_values</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/stats.html#update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.stats.update" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">opacus.utils.stats.</code><code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stat_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hist</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">named_values</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/stats.html#update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.stats.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Updates the stat(s) with the given <code class="docutils literal notranslate"><span class="pre">name</span></code> and <code class="docutils literal notranslate"><span class="pre">stat_type</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

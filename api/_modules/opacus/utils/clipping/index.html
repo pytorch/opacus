@@ -135,7 +135,7 @@
     <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">current_thresh</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">clipping_mehod</span><span class="p">:</span> <span class="n">ClippingMethod</span> <span class="o">=</span> <span class="n">ClippingMethod</span><span class="o">.</span><span class="n">STATIC</span><span class="p">,</span>
-    <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">clipping_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Calculates a clipping threshold by looking at the layer norms</span>
@@ -150,7 +150,7 @@
 <span class="sd">        current_thresh: Value of the current threshold.</span>
 <span class="sd">        clipping_method: Enum value defining the clipping strategy. Current</span>
 <span class="sd">            options are STATIC, PVALUE, MEAN, and OTSU.</span>
-<span class="sd">        ratio: Value that has different meaning for differnet strategies, it</span>
+<span class="sd">        clipping_ratio: Value that has different meaning for differnet strategies, it</span>
 <span class="sd">            is the percentile parameter for PVALUE, and a multiplier for</span>
 <span class="sd">            standard deviation for MEAN. It has no significance for OTSU and</span>
 <span class="sd">            STATIC.</span>
@@ -158,7 +158,9 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        Clipping threshold value</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">_thresh_</span><span class="p">[</span><span class="n">clipping_mehod</span><span class="p">](</span><span class="n">data</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="n">ratio</span><span class="p">,</span> <span class="n">current_thresh</span><span class="o">=</span><span class="n">current_thresh</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_thresh_</span><span class="p">[</span><span class="n">clipping_mehod</span><span class="p">](</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="n">clipping_ratio</span><span class="p">,</span> <span class="n">current_thresh</span><span class="o">=</span><span class="n">current_thresh</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="NormClipper"><a class="viewcode-back" href="../../../clipping.html#opacus.utils.clipping.NormClipper">[docs]</a><span class="k">class</span> <span class="nc">NormClipper</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -366,7 +368,8 @@
         <span class="n">flat_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">clip_per_layer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">clipping_method</span><span class="p">:</span> <span class="n">ClippingMethod</span> <span class="o">=</span> <span class="n">ClippingMethod</span><span class="o">.</span><span class="n">STATIC</span><span class="p">,</span>
-        <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">clipping_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">clipping_momentum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        Args:</span>
@@ -377,8 +380,11 @@
 <span class="sd">                specified per layer or if a single value is shared for all.</span>
 <span class="sd">            clipping_method: Value in the enum ClippingMethod that specifies one</span>
 <span class="sd">                of the currently supported clipping types.</span>
-<span class="sd">            ratio: Value that can be used to evaluate the clipping threshold</span>
+<span class="sd">            clipping_ratio: Value that can be used to evaluate the clipping threshold</span>
 <span class="sd">                for certain clipping types.</span>
+<span class="sd">            clipping_momentum: value defines the decaing factor of an ubiased estimator</span>
+<span class="sd">                 of exponential averaging of clipping thresholds, i.e. weight used to</span>
+<span class="sd">                 combine the threshold from the current batch and the previous one.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flat_values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">float_value</span><span class="p">)</span> <span class="k">for</span> <span class="n">float_value</span> <span class="ow">in</span> <span class="n">flat_values</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clip_per_layer</span> <span class="o">=</span> <span class="n">clip_per_layer</span>
@@ -389,7 +395,8 @@
                 <span class="s2">"indicative of a proper bound."</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipping_method</span> <span class="o">=</span> <span class="n">clipping_method</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span> <span class="o">=</span> <span class="n">ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clipping_ratio</span> <span class="o">=</span> <span class="n">clipping_ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clipping_momentum</span> <span class="o">=</span> <span class="n">clipping_momentum</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thresh</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">calc_clipping_factors</span><span class="p">(</span>
@@ -432,7 +439,11 @@
 
         <span class="k">for</span> <span class="n">norm</span><span class="p">,</span> <span class="n">current_thresh</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">norms</span><span class="p">,</span> <span class="n">current_threshs</span><span class="p">):</span>
             <span class="n">thresh</span> <span class="o">=</span> <span class="n">_calculate_thresh_value</span><span class="p">(</span>
-                <span class="n">norm</span><span class="p">,</span> <span class="n">current_thresh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipping_method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span>
+                <span class="n">norm</span><span class="p">,</span> <span class="n">current_thresh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipping_method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipping_ratio</span>
+            <span class="p">)</span>
+            <span class="n">thresh</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipping_momentum</span><span class="p">)</span> <span class="o">*</span> <span class="n">thresh</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipping_momentum</span> <span class="o">*</span> <span class="n">current_thresh</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">thresh</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thresh</span><span class="p">)</span>
             <span class="n">per_sample_clip_factor</span> <span class="o">=</span> <span class="n">thresh</span> <span class="o">/</span> <span class="p">(</span><span class="n">norm</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>

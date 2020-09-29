@@ -197,7 +197,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                     <span class="s2">"clipping_method"</span><span class="p">,</span> <span class="n">clipping</span><span class="o">.</span><span class="n">ClippingMethod</span><span class="o">.</span><span class="n">STATIC</span>
                 <span class="p">),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ratio"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clipping_ratio"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clipping_momentum"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span> <span class="o">=</span> <span class="n">PerSampleGradientClipper</span><span class="p">(</span>
