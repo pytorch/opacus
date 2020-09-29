@@ -203,11 +203,11 @@ class DocstringExamplesTest(unittest.TestCase):
         mock_summary_writer = MockSummaryWriter()
         stats.set_global_summary_writer(mock_summary_writer)
 
-        stat = stats.Stat(stats.StatType.CLIPPING, "sample_stats", frequency=0.1)
+        stat = stats.Stat(stats.StatType.GRAD, "sample_stats", frequency=0.1)
         for i in range(21):
             stat.log({"val": i})
 
-        self.assertEqual(len(mock_summary_writer.logs["CLIPPING:sample_stats/val"]), 2)
+        self.assertEqual(len(mock_summary_writer.logs["GRAD:sample_stats/val"]), 2)
 
         stats.add(stats.Stat(stats.StatType.TEST, "accuracy", frequency=1.0))
         stats.update(stats.StatType.TEST, acc1=1.0)

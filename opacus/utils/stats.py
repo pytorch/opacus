@@ -22,13 +22,13 @@ class StatType(IntEnum):
     This enum covers all the stat types we currently support.
 
     1. LOSS: Monitors the training loss.
-    2. CLIPPING: Monitors clipping by logging the norm of the gradients across iterations
+    2. Grads: Monitors stats about the gradients across iterations
     3. PRIVACY: Logs Epsilon so you can see how it evolves during training
     4. TRAIN: This is a TB namespace where you can attach training metrics
     5. TEST: Similar to TRAIN, just another TB namespace to log things under
     """
     LOSS = 1
-    CLIPPING = 2
+    GRAD = 2
     PRIVACY = 3
     TRAIN = 4
     TEST = 5
@@ -45,7 +45,7 @@ class Stat:
 
     We have already implemented some common ones inside ``opacus.utils.stat.StatType``.
 
-    Internal Privacy metrics (such as ``StatType.PRIVACY`` and ``StatType.CLIPPING``)
+    Internal Privacy metrics (such as ``StatType.PRIVACY`` and ``StatType.GRAD``)
     are already added to the code and need only be activated by adding the stat
     as shown in the example. Other stat types need to be added to the stat
     and updated properly using ``update`` function.
@@ -55,7 +55,7 @@ class Stat:
         to your main file. By default the samples are averaged and the average is
         reported every ``1 / frequency`` times.
 
-        >>> stat = Stat(StatType.CLIPPING, 'sample_stats', frequency=0.1)
+        >>> stat = Stat(StatType.GRAD, 'sample_stats', frequency=0.1)
         >>> for i in range(20):
         >>>    stat.log({"val":i})
 
