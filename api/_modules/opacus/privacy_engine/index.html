@@ -205,6 +205,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="n">norm_clipper</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span>
         <span class="p">)</span>
 
+        <span class="k">def</span> <span class="nf">dp_zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">original_zero_grad</span><span class="p">()</span>
+
         <span class="k">def</span> <span class="nf">dp_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">original_step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
@@ -213,6 +217,9 @@
         <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="bp">self</span>  <span class="c1"># pyre-ignore</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">original_step</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span>  <span class="c1"># pyre-ignore</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>  <span class="c1"># pyre-ignore</span>
+
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">original_zero_grad</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span>  <span class="c1"># pyre-ignore</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_zero_grad</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>  <span class="c1"># pyre-ignore</span>
 
         <span class="k">def</span> <span class="nf">virtual_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span>
@@ -252,6 +259,22 @@
             <span class="n">target_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span>
         <span class="n">rdp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_renyi_divergence</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span>
         <span class="k">return</span> <span class="n">tf_privacy</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">,</span> <span class="n">rdp</span><span class="p">,</span> <span class="n">target_delta</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PrivacyEngine.zero_grad"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.zero_grad">[docs]</a>    <span class="k">def</span> <span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Resets clippers status.</span>
+
+<span class="sd">        Clipper keeps internal gradient per sample in the batch in each</span>
+<span class="sd">        ``forward`` call of the module, they need to be cleaned before the</span>
+<span class="sd">        next round.</span>
+
+<span class="sd">        If these variables are not cleaned the per sample gradients keep</span>
+<span class="sd">        being concatenated accross batches. If accumulating gradients</span>
+<span class="sd">        is intented behavious, e.g. simulating a large batch, prefer</span>
+<span class="sd">        using ``virtual_step()`` function.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="PrivacyEngine.step"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>

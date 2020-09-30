@@ -131,6 +131,15 @@ as a tensor) and the batch size</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.zero_grad">
+<code class="sig-name descname">zero_grad</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.zero_grad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.zero_grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the added attributes, <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> and <code class="docutils literal notranslate"><span class="pre">summed_grad</span></code>.</p>
+<p>The two mentioned attributes are
+automatically deleted when <code class="docutils literal notranslate"><span class="pre">pre_step</span></code> or
+<code class="docutils literal notranslate"><span class="pre">clip_and_accumulate</span></code> are properly called. This is a safety measure
+to avoid further issues if regular use has not been followed.</p>
+</dd></dl>
 </dd></dl>
 </div>
 </div>

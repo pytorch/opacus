@@ -197,6 +197,18 @@ for an effective batch of size <code class="docutils literal notranslate"><span 
 <p>The advantage here is that this is memory-efficient: it discards the per-sample
 gradients after every mini-batch. We can thus handle batches of arbitrary size.</p>
 </dd></dl>
+<dl class="py method">
+<dt id="opacus.privacy_engine.PrivacyEngine.zero_grad">
+<code class="sig-name descname">zero_grad</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.zero_grad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.zero_grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets clippers status.</p>
+<p>Clipper keeps internal gradient per sample in the batch in each
+<code class="docutils literal notranslate"><span class="pre">forward</span></code> call of the module, they need to be cleaned before the
+next round.</p>
+<p>If these variables are not cleaned the per sample gradients keep
+being concatenated accross batches. If accumulating gradients
+is intented behavious, e.g. simulating a large batch, prefer
+using <code class="docutils literal notranslate"><span class="pre">virtual_step()</span></code> function.</p>
+</dd></dl>
 </dd></dl>
 </div>
 </div>

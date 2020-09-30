@@ -252,6 +252,21 @@
             <span class="k">del</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_on_batch_clip</span><span class="p">()</span>  <span class="c1"># inform analysis of the whole module</span></div>
 
+<div class="viewcode-block" id="PerSampleGradientClipper.zero_grad"><a class="viewcode-back" href="../../per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper.zero_grad">[docs]</a>    <span class="k">def</span> <span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Deletes the added attributes, ``grad_sample`` and ``summed_grad``.</span>
+
+<span class="sd">        The two mentioned attributes are</span>
+<span class="sd">        automatically deleted when ``pre_step`` or</span>
+<span class="sd">        ``clip_and_accumulate`` are properly called. This is a safety measure</span>
+<span class="sd">        to avoid further issues if regular use has not been followed.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_named_params</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="s2">"grad_sample"</span><span class="p">):</span>
+                <span class="k">del</span> <span class="n">param</span><span class="o">.</span><span class="n">grad_sample</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="s2">"summed_grad"</span><span class="p">):</span>
+                <span class="k">del</span> <span class="n">param</span><span class="o">.</span><span class="n">summed_grad</span></div>
+
     <span class="k">def</span> <span class="nf">_named_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]]:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Helper function to get parameter with their names that require grad</span>
