@@ -76,7 +76,7 @@ class DPLSTM(nn.Module):
         self.dropout = dropout
         self.bidirectional = bidirectional
         self.cells_initialized = False
-        self.cells = []
+        self.cells = nn.ModuleList([])
 
         self.validate_parameters()
 
@@ -113,21 +113,19 @@ class DPLSTM(nn.Module):
             self.bias_hh_l0,
         ] = weight_params
 
+    def unroll_and_initialize_cells(self, seq_length, device):
+        self.cells = nn.ModuleList([])
+        for t in range(0, seq_length):
+            self.cells.append(DPLSTMCell(self.input_size, self.hidden_size).to(device))
+            self.cells[t].initialize_weights(
+                [self.weight_ih_l0, self.weight_hh_l0, self.bias_ih_l0, self.bias_hh_l0]
+            )
+
     def forward(self, x, state_init=None):
         x = self._rearrange_batch_dim(x)
         seq_length, batch_sz, _ = x.shape
-        if not self.cells_initialized:
-            for t in range(0, seq_length):
-                self.cells.append(DPLSTMCell(self.input_size, self.hidden_size))
-                self.cells[t].initialize_weights(
-                    [
-                        self.weight_ih_l0,
-                        self.weight_hh_l0,
-                        self.bias_ih_l0,
-                        self.bias_hh_l0,
-                    ]
-                )
-            self.cells_initialized = True
+        device = next(self.parameters()).device
+        self.unroll_and_initialize_cells(seq_length, device)
 
         x = torch.unbind(x, dim=0)
         h = [None] * seq_length
@@ -137,6 +135,9 @@ class DPLSTM(nn.Module):
         else:
             h_init = torch.zeros(self.num_layers, batch_sz, self.hidden_size)
             c_init = torch.zeros(self.num_layers, batch_sz, self.hidden_size)
+
+        h_init = h_init.to(device)
+        c_init = c_init.to(device)
 
         h[0] = self.cells[0](x[0].unsqueeze(0), h_init, c_init)
         for t in range(1, seq_length):
