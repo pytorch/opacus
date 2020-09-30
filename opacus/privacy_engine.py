@@ -178,6 +178,10 @@ class PrivacyEngine:
             self.module, norm_clipper, self.batch_first
         )
 
+        def dp_zero_grad(self):
+            self.privacy_engine.zero_grad()
+            self.original_zero_grad()
+
         def dp_step(self, closure=None):
             self.privacy_engine.step()
             self.original_step(closure)
@@ -186,6 +190,9 @@ class PrivacyEngine:
         optimizer.privacy_engine = self  # pyre-ignore
         optimizer.original_step = optimizer.step  # pyre-ignore
         optimizer.step = types.MethodType(dp_step, optimizer)  # pyre-ignore
+
+        optimizer.original_zero_grad = optimizer.zero_grad  # pyre-ignore
+        optimizer.zero_grad = types.MethodType(dp_zero_grad, optimizer)  # pyre-ignore
 
         def virtual_step(self):
             self.privacy_engine.virtual_step()
@@ -225,6 +232,22 @@ class PrivacyEngine:
             target_delta = self.target_delta
         rdp = self.get_renyi_divergence() * self.steps
         return tf_privacy.get_privacy_spent(self.alphas, rdp, target_delta)
+
+    def zero_grad(self):
+        """
+        Resets clippers status.
+
+        Clipper keeps internal gradient per sample in the batch in each
+        ``forward`` call of the module, they need to be cleaned before the
+        next round.
+
+        If these variables are not cleaned the per sample gradients keep
+        being concatenated accross batches. If accumulating gradients
+        is intented behavious, e.g. simulating a large batch, prefer
+        using ``virtual_step()`` function.
+        """
+        if self.clipper is not None:
+            self.clipper.zero_grad()
 
     def step(self):
         """

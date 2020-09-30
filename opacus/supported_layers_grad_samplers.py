@@ -39,7 +39,6 @@ def _create_or_extend_grad_sample(
     """
 
     if hasattr(param, "grad_sample"):
-        # pyre-fixme[16]: `Tensor` has no attribute `grad_sample`.
         param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
     else:
         param.grad_sample = grad_sample
@@ -252,9 +251,9 @@ def _compute_conv_grad_sample(
         _create_or_extend_grad_sample(
             layer.weight, grad_sample.reshape(shape), batch_dim
         )
-    except Exception as e:
+    except BaseException as e:
         raise type(e)(
-            f"{e} There is probably a problem with {layer_type}.groups"
+            f"{e} There is probably a problem with {layer_type}.groups. "
             + "It should be either 1 or in_channel"
         )
     if layer.bias is not None:

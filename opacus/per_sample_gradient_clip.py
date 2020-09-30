@@ -225,6 +225,21 @@ class PerSampleGradientClipper:
             del p.grad_sample
         self._on_batch_clip()  # inform analysis of the whole module
 
+    def zero_grad(self):
+        """
+        Deletes the added attributes, ``grad_sample`` and ``summed_grad``.
+
+        The two mentioned attributes are
+        automatically deleted when ``pre_step`` or
+        ``clip_and_accumulate`` are properly called. This is a safety measure
+        to avoid further issues if regular use has not been followed.
+        """
+        for _, param in self._named_params():
+            if hasattr(param, "grad_sample"):
+                del param.grad_sample
+            if hasattr(param, "summed_grad"):
+                del param.summed_grad
+
     def _named_params(self) -> Iterator[Tuple[str, nn.Parameter]]:
         r"""
         Helper function to get parameter with their names that require grad
