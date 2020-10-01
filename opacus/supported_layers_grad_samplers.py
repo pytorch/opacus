@@ -14,7 +14,7 @@ Attributes:
 from typing import Union
 
 import torch
-from opacus.layers.dp_lstm import DPLSTM
+from opacus.layers.dp_lstm import DPLSTM, DPLSTMCell
 from opacus.layers.dp_multihead_attention import SequenceBias
 from torch import nn
 from torch.functional import F
@@ -280,6 +280,12 @@ def _compute_embedding_grad_sample(
     )
 
 
+def _compute_dplstmcell_grad_sample(
+    layer: DPLSTMCell, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
+) -> None:
+    pass
+
+
 _supported_layers_grad_samplers = {
     "Embedding": _compute_embedding_grad_sample,
     "Linear": _compute_linear_grad_sample,
@@ -292,4 +298,5 @@ _supported_layers_grad_samplers = {
     "InstanceNorm3d": _compute_norm_grad_sample,
     "SequenceBias": _compute_sequence_bias_grad_sample,
     "DPLSTM": _compute_dplstm_grad_sample,
+    "DPLSTMCell": _compute_dplstmcell_grad_sample,
 }  # Supported layer class types
