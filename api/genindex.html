@@ -114,9 +114,11 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.detach">detach() (opacus.privacy_engine.PrivacyEngine method)</a>
 </li>
+<li><a href="per_sample_gradients.html#opacus.autograd_grad_sample.disable_hooks">disable_hooks() (in module opacus.autograd_grad_sample)</a>
+</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="per_sample_gradients.html#opacus.autograd_grad_sample.disable_hooks">disable_hooks() (in module opacus.autograd_grad_sample)</a>
+<li><a href="dp_model_inspector.html#opacus.dp_model_inspector.DPModelInspector">DPModelInspector (class in opacus.dp_model_inspector)</a>
 </li>
 <li><a href="dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention">DPMultiheadAttention (class in opacus.layers.dp_multihead_attention)</a>
 </li>
@@ -163,6 +165,8 @@
 <h2 id="I">I</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="dp_model_inspector.html#opacus.dp_model_inspector.IncompatibleModuleException">IncompatibleModuleException</a>
+</li>
 <li><a href="clipping.html#opacus.utils.clipping.ConstantFlatClipper.is_per_layer">is_per_layer() (opacus.utils.clipping.ConstantFlatClipper property)</a>
 <ul>
 <li><a href="clipping.html#opacus.utils.clipping.ConstantPerLayerClipper.is_per_layer">(opacus.utils.clipping.ConstantPerLayerClipper property)</a>
@@ -197,6 +201,8 @@
 
       <ul>
 <li><a href="per_sample_gradients.html#module-opacus.autograd_grad_sample">opacus.autograd_grad_sample</a>
+</li>
+<li><a href="dp_model_inspector.html#module-opacus.dp_model_inspector">opacus.dp_model_inspector</a>
 </li>
 <li><a href="dp_multihead_attention.html#module-opacus.layers.dp_multihead_attention">opacus.layers.dp_multihead_attention</a>
 </li>
@@ -242,6 +248,13 @@
 
       <ul>
 <li><a href="per_sample_gradients.html#module-opacus.autograd_grad_sample">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.dp_model_inspector
+
+      <ul>
+<li><a href="dp_model_inspector.html#module-opacus.dp_model_inspector">module</a>
 </li>
 </ul></li>
 <li>
@@ -405,8 +418,11 @@
 <h2 id="V">V</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="module_inspection.html#opacus.utils.module_inspection.ModelInspector.validate">validate() (opacus.utils.module_inspection.ModelInspector method)</a>
+<li><a href="dp_model_inspector.html#opacus.dp_model_inspector.DPModelInspector.validate">validate() (opacus.dp_model_inspector.DPModelInspector method)</a>
+<ul>
+<li><a href="module_inspection.html#opacus.utils.module_inspection.ModelInspector.validate">(opacus.utils.module_inspection.ModelInspector method)</a>
 </li>
+</ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.virtual_step">virtual_step() (opacus.privacy_engine.PrivacyEngine method)</a>
@@ -436,6 +452,7 @@
 <li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">Gradient Clipping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="per_sample_gradients.html">Per Sample Gradients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dp_model_inspector.html">Model Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="layers.html">DP Layers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
