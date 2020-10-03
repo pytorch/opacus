@@ -15,6 +15,7 @@ Opacus API Reference
    privacy_analysis
    per_sample_gradient_clip
    per_sample_gradients
+   dp_model_inspector
    layers
    utils
    scripts
