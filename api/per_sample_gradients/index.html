@@ -49,10 +49,10 @@ The hooks will</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Model to which hooks are added.</p></li>
-<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the
 gradients) is a sum or a mean operation. Can take values <code class="docutils literal notranslate"><span class="pre">sum</span></code> or
 <code class="docutils literal notranslate"><span class="pre">mean</span></code>.</p></li>
-<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to indicate if the input tensor to the corresponding module
+<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to indicate if the input tensor to the corresponding module
 has the first dimension represent the batch, for example of shape
 <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">...,</span> <span class="pre">...]</span></code>. Set to True if batch appears in first
 dimension else set to False (<code class="docutils literal notranslate"><span class="pre">batch_first=False</span></code> implies that the
@@ -81,7 +81,7 @@ batch is always in the second dimension).</p></li>
 capturing per-sample gradients is available.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>Whether the <code class="docutils literal notranslate"><span class="pre">layer</span></code> is supported by this library.</p>
@@ -111,7 +111,7 @@ backpropagations (gradient values propagated from downstream layers).</p>
 from layer name to corresponding grad sampler</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Dict[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a>, Callable]</p>
+<dd class="field-odd"><p>Dict[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a>, Callable]</p>
 </dd>
 </dl>
 </dd></dl>

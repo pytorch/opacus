@@ -36,7 +36,7 @@
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Module instance, potentially with sub-modules</p></li>
-<li><p><strong>converter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">_BatchNorm</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Function or a lambda that converts an instance of a
+<li><p><strong>converter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">_BatchNorm</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Function or a lambda that converts an instance of a
 Batchnorm to another nn.Module.</p></li>
 </ul>
 </dd>
@@ -94,8 +94,8 @@ supported by the Privacy Engine.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Model instance, potentially with sub-modules</p></li>
-<li><p><strong>target_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Type" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Target class that needs to be replaced.</p></li>
-<li><p><strong>converter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.8)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Function or a lambda that converts an instance
+<li><p><strong>target_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Type" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Target class that needs to be replaced.</p></li>
+<li><p><strong>converter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]) – Function or a lambda that converts an instance
 of a given target_class to another nn.Module.</p></li>
 </ul>
 </dd>
