@@ -95,3 +95,21 @@ Although we report expended privacy budget using the (epsilon, delta) language, 
 When the privacy engine needs to bound the privacy loss of a training run using (epsilon, delta)-DP for a given delta, it searches for the optimal order from among `alphas`. There’s very little additional cost in expanding the list of orders. We suggest using a list `[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))`.
 
 A call to `privacy_engine.get_privacy_spent(delta)` returns a pair: an epsilon such that the training run satisfies (epsilon, delta)-DP and an optimal order alpha. An easy diagnostic to determine whether the list of `alphas` ought to be expanded is whether the returned value alpha is one of the two boundary values of `alphas`.
+
+## How do I run Opacus in Colab?
+
+If you are getting an error like this, `ImportError: libcudart.so.10.2: cannot open shared object file: No such file or directory`, the reason is that you are on the wrong CUDA version. For example, as of October 2020 Colab is still on Cuda 10.1, while PyTorch has moved on to Cuda 10.2 as its default. You would actually see this issue even with installing PyTorch - you don't see it because PyTorch comes pre-installed in Colab so they have the right Cuda version already.
+
+The fix is to just install the package for the right Cuda version you have :)
+
+Here's the copypasta to install PyTorch with CUDA 10.1:
+
+```
+pip install torchcsprng==0.1.2+cu101 torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+```
+
+After this, you can just `pip install opacus` and it will work :)
+
+Notice our convention in naming package versions: <lib_version>+cu<cuda_version>. If at any point you lose the copypasta or forget the convention, you can simply go to the PyTorch install page, select Cuda 10.1 for Linux and you'll see it: https://pytorch.org/get-started/locally/
+
+The same principle will apply for future CUDA releases should Colab and PyTorch fall out of sync again.
