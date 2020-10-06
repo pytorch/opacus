@@ -18,6 +18,16 @@ The latest release of Opacus can be installed via `pip`:
 pip install opacus
 ```
 
+> :warning: **NOTE**: This will bring in the latest version of our deps, which are on Cuda 10.2. This will not work if you environment is using an older Cuda version (for example, Google Colab is still on Cuda 10.1).
+
+To install on Colab, run this cell first:
+
+```bash
+pip install torchcsprng==0.1.2+cu101 torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+```
+Then you can just `pip install opacus` like before. See more context in [this issue](https://github.com/pytorch/opacus/issues/69).
+
+
 You can also install directly from the source for the latest features (along with its quirks and potentially ocassional bugs):
 ```bash
 git clone https://github.com/pytorch/opacus.git
