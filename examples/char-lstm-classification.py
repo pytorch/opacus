@@ -2,12 +2,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import argparse
-import glob
 import math
 import random
 import string
 import time
 import unicodedata
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -21,9 +21,7 @@ parser = argparse.ArgumentParser(
     description="PyTorch Name language classification DP Training"
 )
 parser.add_argument(
-    "--training-path",
-    type=str,
-    help="Path to training set of names (ie. /home/[username]/names/*.txt)",
+    "--data-root", type=str, help="Path to training set of names (ie. ~/data/names/)"
 )
 parser.add_argument(
     "--device",
@@ -126,7 +124,7 @@ def build_category_lines(all_filenames, all_letters):
     all_categories = []
 
     for filename in all_filenames:
-        category = filename.split("/")[-1].split(".")[0]
+        category = filename.stem
         all_categories.append(category)
         lines = read_lines(filename, all_letters)
         category_lines[category] = lines
@@ -326,8 +324,10 @@ def get_eval_metrics(
 def main():
     args = parser.parse_args()
     device = torch.device(args.device)
+    root = Path(args.data_root)
 
-    all_filenames = glob.glob(args.training_path)
+    all_filenames = list(root.glob("**/*.txt"))
+    print(f"At root {root.absolute()}, found the following files: {all_filenames}")
     all_letters = string.ascii_letters + " .,;'#"
     n_letters = len(all_letters)
 

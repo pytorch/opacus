@@ -272,11 +272,11 @@ def main():
     # 2. enable stats
     stats.add(
         # stats about gradient norms aggregated for all layers
-        stats.Stat(stats.StatType.CLIPPING, "AllLayers", frequency=0.1),
+        stats.Stat(stats.StatType.GRAD, "AllLayers", frequency=0.1),
         # stats about gradient norms per layer
-        stats.Stat(stats.StatType.CLIPPING, "PerLayer", frequency=0.1),
+        stats.Stat(stats.StatType.GRAD, "PerLayer", frequency=0.1),
         # stats about clipping
-        stats.Stat(stats.StatType.CLIPPING, "ClippingStats", frequency=0.1),
+        stats.Stat(stats.StatType.GRAD, "ClippingStats", frequency=0.1),
         # stats on training accuracy
         stats.Stat(stats.StatType.TRAIN, "accuracy", frequency=0.01),
         # stats on validation accuracy
