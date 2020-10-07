@@ -107,7 +107,7 @@ commands:
           path: unittest-reports
 
   mnist_integration_test:
-    description: "Runs MNIST end to end"
+    description: "Runs MNIST example end to end"
     parameters:
       device:
         default: "cpu"
@@ -116,12 +116,102 @@ commands:
       - run:
           name: MNIST example
           command: |
-            mkdir mnist-test-reports
-            PYTHONPATH=. python3 examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 16 --epochs 2 --data-root . --n-runs 1 --device <<parameters.device>>
+            mkdir mnist
+            mkdir mnist/data
+            mkdir mnist/test-reports
+            PYTHONPATH=. python3 examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root mnist/data --n-runs 1 --device <<parameters.device>>
+          when: always
       - store_test_results:
-          path: mnist-test-reports
+          path: mnist/test-reports
       - store_artifacts:
-          path: mnist-test-reports
+          path: mnist/test-reports
+
+  cifar10_integration_test:
+    description: "Runs CIFAR10 example end to end"
+    parameters:
+      device:
+        default: "cpu"
+        type: string
+    steps:
+      - run:
+          name: CIFAR10 example
+          command: |
+            mkdir cifar10
+            mkdir cifar10/data
+            mkdir cifar10/logs
+            mkdir cifar10/test-reports
+            PYTHONPATH=. pip3 install tensorboard
+            PYTHONPATH=. python3 examples/cifar10.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 128 --epochs 1 --data-root cifar10/data --log-dir cifar10/logs --device <<parameters.device>>
+          when: always
+      - store_test_results:
+          path: cifar10/test-reports
+      - store_artifacts:
+          path: cifar10/test-reports
+
+  dcgan_integration_test:
+    description: "Runs dcgan example end to end"
+    parameters:
+      device:
+        default: "cpu"
+        type: string
+    steps:
+      - run:
+          name: dcgan example
+          command: |
+            mkdir dcgan
+            mkdir dcgan/data
+            mkdir dcgan/test-reports
+            PYTHONPATH=. python3 examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root dcgan/data --device <<parameters.device>>
+          when: always
+      - store_test_results:
+          path: dcgan/test-reports
+      - store_artifacts:
+          path: dcgan/test-reports
+
+  imdb_integration_test:
+    description: "Runs imdb example end to end"
+    parameters:
+      device:
+        default: "cpu"
+        type: string
+    steps:
+      - run:
+          name: imdb example
+          command: |
+            mkdir imdb
+            mkdir imdb/data
+            mkdir imdb/test-reports
+            PYTHONPATH=. pip3 install torchtext
+            PYTHONPATH=. python3 examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 16 --epochs 1 --data-root imdb/data --device <<parameters.device>>
+          when: always
+      - store_test_results:
+          path: imdb/test-reports
+      - store_artifacts:
+          path: imdb/test-reports
+
+  charlstm_integration_test:
+    description: "Runs charlstm example end to end"
+    parameters:
+      device:
+        default: "cpu"
+        type: string
+    steps:
+      - run:
+          name: charlstm example
+          command: |
+            mkdir charlstm
+            mkdir charlstm/data
+            wget https://download.pytorch.org/tutorial/data.zip -O charlstm/data/data.zip
+            unzip charlstm/data/data.zip -d charlstm/data
+            rm charlstm/data/data.zip
+            mkdir charlstm/test-reports
+            PYTHONPATH=. pip3 install scikit-learn
+            PYTHONPATH=. python3 examples/char-lstm-classification.py --data-root="charlstm/data/" --iterations 30 --learning-rate=2.0 --n-hidden=128 --delta=8e-5 --batch-size=800 --sigma=1.0 --device <<parameters.device>>
+          when: always
+      - store_test_results:
+          path: charlstm/test-reports
+      - store_artifacts:
+          path: charlstm/test-reports
 
 # -------------------------------------------------------------------------------------
 # Jobs
@@ -180,7 +270,7 @@ jobs:
       - checkout
       - pip_install
       - mnist_integration_test:
-        device: "cpu"
+          device: "cpu"
 
   integrationtest_py36_torch_release_cuda:
     machine:
@@ -191,7 +281,16 @@ jobs:
       - py_3_6_setup
       - pip_install
       - mnist_integration_test:
-        device: "cuda"
+          device: "cuda"
+      - cifar10_integration_test:
+          device: "cuda"
+      - charlstm_integration_test:
+          device: "cuda"
+      - imdb_integration_test:
+          device: "cuda"
+      - dcgan_integration_test:
+          device: "cuda"
+
 
   auto_deploy_site:
     docker:
