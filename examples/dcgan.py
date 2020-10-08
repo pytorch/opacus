@@ -17,6 +17,7 @@ import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
+import torchcsprng as prng
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
@@ -73,6 +74,12 @@ parser.add_argument(
     action="store_true",
     default=False,
     help="Disable privacy training and just train with vanilla SGD",
+)
+parser.add_argument(
+    "--secure-rng",
+    action="store_true",
+    default=False,
+    help="Enable Secure RNG to have trustworthy privacy guarantees. Comes at a performance cost",
 )
 parser.add_argument(
     "-r",
@@ -142,8 +149,15 @@ try:
 except ValueError:
     print("Cannot load dataset")
 
+generator = (
+    prng.create_random_device_generator("/dev/urandom") if opt.secure_rng else None
+)
 dataloader = torch.utils.data.DataLoader(
-    dataset, batch_size=opt.batch_size, shuffle=True, num_workers=int(opt.workers)
+    dataset,
+    batch_size=opt.batch_size,
+    shuffle=True,
+    num_workers=int(opt.workers),
+    generator=generator,
 )
 
 device = torch.device(opt.device)
@@ -269,6 +283,7 @@ privacy_engine = PrivacyEngine(
     alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
     noise_multiplier=opt.sigma,
     max_grad_norm=opt.max_per_sample_grad_norm,
+    secure_rng=opt.secure_rng,
 )
 if not opt.disable_dp:
     privacy_engine.attach(optimizerD)

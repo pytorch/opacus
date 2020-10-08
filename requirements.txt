@@ -4,4 +4,4 @@ torchvision>=0.4
 tqdm>=4.40
 scipy>=1.2
 pytest
-torchcsprng
+torchcsprng>=0.1.2
