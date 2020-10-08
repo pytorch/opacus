@@ -13,6 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torchcsprng as prng
 from opacus import PrivacyEngine
 from torchvision import datasets, transforms
 from tqdm import tqdm
@@ -180,6 +181,12 @@ def main():
         help="Disable privacy training and just train with vanilla SGD",
     )
     parser.add_argument(
+        "--secure-rng",
+        action="store_true",
+        default=False,
+        help="Enable Secure RNG to have trustworthy privacy guarantees. Comes at a performance cost",
+    )
+    parser.add_argument(
         "--data-root",
         type=str,
         default="../mnist",
@@ -189,6 +196,10 @@ def main():
     device = torch.device(args.device)
 
     kwargs = {"num_workers": 1, "pin_memory": True}
+
+    generator = (
+        prng.create_random_device_generator("/dev/urandom") if args.secure_rng else None
+    )
 
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST(
@@ -204,6 +215,7 @@ def main():
         ),
         batch_size=args.batch_size,
         shuffle=True,
+        generator=generator,
         **kwargs,
     )
     test_loader = torch.utils.data.DataLoader(
@@ -234,6 +246,7 @@ def main():
                 alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
                 noise_multiplier=args.sigma,
                 max_grad_norm=args.max_per_sample_grad_norm,
+                secure_rng=args.secure_rng,
             )
             privacy_engine.attach(optimizer)
         for epoch in range(1, args.epochs + 1):

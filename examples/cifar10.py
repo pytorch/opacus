@@ -16,6 +16,7 @@ import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
+import torchcsprng as prng
 import torchvision.models as models
 import torchvision.transforms as transforms
 from opacus import PrivacyEngine
@@ -233,6 +234,12 @@ def main():
         help="Disable privacy training and just train with vanilla SGD",
     )
     parser.add_argument(
+        "--secure-rng",
+        action="store_true",
+        default=False,
+        help="Enable Secure RNG to have trustworthy privacy guarantees. Comes at a performance cost",
+    )
+    parser.add_argument(
         "--delta",
         type=float,
         default=1e-5,
@@ -286,6 +293,10 @@ def main():
     # The following lines enable stat gathering for the clipping process
     # and set a default of per layer clipping for the Privacy Engine
     clipping = {"clip_per_layer": False, "enable_stat": True}
+
+    generator = (
+        prng.create_random_device_generator("/dev/urandom") if args.secure_rng else None
+    )
     augmentations = [
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -310,6 +321,7 @@ def main():
         shuffle=True,
         num_workers=args.workers,
         drop_last=True,
+        generator=generator,
     )
 
     test_dataset = CIFAR10(
@@ -349,6 +361,7 @@ def main():
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
+            secure_rng=args.secure_rng,
             **clipping,
         )
         privacy_engine.attach(optimizer)
