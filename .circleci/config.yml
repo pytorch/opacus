@@ -20,6 +20,14 @@ commands:
             sudo "$(which python)" -m pip install --upgrade pip
             sudo "$(which python)" -m pip install pytest
 
+  run_nvidia_smi:
+    description: "Prints GPU capabilities from nvidia-smi"
+    steps:
+      - run:
+          name: "Run Nvidia-SMI"
+          command: |
+            nvidia-smi
+
   pip_install:
     description: "Simple install via pip with no extra deps to build the website."
     steps:
@@ -181,8 +189,8 @@ commands:
             mkdir imdb
             mkdir imdb/data
             mkdir imdb/test-reports
-            PYTHONPATH=. pip3 install torchtext
-            PYTHONPATH=. python3 examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 16 --epochs 1 --data-root imdb/data --device <<parameters.device>>
+            PYTHONPATH=. pip3 install torchtext transformers
+            PYTHONPATH=. python3 examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 8 --max-sequence-length 256 --epochs 1 --data-root imdb/data --device <<parameters.device>>
           when: always
       - store_test_results:
           path: imdb/test-reports
@@ -280,13 +288,14 @@ jobs:
       - checkout
       - py_3_6_setup
       - pip_install
+      - run_nvidia_smi
       - mnist_integration_test:
           device: "cuda"
       - cifar10_integration_test:
           device: "cuda"
-      - charlstm_integration_test:
-          device: "cuda"
       - imdb_integration_test:
+          device: "cuda"
+      - charlstm_integration_test:
           device: "cuda"
       - dcgan_integration_test:
           device: "cuda"
