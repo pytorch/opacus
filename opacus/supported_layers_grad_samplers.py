@@ -272,12 +272,39 @@ def _compute_embedding_grad_sample(
         B: Backpropagations
         batch_dim: Batch dimension position
     """
-    one_hot = F.one_hot(A, num_classes=layer.weight.shape[0])
-    gs = torch.einsum("n...i,n...j->n...ij", one_hot, B)
+    try:
+        saved = torch.backends.cudnn.deterministic
+        torch.backends.cudnn.deterministic = True
 
-    _create_or_extend_grad_sample(
-        layer.weight, torch.einsum("n...ij->nij", gs), batch_dim
-    )
+        if batch_dim != 0:
+            raise ValueError(
+                f"batch_dim={batch_dim} but only batch_dim=0 supported in _compute_embedding_grad_sample"
+            )
+        is_1d_tensor = len(A.shape) == 1  # Then it's just seq_len, no batch dim
+        if is_1d_tensor:
+            A = A.unsqueeze(batch_dim)
+            B = B.unsqueeze(batch_dim)
+        batch_size = A.shape[batch_dim]
+        index = A.unsqueeze(-1).expand(*A.shape, layer.embedding_dim)
+        result = torch.zeros(
+            batch_size, *layer.weight.shape, device=layer.weight.device
+        )
+        result.scatter_add_(1, index, B)
+        if is_1d_tensor:  # Cleanup
+            A = A.squeeze(batch_dim)
+            B = B.squeeze(batch_dim)
+            # NOTE: result is not squeezed back, because grad_samples should always contain
+            # their batch dimension
+
+        torch.backends.cudnn.deterministic = saved
+
+        _create_or_extend_grad_sample(layer.weight, result, batch_dim)
+    except RuntimeError as e:
+        print(e)
+        print("FAIL!")
+        print(f"A: {A.shape}")
+        print(f"B: {B.shape}")
+        print(f"index tensor: {index.shape}")
 
 
 def _compute_dplstmcell_grad_sample(
