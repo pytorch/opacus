@@ -71,6 +71,12 @@
 <h2 id="B">B</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.backward">backward() (opacus.layers.dp_lstm.DPLSTMCell method)</a>
+</li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.batch_first">batch_first (opacus.layers.dp_lstm.DPLSTM attribute)</a>
+</li>
 <li><a href="dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias.bias">bias (opacus.layers.dp_multihead_attention.SequenceBias attribute)</a>
 </li>
 </ul></td>
@@ -116,8 +122,12 @@
 </li>
 <li><a href="per_sample_gradients.html#opacus.autograd_grad_sample.disable_hooks">disable_hooks() (in module opacus.autograd_grad_sample)</a>
 </li>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM">DPLSTM (class in opacus.layers.dp_lstm)</a>
+</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell">DPLSTMCell (class in opacus.layers.dp_lstm)</a>
+</li>
 <li><a href="dp_model_inspector.html#opacus.dp_model_inspector.DPModelInspector">DPModelInspector (class in opacus.dp_model_inspector)</a>
 </li>
 <li><a href="dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention">DPMultiheadAttention (class in opacus.layers.dp_multihead_attention)</a>
@@ -134,8 +144,12 @@
 <h2 id="F">F</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention.forward">forward() (opacus.layers.dp_multihead_attention.DPMultiheadAttention method)</a>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.forward">forward() (opacus.layers.dp_lstm.DPLSTM method)</a>
 <ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.forward">(opacus.layers.dp_lstm.DPLSTMCell method)</a>
+</li>
+<li><a href="dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention.forward">(opacus.layers.dp_multihead_attention.DPMultiheadAttention method)</a>
+</li>
 <li><a href="dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias.forward">(opacus.layers.dp_multihead_attention.SequenceBias method)</a>
 </li>
 </ul></li>
@@ -161,12 +175,25 @@
 <li><a href="module_inspection.html#opacus.utils.module_inspection.has_no_param">has_no_param() (in module opacus.utils.module_inspection)</a>
 </li>
 </ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.hidden_size">hidden_size (opacus.layers.dp_lstm.DPLSTM attribute)</a>
+</li>
+</ul></td>
 </tr></table>
 <h2 id="I">I</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="dp_model_inspector.html#opacus.dp_model_inspector.IncompatibleModuleException">IncompatibleModuleException</a>
 </li>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.initialize_weights">initialize_weights() (opacus.layers.dp_lstm.DPLSTM method)</a>
+<ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.initialize_weights">(opacus.layers.dp_lstm.DPLSTMCell method)</a>
+</li>
+</ul></li>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.input_size">input_size (opacus.layers.dp_lstm.DPLSTM attribute)</a>
+</li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="clipping.html#opacus.utils.clipping.ConstantFlatClipper.is_per_layer">is_per_layer() (opacus.utils.clipping.ConstantFlatClipper property)</a>
 <ul>
 <li><a href="clipping.html#opacus.utils.clipping.ConstantPerLayerClipper.is_per_layer">(opacus.utils.clipping.ConstantPerLayerClipper property)</a>
@@ -174,8 +201,6 @@
 <li><a href="clipping.html#opacus.utils.clipping.NormClipper.is_per_layer">(opacus.utils.clipping.NormClipper property)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="per_sample_gradients.html#opacus.autograd_grad_sample.is_supported">is_supported() (in module opacus.autograd_grad_sample)</a>
 </li>
 </ul></td>
@@ -203,6 +228,8 @@
 <li><a href="per_sample_gradients.html#module-opacus.autograd_grad_sample">opacus.autograd_grad_sample</a>
 </li>
 <li><a href="dp_model_inspector.html#module-opacus.dp_model_inspector">opacus.dp_model_inspector</a>
+</li>
+<li><a href="dp_lstm.html#module-opacus.layers.dp_lstm">opacus.layers.dp_lstm</a>
 </li>
 <li><a href="dp_multihead_attention.html#module-opacus.layers.dp_multihead_attention">opacus.layers.dp_multihead_attention</a>
 </li>
@@ -258,6 +285,13 @@
 </li>
 </ul></li>
 <li>
+    opacus.layers.dp_lstm
+
+      <ul>
+<li><a href="dp_lstm.html#module-opacus.layers.dp_lstm">module</a>
+</li>
+</ul></li>
+<li>
     opacus.layers.dp_multihead_attention
 
       <ul>
@@ -285,6 +319,8 @@
 <li><a href="privacy_engine.html#module-opacus.privacy_engine">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     opacus.scripts.compute_dp_sgd_privacy
 
@@ -292,8 +328,6 @@
 <li><a href="compute_dp_sgd_privacy.html#module-opacus.scripts.compute_dp_sgd_privacy">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     opacus.supported_layers_grad_samplers
 
@@ -369,6 +403,8 @@
 <li><a href="stats.html#opacus.utils.stats.Stat.reset">(opacus.utils.stats.Stat method)</a>
 </li>
 </ul></li>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.reset_parameters">reset_parameters() (opacus.layers.dp_lstm.DPLSTM method)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="S">S</h2>
@@ -379,6 +415,8 @@
 <li><a href="stats.html#opacus.utils.stats.set_global_summary_writer">set_global_summary_writer() (in module opacus.utils.stats)</a>
 </li>
 <li><a href="per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper.set_on_batch_clip_func">set_on_batch_clip_func() (opacus.per_sample_gradient_clip.PerSampleGradientClipper method)</a>
+</li>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.sigmoid_fn">sigmoid_fn (opacus.layers.dp_lstm.DPLSTMCell attribute)</a>
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
@@ -395,6 +433,8 @@
 <h2 id="T">T</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.tanh_fn">tanh_fn (opacus.layers.dp_lstm.DPLSTMCell attribute)</a>
+</li>
 <li><a href="clipping.html#opacus.utils.clipping.ConstantFlatClipper.thresholds">thresholds() (opacus.utils.clipping.ConstantFlatClipper property)</a>
 <ul>
 <li><a href="clipping.html#opacus.utils.clipping.ConstantPerLayerClipper.thresholds">(opacus.utils.clipping.ConstantPerLayerClipper property)</a>
@@ -425,6 +465,8 @@
 </ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.validate_parameters">validate_parameters() (opacus.layers.dp_lstm.DPLSTM method)</a>
+</li>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.virtual_step">virtual_step() (opacus.privacy_engine.PrivacyEngine method)</a>
 </li>
 </ul></td>
