@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Dnc. and its affiliates. All Rights Reserved
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
 from typing import List, Tuple
@@ -130,9 +130,9 @@ class DPLSTM(nn.Module):
     ``h_t`` is of shape ``[B, H]`` with the cell state ``c_t`` also of shape ``[B, H]``.
 
     Attributes:
-        input_size: The number of expected features in the input ``x``.
-        hidden_size:  The number of features in the hidden state ``h``.
-        batch_first: If ``True``, then the input and output tensors are provided as
+        input_size (int): The number of expected features in the input ``x``.
+        hidden_size (int):  The number of features in the hidden state ``h``.
+        batch_first (bool): If ``True``, then the input and output tensors are provided as
             (batch, seq, feature). The default is ``False``.
 
     """
