@@ -72,6 +72,21 @@ class Footer extends React.Component {
             <a href={`${this.props.config.baseUrl}api/`}>API Reference</a>
           </div>
           <SocialFooter config={this.props.config} />
+          <div className="footerSection">
+            <h5>Legal</h5>
+            <a
+              href="https://opensource.facebook.com/legal/privacy/"
+              target="_blank"
+              rel="noreferrer noopener">
+              Privacy
+            </a>
+            <a
+              href="https://opensource.facebook.com/legal/terms/"
+              target="_blank"
+              rel="noreferrer noopener">
+              Terms
+            </a>
+          </div>
         </section>
         <a
           href="https://opensource.facebook.com/"
