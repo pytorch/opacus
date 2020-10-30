@@ -264,7 +264,7 @@ def _compute_embedding_grad_sample(
     layer: nn.Embedding, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
 ) -> None:
     """
-    Computes per sample gradients for ``nn.Embedding`` layer
+    Computes per sample gradients for ``nn.Embedding`` layer.
 
     Args:
         layer: Layer
@@ -272,12 +272,20 @@ def _compute_embedding_grad_sample(
         B: Backpropagations
         batch_dim: Batch dimension position
     """
-    one_hot = F.one_hot(A, num_classes=layer.weight.shape[0])
-    gs = torch.einsum("n...i,n...j->n...ij", one_hot, B)
+    saved = torch.backends.cudnn.deterministic
+    torch.backends.cudnn.deterministic = True
 
-    _create_or_extend_grad_sample(
-        layer.weight, torch.einsum("n...ij->nij", gs), batch_dim
+    batch_size = A.shape[batch_dim]
+    index = (
+        A.unsqueeze(-1)
+        .expand(*A.shape, layer.embedding_dim)
+        .reshape(batch_size, -1, layer.embedding_dim)
     )
+    grad_sample = torch.zeros(batch_size, *layer.weight.shape, device=layer.weight.device)
+    grad_sample.scatter_add_(1, index, B.reshape(batch_size, -1, layer.embedding_dim))
+    torch.backends.cudnn.deterministic = saved
+
+    _create_or_extend_grad_sample(layer.weight, grad_sample, batch_dim)
 
 
 def _compute_dplstmcell_grad_sample(

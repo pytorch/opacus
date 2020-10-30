@@ -162,10 +162,13 @@ class LayersGradTest(unittest.TestCase):
 
     def test_embedding(self):
         layer = nn.Embedding(256, 100)
-        x1 = torch.randint(0, 255, (128, 42)).long()
+        x0 = torch.randint(0, 255, (16, 8, 4)).long()
+        x1 = torch.randint(0, 255, (16, 8)).long()
         x2 = torch.randint(0, 255, (64,)).long()
+        self._check_one_layer(layer, x0)
         self._check_one_layer(layer, x1)
         self._check_one_layer(layer, x2)
+
 
     def test_lstm_batch_first(self):
         # input size : 25 output size : 12 minibatch : 30 sequence length : 20
