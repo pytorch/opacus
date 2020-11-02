@@ -27,12 +27,17 @@
 <div class="section" id="module-opacus.layers.dp_lstm">
 <span id="dplstm"></span><h1>DPLSTM<a class="headerlink" href="#module-opacus.layers.dp_lstm" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
+<dt id="opacus.layers.dp_lstm.AccumulateLinear">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.layers.dp_lstm.</code><code class="sig-name descname">AccumulateLinear</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_features</span></em>, <em class="sig-param"><span class="n">out_features</span></em>, <em class="sig-param"><span class="n">bias</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#AccumulateLinear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.AccumulateLinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is the same as a nn.Linear layer, except that in the backward pass
+the grad_samples get accumulated (instead of being concatenated as in the standard
+nn.Linear)</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+<dl class="py class">
 <dt id="opacus.layers.dp_lstm.DPLSTM">
 <em class="property">class </em><code class="sig-prename descclassname">opacus.layers.dp_lstm.</code><code class="sig-name descname">DPLSTM</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_size</span></em>, <em class="sig-param"><span class="n">hidden_size</span></em>, <em class="sig-param"><span class="n">num_layers</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">bias</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dropout</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">bidirectional</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encapsulates a DPLSTM module which provides a DP-friendly abstraction in place of the
-<code class="docutils literal notranslate"><span class="pre">torch.nn.LSTM</span></code> module while having a similar interface. Includes functionality
-for resetting parameters, loading them from an external source as well as unrolling
-the network for multiple timesteps and implementing the forward pass.</p>
+<dd><p>DP-friendly abstraction in place of the <code class="docutils literal notranslate"><span class="pre">torch.nn.LSTM</span></code> module with a similar interface.</p>
 <p>The dimensionality of each timestep input tensor for a sequence of length <code class="docutils literal notranslate"><span class="pre">T</span></code> is
 <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">D]</span></code> where <code class="docutils literal notranslate"><span class="pre">B</span></code> is the batch size. The <code class="docutils literal notranslate"><span class="pre">DPLSTM</span></code> output at timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>,
 <code class="docutils literal notranslate"><span class="pre">h_t</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> with the cell state <code class="docutils literal notranslate"><span class="pre">c_t</span></code> also of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>.</p>
@@ -71,10 +76,7 @@ the network for multiple timesteps and implementing the forward pass.</p>
 <dl class="py method">
 <dt id="opacus.layers.dp_lstm.DPLSTM.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">state_init</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements the forward pass of the DPLSTM when a sequence is input.
-The constituent cells are initialized and unrolled, and the hidden state
-for each <code class="docutils literal notranslate"><span class="pre">DPLSTMCell</span></code> in the sequence is obtained as a function of the
-input at the timestep and the previous timestep hidden and cell states.</p>
+<dd><p>Implements the forward pass of the DPLSTM when a sequence is input.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -98,19 +100,6 @@ tensor containing the hidden state for <code class="docutils literal notranslate
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt id="opacus.layers.dp_lstm.DPLSTM.initialize_weights">
-<code class="sig-name descname">initialize_weights</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weight_params</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM.initialize_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.initialize_weights" title="Permalink to this definition">¶</a></dt>
-<dd><p>Loads the LSTM weights and biases for the internal cell gates from
-an external input.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>weight_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]) – List of parameters <code class="docutils literal notranslate"><span class="pre">[weight_ih_l0,</span> <span class="pre">weight_hh_l0,</span> <span class="pre">...</span>
-<span class="pre">bias_ih_l0,</span> <span class="pre">bias_hh_l0]</span></code> from which to load internal cell weights
-(for input, output and forget gates).</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
 <dt id="opacus.layers.dp_lstm.DPLSTM.reset_parameters">
 <code class="sig-name descname">reset_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM.reset_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.reset_parameters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resets parameters of the DPLSTM by initializing them from an uniform distribution.</p>
@@ -125,95 +114,6 @@ or, it does not have a bias term.</p>
 <dt class="field-odd">Raises</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.9)"><strong>NotImplementedError</strong></a> – If the number of layers is more than 1, the DPLSTM is bidirectional,
     uses dropout at the output, or it does not have a bias term.</p>
-</dd>
-</dl>
-</dd></dl>
-</dd></dl>
-<dl class="py class">
-<dt id="opacus.layers.dp_lstm.DPLSTMCell">
-<em class="property">class </em><code class="sig-prename descclassname">opacus.layers.dp_lstm.</code><code class="sig-name descname">DPLSTMCell</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_dim</span></em>, <em class="sig-param"><span class="n">lstm_out_dim</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encapsulates an LSTM cell in the DP-friendly implementation of LSTM.
-This provides access to the forward and backward passes and enables
-computation of the per-example gradients required in DP-SGD.</p>
-<p>The dimensionality of each timestep input tensor for a sequence of length
-<code class="docutils literal notranslate"><span class="pre">T</span></code> is <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">D]</span></code> where <code class="docutils literal notranslate"><span class="pre">B</span></code> is the batch size. The <code class="docutils literal notranslate"><span class="pre">DPLSTMCell</span></code>
-output at timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>, <code class="docutils literal notranslate"><span class="pre">h_t</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> with the cell
-state <code class="docutils literal notranslate"><span class="pre">c_t</span></code> also of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>.</p>
-<dl class="py attribute">
-<dt id="opacus.layers.dp_lstm.DPLSTMCell.sigmoid_fn">
-<code class="sig-name descname">sigmoid_fn</code><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.sigmoid_fn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sigmoid activation function used in internal cell gates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Callable</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py attribute">
-<dt id="opacus.layers.dp_lstm.DPLSTMCell.tanh_fn">
-<code class="sig-name descname">tanh_fn</code><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.tanh_fn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Tanh activation function used in internal cell gates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Callable</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Dimensionality <code class="docutils literal notranslate"><span class="pre">D</span></code> at each timestep of the input
-sequence to LSTM.</p></li>
-<li><p><strong>lstm_out_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Output dimensionality <code class="docutils literal notranslate"><span class="pre">H</span></code> at each timestep of the LSTM output.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt id="opacus.layers.dp_lstm.DPLSTMCell.backward">
-<code class="sig-name descname">backward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x_t</span></em>, <em class="sig-param"><span class="n">delta_h_t</span></em>, <em class="sig-param"><span class="n">delta_t</span></em>, <em class="sig-param"><span class="n">f_next</span></em>, <em class="sig-param"><span class="n">dc_next</span></em>, <em class="sig-param"><span class="n">c_prev</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell.backward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.backward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements the backward pass for the LSTM cell.</p>
-<p>The steps implemented closely correspond to the description provided in the Medium post
-<a class="reference external" href="https://medium.com/@aidangomez/let-s-do-this-f9b699de31d9">https://medium.com/@aidangomez/let-s-do-this-f9b699de31d9</a></p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt id="opacus.layers.dp_lstm.DPLSTMCell.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x_t</span></em>, <em class="sig-param"><span class="n">h_prev</span></em>, <em class="sig-param"><span class="n">c_prev</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements the forward pass for the LSTM cell. This includes computation
-of the cell states as well as the internal gate activations for the input,
-output, cell and forget gates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x_t</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Input tensor for the timestep <code class="docutils literal notranslate"><span class="pre">t</span></code> of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">D]</span></code>.</p></li>
-<li><p><strong>h_prev</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Hidden state <code class="docutils literal notranslate"><span class="pre">h</span></code> for the previous timestep <code class="docutils literal notranslate"><span class="pre">t-1</span></code>
-of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>.</p></li>
-<li><p><strong>c_prev</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Cell state <code class="docutils literal notranslate"><span class="pre">c</span></code> for the previous timestep <code class="docutils literal notranslate"><span class="pre">t-1</span></code>
-of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Hidden state for the particular timestep on which the cell is run.</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt id="opacus.layers.dp_lstm.DPLSTMCell.initialize_weights">
-<code class="sig-name descname">initialize_weights</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weight_params</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell.initialize_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.initialize_weights" title="Permalink to this definition">¶</a></dt>
-<dd><p>Loads internal gate parameter weights and biases from an input list of parameters
-<code class="docutils literal notranslate"><span class="pre">[weight_ih_l0,</span> <span class="pre">weight_hh_l0,</span> <span class="pre">bias_ih_l0,</span> <span class="pre">bias_hh_l0]</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>weight_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]) – List of parameters <code class="docutils literal notranslate"><span class="pre">[weight_ih_l0,</span> <span class="pre">weight_hh_l0,</span> <span class="pre">...</span>
-<span class="pre">bias_ih_l0,</span> <span class="pre">bias_hh_l0]</span></code> from which to load internal cell weights
-(for input, output and forget gates).</p>
 </dd>
 </dl>
 </dd></dl>

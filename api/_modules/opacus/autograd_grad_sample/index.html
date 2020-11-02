@@ -160,8 +160,9 @@
     <span class="k">if</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Hook installed on unsupported layer"</span><span class="p">)</span>
 
-    <span class="c1"># pyre-fixme[16]: `Module` has no attribute `activations`.</span>
-    <span class="n">layer</span><span class="o">.</span><span class="n">activations</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">"activations"</span><span class="p">):</span>
+        <span class="n">layer</span><span class="o">.</span><span class="n">activations</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
 
 
 <span class="k">def</span> <span class="nf">_capture_backprops</span><span class="p">(</span>
@@ -229,8 +230,11 @@
 
     <span class="n">batch_dim</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">batch_first</span> <span class="k">else</span> <span class="mi">1</span>
 
-    <span class="c1"># pyre-fixme[16]: `Module` has no attribute `activations`.</span>
-    <span class="n">A</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">activations</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">activations</span>
+
     <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_dim</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
         <span class="n">B</span> <span class="o">=</span> <span class="n">backprops</span> <span class="o">*</span> <span class="n">n</span>
