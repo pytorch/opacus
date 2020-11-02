@@ -133,8 +133,9 @@ def _capture_activations(
     if get_layer_type(layer) not in _supported_layers_grad_samplers.keys():
         raise ValueError("Hook installed on unsupported layer")
 
-    # pyre-fixme[16]: `Module` has no attribute `activations`.
-    layer.activations = inputs[0].detach()
+    if not hasattr(layer, "activations"):
+        layer.activations = []
+    layer.activations.append(inputs[0].detach())
 
 
 def _capture_backprops(
@@ -202,8 +203,11 @@ def _compute_grad_sample(
 
     batch_dim = 0 if batch_first else 1
 
-    # pyre-fixme[16]: `Module` has no attribute `activations`.
-    A = layer.activations
+    if isinstance(layer.activations, list):
+        A = layer.activations.pop()
+    else:
+        A = layer.activations
+
     n = A.shape[batch_dim]
     if loss_reduction == "mean":
         B = backprops * n

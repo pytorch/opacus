@@ -10,6 +10,7 @@ from torch.nn.modules.activation import MultiheadAttention
 from torch.testing import assert_allclose
 
 
+
 class DPLayersTest(unittest.TestCase):
     def setUp(self):
         self.EMBED_SIZE = 32
@@ -98,6 +99,7 @@ class DPLSTMTest(unittest.TestCase):
             (self.lstm_state[0], self.dplstm_state[0], "LSTM and DPLSTM state `h`"),
             (self.lstm_state[1], self.dplstm_state[1], "LSTM and DPLSTM state `c`"),
         ]
+
         for param, dp_param, message in params_to_test:
             assert_allclose(
                 actual=param,
@@ -120,22 +122,22 @@ class DPLSTMTest(unittest.TestCase):
         params_to_test = [
             (
                 self.original_lstm.weight_ih_l0.grad,
-                self.dp_lstm.weight_ih_l0.grad,
+                self.dp_lstm.ih.weight.grad,
                 "LSTM and DPLSTM `weight_ih_l0` gradients",
             ),
             (
                 self.original_lstm.bias_ih_l0.grad,
-                self.dp_lstm.bias_ih_l0.grad,
+                self.dp_lstm.ih.bias.grad,
                 "LSTM and DPLSTM `bias_ih_l0` gradients",
             ),
             (
                 self.original_lstm.weight_hh_l0.grad,
-                self.dp_lstm.weight_hh_l0.grad,
+                self.dp_lstm.hh.weight.grad,
                 "LSTM and DPLSTM `weight_hh_l0` gradients",
             ),
             (
                 self.original_lstm.bias_hh_l0.grad,
-                self.dp_lstm.bias_hh_l0.grad,
+                self.dp_lstm.hh.bias.grad,
                 "LSTM and DPLSTM `bias_hh_l0` gradients",
             ),
         ]
