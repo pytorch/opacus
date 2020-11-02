@@ -169,7 +169,6 @@ class LayersGradTest(unittest.TestCase):
         self._check_one_layer(layer, x1)
         self._check_one_layer(layer, x2)
 
-
     def test_lstm_batch_first(self):
         # input size : 25 output size : 12 minibatch : 30 sequence length : 20
         # Test batch_first=True case

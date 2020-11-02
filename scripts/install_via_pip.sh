@@ -7,9 +7,10 @@ PYTORCH_NIGHTLY=false
 DEPLOY=false
 CHOSEN_TORCH_VERSION=-1
 
-while getopts 'ndv:' flag; do
+while getopts 'ncdv:' flag; do
   case "${flag}" in
     n) PYTORCH_NIGHTLY=true ;;
+    c) CUDA=true;;
     d) DEPLOY=true ;;
     v) CHOSEN_TORCH_VERSION=${OPTARG};;
     *) echo "usage: $0 [-n] [-d] [-v version]" >&2
@@ -45,8 +46,11 @@ sudo pip install -e .[dev]
 
 # install pytorch nightly if asked for
 if [[ $PYTORCH_NIGHTLY == true ]]; then
-  sudo pip install --upgrade --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-  sudo pip install --upgrade --pre torchcsprng -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+  if [[ $CUDA == true ]]; then
+    sudo pip install --upgrade --pre torch torchvision torchcsprng -f https://download.pytorch.org/whl/nightly/cu101/torch_nightly.html
+  else
+    sudo pip install --upgrade --pre torch torchvision torchcsprng -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+  fi
 else
   # If no version specified, upgrade to latest release.
   if [[ $CHOSEN_TORCH_VERSION == -1 ]]; then

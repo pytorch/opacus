@@ -281,7 +281,9 @@ def _compute_embedding_grad_sample(
         .expand(*A.shape, layer.embedding_dim)
         .reshape(batch_size, -1, layer.embedding_dim)
     )
-    grad_sample = torch.zeros(batch_size, *layer.weight.shape, device=layer.weight.device)
+    grad_sample = torch.zeros(
+        batch_size, *layer.weight.shape, device=layer.weight.device
+    )
     grad_sample.scatter_add_(1, index, B.reshape(batch_size, -1, layer.embedding_dim))
     torch.backends.cudnn.deterministic = saved
 
