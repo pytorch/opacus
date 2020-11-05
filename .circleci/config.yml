@@ -20,6 +20,19 @@ commands:
             sudo "$(which python)" -m pip install --upgrade pip
             sudo "$(which python)" -m pip install pytest
 
+  update_gpg_key:
+    description: "Temp fix due to CircleCI image being old and requiring manual GPG key updates to Ubuntu, Nvidia, Heroku"
+    steps:
+      - run:
+          name: "Update GPG keys"
+          command: |
+            wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+            distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+            curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+            sudo apt-get update
+            curl https://cli-assets.heroku.com/apt/release.key | sudo apt-key add -
+
   run_nvidia_smi:
     description: "Prints GPU capabilities from nvidia-smi"
     steps:
@@ -189,7 +202,7 @@ commands:
             mkdir imdb
             mkdir imdb/data
             mkdir imdb/test-reports
-            PYTHONPATH=. pip3 install torchtext transformers
+            PYTHONPATH=. pip3 install transformers datasets
             PYTHONPATH=. python3 examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 8 --max-sequence-length 256 --epochs 1 --data-root imdb/data --device <<parameters.device>>
           when: always
       - store_test_results:
@@ -231,7 +244,9 @@ jobs:
     docker:
       - image: circleci/python:3.6.9
     steps:
+      - update_gpg_key
       - checkout
+      - py_3_6_setup
       - pip_dev_install
       - lint_flake8
       - lint_black
@@ -285,6 +300,7 @@ jobs:
       resource_class: gpu.nvidia.small
       image: ubuntu-1604-cuda-10.1:201909-23
     steps:
+      - update_gpg_key
       - checkout
       - py_3_6_setup
       - pip_install
@@ -293,11 +309,23 @@ jobs:
           device: "cuda"
       - cifar10_integration_test:
           device: "cuda"
-      - imdb_integration_test:
-          device: "cuda"
       - charlstm_integration_test:
           device: "cuda"
       - dcgan_integration_test:
+          device: "cuda"
+
+  integrationtest_py36_torch_nightly_cuda:
+    machine:
+      resource_class: gpu.nvidia.small
+      image: ubuntu-1604-cuda-10.1:201909-23
+    steps:
+      - update_gpg_key
+      - checkout
+      - py_3_6_setup
+      - pip_dev_install:
+          args: "-nc"
+      - run_nvidia_smi
+      - imdb_integration_test:
           device: "cuda"
 
 
@@ -340,6 +368,8 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py36_torch_release_cuda:
           filters: *exclude_ghpages
+      - integrationtest_py36_torch_nightly_cuda:
+          filters: *exclude_ghpages
 
   nightly:
     triggers:
@@ -355,6 +385,8 @@ workflows:
       - integrationtest_py36_torch_release_cpu:
           filters: *exclude_ghpages
       - integrationtest_py36_torch_release_cuda:
+          filters: *exclude_ghpages
+      - integrationtest_py36_torch_nightly_cuda:
           filters: *exclude_ghpages
 
   website_deployment:

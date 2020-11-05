@@ -7,11 +7,12 @@ PYTORCH_NIGHTLY=false
 DEPLOY=false
 CHOSEN_TORCH_VERSION=-1
 
-while getopts 'ndv:' flag; do
+while getopts 'ncdv:' flag; do
   case "${flag}" in
     n) PYTORCH_NIGHTLY=true ;;
+    c) CUDA=true ;;
     d) DEPLOY=true ;;
-    v) CHOSEN_TORCH_VERSION=${OPTARG};;
+    v) CHOSEN_TORCH_VERSION=${OPTARG} ;;
     *) echo "usage: $0 [-n] [-d] [-v version]" >&2
        exit 1 ;;
     esac
@@ -20,43 +21,42 @@ while getopts 'ndv:' flag; do
 # NOTE: Only Debian variants are supported, since this script is only
 # used by our tests on CircleCI.
 
-# install nodejs and yarn for website build
-sudo apt install apt-transport-https ca-certificates
+
 curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+sudo apt-get install -y nodejs
+curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt update
-sudo apt install nodejs
-sudo apt install yarn
+sudo apt-get update && sudo apt-get install yarn
 
 # yarn needs terminal info
 export TERM=xterm
 
-# NOTE: All of the below installs use sudo, b/c otherwise pip will get
-# permission errors installing in the docker container. An alternative would be
-# to use a virtualenv, but that would lead to bifurcation of the CircleCI config
-# since we'd need to source the environemnt in each step.
+# NOTE: We don't use sudo for the below installs, because we expect these to come from pyenv which
+# installs Python in a folder for which we have user access.
 
 # upgrade pip
-sudo pip install --upgrade pip
+pip install --upgrade pip
 
 # install with dev dependencies
-sudo pip install -e .[dev]
+pip install -e .[dev]
 
 # install pytorch nightly if asked for
 if [[ $PYTORCH_NIGHTLY == true ]]; then
-  sudo pip install --upgrade --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-  sudo pip install --upgrade --pre torchcsprng -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+  if [[ $CUDA == true ]]; then
+    pip install --upgrade --pre torch torchvision torchtext torchcsprng -f https://download.pytorch.org/whl/nightly/cu102/torch_nightly.html
+  else
+    pip install --upgrade --pre torch torchvision torchtext torchcsprng -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+  fi
 else
   # If no version specified, upgrade to latest release.
   if [[ $CHOSEN_TORCH_VERSION == -1 ]]; then
-    sudo pip install --upgrade torch
+    pip install --upgrade torch
   else
-    sudo pip install torch==$CHOSEN_TORCH_VERSION
+    pip install torch==$CHOSEN_TORCH_VERSION
   fi
 fi
 
 # install deployment bits if asked for
 if [[ $DEPLOY == true ]]; then
-  sudo pip install beautifulsoup4 ipython nbconvert
+  pip install beautifulsoup4 ipython nbconvert
 fi
