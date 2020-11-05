@@ -19,6 +19,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
+from opacus.layers.dp_lstm import LSTMLinear
 from .supported_layers_grad_samplers import _supported_layers_grad_samplers
 from .utils.module_inspection import get_layer_type, requires_grad
 
@@ -201,7 +202,8 @@ def _compute_grad_sample(
             " run forward after add_hooks(model)"
         )
 
-    batch_dim = 0 if batch_first else 1
+    # Outside of the LSTM there is "batch_first" but not for the Linear inside the LSTM
+    batch_dim = 0 if batch_first or type(layer) is LSTMLinear else 1
 
     if isinstance(layer.activations, list):
         A = layer.activations.pop()
