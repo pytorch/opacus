@@ -10,7 +10,6 @@ from torch.nn.modules.activation import MultiheadAttention
 from torch.testing import assert_allclose
 
 
-
 class DPLayersTest(unittest.TestCase):
     def setUp(self):
         self.EMBED_SIZE = 32
