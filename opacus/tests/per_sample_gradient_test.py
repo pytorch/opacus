@@ -79,10 +79,18 @@ class PerSampleGradientTest(unittest.TestCase):
         self._check_one_layer(layer, x)
 
     def test_conv2d(self):
-        x = torch.randn(24, 16, 24, 24)
-        layer = nn.Conv2d(16, 32, 3, 1)
+        x1 = torch.randn(24, 16, 24, 24)
+        x2 = torch.randn(24, 32, 24, 24)
 
-        self._check_one_layer(layer, x)
+        self._check_one_layer(nn.Conv2d(16, 32, 3, 1, groups=1), x1)
+        self._check_one_layer(nn.Conv2d(16, 32, 3, 1, groups=2), x1)
+        self._check_one_layer(nn.Conv2d(16, 32, 3, 1, groups=4), x1)
+        self._check_one_layer(nn.Conv2d(16, 32, 3, 1, groups=16), x1)
+
+        self._check_one_layer(nn.Conv2d(32, 16, 3, 1, groups=1), x2)
+        self._check_one_layer(nn.Conv2d(32, 16, 3, 1, groups=2), x2)
+        self._check_one_layer(nn.Conv2d(32, 16, 3, 1, groups=4), x2)
+        self._check_one_layer(nn.Conv2d(32, 16, 3, 1, groups=16), x2)
 
     def test_linear(self):
         self._check_one_layer(nn.Linear(8, 4), torch.randn(16, 8))
