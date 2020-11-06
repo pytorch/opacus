@@ -12,56 +12,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchcsprng as prng
+from datasets import load_dataset
 from opacus import PrivacyEngine
 from torch.functional import F
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import DataLoader, Dataset
-from torchtext.experimental.datasets.raw import IMDB as RawIMDB
+from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoTokenizer
-
-
-class HuggingFaceTorchTextDataset(Dataset):
-    """
-    A dataset that wraps a TorchText raw dataset, and applies an HuggingFace tokenizer to it
-    """
-
-    def __init__(
-        self,
-        raw_dataset,
-        tokenizer_name="bert-base-uncased",
-        max_len=512,
-        num_workers=8,
-    ):
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=True)
-        self.max_len = max_len
-        self.samples = [self.process_item(item) for item in tqdm(raw_dataset)]
-
-    def __getitem__(self, i):
-        return self.samples[i]
-
-    def process_item(self, item):
-        label, text = item
-        inputs = self.tokenizer.encode_plus(
-            text,
-            None,
-            add_special_tokens=True,
-            max_length=self.max_len,
-            pad_to_max_length=False,
-            return_token_type_ids=True,
-            truncation=True,
-        )
-        ids = inputs["input_ids"]
-        mask = inputs["attention_mask"]
-
-        return {
-            "ids": torch.tensor(ids, dtype=torch.long),
-            "mask": torch.tensor(mask, dtype=torch.long),
-            "targets": torch.tensor(label, dtype=torch.long),
-        }
-
-    def __len__(self):
-        return len(self.samples)
+from transformers import BertTokenizerFast
 
 
 class SampleNet(nn.Module):
@@ -93,10 +50,11 @@ def binary_accuracy(preds, y):
 
 def padded_collate(batch, padding_idx=0):
     x = pad_sequence(
-        [elem["ids"] for elem in batch], batch_first=True, padding_value=padding_idx
+        [elem["input_ids"] for elem in batch],
+        batch_first=True,
+        padding_value=padding_idx,
     )
-    y = torch.stack([elem["targets"] for elem in batch]).long()
-
+    y = torch.stack([elem["label"] for elem in batch]).long()
     return x, y
 
 
@@ -256,14 +214,18 @@ def main():
     args = parser.parse_args()
     device = torch.device(args.device)
 
-    raw_train_dataset, raw_test_dataset = RawIMDB()
+    raw_dataset = load_dataset("imdb", cache_dir="imdb")
+    tokenizer = BertTokenizerFast.from_pretrained("bert-base-cased")
+    dataset = raw_dataset.map(
+        lambda x: tokenizer(
+            x["text"], truncation=True, max_length=args.max_sequence_length
+        ),
+        batched=True,
+    )
+    dataset.set_format(type="torch", columns=["input_ids", "label"])
 
-    train_dataset = HuggingFaceTorchTextDataset(
-        raw_train_dataset, max_len=args.max_sequence_length
-    )
-    test_dataset = HuggingFaceTorchTextDataset(
-        raw_test_dataset, max_len=args.max_sequence_length
-    )
+    train_dataset = dataset["train"]
+    test_dataset = dataset["test"]
 
     generator = (
         prng.create_random_device_generator("/dev/urandom") if args.secure_rng else None
@@ -289,7 +251,7 @@ def main():
         pin_memory=True,
     )
 
-    model = SampleNet(vocab_size=len(train_dataset.tokenizer)).to(device)
+    model = SampleNet(vocab_size=len(tokenizer)).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
     if not args.disable_dp:
