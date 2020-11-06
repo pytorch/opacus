@@ -14,7 +14,7 @@ Attributes:
 from typing import Union
 
 import torch
-from opacus.layers.dp_lstm import AccumulateLinear
+from opacus.layers.dp_lstm import LSTMLinear
 from opacus.layers.dp_multihead_attention import SequenceBias
 from torch import nn
 from torch.functional import F
@@ -90,10 +90,10 @@ def _compute_linear_grad_sample(
 
 
 def _compute_accumulate_linear_grad_sample(
-    layer: AccumulateLinear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
+    layer: LSTMLinear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
 ) -> None:
     """
-    Computes per sample gradients for ``AccumulateLinear`` layer
+    Computes per sample gradients for ``LSTMLinear`` layer
 
     Args:
         layer: Layer
@@ -101,6 +101,7 @@ def _compute_accumulate_linear_grad_sample(
         B: Backpropagations
         batch_dim: Batch dimension position
     """
+
     gs = torch.einsum("n...i,n...j->n...ij", B, A)
     _create_or_accumulate_grad_sample(
         layer.weight, torch.einsum("n...ij->nij", gs), batch_dim, layer
@@ -278,7 +279,7 @@ def _compute_embedding_grad_sample(
 _supported_layers_grad_samplers = {
     "Embedding": _compute_embedding_grad_sample,
     "Linear": _compute_linear_grad_sample,
-    "AccumulateLinear": _compute_accumulate_linear_grad_sample,
+    "LSTMLinear": _compute_accumulate_linear_grad_sample,
     "Conv2d": _compute_conv_grad_sample,
     "Conv1d": _compute_conv_grad_sample,
     "LayerNorm": _compute_norm_grad_sample,

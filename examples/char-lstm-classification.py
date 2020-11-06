@@ -195,8 +195,10 @@ class CharNNClassifier(nn.Module):
         lstm_out, _ = self.lstm(input_emb, hidden)
         # batch dimension = 1 is needed throughout, so we add an additional
         # dimension and subsequently remove it before the softmax
-        output = self.out_layer(lstm_out[-1].unsqueeze(0))
-        return output[-1]
+
+        output = self.out_layer(lstm_out[-1].unsqueeze(0))[0]
+        
+        return output
 
     def init_hidden(self):
         return (

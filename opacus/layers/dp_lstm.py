@@ -8,7 +8,7 @@ from torch.nn import init
 from typing import Tuple
 
 
-class AccumulateLinear(nn.Linear):
+class LSTMLinear(nn.Linear):
     r"""
     This function is the same as a nn.Linear layer, except that in the backward pass 
     the grad_samples get accumulated (instead of being concatenated as in the standard
@@ -60,8 +60,8 @@ class DPLSTM(nn.Module):
 
         self.validate_parameters()
 
-        self.ih = AccumulateLinear(input_size, 4 * hidden_size)
-        self.hh = AccumulateLinear(hidden_size, 4 * hidden_size)
+        self.ih = LSTMLinear(input_size, 4 * hidden_size)
+        self.hh = LSTMLinear(hidden_size, 4 * hidden_size)
 
         self.reset_parameters()
 

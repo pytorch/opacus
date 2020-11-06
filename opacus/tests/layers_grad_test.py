@@ -82,7 +82,6 @@ class LayersGradTest(unittest.TestCase):
             vanilla_run_grads, private_run_grads
         ):
             assert vanilla_name == private_name
-
             self.assertTrue(
                 torch.allclose(vanilla_grad, private_grad, atol=10e-5, rtol=10e-3),
                 f"Gradient mismatch. Parameter: {layer}.{vanilla_name}, loss: {criterion.reduction}",
@@ -181,6 +180,6 @@ class LayersGradTest(unittest.TestCase):
         # input size : 25 output size : 12 minibatch : 30 sequence length : 20
 
         # Test batch_first=False case
-        layer = DPLSTM(25, 12, 1, batch_first=True)
+        layer = DPLSTM(25, 12, 1, batch_first=False)
         x = torch.randn(20, 30, 25)
-        self._check_one_layer(layer, x, batch_first=True)
+        self._check_one_layer(layer, x, batch_first=False)
