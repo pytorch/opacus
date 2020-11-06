@@ -109,10 +109,10 @@ def _compute_accumulate_linear_grad_sample(
 
     if layer.bias is not None:
         _create_or_accumulate_grad_sample(
-            layer.bias, # pyre-ignore[6] We know layer.bias is not None
+            layer.bias,  # pyre-ignore[6] We know layer.bias is not None
             torch.einsum("n...k->nk", B),
-            batch_dim, 
-            layer
+            batch_dim,
+            layer,
         )
 
 
@@ -188,7 +188,6 @@ def _compute_norm_grad_sample(
             _create_or_extend_grad_sample(
                 layer.bias, torch.einsum("ni...->ni", B), batch_dim
             )
-
 
 
 def _compute_conv_grad_sample(
@@ -269,7 +268,9 @@ def _compute_embedding_grad_sample(
         .expand(*A.shape, layer.embedding_dim)
         .reshape(batch_size, -1, layer.embedding_dim)
     )
-    grad_sample = torch.zeros(batch_size, *layer.weight.shape, device=layer.weight.device)
+    grad_sample = torch.zeros(
+        batch_size, *layer.weight.shape, device=layer.weight.device
+    )
     grad_sample.scatter_add_(1, index, B.reshape(batch_size, -1, layer.embedding_dim))
     torch.backends.cudnn.deterministic = saved
 
