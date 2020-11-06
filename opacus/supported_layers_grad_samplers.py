@@ -13,6 +13,7 @@ Attributes:
 
 from typing import Union
 
+import numpy as np
 import torch
 from opacus.layers.dp_lstm import LSTMLinear
 from opacus.layers.dp_multihead_attention import SequenceBias
@@ -227,22 +228,23 @@ def _compute_conv_grad_sample(
             stride=(1, layer.stride[0]),
         )
         B = B.reshape(n, -1, A.shape[-1])
-    try:
-        # n=batch_sz; o=num_out_channels; p=num_in_channels*kernel_sz
-        grad_sample = (
-            torch.einsum("noq,npq->nop", B, A)
-            if layer.groups == 1
-            else torch.einsum("njk,njk->nj", B, A)
-        )
-        shape = [n] + list(layer.weight.shape)
-        _create_or_extend_grad_sample(
-            layer.weight, grad_sample.reshape(shape), batch_dim
-        )
-    except BaseException as e:
-        raise type(e)(
-            f"{e} There is probably a problem with {layer_type}.groups. "
-            + "It should be either 1 or in_channel"
-        )
+
+    # n=batch_sz; o=num_out_channels; p=(num_in_channels/groups)*kernel_sz
+    grad_sample = torch.einsum("noq,npq->nop", B, A)
+    # rearrange the above tensor and extract diagonals.
+    grad_sample = grad_sample.view(
+        n,
+        layer.groups,
+        -1,
+        layer.groups,
+        int(layer.in_channels / layer.groups),
+        np.prod(layer.kernel_size),
+    )
+    grad_sample = torch.einsum("ngrg...->ngr...", grad_sample).contiguous()
+    shape = [n] + list(layer.weight.shape)
+
+    _create_or_extend_grad_sample(layer.weight, grad_sample.view(shape), batch_dim)
+
     if layer.bias is not None:
         _create_or_extend_grad_sample(layer.bias, torch.sum(B, dim=2), batch_dim)
 
