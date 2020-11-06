@@ -140,7 +140,9 @@ commands:
             mkdir mnist
             mkdir mnist/data
             mkdir mnist/test-reports
-            PYTHONPATH=. python3 examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root mnist/data --n-runs 1 --device <<parameters.device>>
+            echo "Using $(python -V) ($(which python))"
+            echo "Using $(pip -V) ($(which pip))"
+            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root mnist/data --n-runs 1 --device <<parameters.device>>
           when: always
       - store_test_results:
           path: mnist/test-reports
@@ -161,8 +163,10 @@ commands:
             mkdir cifar10/data
             mkdir cifar10/logs
             mkdir cifar10/test-reports
-            PYTHONPATH=. pip3 install tensorboard
-            PYTHONPATH=. python3 examples/cifar10.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 128 --epochs 1 --data-root cifar10/data --log-dir cifar10/logs --device <<parameters.device>>
+            echo "Using $(python -V) ($(which python))"
+            echo "Using $(pip -V) ($(which pip))"
+            pip install tensorboard
+            python examples/cifar10.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 128 --epochs 1 --data-root cifar10/data --log-dir cifar10/logs --device <<parameters.device>>
           when: always
       - store_test_results:
           path: cifar10/test-reports
@@ -182,7 +186,9 @@ commands:
             mkdir dcgan
             mkdir dcgan/data
             mkdir dcgan/test-reports
-            PYTHONPATH=. python3 examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root dcgan/data --device <<parameters.device>>
+            echo "Using $(python -V) ($(which python))"
+            echo "Using $(pip -V) ($(which pip))"
+            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root dcgan/data --device <<parameters.device>>
           when: always
       - store_test_results:
           path: dcgan/test-reports
@@ -202,8 +208,10 @@ commands:
             mkdir imdb
             mkdir imdb/data
             mkdir imdb/test-reports
-            PYTHONPATH=. pip3 install torchtext transformers
-            PYTHONPATH=. python3 examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 8 --max-sequence-length 256 --epochs 1 --data-root imdb/data --device <<parameters.device>>
+            echo "Using $(python -V) ($(which python))"
+            echo "Using $(pip -V) ($(which pip))"
+            pip install --user datasets transformers
+            python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 8 --max-sequence-length 256 --epochs 1 --data-root imdb/data --device <<parameters.device>>
           when: always
       - store_test_results:
           path: imdb/test-reports
@@ -226,8 +234,10 @@ commands:
             unzip charlstm/data/data.zip -d charlstm/data
             rm charlstm/data/data.zip
             mkdir charlstm/test-reports
-            PYTHONPATH=. pip3 install scikit-learn
-            PYTHONPATH=. python3 examples/char-lstm-classification.py --data-root="charlstm/data/" --iterations 30 --learning-rate=2.0 --n-hidden=128 --delta=8e-5 --batch-size=800 --sigma=1.0 --device <<parameters.device>>
+            echo "Using $(python -V) ($(which python))"
+            echo "Using $(pip -V) ($(which pip))"
+            pip install scikit-learn
+            python examples/char-lstm-classification.py --data-root="charlstm/data/" --iterations 30 --learning-rate=2.0 --n-hidden=128 --delta=8e-5 --batch-size=800 --sigma=1.0 --device <<parameters.device>>
           when: always
       - store_test_results:
           path: charlstm/test-reports
