@@ -129,6 +129,9 @@ def _capture_activations(
         inputs: Inputs to the ``layer``.
         outputs: Outputs of the ``layer``.
     """
+    if not layer.training:
+        return
+
     if _hooks_disabled:
         return
     if get_layer_type(layer) not in _supported_layers_grad_samplers.keys():
@@ -189,6 +192,9 @@ def _compute_grad_sample(
             first dimension else set to False (``batch_first=False`` implies
             that the batch is always in the second dimension).
     """
+    if not layer.training:
+        return
+
     layer_type = get_layer_type(layer)
     if (
         not requires_grad(layer)
