@@ -156,6 +156,9 @@
 <span class="sd">        inputs: Inputs to the ``layer``.</span>
 <span class="sd">        outputs: Outputs of the ``layer``.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">layer</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+        <span class="k">return</span>
+
     <span class="k">if</span> <span class="n">_hooks_disabled</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="k">if</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -216,6 +219,9 @@
 <span class="sd">            first dimension else set to False (``batch_first=False`` implies</span>
 <span class="sd">            that the batch is always in the second dimension).</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">layer</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+        <span class="k">return</span>
+
     <span class="n">layer_type</span> <span class="o">=</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span>
         <span class="ow">not</span> <span class="n">requires_grad</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
