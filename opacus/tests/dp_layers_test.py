@@ -102,7 +102,7 @@ class DPLSTMTest(unittest.TestCase):
         for param, dp_param, message in params_to_test:
             assert_allclose(
                 actual=param,
-                expected=dp_param,
+                expected=dp_param.expand_as(param),
                 atol=10e-5,
                 rtol=10e-3,
                 msg=f"Tensor value mismatch between {message}",
