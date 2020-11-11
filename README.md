@@ -23,7 +23,7 @@ pip install opacus
 To install on Colab, run this cell first:
 
 ```bash
-pip install torchcsprng==0.1.2+cu101 torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torchcsprng==0.1.3+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 Then you can just `pip install opacus` like before. See more context in [this issue](https://github.com/pytorch/opacus/issues/69).
 
