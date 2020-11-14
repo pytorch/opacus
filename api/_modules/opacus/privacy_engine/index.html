@@ -202,7 +202,10 @@
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span> <span class="o">=</span> <span class="n">PerSampleGradientClipper</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="n">norm_clipper</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">,</span>
+            <span class="n">norm_clipper</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">dp_zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
