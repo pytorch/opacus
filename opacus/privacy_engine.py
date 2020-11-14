@@ -175,7 +175,10 @@ class PrivacyEngine:
             )
 
         self.clipper = PerSampleGradientClipper(
-            self.module, norm_clipper, self.batch_first, self.loss_reduction
+            self.module,
+            norm_clipper,
+            self.batch_first,
+            self.loss_reduction,
         )
 
         def dp_zero_grad(self):
