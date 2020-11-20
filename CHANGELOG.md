@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.10.1
+### Bug fixes
+* Fix PyPI deployment (#91).
+### Miscellaneous
+* Refactor grad sample tests (#90).
+* Avoid storing activations in certain scenarios (#87)
+
 ## v0.10.0
 ### New features
 * Reimplemented the Embedding layer, making it 9x faster with lower memory footprint (#73).
