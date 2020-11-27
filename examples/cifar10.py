@@ -62,13 +62,13 @@ def train(args, model, train_loader, optimizer, epoch, device):
         stats.update(stats.StatType.TRAIN, acc1=acc1)
 
         # compute gradient and do SGD step
-        optimizer.zero_grad()
         loss.backward()
 
         # make sure we take a step after processing the last mini-batch in the
         # epoch to ensure we start the next epoch with a clean state
         if ((i + 1) % args.n_accumulation_steps == 0) or ((i + 1) == len(train_loader)):
             optimizer.step()
+            optimizer.zero_grad()
         else:
             optimizer.virtual_step()
 
@@ -270,6 +270,9 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.disable_dp and args.n_accumulation_steps > 1:
+        raise ValueError("Virtual steps only works with enabled DP")
 
     # The following few lines, enable stats gathering about the run
     # 1. where the stats should be logged
