@@ -718,8 +718,6 @@ Trainable parameters count: 7680771
         <span class="k">else</span><span class="p">:</span>
             <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span>
 
-        <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-
         <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">step</span> <span class="o">%</span> <span class="n">LOGGING_INTERVAL</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">train_loss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
             <span class="n">eps</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="n">DELTA</span><span class="p">)</span>

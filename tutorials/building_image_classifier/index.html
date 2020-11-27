@@ -506,7 +506,6 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
         <span class="c1"># take a real optimizer step after N_VIRTUAL_STEP steps t</span>
         <span class="k">if</span> <span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">virtual_batch_rate</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="p">)):</span>
             <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span> <span class="c1"># take a virtual step</span>
 
@@ -592,9 +591,9 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="output">
 <div class="output_area">
 <div class="prompt"></div>
-<div class="output_subarea output_widget_view" id="d55397ff-9c35-4e49-8975-9be3c1a0d4f3">
+<div class="output_subarea output_widget_view" id="8332f57a-29b8-4ccc-ab90-3eff0adb91cf">
 <script type="text/javascript">
-var element = $('#d55397ff-9c35-4e49-8975-9be3c1a0d4f3');
+var element = $('#8332f57a-29b8-4ccc-ab90-3eff0adb91cf');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "a0521999fa9d45219724acf70b3b4469", "version_major": 2, "version_minor": 0}
