@@ -115,7 +115,10 @@ def is_supported(layer: nn.Module) -> bool:
     Returns:
         Whether the ``layer`` is supported by this library.
     """
-    return get_layer_type(layer) in _supported_layers_grad_samplers.keys()
+    return get_layer_type(layer) in list(_supported_layers_grad_samplers.keys()) + [
+        "DPLSTM",
+        "DPMultiheadAttention",
+    ]
 
 
 def _capture_activations(
