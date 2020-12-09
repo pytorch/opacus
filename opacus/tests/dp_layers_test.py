@@ -60,92 +60,300 @@ class DPLayersTest(unittest.TestCase):
             self._run_multihead_qkv(num_heads=num_heads, kdim=24, vdim=24)
 
 
-class DPLSTMTest(unittest.TestCase):
+class SimpleDPLSTMTest(unittest.TestCase):
     def setUp(self):
         self.SEQ_LENGTH = 20
         self.INPUT_DIM = 25
         self.MINIBATCH_SIZE = 30
         self.LSTM_OUT_DIM = 12
+        self.NUM_LAYERS = 1
+        self.bidirectional = False
+        self.batch_first = False
 
-        self.h_init = torch.randn(1, self.MINIBATCH_SIZE, self.LSTM_OUT_DIM)
-        self.c_init = torch.randn(1, self.MINIBATCH_SIZE, self.LSTM_OUT_DIM)
-        hidden = (self.h_init, self.c_init)
-
-        self.x = torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.INPUT_DIM)
-
-        self.original_lstm = LSTM(self.INPUT_DIM, self.LSTM_OUT_DIM, batch_first=True)
-        self.dp_lstm = DPLSTM(self.INPUT_DIM, self.LSTM_OUT_DIM, batch_first=True)
-
-        self.dp_lstm.initialize_weights(
-            [
-                self.original_lstm.weight_ih_l0,
-                self.original_lstm.weight_hh_l0,
-                self.original_lstm.bias_ih_l0,
-                self.original_lstm.bias_hh_l0,
-            ]
+        self.num_directions = 2 if self.bidirectional else 1
+        self.h_init = torch.randn(
+            self.NUM_LAYERS * self.num_directions,
+            self.MINIBATCH_SIZE,
+            self.LSTM_OUT_DIM,
+        )
+        self.c_init = torch.randn(
+            self.NUM_LAYERS * self.num_directions,
+            self.MINIBATCH_SIZE,
+            self.LSTM_OUT_DIM,
         )
 
-        self.lstm_out, self.lstm_state = self.original_lstm(self.x, hidden)
-        self.dplstm_out, self.dplstm_state = self.dp_lstm(self.x, hidden)
+        self.original_lstm = LSTM(
+            self.INPUT_DIM,
+            self.LSTM_OUT_DIM,
+            batch_first=self.batch_first,
+            num_layers=self.NUM_LAYERS,
+            bidirectional=self.bidirectional,
+        )
+        self.dp_lstm = DPLSTM(
+            self.INPUT_DIM,
+            self.LSTM_OUT_DIM,
+            batch_first=self.batch_first,
+            num_layers=self.NUM_LAYERS,
+            bidirectional=self.bidirectional,
+        )
+
+        self.dp_lstm.load_state_dict(self.original_lstm.state_dict())
 
     def _reset_seeds(self):
         torch.manual_seed(1337)
         torch.cuda.manual_seed(1337)
 
     def test_lstm_forward(self):
-        params_to_test = [
-            (self.lstm_out, self.dplstm_out, "LSTM and DPLSTM output"),
-            (self.lstm_state[0], self.dplstm_state[0], "LSTM and DPLSTM state `h`"),
-            (self.lstm_state[1], self.dplstm_state[1], "LSTM and DPLSTM state `c`"),
+        x = (
+            torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.INPUT_DIM)
+            if self.batch_first
+            else torch.randn(self.SEQ_LENGTH, self.MINIBATCH_SIZE, self.INPUT_DIM)
+        )
+        hidden = (self.h_init, self.c_init)
+
+        out, (hn, cn) = self.original_lstm(x, hidden)
+        dp_out, (dp_hn, dp_cn) = self.dp_lstm(x, hidden)
+
+        outputs_to_test = [
+            (out, dp_out, "LSTM and DPLSTM output"),
+            (hn, dp_hn, "LSTM and DPLSTM state `h`"),
+            (cn, dp_cn, "LSTM and DPLSTM state `c`"),
         ]
 
-        for param, dp_param, message in params_to_test:
+        for output, dp_output, message in outputs_to_test:
             assert_allclose(
-                actual=param,
-                expected=dp_param.expand_as(param),
-                atol=10e-5,
-                rtol=10e-3,
+                actual=dp_output.expand_as(output),
+                expected=output,
+                atol=10e-6,
+                rtol=10e-5,
                 msg=f"Tensor value mismatch between {message}",
             )
 
     def test_lstm_backward(self):
-        y = torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.LSTM_OUT_DIM)
+        x = (
+            torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.INPUT_DIM)
+            if self.batch_first
+            else torch.randn(self.SEQ_LENGTH, self.MINIBATCH_SIZE, self.INPUT_DIM)
+        )
         criterion = nn.MSELoss()
 
-        loss = criterion(y, self.lstm_out)
+        hidden = (self.h_init, self.c_init)
+
+        out, (hn, cn) = self.original_lstm(x, hidden)
+        y = torch.zeros_like(out)
+        loss = criterion(out, y)
         loss.backward()
 
-        dp_loss = criterion(y, self.dplstm_out)
+        dp_out, (dp_hn, dp_cn) = self.dp_lstm(x, hidden)
+        dp_loss = criterion(dp_out, y)
         dp_loss.backward()
 
-        params_to_test = [
-            (
-                self.original_lstm.weight_ih_l0.grad,
-                self.dp_lstm.ih.weight.grad,
-                "LSTM and DPLSTM `weight_ih_l0` gradients",
-            ),
-            (
-                self.original_lstm.bias_ih_l0.grad,
-                self.dp_lstm.ih.bias.grad,
-                "LSTM and DPLSTM `bias_ih_l0` gradients",
-            ),
-            (
-                self.original_lstm.weight_hh_l0.grad,
-                self.dp_lstm.hh.weight.grad,
-                "LSTM and DPLSTM `weight_hh_l0` gradients",
-            ),
-            (
-                self.original_lstm.bias_hh_l0.grad,
-                self.dp_lstm.hh.bias.grad,
-                "LSTM and DPLSTM `bias_hh_l0` gradients",
-            ),
-        ]
-
-        for param, dp_param, message in params_to_test:
+        dp_lstm_params = dict(self.dp_lstm.named_parameters())
+        for param_name, param in self.original_lstm.named_parameters():
+            dp_param = dp_lstm_params[param_name]
             assert_allclose(
-                actual=param,
-                expected=dp_param,
+                actual=dp_param,
+                expected=param,
                 atol=10e-5,
                 rtol=10e-3,
+                msg=f"Tensor value mismatch in the parameter '{param_name}'",
+            )
+            assert_allclose(
+                actual=dp_param.grad,
+                expected=param.grad,
+                atol=10e-6,
+                rtol=10e-5,
+                msg=f"Tensor value mismatch in the gradient of parameter '{param_name}'",
+            )
+
+    def test_lstm_param_update(self):
+        x = (
+            torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.INPUT_DIM)
+            if self.batch_first
+            else torch.randn(self.SEQ_LENGTH, self.MINIBATCH_SIZE, self.INPUT_DIM)
+        )
+        criterion = nn.MSELoss()
+
+        optimizer = torch.optim.SGD(self.original_lstm.parameters(), lr=0.5)
+        dp_optimizer = torch.optim.SGD(self.dp_lstm.parameters(), lr=0.5)
+
+        # Train original LSTM for one step
+        logits, (h_n, c_n) = self.original_lstm(x)
+        y = torch.zeros_like(logits)
+        loss = criterion(logits, y)
+        loss.backward()
+        optimizer.step()
+
+        # Train DP LSTM for one step
+        dp_logits, (dp_h_n, dp_c_n) = self.dp_lstm(x)
+        dp_loss = criterion(dp_logits, y)
+        dp_loss.backward()
+        dp_optimizer.step()
+
+        dp_lstm_params = dict(self.dp_lstm.named_parameters())
+        for param_name, param in self.original_lstm.named_parameters():
+            dp_param = dp_lstm_params[param_name]
+            assert_allclose(
+                actual=dp_param,
+                expected=param,
+                atol=10e-6,
+                rtol=10e-5,
+                msg=f"Tensor value mismatch in the parameter '{param_name}'",
+            )
+            assert_allclose(
+                actual=dp_param.grad,
+                expected=param.grad,
+                atol=10e-6,
+                rtol=10e-5,
+                msg=f"Tensor value mismatch in the gradient of parameter '{param_name}'",
+            )
+
+
+class ComplexDPLSTMTest(unittest.TestCase):
+    def setUp(self):
+        self.SEQ_LENGTH = 20
+        self.INPUT_DIM = 25
+        self.MINIBATCH_SIZE = 30
+        self.LSTM_OUT_DIM = 12
+        self.NUM_LAYERS = 3
+        self.bidirectional = True
+        self.batch_first = False
+
+        self.num_directions = 2 if self.bidirectional else 1
+
+        self.h_init = torch.randn(
+            self.NUM_LAYERS * self.num_directions,
+            self.MINIBATCH_SIZE,
+            self.LSTM_OUT_DIM,
+        )
+        self.c_init = torch.randn(
+            self.NUM_LAYERS * self.num_directions,
+            self.MINIBATCH_SIZE,
+            self.LSTM_OUT_DIM,
+        )
+
+        self.original_lstm = LSTM(
+            self.INPUT_DIM,
+            self.LSTM_OUT_DIM,
+            batch_first=self.batch_first,
+            num_layers=self.NUM_LAYERS,
+            bidirectional=self.bidirectional,
+        )
+        self.dp_lstm = DPLSTM(
+            self.INPUT_DIM,
+            self.LSTM_OUT_DIM,
+            batch_first=self.batch_first,
+            num_layers=self.NUM_LAYERS,
+            bidirectional=self.bidirectional,
+        )
+
+        self.dp_lstm.load_state_dict(self.original_lstm.state_dict())
+
+    def _reset_seeds(self):
+        torch.manual_seed(1337)
+        torch.cuda.manual_seed(1337)
+
+    def test_lstm_forward(self):
+        x = (
+            torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.INPUT_DIM)
+            if self.batch_first
+            else torch.randn(self.SEQ_LENGTH, self.MINIBATCH_SIZE, self.INPUT_DIM)
+        )
+        hidden = (self.h_init, self.c_init)
+
+        out, (hn, cn) = self.original_lstm(x, hidden)
+        dp_out, (dp_hn, dp_cn) = self.dp_lstm(x, hidden)
+
+        outputs_to_test = [
+            (out, dp_out, "LSTM and DPLSTM output"),
+            (hn, dp_hn, "LSTM and DPLSTM state `h`"),
+            (cn, dp_cn, "LSTM and DPLSTM state `c`"),
+        ]
+
+        for output, dp_output, message in outputs_to_test:
+            assert_allclose(
+                actual=dp_output.expand_as(output),
+                expected=output,
+                atol=10e-6,
+                rtol=10e-5,
                 msg=f"Tensor value mismatch between {message}",
+            )
+
+    def test_lstm_backward(self):
+        x = (
+            torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.INPUT_DIM)
+            if self.batch_first
+            else torch.randn(self.SEQ_LENGTH, self.MINIBATCH_SIZE, self.INPUT_DIM)
+        )
+        criterion = nn.MSELoss()
+
+        hidden = (self.h_init, self.c_init)
+
+        out, (hn, cn) = self.original_lstm(x, hidden)
+        y = torch.zeros_like(out)
+        loss = criterion(out, y)
+        loss.backward()
+
+        dp_out, (dp_hn, dp_cn) = self.dp_lstm(x, hidden)
+        dp_loss = criterion(dp_out, y)
+        dp_loss.backward()
+
+        dp_lstm_params = dict(self.dp_lstm.named_parameters())
+        for param_name, param in self.original_lstm.named_parameters():
+            dp_param = dp_lstm_params[param_name]
+            assert_allclose(
+                actual=dp_param,
+                expected=param,
+                atol=10e-5,
+                rtol=10e-3,
+                msg=f"Tensor value mismatch in the parameter '{param_name}'",
+            )
+            assert_allclose(
+                actual=dp_param.grad,
+                expected=param.grad,
+                atol=10e-6,
+                rtol=10e-5,
+                msg=f"Tensor value mismatch in the gradient of parameter '{param_name}'",
+            )
+
+    def test_lstm_param_update(self):
+        x = (
+            torch.randn(self.MINIBATCH_SIZE, self.SEQ_LENGTH, self.INPUT_DIM)
+            if self.batch_first
+            else torch.randn(self.SEQ_LENGTH, self.MINIBATCH_SIZE, self.INPUT_DIM)
+        )
+        criterion = nn.MSELoss()
+
+        optimizer = torch.optim.SGD(self.original_lstm.parameters(), lr=0.5)
+        dp_optimizer = torch.optim.SGD(self.dp_lstm.parameters(), lr=0.5)
+
+        # Train original LSTM for one step
+        logits, (h_n, c_n) = self.original_lstm(x)
+        y = torch.zeros_like(logits)
+        loss = criterion(logits, y)
+        loss.backward()
+        optimizer.step()
+
+        # Train DP LSTM for one step
+        dp_logits, (dp_h_n, dp_c_n) = self.dp_lstm(x)
+        dp_loss = criterion(dp_logits, y)
+        dp_loss.backward()
+        dp_optimizer.step()
+
+        dp_lstm_params = dict(self.dp_lstm.named_parameters())
+        for param_name, param in self.original_lstm.named_parameters():
+            dp_param = dp_lstm_params[param_name]
+            assert_allclose(
+                actual=dp_param,
+                expected=param,
+                atol=10e-6,
+                rtol=10e-5,
+                msg=f"Tensor value mismatch in the parameter '{param_name}'",
+            )
+            assert_allclose(
+                actual=dp_param.grad,
+                expected=param.grad,
+                atol=10e-6,
+                rtol=10e-5,
+                msg=f"Tensor value mismatch in the gradient of parameter '{param_name}'",
             )
