@@ -25,15 +25,13 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <h1>Source code for opacus.layers.dp_lstm</h1><div class="highlight"><pre>
-<span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
-
-<span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">init</span>
+
+<span class="kn">from</span> <span class="nn">.param_rename</span> <span class="kn">import</span> <span class="n">ParamRenamedModule</span>
 
 
 <div class="viewcode-block" id="LSTMLinear"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.LSTMLinear">[docs]</a><span class="k">class</span> <span class="nc">LSTMLinear</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
@@ -47,88 +45,39 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">in_features</span><span class="p">,</span> <span class="n">out_features</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DPLSTM"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTM">[docs]</a><span class="k">class</span> <span class="nc">DPLSTM</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="DPLSTMCell"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell">[docs]</a><span class="k">class</span> <span class="nc">DPLSTMCell</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    DP-friendly abstraction in place of the ``torch.nn.LSTM`` module with a similar interface.</span>
-
-<span class="sd">    The dimensionality of each timestep input tensor for a sequence of length ``T`` is</span>
-<span class="sd">    ``[B, D]`` where ``B`` is the batch size. The ``DPLSTM`` output at timestep ``t``,</span>
-<span class="sd">    ``h_t`` is of shape ``[B, H]`` with the cell state ``c_t`` also of shape ``[B, H]``.</span>
-
-<span class="sd">    Attributes:</span>
-<span class="sd">        input_size (int): The number of expected features in the input ``x``.</span>
-<span class="sd">        hidden_size (int):  The number of features in the hidden state ``h``.</span>
-<span class="sd">        batch_first (bool): If ``True``, then the input and output tensors are provided as</span>
-<span class="sd">            (batch, seq, feature). The default is ``False``.</span>
+<span class="sd">    Internal-only class. Implements *one* step of LSTM so that a LSTM layer can be seen as repeated</span>
+<span class="sd">    applications of this class.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">bidirectional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_size</span> <span class="o">=</span> <span class="n">input_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">hidden_size</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">=</span> <span class="n">num_layers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">dropout</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span> <span class="o">=</span> <span class="n">bidirectional</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate_parameters</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">ih</span> <span class="o">=</span> <span class="n">LSTMLinear</span><span class="p">(</span><span class="n">input_size</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">hidden_size</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">hh</span> <span class="o">=</span> <span class="n">LSTMLinear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">hidden_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ih</span> <span class="o">=</span> <span class="n">LSTMLinear</span><span class="p">(</span><span class="n">input_size</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hh</span> <span class="o">=</span> <span class="n">LSTMLinear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">reset_parameters</span><span class="p">()</span>
 
-<div class="viewcode-block" id="DPLSTM.validate_parameters"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.validate_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">validate_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="DPLSTMCell.reset_parameters"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.reset_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">reset_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Validates the DPLSTM configuration and raises a ``NotImplementedError`` if the number of</span>
-<span class="sd">        layers is more than 1, the DPLSTM is bidirectional, uses dropout at the output</span>
-<span class="sd">        or, it does not have a bias term.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            NotImplementedError</span>
-<span class="sd">                If the number of layers is more than 1, the DPLSTM is bidirectional,</span>
-<span class="sd">                uses dropout at the output, or it does not have a bias term.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"DPLSTM Layer initialized with unsupported non-default flag. "</span>
-                <span class="s2">"Only supported flags are bias=True, bidirectional=False "</span>
-                <span class="s2">"num_layers=1, dropout=False, and initial state set to zero tensors"</span>
-            <span class="p">)</span></div>
-
-    <span class="k">def</span> <span class="nf">initialize_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weight_params</span><span class="p">):</span>
-        <span class="n">weight_ih_l0</span><span class="p">,</span> <span class="n">weight_hh_l0</span><span class="p">,</span> <span class="n">bias_ih_l0</span><span class="p">,</span> <span class="n">bias_hh_l0</span> <span class="o">=</span> <span class="n">weight_params</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">weight_ih_l0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">bias_ih_l0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">weight_hh_l0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">bias_hh_l0</span><span class="p">)</span>
-
-<div class="viewcode-block" id="DPLSTM.reset_parameters"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.reset_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">reset_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Resets parameters of the DPLSTM by initializing them from an uniform distribution.</span>
+<span class="sd">        Resets parameters by initializing them from an uniform distribution.</span>
 <span class="sd">        """</span>
         <span class="n">stdv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">weight</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
-            <span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="o">-</span><span class="n">stdv</span><span class="p">,</span> <span class="n">stdv</span><span class="p">)</span></div>
+            <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="o">-</span><span class="n">stdv</span><span class="p">,</span> <span class="n">stdv</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_rearrange_batch_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>  <span class="c1"># batch is by default in second dimension</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span>
-
-    <span class="k">def</span> <span class="nf">_forward_cell</span><span class="p">(</span>
+<div class="viewcode-block" id="DPLSTMCell.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">h_prev</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">c_prev</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="n">gates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="p">(</span><span class="n">h_prev</span><span class="p">)</span>  <span class="c1"># [B, 4*D]</span>
         <span class="n">i_t_input</span><span class="p">,</span> <span class="n">f_t_input</span><span class="p">,</span> <span class="n">g_t_input</span><span class="p">,</span> <span class="n">o_t_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
             <span class="n">gates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">1</span>
@@ -140,63 +89,339 @@
         <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_prev</span> <span class="o">+</span> <span class="n">i_t</span> <span class="o">*</span> <span class="n">g_t</span>
         <span class="n">h_t</span> <span class="o">=</span> <span class="n">o_t</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_t</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span>
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div></div>
 
-<div class="viewcode-block" id="DPLSTM.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">state_init</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DPLSTMLayer"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMLayer">[docs]</a><span class="k">class</span> <span class="nc">DPLSTMLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Implements *one* layer of LSTM in a way amenable to differential privacy.</span>
+<span class="sd">    We don't expect you to use this directly: use DPLSTM instead :)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_size</span> <span class="o">=</span> <span class="n">input_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">hidden_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">dropout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">=</span> <span class="n">reverse</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell</span> <span class="o">=</span> <span class="n">DPLSTMCell</span><span class="p">(</span>
+            <span class="n">input_size</span><span class="o">=</span><span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropout_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span> <span class="k">if</span> <span class="n">dropout</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DPLSTMLayer.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMLayer.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">state_init</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Implements the forward pass of the DPLSTMLayer when a sequence is given in input.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: Input sequence to the DPLSTMCell of shape ``[T, B, D]``.</span>
+<span class="sd">            state_init: Initial state of the LSTMCell as a tuple ``(h_0, c_0)``</span>
+<span class="sd">                where ``h_0`` is the initial hidden state and ``c_0`` is the</span>
+<span class="sd">                initial cell state of the DPLSTMCell</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``output, (h_n, c_n)`` where:</span>
+<span class="sd">            - ``output`` is of shape ``[T, B, H]`` and is a tensor containing the output</span>
+<span class="sd">                features (``h_t``) from the last layer of the DPLSTMCell for each timestep ``t``.</span>
+<span class="sd">            - ``h_n`` is of shape ``[B, H]`` and is a tensor containing the hidden state for ``t = T``.</span>
+<span class="sd">            - ``c_n`` is of shape ``[B, H]`` tensor containing the cell state for ``t = T``.</span>
+<span class="sd">        """</span>
+
+        <span class="n">seq_length</span><span class="p">,</span> <span class="n">batch_sz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">h_0</span><span class="p">,</span> <span class="n">c_0</span> <span class="o">=</span> <span class="n">state_init</span>
+
+        <span class="n">h_n</span> <span class="o">=</span> <span class="p">[</span><span class="n">h_0</span><span class="p">]</span>
+        <span class="n">c_n</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_0</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seq_length</span><span class="p">):</span>
+            <span class="n">h_next</span><span class="p">,</span> <span class="n">c_next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">h_n</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">c_n</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">:</span>
+                <span class="n">h_next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout_layer</span><span class="p">(</span><span class="n">h_next</span><span class="p">)</span>
+            <span class="n">h_n</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h_next</span><span class="p">)</span>
+            <span class="n">c_n</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c_next</span><span class="p">)</span>
+
+        <span class="n">h_n</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">h_n</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [T, B, H], init step not part of output</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">h_n</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="k">else</span> <span class="n">h_n</span><span class="p">,</span>  <span class="c1"># Flip the output...</span>
+            <span class="p">(</span><span class="n">h_n</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">c_n</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>  <span class="c1"># ... But not the states</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BidirectionalDPLSTMLayer"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer">[docs]</a><span class="k">class</span> <span class="nc">BidirectionalDPLSTMLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Implements *one* layer of Bidirectional LSTM in a way amenable to differential privacy.</span>
+<span class="sd">    We don't expect you to use this directly: use DPLSTM instead :)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_size</span> <span class="o">=</span> <span class="n">input_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">hidden_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">dropout</span>
+
+        <span class="c1"># nn.LSTM (as of November 2020) only implements a "type 2" multilayer bidirectional LSTM.</span>
+        <span class="c1"># See https://github.com/pytorch/pytorch/issues/4930 for the definition of type 1 and type 2</span>
+        <span class="c1"># and for discussion. When the PR to extend nn.LSTM to Type 1 lands, we will extend this</span>
+        <span class="c1"># accordingly.</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">forward_layer</span> <span class="o">=</span> <span class="n">DPLSTMLayer</span><span class="p">(</span>
+            <span class="n">input_size</span><span class="o">=</span><span class="n">input_size</span><span class="p">,</span>
+            <span class="n">hidden_size</span><span class="o">=</span><span class="n">hidden_size</span><span class="p">,</span>
+            <span class="n">bias</span><span class="o">=</span><span class="n">bias</span><span class="p">,</span>
+            <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
+            <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reverse_layer</span> <span class="o">=</span> <span class="n">DPLSTMLayer</span><span class="p">(</span>
+            <span class="n">input_size</span><span class="o">=</span><span class="n">input_size</span><span class="p">,</span>
+            <span class="n">hidden_size</span><span class="o">=</span><span class="n">hidden_size</span><span class="p">,</span>
+            <span class="n">bias</span><span class="o">=</span><span class="n">bias</span><span class="p">,</span>
+            <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
+            <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="BidirectionalDPLSTMLayer.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">state_init</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Implements the forward pass of the DPLSTM when a sequence is input.</span>
 
+<span class="sd">        Dimensions as follows:</span>
+<span class="sd">            - B: Batch size</span>
+<span class="sd">            - T: Sequence length</span>
+<span class="sd">            - D: LSTM input hidden size (eg from a word embedding)</span>
+<span class="sd">            - H: LSTM output hidden size</span>
+<span class="sd">            - P: number of directions (2 if bidirectional, else 1)</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            x: Input sequence to the DPLSTM of shape ``[T, B, D]``</span>
-<span class="sd">            state_init: Initial state of the LSTM as a tuple ``(h_init, c_init)``</span>
-<span class="sd">                where ``h_init`` is the initial hidden state and ``c_init`` is the</span>
-<span class="sd">                initial cell state of the DPLSTM (The default is ``None``, in which case both</span>
-<span class="sd">                ``h_init`` and ``c_init`` default to zero tensors).</span>
+<span class="sd">            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:</span>
+<span class="sd">                    - h_0 of shape ``[P, B, H]  contains the initial hidden state</span>
+<span class="sd">                    - c_0 of shape ``[P, B, H]  contains the initial cell state</span>
+<span class="sd">                    This argument can be (and defaults to) None, in which case zero tensors will be used.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">            ``output, (h_n, c_n)`` where ``output`` is of shape ``[T, B, H]`` and is a</span>
-<span class="sd">            tensor containing the output features (``h_t``) from the last layer of the</span>
-<span class="sd">            DPLSTM for each timestep ``t``. ``h_n`` is of shape ``[B,H]`` and is a</span>
-<span class="sd">            tensor containing the hidden state for ``t = T``. ``c_n`` is of shape</span>
-<span class="sd">            ``[B, H]`` tensor containing the cell state for ``t = T``.</span>
+<span class="sd">         Returns:</span>
+<span class="sd">            ``output, (h_n, c_n)`` where:</span>
+<span class="sd">            - ``output`` is of shape ``[T, B, H * P]`` and is a tensor containing the output</span>
+<span class="sd">                features (``h_t``) from the last layer of the DPLSTM for each timestep ``t``.</span>
+<span class="sd">            - ``h_n`` is of shape ``[P, B, H]`` and contains the hidden state for ``t = T``.</span>
+<span class="sd">            - ``c_n`` is of shape ``[P, B, H]`` and contains the cell state for ``t = T``.</span>
+<span class="sd">        """</span>
+
+        <span class="n">h0</span><span class="p">,</span> <span class="n">c0</span> <span class="o">=</span> <span class="n">state_init</span>
+
+        <span class="n">h0_f</span><span class="p">,</span> <span class="n">h0_r</span> <span class="o">=</span> <span class="n">h0</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># each of shape [B, H] for their layer</span>
+        <span class="n">c0_f</span><span class="p">,</span> <span class="n">c0_r</span> <span class="o">=</span> <span class="n">c0</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># each of shape [B, H] for their layer</span>
+
+        <span class="n">out_f</span><span class="p">,</span> <span class="p">(</span><span class="n">h_f</span><span class="p">,</span> <span class="n">c_f</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0_f</span><span class="p">,</span> <span class="n">c0_f</span><span class="p">))</span>
+        <span class="n">out_r</span><span class="p">,</span> <span class="p">(</span><span class="n">h_r</span><span class="p">,</span> <span class="n">c_r</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0_r</span><span class="p">,</span> <span class="n">c0_r</span><span class="p">))</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">out_f</span><span class="p">,</span> <span class="n">out_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [T, B, H * P]</span>
+
+        <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">h_f</span><span class="p">,</span> <span class="n">h_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [P, B, H]</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c_f</span><span class="p">,</span> <span class="n">c_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [P, B, H]</span>
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DPLSTM"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTM">[docs]</a><span class="k">class</span> <span class="nc">DPLSTM</span><span class="p">(</span><span class="n">ParamRenamedModule</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    DP-friendly drop-in replacement of the ``torch.nn.LSTM`` module.</span>
+
+<span class="sd">    Its state_dict matches that of nn.LSTM exactly, so that after training it can be exported</span>
+<span class="sd">    and loaded by an nn.LSTM for inference.</span>
+
+<span class="sd">    Refer to nn.LSTM's documentation for all parameters and inputs.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">bidirectional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">rename_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_rename_dict</span><span class="p">(</span><span class="n">num_layers</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">bidirectional</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">rename_dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_size</span> <span class="o">=</span> <span class="n">input_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">hidden_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">=</span> <span class="n">num_layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">dropout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span> <span class="o">=</span> <span class="n">bidirectional</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_directions</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="n">LayerClass</span> <span class="o">=</span> <span class="n">BidirectionalDPLSTMLayer</span> <span class="k">if</span> <span class="n">bidirectional</span> <span class="k">else</span> <span class="n">DPLSTMLayer</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">LayerClass</span><span class="p">(</span>
+                    <span class="n">input_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_size</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span>
+                    <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_directions</span><span class="p">,</span>
+                    <span class="n">hidden_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span>
+                    <span class="n">bias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">,</span>
+                    <span class="n">dropout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="DPLSTM.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">state_init</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Implements the forward pass of the DPLSTM when a sequence is input.</span>
+
+<span class="sd">        Dimensions as follows:</span>
+<span class="sd">            - B: Batch size</span>
+<span class="sd">            - T: Sequence length</span>
+<span class="sd">            - D: LSTM input hidden size (eg from a word embedding)</span>
+<span class="sd">            - H: LSTM output hidden size</span>
+<span class="sd">            - L: number of layers in the LSTM</span>
+<span class="sd">            - P: number of directions (2 if bidirectional, else 1)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: Input sequence to the DPLSTM of shape ``[T, B, D]``</span>
+<span class="sd">            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:</span>
+<span class="sd">                    - h_0 of shape ``[L*P, B, H]  contains the initial hidden state</span>
+<span class="sd">                    - c_0 of shape ``[L*P, B, H]  contains the initial cell state</span>
+<span class="sd">                    This argument can be (and defaults to) None, in which case zero tensors will be used.</span>
+
+<span class="sd">         Returns:</span>
+<span class="sd">            ``output, (h_n, c_n)`` where:</span>
+<span class="sd">            - ``output`` is of shape ``[T, B, H * P]`` and is a tensor containing the output</span>
+<span class="sd">                features (``h_t``) from the last layer of the DPLSTM for each timestep ``t``.</span>
+<span class="sd">            - ``h_n`` is of shape ``[L * P, B, H]`` and contains the hidden state for ``t = T``.</span>
+<span class="sd">            - ``c_n`` is of shape ``[L * P, B, H]`` and contains the cell state for ``t = T``.</span>
 <span class="sd">        """</span>
 
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rearrange_batch_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">seq_length</span><span class="p">,</span> <span class="n">batch_sz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">T</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span>
 
-        <span class="n">hc</span> <span class="o">=</span> <span class="p">[(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="n">seq_length</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">h_0s</span><span class="p">,</span> <span class="n">c_0s</span> <span class="o">=</span> <span class="n">state_init</span> <span class="ow">or</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">state_init</span><span class="p">:</span>
-            <span class="n">h_init</span><span class="p">,</span> <span class="n">c_init</span> <span class="o">=</span> <span class="n">state_init</span>
+        <span class="k">if</span> <span class="n">h_0s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">h_0s</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">L</span><span class="p">,</span>
+                <span class="n">P</span><span class="p">,</span>
+                <span class="n">B</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">h_init</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="p">,</span>
-                <span class="n">batch_sz</span><span class="p">,</span>
+            <span class="n">h_0s</span> <span class="o">=</span> <span class="n">h_0s</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="n">L</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">H</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">c_0s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c_0s</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">L</span><span class="p">,</span>
+                <span class="n">P</span><span class="p">,</span>
+                <span class="n">B</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span>
                 <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                 <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">c_init</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="p">,</span>
-                <span class="n">batch_sz</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span>
-                <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">c_0s</span> <span class="o">=</span> <span class="n">c_0s</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="n">L</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">H</span><span class="p">])</span>
 
-        <span class="n">layer</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">hc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_cell</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">h_init</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">c_init</span><span class="p">[</span><span class="n">layer</span><span class="p">])</span>
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">):</span>
-            <span class="n">h_prev</span><span class="p">,</span> <span class="n">c_prev</span> <span class="o">=</span> <span class="n">hc</span><span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-            <span class="n">hc</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_cell</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">h_prev</span><span class="p">,</span> <span class="n">c_prev</span><span class="p">)</span>
+        <span class="n">hs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_rearrange_batch_dim</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">hc_t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">hc_t</span> <span class="ow">in</span> <span class="n">hc</span><span class="p">])),</span>
-            <span class="p">(</span><span class="n">hc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">hc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="p">)</span></div></div>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">c0</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">,</span> <span class="n">h_0s</span><span class="p">,</span> <span class="n">c_0s</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span><span class="p">:</span>
+                <span class="n">h0</span> <span class="o">=</span> <span class="n">h0</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+                <span class="n">c0</span> <span class="o">=</span> <span class="n">c0</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+            <span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">c0</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span><span class="p">:</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [1, B, H]</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [1, B, H]</span>
+
+            <span class="n">hs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+            <span class="n">cs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+
+        <span class="n">hs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">hs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [L * P, B, H]</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [L * P, B, H]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rearrange_batch_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="p">(</span><span class="n">hs</span><span class="p">,</span> <span class="n">cs</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_rearrange_batch_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>  <span class="c1"># batch is by default in second dimension</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"DPLSTM(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">input_size</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="si">}</span><span class="s2">, bias=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="si">}</span><span class="s2">"</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", batch_first=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="si">}</span><span class="s2">"</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", num_layers=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="si">}</span><span class="s2">"</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", dropout=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="si">}</span><span class="s2">"</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", bidirectional=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span><span class="si">}</span><span class="s2">"</span>
+
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="nf">_make_rename_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">bidirectional</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Programmatically constructs a dictionary old_name -&gt; new_name to align with the param</span>
+<span class="sd">        names used in ``torch.nn.LSTM``.</span>
+<span class="sd">        """</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"weight"</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"bias"</span> <span class="k">if</span> <span class="n">bias</span> <span class="k">else</span> <span class="p">[]]</span>
+        <span class="n">matrices</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ih"</span><span class="p">,</span> <span class="s2">"hh"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">components</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matrices</span><span class="p">:</span>
+                    <span class="n">nn_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_l</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">if</span> <span class="n">bidirectional</span><span class="p">:</span>
+                        <span class="n">d</span><span class="p">[</span><span class="sa">f</span><span class="s2">"layers.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.forward_layer.cell.</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">nn_name</span>
+                        <span class="n">d</span><span class="p">[</span><span class="sa">f</span><span class="s2">"layers.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.reverse_layer.cell.</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">nn_name</span> <span class="o">+</span> <span class="s2">"_reverse"</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">d</span><span class="p">[</span><span class="sa">f</span><span class="s2">"layers.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.cell.</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">nn_name</span>
+
+        <span class="k">return</span> <span class="n">d</span></div>
 </pre></div>
 </div>
 </div>

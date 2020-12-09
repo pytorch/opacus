@@ -27,85 +27,180 @@
 <div class="section" id="module-opacus.layers.dp_lstm">
 <span id="dplstm"></span><h1>DPLSTM<a class="headerlink" href="#module-opacus.layers.dp_lstm" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="opacus.layers.dp_lstm.DPLSTM">
-<em class="property">class </em><code class="sig-prename descclassname">opacus.layers.dp_lstm.</code><code class="sig-name descname">DPLSTM</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_size</span></em>, <em class="sig-param"><span class="n">hidden_size</span></em>, <em class="sig-param"><span class="n">num_layers</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">bias</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dropout</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">bidirectional</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM" title="Permalink to this definition">¶</a></dt>
-<dd><p>DP-friendly abstraction in place of the <code class="docutils literal notranslate"><span class="pre">torch.nn.LSTM</span></code> module with a similar interface.</p>
-<p>The dimensionality of each timestep input tensor for a sequence of length <code class="docutils literal notranslate"><span class="pre">T</span></code> is
-<code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">D]</span></code> where <code class="docutils literal notranslate"><span class="pre">B</span></code> is the batch size. The <code class="docutils literal notranslate"><span class="pre">DPLSTM</span></code> output at timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>,
-<code class="docutils literal notranslate"><span class="pre">h_t</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> with the cell state <code class="docutils literal notranslate"><span class="pre">c_t</span></code> also of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>.</p>
-<dl class="py attribute">
-<dt id="opacus.layers.dp_lstm.DPLSTM.input_size">
-<code class="sig-name descname">input_size</code><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.input_size" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of expected features in the input <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py attribute">
-<dt id="opacus.layers.dp_lstm.DPLSTM.hidden_size">
-<code class="sig-name descname">hidden_size</code><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.hidden_size" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of features in the hidden state <code class="docutils literal notranslate"><span class="pre">h</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py attribute">
-<dt id="opacus.layers.dp_lstm.DPLSTM.batch_first">
-<code class="sig-name descname">batch_first</code><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.batch_first" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then the input and output tensors are provided as
-(batch, seq, feature). The default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
-</dd>
-</dl>
-</dd></dl>
+<dt id="opacus.layers.dp_lstm.BidirectionalDPLSTMLayer">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.layers.dp_lstm.</code><code class="sig-name descname">BidirectionalDPLSTMLayer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_size</span></em>, <em class="sig-param"><span class="n">hidden_size</span></em>, <em class="sig-param"><span class="n">bias</span></em>, <em class="sig-param"><span class="n">dropout</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#BidirectionalDPLSTMLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements <em>one</em> layer of Bidirectional LSTM in a way amenable to differential privacy.
+We don’t expect you to use this directly: use DPLSTM instead :)</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
-<dt id="opacus.layers.dp_lstm.DPLSTM.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">state_init</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.forward" title="Permalink to this definition">¶</a></dt>
+<dt id="opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">state_init</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#BidirectionalDPLSTMLayer.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Implements the forward pass of the DPLSTM when a sequence is input.</p>
+<dl class="simple">
+<dt>Dimensions as follows:</dt><dd><ul class="simple">
+<li><p>B: Batch size</p></li>
+<li><p>T: Sequence length</p></li>
+<li><p>D: LSTM input hidden size (eg from a word embedding)</p></li>
+<li><p>H: LSTM output hidden size</p></li>
+<li><p>P: number of directions (2 if bidirectional, else 1)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Input sequence to the DPLSTM of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">D]</span></code></p></li>
-<li><p><strong>state_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]) – Initial state of the LSTM as a tuple <code class="docutils literal notranslate"><span class="pre">(h_init,</span> <span class="pre">c_init)</span></code>
-where <code class="docutils literal notranslate"><span class="pre">h_init</span></code> is the initial hidden state and <code class="docutils literal notranslate"><span class="pre">c_init</span></code> is the
-initial cell state of the DPLSTM (The default is <code class="docutils literal notranslate"><span class="pre">None</span></code>, in which case both
-<code class="docutils literal notranslate"><span class="pre">h_init</span></code> and <code class="docutils literal notranslate"><span class="pre">c_init</span></code> default to zero tensors).</p></li>
+<li><p><strong>state_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]) – <dl>
+<dt>Initial state of the LSTM as a tuple <code class="docutils literal notranslate"><span class="pre">(h_0,</span> <span class="pre">c_0)</span></code>, where:</dt><dd><ul>
+<li><p>h_0 of shape <a href="#id1"><span class="problematic" id="id2">``</span></a>[P, B, H]  contains the initial hidden state</p></li>
+<li><p>c_0 of shape <a href="#id3"><span class="problematic" id="id4">``</span></a>[P, B, H]  contains the initial cell state</p></li>
+</ul>
+<p>This argument can be (and defaults to) None, in which case zero tensors will be used.</p>
+</dd>
+<dt>Returns:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where:
+- <code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H</span> <span class="pre">*</span> <span class="pre">P]</span></code> and is a tensor containing the output</p>
+<blockquote>
+<div><p>features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the DPLSTM for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
+</div></blockquote>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where <code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and is a
-tensor containing the output features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the
-DPLSTM for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>. <code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,H]</span></code> and is a
-tensor containing the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>. <code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape
-<code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> tensor containing the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="opacus.layers.dp_lstm.DPLSTM">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.layers.dp_lstm.</code><code class="sig-name descname">DPLSTM</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_size</span></em>, <em class="sig-param"><span class="n">hidden_size</span></em>, <em class="sig-param"><span class="n">num_layers</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">bias</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">batch_first</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dropout</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">bidirectional</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM" title="Permalink to this definition">¶</a></dt>
+<dd><p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.LSTM</span></code> module.</p>
+<p>Its state_dict matches that of nn.LSTM exactly, so that after training it can be exported
+and loaded by an nn.LSTM for inference.</p>
+<p>Refer to nn.LSTM’s documentation for all parameters and inputs.</p>
+<p>Initializes internal state. Subclass this instead of <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code> whenever you need
+to rename your model’s state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>rename_map</strong> – mapping from old name -&gt; new name for each parameter you want renamed.
+Note that this must be a 1:1 mapping!</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="opacus.layers.dp_lstm.DPLSTM.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">state_init</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements the forward pass of the DPLSTM when a sequence is input.</p>
+<dl class="simple">
+<dt>Dimensions as follows:</dt><dd><ul class="simple">
+<li><p>B: Batch size</p></li>
+<li><p>T: Sequence length</p></li>
+<li><p>D: LSTM input hidden size (eg from a word embedding)</p></li>
+<li><p>H: LSTM output hidden size</p></li>
+<li><p>L: number of layers in the LSTM</p></li>
+<li><p>P: number of directions (2 if bidirectional, else 1)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Input sequence to the DPLSTM of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">D]</span></code></p></li>
+<li><p><strong>state_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]) – <dl>
+<dt>Initial state of the LSTM as a tuple <code class="docutils literal notranslate"><span class="pre">(h_0,</span> <span class="pre">c_0)</span></code>, where:</dt><dd><ul>
+<li><p>h_0 of shape <a href="#id5"><span class="problematic" id="id6">``</span></a>[L*P, B, H]  contains the initial hidden state</p></li>
+<li><p>c_0 of shape <a href="#id7"><span class="problematic" id="id8">``</span></a>[L*P, B, H]  contains the initial cell state</p></li>
+</ul>
+<p>This argument can be (and defaults to) None, in which case zero tensors will be used.</p>
+</dd>
+<dt>Returns:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where:
+- <code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H</span> <span class="pre">*</span> <span class="pre">P]</span></code> and is a tensor containing the output</p>
+<blockquote>
+<div><p>features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the DPLSTM for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
+</div></blockquote>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[L</span> <span class="pre">*</span> <span class="pre">P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[L</span> <span class="pre">*</span> <span class="pre">P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="opacus.layers.dp_lstm.DPLSTMCell">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.layers.dp_lstm.</code><code class="sig-name descname">DPLSTMCell</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_size</span></em>, <em class="sig-param"><span class="n">hidden_size</span></em>, <em class="sig-param"><span class="n">bias</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal-only class. Implements <em>one</em> step of LSTM so that a LSTM layer can be seen as repeated
+applications of this class.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="opacus.layers.dp_lstm.DPLSTMCell.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">h_prev</span></em>, <em class="sig-param"><span class="n">c_prev</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt id="opacus.layers.dp_lstm.DPLSTM.reset_parameters">
-<code class="sig-name descname">reset_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM.reset_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.reset_parameters" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resets parameters of the DPLSTM by initializing them from an uniform distribution.</p>
+<dt id="opacus.layers.dp_lstm.DPLSTMCell.reset_parameters">
+<code class="sig-name descname">reset_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell.reset_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.reset_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets parameters by initializing them from an uniform distribution.</p>
 </dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="opacus.layers.dp_lstm.DPLSTMLayer">
+<em class="property">class </em><code class="sig-prename descclassname">opacus.layers.dp_lstm.</code><code class="sig-name descname">DPLSTMLayer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_size</span></em>, <em class="sig-param"><span class="n">hidden_size</span></em>, <em class="sig-param"><span class="n">bias</span></em>, <em class="sig-param"><span class="n">dropout</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements <em>one</em> layer of LSTM in a way amenable to differential privacy.
+We don’t expect you to use this directly: use DPLSTM instead :)</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
-<dt id="opacus.layers.dp_lstm.DPLSTM.validate_parameters">
-<code class="sig-name descname">validate_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTM.validate_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTM.validate_parameters" title="Permalink to this definition">¶</a></dt>
-<dd><p>Validates the DPLSTM configuration and raises a <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> if the number of
-layers is more than 1, the DPLSTM is bidirectional, uses dropout at the output
-or, it does not have a bias term.</p>
+<dt id="opacus.layers.dp_lstm.DPLSTMLayer.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">state_init</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMLayer.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMLayer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements the forward pass of the DPLSTMLayer when a sequence is given in input.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.9)"><strong>NotImplementedError</strong></a> – If the number of layers is more than 1, the DPLSTM is bidirectional,
-    uses dropout at the output, or it does not have a bias term.</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Input sequence to the DPLSTMCell of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">D]</span></code>.</p></li>
+<li><p><strong>state_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+0bc39c0 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]) – Initial state of the LSTMCell as a tuple <code class="docutils literal notranslate"><span class="pre">(h_0,</span> <span class="pre">c_0)</span></code>
+where <code class="docutils literal notranslate"><span class="pre">h_0</span></code> is the initial hidden state and <code class="docutils literal notranslate"><span class="pre">c_0</span></code> is the
+initial cell state of the DPLSTMCell</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and is a tensor containing the output</dt><dd><p>features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the DPLSTMCell for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> and is a tensor containing the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> tensor containing the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where</p>
 </dd>
 </dl>
 </dd></dl>
