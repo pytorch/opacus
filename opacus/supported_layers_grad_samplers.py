@@ -21,7 +21,7 @@ from torch import nn
 from torch.functional import F
 
 from .utils.module_inspection import get_layer_type
-from .utils.tensor_utils import sum_over_all_but_batch_and_last_n
+from .utils.tensor_utils import sum_over_all_but_batch_and_last_n, unfold3d
 
 
 def _create_or_extend_grad_sample(
@@ -228,6 +228,9 @@ def _compute_conv_grad_sample(
             stride=(1, layer.stride[0]),
         )
         B = B.reshape(n, -1, A.shape[-1])
+    elif layer_type == "Conv3d":
+        A = unfold3d(A, layer.kernel_size, layer.padding, layer.stride)
+        B = B.reshape(n, -1, A.shape[-1])
 
     # n=batch_sz; o=num_out_channels; p=(num_in_channels/groups)*kernel_sz
     grad_sample = torch.einsum("noq,npq->nop", B, A)
@@ -283,6 +286,7 @@ _supported_layers_grad_samplers = {
     "Embedding": _compute_embedding_grad_sample,
     "Linear": _compute_linear_grad_sample,
     "LSTMLinear": _compute_accumulate_linear_grad_sample,
+    "Conv3d": _compute_conv_grad_sample,
     "Conv2d": _compute_conv_grad_sample,
     "Conv1d": _compute_conv_grad_sample,
     "LayerNorm": _compute_norm_grad_sample,
