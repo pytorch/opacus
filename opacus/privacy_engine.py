@@ -7,7 +7,6 @@ import warnings
 from typing import List, Optional, Tuple, Union
 
 import torch
-import torchcsprng as csprng
 from torch import nn
 
 from . import privacy_analysis as tf_privacy
@@ -95,6 +94,15 @@ class PrivacyEngine:
             )
 
         if self.secure_rng:
+            try:
+                import torchcsprng as csprng
+            except ImportError as e:
+                msg = (
+                    "To use secure RNG, you must install the torchcsprng package! "
+                    "Check out the instructions here: https://github.com/pytorch/csprng#installation"
+                )
+                raise ImportError(msg) from e
+
             self.seed = None
             self.random_number_generator = csprng.create_random_device_generator(
                 "/dev/urandom"

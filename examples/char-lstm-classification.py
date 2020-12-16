@@ -8,7 +8,6 @@ from statistics import mean
 
 import torch
 import torch.nn as nn
-import torchcsprng as prng
 from opacus import PrivacyEngine
 from opacus.layers import DPLSTM
 from torch.nn.utils.rnn import pad_sequence
@@ -339,9 +338,20 @@ def main():
 
     print(f"{train_len} samples for training, {test_len} for testing")
 
-    generator = (
-        prng.create_random_device_generator("/dev/urandom") if args.secure_rng else None
-    )
+    if args.secure_rng:
+        try:
+            import torchcsprng as prng
+        except ImportError as e:
+            msg = (
+                "To use secure RNG, you must install the torchcsprng package! "
+                "Check out the instructions here: https://github.com/pytorch/csprng#installation"
+            )
+            raise ImportError(msg) from e
+
+        generator = prng.create_random_device_generator("/dev/urandom")
+
+    else:
+        generator = None
 
     train_ds, test_ds = torch.utils.data.random_split(
         ds, [train_len, test_len], generator=generator

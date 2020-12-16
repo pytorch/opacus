@@ -17,7 +17,6 @@ import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
-import torchcsprng as prng
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
@@ -149,9 +148,20 @@ try:
 except ValueError:
     print("Cannot load dataset")
 
-generator = (
-    prng.create_random_device_generator("/dev/urandom") if opt.secure_rng else None
-)
+if opt.secure_rng:
+    try:
+        import torchcsprng as prng
+    except ImportError as e:
+        msg = (
+            "To use secure RNG, you must install the torchcsprng package! "
+            "Check out the instructions here: https://github.com/pytorch/csprng#installation"
+        )
+        raise ImportError(msg) from e
+
+    generator = prng.create_random_device_generator("/dev/urandom")
+
+else:
+    generator = None
 dataloader = torch.utils.data.DataLoader(
     dataset,
     batch_size=opt.batch_size,

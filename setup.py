@@ -33,6 +33,7 @@ DEV_REQUIRES = [
     "sphinx-autodoc-typehints",
     "mypy>=0.760",
     "isort",
+    "torchcsprng",
 ]
 
 

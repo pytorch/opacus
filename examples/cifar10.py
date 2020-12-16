@@ -16,7 +16,6 @@ import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
-import torchcsprng as prng
 import torchvision.models as models
 import torchvision.transforms as transforms
 from opacus import PrivacyEngine
@@ -297,9 +296,21 @@ def main():
     # and set a default of per layer clipping for the Privacy Engine
     clipping = {"clip_per_layer": False, "enable_stat": True}
 
-    generator = (
-        prng.create_random_device_generator("/dev/urandom") if args.secure_rng else None
-    )
+    if args.secure_rng:
+        try:
+            import torchcsprng as prng
+        except ImportError as e:
+            msg = (
+                "To use secure RNG, you must install the torchcsprng package! "
+                "Check out the instructions here: https://github.com/pytorch/csprng#installation"
+            )
+            raise ImportError(msg) from e
+
+        generator = prng.create_random_device_generator("/dev/urandom")
+
+    else:
+        generator = None
+
     augmentations = [
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
