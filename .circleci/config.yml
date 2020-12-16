@@ -237,7 +237,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install scikit-learn
-            python examples/char-lstm-classification.py --data-root="charlstm/data/" --iterations 30 --learning-rate=2.0 --n-hidden=128 --delta=8e-5 --batch-size=800 --sigma=1.0 --device <<parameters.device>>
+            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --batch-size=400 --n-lstm-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
           when: always
       - store_test_results:
           path: charlstm/test-reports
