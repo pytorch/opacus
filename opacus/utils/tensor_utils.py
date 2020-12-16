@@ -133,7 +133,6 @@ def unfold3d(
     # Output shape: (B, C, D_out, H_out, W_out, kernel_size[0], kernel_size[1], kernel_size[2])
     # For D_out, H_out, W_out definitions see :class:`torch.nn.Unfold`
 
-
     tensor = tensor.permute(0, 2, 3, 4, 1, 5, 6, 7)
     # Output shape: (B, D_out, H_out, W_out, C, kernel_size[0], kernel_size[1], kernel_size[2])
 
