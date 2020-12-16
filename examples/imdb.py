@@ -11,7 +11,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchcsprng as prng
 from datasets import load_dataset
 from opacus import PrivacyEngine
 from torch.functional import F
@@ -227,9 +226,20 @@ def main():
     train_dataset = dataset["train"]
     test_dataset = dataset["test"]
 
-    generator = (
-        prng.create_random_device_generator("/dev/urandom") if args.secure_rng else None
-    )
+    if args.secure_rng:
+        try:
+            import torchcsprng as prng
+        except ImportError as e:
+            msg = (
+                "To use secure RNG, you must install the torchcsprng package! "
+                "Check out the instructions here: https://github.com/pytorch/csprng#installation"
+            )
+            raise ImportError(msg) from e
+
+        generator = prng.create_random_device_generator("/dev/urandom")
+
+    else:
+        generator = None
 
     train_loader = DataLoader(
         train_dataset,
