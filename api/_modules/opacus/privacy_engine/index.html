@@ -34,7 +34,6 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">import</span> <span class="nn">torchcsprng</span> <span class="k">as</span> <span class="nn">csprng</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">privacy_analysis</span> <span class="k">as</span> <span class="n">tf_privacy</span>
@@ -122,6 +121,15 @@
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span> <span class="nn">torchcsprng</span> <span class="k">as</span> <span class="nn">csprng</span>
+            <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"To use secure RNG, you must install the torchcsprng package! "</span>
+                    <span class="s2">"Check out the instructions here: https://github.com/pytorch/csprng#installation"</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
             <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">random_number_generator</span> <span class="o">=</span> <span class="n">csprng</span><span class="o">.</span><span class="n">create_random_device_generator</span><span class="p">(</span>
                 <span class="s2">"/dev/urandom"</span>
