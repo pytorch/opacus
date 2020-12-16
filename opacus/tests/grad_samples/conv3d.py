@@ -83,55 +83,55 @@ class Conv3d_test(GradSampleHooks_test):
     def test_square_image_variable_pad(self):
         N, C, D, H, W = 32, 3, 10, 10, 10
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=2, padding=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=2, padding=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     def test_landscape_image_variable_pad(self):
         N, C, D, H, W = 32, 3, 5, 9, 16
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=2, padding=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=2, padding=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     def test_portrait_image_variable_pad(self):
         N, C, D, H, W = 32, 3, 5, 16, 9
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=2, padding=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=2, padding=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     def test_square_image_variable_kernel(self):
         N, C, D, H, W = 32, 3, 10, 10, 10
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     def test_landscape_image_variable_kernel(self):
         N, C, D, H, W = 32, 3, 4, 9, 16
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     def test_portrait_image_variable_kernel(self):
         N, C, D, H, W = 32, 3, 4, 16, 9
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     def test_square_image_variable_stride(self):
         N, C, D, H, W = 32, 3, 10, 10, 10
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=2, stride=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=2, stride=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     def test_landscape_image_variable_stride(self):
         N, C, D, H, W = 32, 3, 5, 9, 16
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=2, stride=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=2, stride=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     def test_portrait_image_variable_stride(self):
         N, C, D, H, W = 32, 3, 5, 16, 9
         x = torch.randn([N, C, D, H, W])
-        conv = nn.Conv3d(C, 2 * C, kernel_size=2, stride=(1,2,3))
+        conv = nn.Conv3d(C, 2 * C, kernel_size=2, stride=(1, 2, 3))
         self.run_test(x, conv, batch_first=True, atol=10e-8, rtol=10e-4)
 
     """
