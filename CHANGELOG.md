@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.11.0
+### New features
+* Extend DPLSTM to support multilayer, dropout (#101)
+* Modifications to Char LSTM name classification example
+* Introduce issue templates for GitHub (#102)
+* Added support for Conv3D layers
+### Bug fixes
+* Linter fixes for Conv3D (#105)
+### Miscellaneous
+* Make TorchCSPRNG an optional dependency (#106)
+* Removed unnecessary calls to zero_grad from examples and tutorials (#96)
+
 ## v0.10.1
 ### Bug fixes
 * Fix PyPI deployment (#91).
