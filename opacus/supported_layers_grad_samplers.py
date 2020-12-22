@@ -86,7 +86,7 @@ def _compute_linear_grad_sample(
         _create_or_extend_grad_sample(
             layer.bias,
             torch.einsum("n...k->nk", B),
-            batch_dim,  # pyre-ignore[6] We know layer.bias is not None
+            batch_dim,
         )
 
 
@@ -110,7 +110,7 @@ def _compute_accumulate_linear_grad_sample(
 
     if layer.bias is not None:
         _create_or_accumulate_grad_sample(
-            layer.bias,  # pyre-ignore[6] We know layer.bias is not None
+            layer.bias,
             torch.einsum("n...k->nk", B),
             batch_dim,
             layer,
@@ -133,9 +133,6 @@ def _compute_sequence_bias_grad_sample(
 
 
 def _compute_norm_grad_sample(
-    # for some reason pyre doesn't understand that
-    # nn.LayerNorm and nn.modules.normalization.LayerNorm is the same thing
-    # pyre-ignore[11]
     layer: Union[
         nn.LayerNorm,
         nn.GroupNorm,
@@ -192,9 +189,6 @@ def _compute_norm_grad_sample(
 
 
 def _compute_conv_grad_sample(
-    # for some reason pyre doesn't understand that
-    # nn.Conv1d and nn.modules.conv.Conv1d is the same thing
-    # pyre-ignore[11]
     layer: Union[nn.Conv2d, nn.Conv1d],
     A: torch.Tensor,
     B: torch.Tensor,

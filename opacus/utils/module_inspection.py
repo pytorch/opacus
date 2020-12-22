@@ -69,7 +69,6 @@ class ModelInspector:
             Flag indicate if predicate is satisfied.
         """
         valid = True
-        # pyre-fixme[16]: `Module` has no attribute `named_modules`.
         for name, module in model.named_modules(prefix="Main"):
             if not self.predicate(module):
                 valid = False
