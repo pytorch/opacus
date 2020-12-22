@@ -160,7 +160,7 @@
 <span class="sd">        will heavily affect convergence of the model.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">replace_all_modules</span><span class="p">(</span>
-        <span class="n">root</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">batchnorm</span><span class="o">.</span><span class="n">_BatchNorm</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span>  <span class="c1"># pyre-ignore</span>
+        <span class="n">root</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">batchnorm</span><span class="o">.</span><span class="n">_BatchNorm</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span>
     <span class="p">)</span></div>
 
 
@@ -194,8 +194,6 @@
 <span class="sd">        &gt;&gt;&gt;  print(model.layer1[0].bn1)</span>
 <span class="sd">        GroupNorm module details</span>
 <span class="sd">    """</span>
-    <span class="c1"># pyre-fixme[6]: Expected `Type[nn.Module]` for 2nd param but got</span>
-    <span class="c1">#  `Type[nn.modules.batchnorm._BatchNorm]`.</span>
     <span class="k">return</span> <span class="n">replace_all_modules</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">batchnorm</span><span class="o">.</span><span class="n">_BatchNorm</span><span class="p">,</span> <span class="n">converter</span><span class="p">)</span></div>
 </pre></div>
 </div>

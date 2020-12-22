@@ -96,7 +96,6 @@
 <span class="sd">            Flag indicate if predicate is satisfied.</span>
 <span class="sd">        """</span>
         <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="c1"># pyre-fixme[16]: `Module` has no attribute `named_modules`.</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_modules</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"Main"</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">predicate</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
                 <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>

@@ -187,19 +187,13 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
         <span class="n">norm_clipper</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="c1"># pyre-fixme[6]: Expected `float` for 1st param but got</span>
-            <span class="c1">#  `Union[List[float], float]`.</span>
             <span class="n">clipping</span><span class="o">.</span><span class="n">ConstantFlatClipper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
-            <span class="c1"># pyre-fixme[6]: Expected `List[float]` for 1st param but got</span>
-            <span class="c1">#  `Union[List[float], float]`.</span>
             <span class="k">else</span> <span class="n">clipping</span><span class="o">.</span><span class="n">ConstantPerLayerClipper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">)</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"experimental"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
             <span class="n">norm_clipper</span> <span class="o">=</span> <span class="n">clipping</span><span class="o">.</span><span class="n">_Dynamic_Clipper_</span><span class="p">(</span>
-                <span class="c1"># pyre-fixme[6]: Expected `List[float]` for 1st param but got</span>
-                <span class="c1">#  `List[Union[List[float], float]]`.</span>
                 <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">],</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_per_layer"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -224,22 +218,20 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">original_step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
 
-        <span class="c1"># Pyre doesn't like monkeypatching. But we'll do it anyway :)</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="bp">self</span>  <span class="c1"># pyre-ignore</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">original_step</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span>  <span class="c1"># pyre-ignore</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>  <span class="c1"># pyre-ignore</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">original_step</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">original_zero_grad</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span>  <span class="c1"># pyre-ignore</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_zero_grad</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>  <span class="c1"># pyre-ignore</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">original_zero_grad</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_zero_grad</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">virtual_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span>
 
-        <span class="c1"># pyre-ignore</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">virtual_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 
         <span class="c1"># create a cross reference for detaching</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>  <span class="c1"># pyre-ignore</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span></div>
 
     <span class="k">def</span> <span class="nf">get_renyi_divergence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">rdp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
@@ -419,7 +411,6 @@
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
                 <span class="mi">0</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">*</span> <span class="n">max_grad_norm</span><span class="p">,</span>
-                <span class="c1"># pyre-fixme[16]: nn.parameter.Parameter has no attribute grad</span>
                 <span class="n">reference</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
                 <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
                 <span class="n">generator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_number_generator</span><span class="p">,</span>

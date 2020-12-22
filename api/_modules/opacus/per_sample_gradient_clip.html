@@ -183,15 +183,13 @@
         <span class="c1"># now that we know the full batch size, we can average the gradients</span>
         <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_named_params</span><span class="p">():</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_summed_grad</span><span class="p">(</span>  <span class="c1"># pyre-ignore[16]</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span><span class="p">,</span> <span class="n">batch_size</span>  <span class="c1"># pyre-ignore[16]</span>
-            <span class="p">)</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_summed_grad</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
             <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">del</span> <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span>
 
         <span class="c1"># NOTE: For Renyi-based epsilon calculation, we will calculate a flat</span>
         <span class="c1"># max norm equal to the norm of all clip values per layer.</span>
-        <span class="n">max_norm</span> <span class="o">=</span> <span class="n">threshs</span><span class="o">.</span><span class="n">new_full</span><span class="p">((</span><span class="n">n</span><span class="p">,),</span> <span class="n">threshs</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>  <span class="c1"># pyre-ignore[16]</span>
+        <span class="n">max_norm</span> <span class="o">=</span> <span class="n">threshs</span><span class="o">.</span><span class="n">new_full</span><span class="p">((</span><span class="n">n</span><span class="p">,),</span> <span class="n">threshs</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_aggregated_state</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">max_norm</span><span class="p">,</span> <span class="n">batch_size</span></div>
 
@@ -225,16 +223,14 @@
         <span class="p">):</span>
             <span class="c1"># Do the clipping</span>
             <span class="n">name</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">named_param</span>
-            <span class="n">summed_grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weighted_sum</span><span class="p">(</span>
-                <span class="n">clip_factor</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span>  <span class="c1"># pyre-ignore[16]</span>
-            <span class="p">)</span>
+            <span class="n">summed_grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weighted_sum</span><span class="p">(</span><span class="n">clip_factor</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>
             <span class="n">clipping_thresh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_clipper</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span>
                 <span class="n">i</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm_clipper</span><span class="o">.</span><span class="n">thresholds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
             <span class="p">]</span>
             <span class="n">per_sample_norm</span> <span class="o">=</span> <span class="n">all_norms</span><span class="p">[</span><span class="n">i</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_norms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span><span class="p">]</span>
             <span class="c1"># accumulate the summed gradient for this mini-batch</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"summed_grad"</span><span class="p">):</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">+=</span> <span class="n">summed_grad</span>  <span class="c1"># pyre-ignore[16]</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">+=</span> <span class="n">summed_grad</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">=</span> <span class="n">summed_grad</span>
 
@@ -244,7 +240,7 @@
                 <span class="n">clipping_thresh</span><span class="p">,</span>
                 <span class="n">per_sample_norm</span><span class="p">,</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span>
-                <span class="n">grad_before_clip</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span><span class="p">,</span>  <span class="c1"># pyre-ignore[16]</span>
+                <span class="n">grad_before_clip</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span><span class="p">,</span>
                 <span class="n">grad_after_clip</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale_summed_grad</span><span class="p">(</span><span class="n">summed_grad</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">),</span>
             <span class="p">)</span>
 
@@ -285,7 +281,7 @@
 <span class="sd">            Iterator of parameter names and per-sample gradients</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>  <span class="c1"># pyre-ignore[16]</span>
+            <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span>
         <span class="p">)</span>

@@ -83,11 +83,9 @@
     <span class="n">handles</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="c1"># pyre-fixme[16]: `Module` has no attribute `register_forward_hook`.</span>
             <span class="n">handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">_capture_activations</span><span class="p">))</span>
 
             <span class="n">handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="c1"># pyre-fixme[16]: `Module` has no attribute `register_backward_hook`.</span>
                 <span class="n">layer</span><span class="o">.</span><span class="n">register_backward_hook</span><span class="p">(</span>
                     <span class="n">partial</span><span class="p">(</span>
                         <span class="n">_capture_backprops</span><span class="p">,</span>
@@ -110,7 +108,6 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Asked to remove hooks, but no hooks found"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># pyre-fixme[16]: `Module` has no attribute `autograd_grad_sample_hooks`.</span>
         <span class="k">for</span> <span class="n">handle</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
         <span class="k">del</span> <span class="n">model</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span></div>
@@ -263,7 +260,6 @@
     <span class="c1"># rearrange the blob dimensions</span>
     <span class="k">if</span> <span class="n">batch_dim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">A</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">permute</span><span class="p">([</span><span class="n">batch_dim</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">dim</span><span class="p">())</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">batch_dim</span><span class="p">])</span>
-        <span class="c1"># pyre-fixme[6]: Expected `int` for 1st param but got `List[int]`.</span>
         <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">permute</span><span class="p">([</span><span class="n">batch_dim</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">dim</span><span class="p">())</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">batch_dim</span><span class="p">])</span>
     <span class="c1"># compute grad sample for  individual layers</span>
     <span class="n">compute_layer_grad_sample</span> <span class="o">=</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>

@@ -153,7 +153,6 @@
 <span class="sd">    Checks if number of groups in `nn.Conv2d` layer is valid</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">):</span>
-        <span class="c1"># pyre-fixme[16]: `Conv2d` has no attribute `in_channels`.</span>
         <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="n">groups</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">module</span><span class="o">.</span><span class="n">groups</span> <span class="o">==</span> <span class="n">module</span><span class="o">.</span><span class="n">in_channels</span>
 
     <span class="k">return</span> <span class="kc">True</span>
@@ -179,7 +178,6 @@
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">is_instancenorm</span><span class="p">:</span>
-        <span class="c1"># pyre-fixme[16]: `Module` has no attribute `track_running_stats`.</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="n">module</span><span class="o">.</span><span class="n">track_running_stats</span>
     <span class="k">return</span> <span class="kc">True</span>
 

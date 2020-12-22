@@ -249,7 +249,7 @@
             <span class="p">)</span>
         <span class="n">per_sample_clip_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_value</span> <span class="o">/</span> <span class="p">(</span><span class="n">norms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>
         <span class="c1"># We are *clipping* the gradient, so if the factor is ever &gt;1 we set it to 1</span>
-        <span class="n">per_sample_clip_factor</span> <span class="o">=</span> <span class="n">per_sample_clip_factor</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># pyre-ignore</span>
+        <span class="n">per_sample_clip_factor</span> <span class="o">=</span> <span class="n">per_sample_clip_factor</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
         <span class="c1"># return this clipping factor for all layers</span>
         <span class="k">return</span> <span class="n">cycle</span><span class="p">([</span><span class="n">per_sample_clip_factor</span><span class="p">])</span></div>
 
@@ -447,7 +447,7 @@
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">thresh</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thresh</span><span class="p">)</span>
             <span class="n">per_sample_clip_factor</span> <span class="o">=</span> <span class="n">thresh</span> <span class="o">/</span> <span class="p">(</span><span class="n">norm</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>
-            <span class="n">clipping_factor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">per_sample_clip_factor</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>  <span class="c1"># pyre-ignore</span>
+            <span class="n">clipping_factor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">per_sample_clip_factor</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">clipping_factor</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_per_layer</span> <span class="k">else</span> <span class="n">cycle</span><span class="p">(</span><span class="n">clipping_factor</span><span class="p">)</span>
 
     <span class="nd">@property</span>
