@@ -286,10 +286,7 @@ optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 privacy_engine = PrivacyEngine(
     netD,
     batch_size=opt.batch_size,
-    # pyre-fixme[6]: Expected `Sized` for 1st param but got `Dataset[typing.Any]`.
     sample_size=len(dataloader.dataset),
-    # pyre-fixme[6]: `+` is not supported for operand types `List[float]` and
-    #  `List[int]`.
     alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
     noise_multiplier=opt.sigma,
     max_grad_norm=opt.max_per_sample_grad_norm,

@@ -222,7 +222,7 @@ class ConstantFlatClipper(NormClipper):
             )
         per_sample_clip_factor = self.flat_value / (norms[0] + 1e-6)
         # We are *clipping* the gradient, so if the factor is ever >1 we set it to 1
-        per_sample_clip_factor = per_sample_clip_factor.clamp(max=1.0)  # pyre-ignore
+        per_sample_clip_factor = per_sample_clip_factor.clamp(max=1.0)
         # return this clipping factor for all layers
         return cycle([per_sample_clip_factor])
 
@@ -420,7 +420,7 @@ class _Dynamic_Clipper_(NormClipper):
             )
             self.thresh.append(thresh)
             per_sample_clip_factor = thresh / (norm + 1e-6)
-            clipping_factor.append(per_sample_clip_factor.clamp(max=1.0))  # pyre-ignore
+            clipping_factor.append(per_sample_clip_factor.clamp(max=1.0))
         return clipping_factor if self.is_per_layer else cycle(clipping_factor)
 
     @property
