@@ -44,7 +44,6 @@ class PrivacyEngine:
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
         secure_rng: bool = False,
-        grad_norm_type: int = 2,
         batch_first: bool = True,
         target_delta: float = 1e-6,
         loss_reduction: str = "mean",
@@ -63,8 +62,6 @@ class PrivacyEngine:
             secure_rng: If on, it will use ``torchcsprng`` for secure random number generation.
                 Comes with a significant performance cost, therefore it's recommended that you
                 turn it off when just experimenting.
-            grad_norm_type: The order of the norm. For instance, 2 represents L-2 norm, while
-                1 represents L-1 norm.
             batch_first: Flag to indicate if the input tensor to the corresponding module
                 has the first dimension representing the batch. If set to True, dimensions on
                 input tensor will be ``[batch_size, ..., ...]``.
@@ -82,7 +79,6 @@ class PrivacyEngine:
         self.sample_rate = batch_size / sample_size
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
-        self.grad_norm_type = grad_norm_type
         self.batch_first = batch_first
         self.target_delta = target_delta
 
