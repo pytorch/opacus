@@ -50,6 +50,23 @@ class TutorialHome extends React.Component {
                 </a>
               </li>
             </ol>
+            <h4>Blog Posts by OpenMined</h4>
+            <ol>
+              <li>
+                <a
+                  href="https://blog.openmined.org/differentially-private-deep-learning-using-opacus-in-20-lines-of-code/"
+                  target="_blank">
+                  Differentially Private Deep Learning In 20 Lines Of Code
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://blog.openmined.org/pysyft-opacus-federated-learning-with-differential-privacy/"
+                  target="_blank">
+                  PySyft + Opacus: Federated Learning With Differential Privacy
+                </a>
+              </li>
+            </ol>
           </div>
         </Container>
       </div>

@@ -1,6 +1,6 @@
 ---
 id: faq
-title: Opacus FAQ
+title: FAQ
 ---
 
 ## What is Opacus?
