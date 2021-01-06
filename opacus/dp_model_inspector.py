@@ -116,14 +116,26 @@ class DPModelInspector:
 
 def _is_valid_check(module: nn.Module) -> bool:
     r"""
-    Checks if the ``module``  is supported by ``autograd_grad_sample``
+    Checks if the ``module`` is supported by ``autograd_grad_sample``
+
+    Args:
+        module: The model to validate.
+
+    Returns:
+        True if ``module`` is supported by ``autograd_grad_sample``
     """
     return is_supported(module)
 
 
 def _conv_group_number_check(module: nn.Module) -> bool:
     r"""
-    Checks if number of groups in `nn.Conv2d` layer is valid
+    Checks if number of groups in ``nn.Conv2d`` layer is valid
+
+    Args:
+        module: The input module (layer) for which the check occurs.
+
+    Returns:
+        True if number of groups in ``nn.Conv2d`` layer of ``module`` is valid
     """
     if isinstance(module, nn.Conv2d):
         return module.groups == 1 or module.groups == module.in_channels
@@ -133,16 +145,31 @@ def _conv_group_number_check(module: nn.Module) -> bool:
 
 def _no_batchnorm_check(module: nn.Module) -> bool:
     r"""
-    Checks if the module is not BatchNorm.
+    Checks if the input module is not BatchNorm.
 
-    This check overlaps with `_is_valid_check`, but provides more targeted remedy.
+    This check overlaps with ``_is_valid_check``, but provides more targeted remedy.
+
+    Args:
+        module: The input module
+
+    Returns:
+        True if the input module is not BatchNorm
     """
     return not isinstance(module, nn.modules.batchnorm._BatchNorm)
 
 
 def _no_running_stats_instancenorm_check(module: nn.Module) -> bool:
     r"""
-    Checks that InstanceNorm layer has `track_running_stats` set to False
+    Checks that ``InstanceNorm`` layer has ``track_running_stats`` set to False
+
+    Args:
+        module: The input module (layer) for which the check is verified.
+
+    Returns:
+        True if the module is not ``InstanceNorm``, otherwise it returns
+        True if the module (layer) have ``track_running_stats`` set to False,
+        and False otherwise.
+
     """
     is_instancenorm = get_layer_type(module) in (
         "InstanceNorm1d",
@@ -155,7 +182,16 @@ def _no_running_stats_instancenorm_check(module: nn.Module) -> bool:
     return True
 
 
-def _no_lstm(module: nn.Module):
+def _no_lstm(module: nn.Module) -> bool:
+    r"""
+    Checks if the input module is not LSTM.
+
+    Args:
+        module: The input module
+
+    Returns:
+        True if the input module is not LSTM
+    """
     is_lstm = True if get_layer_type(module) == "LSTM" else False
 
     return not is_lstm

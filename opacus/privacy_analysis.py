@@ -203,6 +203,12 @@ def _log_erfc(x: float) -> float:
 
     Helper function used in computation of :math:`log(A_\alpha)`
     for a fractional alpha.
+
+    Args:
+        x: The input to the function
+
+    Returns:
+        :math:`log(erfc(x))`
     """
     return math.log(2) + special.log_ndtr(-x * 2 ** 0.5)
 
@@ -251,7 +257,7 @@ def compute_rdp(
         orders: An array (or a scalar) of RDP orders.
 
     Returns:
-      The RDP guarantees at all orders; can be np.inf.
+        The RDP guarantees at all orders; can be ``np.inf``.
     """
     if isinstance(orders, float):
         rdp = _compute_rdp(q, noise_multiplier, orders)
