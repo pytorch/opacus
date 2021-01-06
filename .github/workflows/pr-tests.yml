@@ -1,5 +1,5 @@
 # This workflow makes sure edge case versions work
-name: PR Tests
+name: Test Installation
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
       - ".github/workflows/**.yml"
 
 jobs:
-  install-package:
+  test-installation:
     strategy:
       max-parallel: 12
       matrix:
