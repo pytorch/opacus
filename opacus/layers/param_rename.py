@@ -6,7 +6,7 @@ from typing import Dict, Union
 
 import torch.nn as nn
 from torch import Tensor
-from torch.nn.modules.module import ModuleAttributeError, _IncompatibleKeys
+from torch.nn.modules.module import _IncompatibleKeys
 
 
 def filter_out_old_keys(self, state_dict, prefix, local_metadata):
@@ -65,7 +65,7 @@ class ParamRenamedModule(nn.Module):
         super().__setattr__(name, value)
         try:
             self._register_renamed_parameters()
-        except ModuleAttributeError:
+        except AttributeError:
             # At the very beginning of instantiation, this will fail because we do not yet have
             # self._parameters. Safe to ignore.
             pass

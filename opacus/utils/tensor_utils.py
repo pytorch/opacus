@@ -38,12 +38,7 @@ def calc_sample_norms(
     norms = [param.view(len(param), -1).norm(2, dim=-1) for name, param in named_params]
     # calc norm over all layer norms if flat = True
     if flat:
-        # pyre-fixme[6]: Expected `Union[List[torch.Tensor],
-        #  typing.Tuple[torch.Tensor, ...]]` for 1st param but got
-        #  `List[torch.FloatTensor]`.
         norms = [torch.stack(norms, dim=0).norm(2, dim=0)]
-    # pyre-fixme[7]: Expected `Tuple[List[torch.Tensor], Dict[str, float]]` but got
-    #  `List[torch.FloatTensor]`.
     return norms
 
 

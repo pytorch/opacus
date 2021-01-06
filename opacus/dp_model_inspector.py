@@ -126,7 +126,6 @@ def _conv_group_number_check(module: nn.Module) -> bool:
     Checks if number of groups in `nn.Conv2d` layer is valid
     """
     if isinstance(module, nn.Conv2d):
-        # pyre-fixme[16]: `Conv2d` has no attribute `in_channels`.
         return module.groups == 1 or module.groups == module.in_channels
 
     return True
@@ -152,7 +151,6 @@ def _no_running_stats_instancenorm_check(module: nn.Module) -> bool:
     )
 
     if is_instancenorm:
-        # pyre-fixme[16]: `Module` has no attribute `track_running_stats`.
         return not module.track_running_stats
     return True
 

@@ -44,7 +44,6 @@ class PrivacyEngine:
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
         secure_rng: bool = False,
-        grad_norm_type: int = 2,
         batch_first: bool = True,
         target_delta: float = 1e-6,
         loss_reduction: str = "mean",
@@ -63,8 +62,6 @@ class PrivacyEngine:
             secure_rng: If on, it will use ``torchcsprng`` for secure random number generation.
                 Comes with a significant performance cost, therefore it's recommended that you
                 turn it off when just experimenting.
-            grad_norm_type: The order of the norm. For instance, 2 represents L-2 norm, while
-                1 represents L-1 norm.
             batch_first: Flag to indicate if the input tensor to the corresponding module
                 has the first dimension representing the batch. If set to True, dimensions on
                 input tensor will be ``[batch_size, ..., ...]``.
@@ -82,7 +79,6 @@ class PrivacyEngine:
         self.sample_rate = batch_size / sample_size
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
-        self.grad_norm_type = grad_norm_type
         self.batch_first = batch_first
         self.target_delta = target_delta
 
@@ -160,19 +156,13 @@ class PrivacyEngine:
 
         self.validator.validate(self.module)
         norm_clipper = (
-            # pyre-fixme[6]: Expected `float` for 1st param but got
-            #  `Union[List[float], float]`.
             clipping.ConstantFlatClipper(self.max_grad_norm)
             if not isinstance(self.max_grad_norm, list)
-            # pyre-fixme[6]: Expected `List[float]` for 1st param but got
-            #  `Union[List[float], float]`.
             else clipping.ConstantPerLayerClipper(self.max_grad_norm)
         )
 
         if self.misc_settings.get("experimental", False):
             norm_clipper = clipping._Dynamic_Clipper_(
-                # pyre-fixme[6]: Expected `List[float]` for 1st param but got
-                #  `List[Union[List[float], float]]`.
                 [self.max_grad_norm],
                 self.misc_settings.get("clip_per_layer", False),
                 self.misc_settings.get(
@@ -197,22 +187,20 @@ class PrivacyEngine:
             self.privacy_engine.step()
             self.original_step(closure)
 
-        # Pyre doesn't like monkeypatching. But we'll do it anyway :)
-        optimizer.privacy_engine = self  # pyre-ignore
-        optimizer.original_step = optimizer.step  # pyre-ignore
-        optimizer.step = types.MethodType(dp_step, optimizer)  # pyre-ignore
+        optimizer.privacy_engine = self
+        optimizer.original_step = optimizer.step
+        optimizer.step = types.MethodType(dp_step, optimizer)
 
-        optimizer.original_zero_grad = optimizer.zero_grad  # pyre-ignore
-        optimizer.zero_grad = types.MethodType(dp_zero_grad, optimizer)  # pyre-ignore
+        optimizer.original_zero_grad = optimizer.zero_grad
+        optimizer.zero_grad = types.MethodType(dp_zero_grad, optimizer)
 
         def virtual_step(self):
             self.privacy_engine.virtual_step()
 
-        # pyre-ignore
         optimizer.virtual_step = types.MethodType(virtual_step, optimizer)
 
         # create a cross reference for detaching
-        self.optimizer = optimizer  # pyre-ignore
+        self.optimizer = optimizer
 
     def get_renyi_divergence(self):
         rdp = torch.tensor(
@@ -392,7 +380,6 @@ class PrivacyEngine:
             return torch.normal(
                 0,
                 self.noise_multiplier * max_grad_norm,
-                # pyre-fixme[16]: nn.parameter.Parameter has no attribute grad
                 reference.grad.shape,
                 device=self.device,
                 generator=self.random_number_generator,

@@ -159,6 +159,7 @@ pip install -e .
                 'Vectorized per-sample gradient computation that is 10x faster than microbatching',
               image: `${baseUrl}img/expanding_arrows.svg`,
               imageAlign: 'top',
+              imageAlt: 'Scalable logo',
               title: 'Scalable',
             },
             {
@@ -166,6 +167,7 @@ pip install -e .
                 'Supports most types of PyTorch models and can be used with minimal modification to the original neural network.',
               image: `${baseUrl}img/pytorch_logo.svg`,
               imageAlign: 'top',
+              imageAlt: 'PyTorch logo',
               title: 'Built on PyTorch',
             },
             {
@@ -173,6 +175,7 @@ pip install -e .
                 'Open source, modular API for differential privacy research. Everyone is welcome to contribute.',
               image: `${baseUrl}img/modular.svg`,
               imageAlign: 'top',
+              imageAlt: 'Extensible logo',
               title: 'Extensible',
             },
           ]}

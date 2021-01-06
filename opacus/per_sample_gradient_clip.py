@@ -156,15 +156,13 @@ class PerSampleGradientClipper:
         # now that we know the full batch size, we can average the gradients
         n = 0
         for _, p in self._named_params():
-            p.grad = self._scale_summed_grad(  # pyre-ignore[16]
-                p.summed_grad, batch_size  # pyre-ignore[16]
-            )
+            p.grad = self._scale_summed_grad(p.summed_grad, batch_size)
             n += 1
             del p.summed_grad
 
         # NOTE: For Renyi-based epsilon calculation, we will calculate a flat
         # max norm equal to the norm of all clip values per layer.
-        max_norm = threshs.new_full((n,), threshs.norm(2))  # pyre-ignore[16]
+        max_norm = threshs.new_full((n,), threshs.norm(2))
         self._reset_aggregated_state()
         return max_norm, batch_size
 
@@ -198,16 +196,14 @@ class PerSampleGradientClipper:
         ):
             # Do the clipping
             name, p = named_param
-            summed_grad = self._weighted_sum(
-                clip_factor, p.grad_sample  # pyre-ignore[16]
-            )
+            summed_grad = self._weighted_sum(clip_factor, p.grad_sample)
             clipping_thresh = self.norm_clipper.thresholds[
                 i if len(self.norm_clipper.thresholds) > 1 else 0
             ]
             per_sample_norm = all_norms[i if len(all_norms) > 1 else 0]
             # accumulate the summed gradient for this mini-batch
             if hasattr(p, "summed_grad"):
-                p.summed_grad += summed_grad  # pyre-ignore[16]
+                p.summed_grad += summed_grad
             else:
                 p.summed_grad = summed_grad
 
@@ -217,7 +213,7 @@ class PerSampleGradientClipper:
                 clipping_thresh,
                 per_sample_norm,
                 p.grad_sample,
-                grad_before_clip=p.grad,  # pyre-ignore[16]
+                grad_before_clip=p.grad,
                 grad_after_clip=self._scale_summed_grad(summed_grad, batch_size),
             )
 
@@ -258,7 +254,7 @@ class PerSampleGradientClipper:
             Iterator of parameter names and per-sample gradients
         """
         return (
-            (n, p.grad_sample)  # pyre-ignore[16]
+            (n, p.grad_sample)
             for n, p in self.module.named_parameters()
             if p.requires_grad
         )
