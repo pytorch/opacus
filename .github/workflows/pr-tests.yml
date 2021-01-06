@@ -1,0 +1,54 @@
+# This workflow makes sure edge case versions work
+name: PR Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "**.py"
+      - ".github/workflows/**.yml"
+
+jobs:
+  install-package:
+    strategy:
+      max-parallel: 12
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: actions/cache@v2
+        if: startsWith(runner.os, 'Windows') != true
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+
+      - uses: actions/cache@v2
+        if: startsWith(runner.os, 'Windows')
+        with:
+          path: '%LOCALAPPDATA%\pip\Cache'
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+
+      - name: Cache packages
+        uses: actions/cache@v2
+        id: cache-reqs
+        with:
+          path: ~/.eggs
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('**.egg') }}
+
+      - name: Install Opacus in Editing Mode
+        run: |
+          pip install -e . --default-timeout=60
