@@ -63,3 +63,4 @@ jobs:
       - name: Install Opacus in Editing Mode
         run: |
           pip install -e . --default-timeout=60
+          python -c "import opacus; print(opacus.__version__)"
