@@ -12,11 +12,14 @@ on:
 jobs:
   test-installation:
     strategy:
-      max-parallel: 12
+      max-parallel: 48
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python-version: [3.6.8, 3.7, 3.8, 3.9]
-        torch-version: [1.7.1]
+        torch-version: [1.5.0, 1.5.1, 1.6.0, 1.7.0, 1.7.1]
+        exclude:
+          - python-version: 3.9
+            torch-version: [1.5.0, 1.5.1, 1.6.0, 1.7.0]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -42,19 +45,13 @@ jobs:
 
       - name: Install PyTorch Linux and MacOS
         if: startsWith(runner.os, 'Windows') != true
-        env:
-          TORCH_VERSION: ${{ matrix.torch-version }}
-          TORCHVISION_VERSION: "0.8.2"
         run: |
-          pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION}
+          ./scripts/pytorch_install.sh ${{ matrix.torch-version }}
 
       - name: Install PyTorch Windows
         if: startsWith(runner.os, 'Windows')
-        env:
-          TORCH_VERSION: ${{ matrix.torch-version }}
-          TORCHVISION_VERSION: "0.8.2"
         run: |
-          pip install torch==$env:TORCH_VERSION+cpu torchvision==$env:TORCHVISION_VERSION+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          ./scripts/pytorch_install.ps1 ${{ matrix.torch-version }}
 
       - name: Install Opacus in Editing Mode
         run: |
