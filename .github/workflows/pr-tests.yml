@@ -15,7 +15,7 @@ jobs:
       max-parallel: 12
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.6.8, 3.7, 3.8, 3.9]
         torch-version: [1.7.1]
 
     runs-on: ${{ matrix.os }}
@@ -27,26 +27,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/cache@v2
-        if: startsWith(runner.os, 'Linux')
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "::set-output name=dir::$(pip cache dir)"
 
-      - uses: actions/cache@v2
-        if: startsWith(runner.os, 'macOS')
+      - name: pip cache
+        uses: actions/cache@v2
         with:
-          path: ~/Library/Caches/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - uses: actions/cache@v2
-        if: startsWith(runner.os, 'Windows')
-        with:
-          path: ~\AppData\Local\pip\Cache
+          path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
