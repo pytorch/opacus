@@ -230,6 +230,12 @@
 
 <span class="sd">    Helper function used in computation of :math:`log(A_\alpha)`</span>
 <span class="sd">    for a fractional alpha.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: The input to the function</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :math:`log(erfc(x))`</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span>
 
@@ -278,7 +284,7 @@
 <span class="sd">        orders: An array (or a scalar) of RDP orders.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">      The RDP guarantees at all orders; can be np.inf.</span>
+<span class="sd">        The RDP guarantees at all orders; can be ``np.inf``.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">orders</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
         <span class="n">rdp</span> <span class="o">=</span> <span class="n">_compute_rdp</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">orders</span><span class="p">)</span>

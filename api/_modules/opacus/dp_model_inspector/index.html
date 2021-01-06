@@ -143,14 +143,26 @@
 
 <span class="k">def</span> <span class="nf">_is_valid_check</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    Checks if the ``module``  is supported by ``autograd_grad_sample``</span>
+<span class="sd">    Checks if the ``module`` is supported by ``autograd_grad_sample``</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: The model to validate.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if ``module`` is supported by ``autograd_grad_sample``</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">is_supported</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_conv_group_number_check</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    Checks if number of groups in `nn.Conv2d` layer is valid</span>
+<span class="sd">    Checks if number of groups in ``nn.Conv2d`` layer is valid</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: The input module (layer) for which the check occurs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if number of groups in ``nn.Conv2d`` layer of ``module`` is valid</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="n">groups</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">module</span><span class="o">.</span><span class="n">groups</span> <span class="o">==</span> <span class="n">module</span><span class="o">.</span><span class="n">in_channels</span>
@@ -160,16 +172,31 @@
 
 <span class="k">def</span> <span class="nf">_no_batchnorm_check</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    Checks if the module is not BatchNorm.</span>
+<span class="sd">    Checks if the input module is not BatchNorm.</span>
 
-<span class="sd">    This check overlaps with `_is_valid_check`, but provides more targeted remedy.</span>
+<span class="sd">    This check overlaps with ``_is_valid_check``, but provides more targeted remedy.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: The input module</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the input module is not BatchNorm</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">batchnorm</span><span class="o">.</span><span class="n">_BatchNorm</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_no_running_stats_instancenorm_check</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    Checks that InstanceNorm layer has `track_running_stats` set to False</span>
+<span class="sd">    Checks that ``InstanceNorm`` layer has ``track_running_stats`` set to False</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: The input module (layer) for which the check is verified.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the module is not ``InstanceNorm``, otherwise it returns</span>
+<span class="sd">        True if the module (layer) have ``track_running_stats`` set to False,</span>
+<span class="sd">        and False otherwise.</span>
+
 <span class="sd">    """</span>
     <span class="n">is_instancenorm</span> <span class="o">=</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span>
         <span class="s2">"InstanceNorm1d"</span><span class="p">,</span>
@@ -182,7 +209,16 @@
     <span class="k">return</span> <span class="kc">True</span>
 
 
-<span class="k">def</span> <span class="nf">_no_lstm</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_no_lstm</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Checks if the input module is not LSTM.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: The input module</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the input module is not LSTM</span>
+<span class="sd">    """</span>
     <span class="n">is_lstm</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">get_layer_type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"LSTM"</span> <span class="k">else</span> <span class="kc">False</span>
 
     <span class="k">return</span> <span class="ow">not</span> <span class="n">is_lstm</span>
