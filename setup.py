@@ -5,7 +5,7 @@ import os
 import sys
 
 from setuptools import find_packages, setup
-from version import VERSION
+from version import __version__
 
 # 3.6.8 is the final Windows binary release for 3.6.x
 # Google Colab also requires 3.6.9
@@ -50,7 +50,7 @@ with open("requirements.txt", encoding="utf8") as f:
 
 setup(
     name="opacus",
-    version=VERSION,
+    version=__version__,
     author="The Opacus Team",
     description="Train PyTorch models with Differential Privacy",
     long_description=long_description,
