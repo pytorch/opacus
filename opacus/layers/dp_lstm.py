@@ -337,8 +337,8 @@ class DPLSTM(ParamRenamedModule):
 
         for layer, h0, c0 in zip(self.layers, h_0s, c_0s):
             if not self.bidirectional:
-                h0 = h0.squeeze()
-                c0 = c0.squeeze()
+                h0 = h0.squeeze(0)
+                c0 = c0.squeeze(0)
             x, (h, c) = layer(x, (h0, c0))
             if not self.bidirectional:
                 h = h.unsqueeze(0)  # [1, B, H]

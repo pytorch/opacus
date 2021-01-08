@@ -72,3 +72,15 @@ class LSTM_test(GradSampleHooks_test):
         lstm = DPSLTMAdapter(D, H, num_layers=2, batch_first=False, bias=False)
         x = torch.randn([T, N, D])
         self.run_test(x, lstm, batch_first=False)
+
+    def test_batch_first_single_sample(self):
+        N, T, D, H = 1, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=True, bias=False)
+        x = torch.randn([N, T, D])
+        self.run_test(x, lstm, batch_first=True)
+
+    def test_batch_second_single_sample(self):
+        N, T, D, H = 1, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False, bias=False)
+        x = torch.randn([T, N, D])
+        self.run_test(x, lstm, batch_first=False)
