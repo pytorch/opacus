@@ -22,7 +22,7 @@ import argparse
 import math
 from typing import List, Tuple
 
-from opacus import privacy_analysis as tf_privacy
+from opacus import privacy_analysis
 
 
 def _apply_dp_sgd_analysis(
@@ -49,8 +49,8 @@ def _apply_dp_sgd_analysis(
     Returns:
         Pair of privacy loss epsilon and optimal order alpha
     """
-    rdp = tf_privacy.compute_rdp(sample_rate, noise_multiplier, steps, alphas)
-    eps, opt_alpha = tf_privacy.get_privacy_spent(alphas, rdp, delta=delta)
+    rdp = privacy_analysis.compute_rdp(sample_rate, noise_multiplier, steps, alphas)
+    eps, opt_alpha = privacy_analysis.get_privacy_spent(alphas, rdp, delta=delta)
 
     if verbose:
         print(
