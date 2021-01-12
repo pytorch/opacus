@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Union
 import torch
 from torch import nn
 
-from . import privacy_analysis as tf_privacy
+from . import privacy_analysis
 from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
@@ -204,7 +204,7 @@ class PrivacyEngine:
 
     def get_renyi_divergence(self):
         rdp = torch.tensor(
-            tf_privacy.compute_rdp(
+            privacy_analysis.compute_rdp(
                 self.sample_rate, self.noise_multiplier, 1, self.alphas
             )
         )
@@ -230,7 +230,7 @@ class PrivacyEngine:
         if target_delta is None:
             target_delta = self.target_delta
         rdp = self.get_renyi_divergence() * self.steps
-        return tf_privacy.get_privacy_spent(self.alphas, rdp, target_delta)
+        return privacy_analysis.get_privacy_spent(self.alphas, rdp, target_delta)
 
     def zero_grad(self):
         """
