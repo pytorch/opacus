@@ -401,6 +401,7 @@ def main():
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
+            target_delta=args.delta,
             secure_rng=args.secure_rng,
         )
         privacy_engine.attach(optimizer)
