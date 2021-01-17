@@ -9,6 +9,7 @@ from .param_rename import ParamRenamedModule
 
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 
+
 def compute_seq_lengths(batch_sizes: torch.Tensor):
     max_batch_size = batch_sizes[0]
     if len(batch_sizes) == 1:
@@ -17,14 +18,15 @@ def compute_seq_lengths(batch_sizes: torch.Tensor):
     running_seq = 0
     running_seq_lengths = []
     for i in range(1, len(batch_sizes)):
-        delta = batch_sizes[i-1].item() - batch_sizes[i].item()
+        delta = batch_sizes[i - 1].item() - batch_sizes[i].item()
         running_seq += 1
-        running_seq_lengths += (delta * [running_seq])
+        running_seq_lengths += delta * [running_seq]
 
     running_seq += 1
-    running_seq_lengths += (batch_sizes[-1].item() * [running_seq])
+    running_seq_lengths += batch_sizes[-1].item() * [running_seq]
     running_seq_lengths.reverse()
     return running_seq_lengths
+
 
 def compute_last_states(h_n: torch.Tensor, c_n: torch.Tensor, seq_lengths: List):
     max_batch_size = len(seq_lengths)
@@ -33,8 +35,8 @@ def compute_last_states(h_n: torch.Tensor, c_n: torch.Tensor, seq_lengths: List)
     c_last = torch.zeros(max_batch_size, hidden_size)
 
     for i, seq_len in enumerate(seq_lengths):
-        h_last[i, :] = h_n[seq_len-1][i, :]
-        c_last[i, :] = c_n[seq_len-1][i, :]
+        h_last[i, :] = h_n[seq_len - 1][i, :]
+        c_last[i, :] = c_n[seq_len - 1][i, :]
 
     return h_last, c_last
 
@@ -91,8 +93,13 @@ class DPLSTMCell(nn.Module):
             nn.init.uniform_(weight, -stdv, stdv)
 
     def forward(
-        self, x: torch.Tensor, h_prev: torch.Tensor, c_prev: torch.Tensor,
-        B: Optional[int] = None, reverse: Optional[bool] = False) -> Tuple[torch.Tensor, torch.Tensor]:
+        self,
+        x: torch.Tensor,
+        h_prev: torch.Tensor,
+        c_prev: torch.Tensor,
+        B: Optional[int] = None,
+        reverse: Optional[bool] = False,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
 
         if B is None:
             gates = self.ih(x) + self.hh(h_prev)  # [B, 4*D]
@@ -109,7 +116,7 @@ class DPLSTMCell(nn.Module):
         if B is None:
             c_t = f_t * c_prev + i_t * g_t
         else:
-            c_t = f_t * c_prev[:B, :] + i_t * g_t       
+            c_t = f_t * c_prev[:B, :] + i_t * g_t
 
         h_t = o_t * torch.tanh(c_t)
 
@@ -142,7 +149,6 @@ class DPLSTMLayer(nn.Module):
         )
 
         self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else None
-
 
     def forward(
         self,
@@ -193,9 +199,13 @@ class DPLSTMLayer(nn.Module):
                 if delta > 0:
                     h_cat = torch.cat((h_n[t], h_0[batch_size_prev:batch_size_t, :]), 0)
                     c_cat = torch.cat((c_n[t], c_0[batch_size_prev:batch_size_t, :]), 0)
-                    h_next, c_next = self.cell(x[t], h_cat, c_cat, batch_size_t, self.reverse)                    
+                    h_next, c_next = self.cell(
+                        x[t], h_cat, c_cat, batch_size_t, self.reverse
+                    )
                 else:
-                    h_next, c_next = self.cell(x[t], h_n[t], c_n[t], batch_size_t, self.reverse)
+                    h_next, c_next = self.cell(
+                        x[t], h_n[t], c_n[t], batch_size_t, self.reverse
+                    )
             else:
                 h_next, c_next = self.cell(x[t], h_n[t], c_n[t])
             if self.dropout:
@@ -217,9 +227,8 @@ class DPLSTMLayer(nn.Module):
             h_last, c_last = compute_last_states(h_temp, c_temp, seq_lengths)
             if self.reverse:
                 h_temp = tuple(reversed(h_temp))
-            
-            return h_temp, (h_last, c_last)
 
+            return h_temp, (h_last, c_last)
 
 
 class BidirectionalDPLSTMLayer(nn.Module):
@@ -260,7 +269,6 @@ class BidirectionalDPLSTMLayer(nn.Module):
             dropout=dropout,
             reverse=True,
         )
-
 
     def forward(
         self,
@@ -303,10 +311,12 @@ class BidirectionalDPLSTMLayer(nn.Module):
         out_r, (h_r, c_r) = self.reverse_layer(x, (h0_r, c0_r), batch_sizes)
 
         if batch_sizes is None:
-            out = torch.cat([out_f, out_r], dim=-1)  # [T, B, H * P] # needs to change for PackedSequence implementation
+            out = torch.cat(
+                [out_f, out_r], dim=-1
+            )  # [T, B, H * P] # needs to change for PackedSequence implementation
         else:
             out = concat_tensor_sequence(out_f, out_r, -1)
-        
+
         h = torch.stack([h_f, h_r], dim=0)  # [P, B, H]
         c = torch.stack([c_f, c_r], dim=0)  # [P, B, H]
         return out, (h, c)
@@ -358,7 +368,6 @@ class DPLSTM(ParamRenamedModule):
                 for i in range(num_layers)
             ]
         )
-
 
     def forward(
         self,
@@ -424,7 +433,7 @@ class DPLSTM(ParamRenamedModule):
         else:
             h_0s = h_0s.reshape([L, P, B, H])
             h_0s = self._permute_hidden(h_0s, sorted_indices, 2)
-       
+
         if c_0s is None:
             c_0s = torch.zeros(
                 L,
@@ -458,19 +467,26 @@ class DPLSTM(ParamRenamedModule):
 
         if batch_sizes is not None:
             seq_lengths = compute_seq_lengths(batch_sizes)
-            packed_data = pack_padded_sequence(pad_sequence(x, batch_first=False), seq_lengths, batch_first=True)[0]
-            out = PackedSequence(packed_data, batch_sizes, sorted_indices, unsorted_indices)
+            packed_data = pack_padded_sequence(
+                pad_sequence(x, batch_first=False), seq_lengths, batch_first=True
+            )[0]
+            out = PackedSequence(
+                packed_data, batch_sizes, sorted_indices, unsorted_indices
+            )
         else:
             out = self._rearrange_batch_dim(x)
-        
-        return out, (self._permute_hidden(hs, unsorted_indices), self._permute_hidden(cs, unsorted_indices))
 
-    
-    def _permute_hidden(self, x: torch.Tensor, permutation: Optional[torch.Tensor] = None, dim: int = 1):
+        return out, (
+            self._permute_hidden(hs, unsorted_indices),
+            self._permute_hidden(cs, unsorted_indices),
+        )
+
+    def _permute_hidden(
+        self, x: torch.Tensor, permutation: Optional[torch.Tensor] = None, dim: int = 1
+    ):
         if permutation is None:
             return x
         return x.index_select(dim, permutation)
-
 
     def _rearrange_batch_dim(self, x: torch.Tensor) -> torch.Tensor:
         if self.batch_first:  # batch is by default in second dimension
