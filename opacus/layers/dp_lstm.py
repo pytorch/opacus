@@ -10,7 +10,18 @@ from .param_rename import ParamRenamedModule
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 
 
-def compute_seq_lengths(batch_sizes: torch.Tensor):
+def compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
+    r"""
+    Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).
+
+    Args:
+        batch_sizes: Contains the batch sizes as stored in a PackedSequence
+
+    Returns:
+        running_seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence.
+        It's a list of the same length as batch_sizes.
+    """
+
     max_batch_size = batch_sizes[0]
     if len(batch_sizes) == 1:
         return [1] * max_batch_size
@@ -28,7 +39,23 @@ def compute_seq_lengths(batch_sizes: torch.Tensor):
     return running_seq_lengths
 
 
-def compute_last_states(h_n: torch.Tensor, c_n: torch.Tensor, seq_lengths: List):
+def compute_last_states(
+    h_n: List[torch.Tensor], c_n: List[torch.Tensor], seq_lengths: List[int]
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    r"""
+    Given h and c values of all time steps, this function computes the h and c values for each sequence at their last timestep (this can vary across sequences with different sequence lengths).
+
+    Args:
+        h_n: A list of hidden state values across all timesteps.
+        c_n: A list of cell state values across all timesteps.
+        seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence. This can be computed using the compute_seq_lengths function.
+
+    Returns:
+        h_last: Contains the last hidden state values for each of the sequences. 
+                If the i'th sequence has a length of l_i, then h_last[i,:] contains the hidden state corresponding to the i'th sequence at timestep l_i.
+        c_last: The structure is the same as h_last, except that it contains the last cell state values for each of the sequences.
+    """
+
     max_batch_size = len(seq_lengths)
     hidden_size = h_n[0].shape[-1]
     h_last = torch.zeros(max_batch_size, hidden_size)
@@ -41,7 +68,22 @@ def compute_last_states(h_n: torch.Tensor, c_n: torch.Tensor, seq_lengths: List)
     return h_last, c_last
 
 
-def concat_tensor_sequence(a: Union[List, Tuple], b: Union[List, Tuple], dim: int):
+def concat_tensor_sequence(
+    a: Union[List[torch.Tensor], Tuple[torch.Tensor]],
+    b: Union[List[torch.Tensor], Tuple[torch.Tensor]],
+    dim: int,
+) -> Tuple[torch.Tensor]:
+    r"""
+    Given two list/tuple of same length containing tensors, this function returns a concatenation along dimension d. So, output[i] : concatenation of a[i] and b[i] along dimension dim.
+    a[i] and b[i] should have the same shape.
+
+    Args:
+        a: list/tuple containing n tensors.
+        b: list/tuple containing n tensors.
+    Returns:
+        output: list/tuple containing n concatenated tensors.
+    """
+
     seq_length = len(a)
     output = [0] * seq_length
 
@@ -97,14 +139,13 @@ class DPLSTMCell(nn.Module):
         x: torch.Tensor,
         h_prev: torch.Tensor,
         c_prev: torch.Tensor,
-        B: Optional[int] = None,
-        reverse: Optional[bool] = False,
+        batch_size_t: Optional[int] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
 
-        if B is None:
+        if batch_size_t is None:
             gates = self.ih(x) + self.hh(h_prev)  # [B, 4*D]
         else:
-            gates = self.ih(x) + self.hh(h_prev[:B, :])  # [B, 4*D]
+            gates = self.ih(x) + self.hh(h_prev[:batch_size_t, :])  # [B, 4*D]
 
         i_t_input, f_t_input, g_t_input, o_t_input = torch.split(
             gates, self.hidden_size, 1
@@ -113,10 +154,10 @@ class DPLSTMCell(nn.Module):
         f_t = torch.sigmoid(f_t_input)  # [B, D]
         g_t = torch.tanh(g_t_input)  # [B, D]
         o_t = torch.sigmoid(o_t_input)  # [B, D]
-        if B is None:
+        if batch_size_t is None:
             c_t = f_t * c_prev + i_t * g_t
         else:
-            c_t = f_t * c_prev[:B, :] + i_t * g_t
+            c_t = f_t * c_prev[:batch_size_t, :] + i_t * g_t
 
         h_t = o_t * torch.tanh(c_t)
 
@@ -199,13 +240,9 @@ class DPLSTMLayer(nn.Module):
                 if delta > 0:
                     h_cat = torch.cat((h_n[t], h_0[batch_size_prev:batch_size_t, :]), 0)
                     c_cat = torch.cat((c_n[t], c_0[batch_size_prev:batch_size_t, :]), 0)
-                    h_next, c_next = self.cell(
-                        x[t], h_cat, c_cat, batch_size_t, self.reverse
-                    )
+                    h_next, c_next = self.cell(x[t], h_cat, c_cat, batch_size_t)
                 else:
-                    h_next, c_next = self.cell(
-                        x[t], h_n[t], c_n[t], batch_size_t, self.reverse
-                    )
+                    h_next, c_next = self.cell(x[t], h_n[t], c_n[t], batch_size_t)
             else:
                 h_next, c_next = self.cell(x[t], h_n[t], c_n[t])
             if self.dropout:
@@ -386,7 +423,7 @@ class DPLSTM(ParamRenamedModule):
             - P: number of directions (2 if bidirectional, else 1)
 
         Args:
-            x: Input sequence to the DPLSTM of shape ``[T, B, D]``
+            x: Input sequence to the DPLSTM of shape ``[T, B, D]``. Or it can be a PackedSequence.
             state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:
                 - ``h_0`` of shape ``[L*P, B, H]`` contains the initial hidden state
                 - ``c_0`` of shape ``[L*P, B, H]`` contains the initial cell state
@@ -483,10 +520,13 @@ class DPLSTM(ParamRenamedModule):
 
     def _permute_hidden(
         self, x: torch.Tensor, permutation: Optional[torch.Tensor] = None, dim: int = 1
-    ):
+    ) -> torch.Tensor:
         if permutation is None:
             return x
-        return x.index_select(dim, permutation)
+        if dim == 1:
+            return x[:, permutation, :]
+        elif dim == 2:
+            return x[:, :, permutation, :]
 
     def _rearrange_batch_dim(self, x: torch.Tensor) -> torch.Tensor:
         if self.batch_first:  # batch is by default in second dimension
