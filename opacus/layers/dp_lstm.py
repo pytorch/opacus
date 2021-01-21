@@ -10,7 +10,7 @@ from .param_rename import ParamRenamedModule
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 
 
-def compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
+def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
     r"""
     Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).
 
@@ -39,7 +39,7 @@ def compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
     return running_seq_lengths
 
 
-def compute_last_states(
+def _compute_last_states(
     h_n: List[torch.Tensor], c_n: List[torch.Tensor], seq_lengths: List[int]
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     r"""
@@ -48,10 +48,10 @@ def compute_last_states(
     Args:
         h_n: A list of hidden state values across all timesteps.
         c_n: A list of cell state values across all timesteps.
-        seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence. This can be computed using the compute_seq_lengths function.
+        seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence. This can be computed using the _compute_seq_lengths function.
 
     Returns:
-        h_last: Contains the last hidden state values for each of the sequences. 
+        h_last: Contains the last hidden state values for each of the sequences.
                 If the i'th sequence has a length of l_i, then h_last[i,:] contains the hidden state corresponding to the i'th sequence at timestep l_i.
         c_last: The structure is the same as h_last, except that it contains the last cell state values for each of the sequences.
     """
@@ -68,27 +68,32 @@ def compute_last_states(
     return h_last, c_last
 
 
-def concat_tensor_sequence(
-    a: Union[List[torch.Tensor], Tuple[torch.Tensor]],
-    b: Union[List[torch.Tensor], Tuple[torch.Tensor]],
+def _concat_sequence_directions(
+    forward: Union[List[torch.Tensor], Tuple[torch.Tensor]],
+    reverse: Union[List[torch.Tensor], Tuple[torch.Tensor]],
     dim: int,
 ) -> Tuple[torch.Tensor]:
     r"""
-    Given two list/tuple of same length containing tensors, this function returns a concatenation along dimension d. So, output[i] : concatenation of a[i] and b[i] along dimension dim.
-    a[i] and b[i] should have the same shape.
+    Given two list/tuple of same length containing tensors, this function returns a concatenation along dimension d. So, output[i] : concatenation of forward[i] and reverse[i] along dimension dim.
+    forward[i] and reverse[i] should have the same shape. This function is used for concatenating the outputs of the forward and reverse layer of a bidirectional LSTM.
 
     Args:
-        a: list/tuple containing n tensors.
-        b: list/tuple containing n tensors.
+        forward: list/tuple containing n tensors, representing the output of the forward layer.
+        reverse: list/tuple containing n tensors, representing the output of the backward layer.
     Returns:
         output: list/tuple containing n concatenated tensors.
     """
 
-    seq_length = len(a)
+    if len(forward) != len(reverse):
+        raise ValueError(
+            "The forward and reverse layer output sequences should have the same length"
+        )
+
+    seq_length = len(forward)
     output = [0] * seq_length
 
     for i in range(seq_length):
-        output[i] = torch.cat((a[i], b[i]), dim=dim)
+        output[i] = torch.cat((forward[i], reverse[i]), dim=dim)
 
     return output
 
@@ -145,15 +150,25 @@ class DPLSTMCell(nn.Module):
         if batch_size_t is None:
             gates = self.ih(x) + self.hh(h_prev)  # [B, 4*D]
         else:
-            gates = self.ih(x) + self.hh(h_prev[:batch_size_t, :])  # [B, 4*D]
+            gates = self.ih(x) + self.hh(
+                h_prev[:batch_size_t, :]
+            )  # [batch_size_t, 4*D]
 
         i_t_input, f_t_input, g_t_input, o_t_input = torch.split(
             gates, self.hidden_size, 1
         )
-        i_t = torch.sigmoid(i_t_input)  # [B, D]
-        f_t = torch.sigmoid(f_t_input)  # [B, D]
-        g_t = torch.tanh(g_t_input)  # [B, D]
-        o_t = torch.sigmoid(o_t_input)  # [B, D]
+        i_t = torch.sigmoid(
+            i_t_input
+        )  # [B, D] or [batch_size_t, 4*D] if batch_size_t is not None
+        f_t = torch.sigmoid(
+            f_t_input
+        )  # [B, D] or [batch_size_t, 4*D] if batch_size_t is not None
+        g_t = torch.tanh(
+            g_t_input
+        )  # [B, D] or [batch_size_t, 4*D] if batch_size_t is not None
+        o_t = torch.sigmoid(
+            o_t_input
+        )  # [B, D] or [batch_size_t, 4*D] if batch_size_t is not None
         if batch_size_t is None:
             c_t = f_t * c_prev + i_t * g_t
         else:
@@ -259,9 +274,9 @@ class DPLSTMLayer(nn.Module):
                 (h_n[-1], c_n[-1]),  # ... But not the states
             )
         else:
-            seq_lengths = compute_seq_lengths(batch_sizes)
+            seq_lengths = _compute_seq_lengths(batch_sizes)
             h_temp, c_temp = h_n[1:], c_n[1:]
-            h_last, c_last = compute_last_states(h_temp, c_temp, seq_lengths)
+            h_last, c_last = _compute_last_states(h_temp, c_temp, seq_lengths)
             if self.reverse:
                 h_temp = tuple(reversed(h_temp))
 
@@ -348,11 +363,9 @@ class BidirectionalDPLSTMLayer(nn.Module):
         out_r, (h_r, c_r) = self.reverse_layer(x, (h0_r, c0_r), batch_sizes)
 
         if batch_sizes is None:
-            out = torch.cat(
-                [out_f, out_r], dim=-1
-            )  # [T, B, H * P] # needs to change for PackedSequence implementation
+            out = torch.cat([out_f, out_r], dim=-1)  # [T, B, H * P]
         else:
-            out = concat_tensor_sequence(out_f, out_r, -1)
+            out = _concat_sequence_directions(out_f, out_r, -1)
 
         h = torch.stack([h_f, h_r], dim=0)  # [P, B, H]
         c = torch.stack([c_f, c_r], dim=0)  # [P, B, H]
@@ -503,7 +516,7 @@ class DPLSTM(ParamRenamedModule):
         cs = torch.cat(cs, dim=0)  # [L * P, B, H]
 
         if batch_sizes is not None:
-            seq_lengths = compute_seq_lengths(batch_sizes)
+            seq_lengths = _compute_seq_lengths(batch_sizes)
             packed_data = pack_padded_sequence(
                 pad_sequence(x, batch_first=False), seq_lengths, batch_first=True
             )[0]
