@@ -159,16 +159,16 @@ class DPLSTMCell(nn.Module):
         )
         i_t = torch.sigmoid(
             i_t_input
-        )  # [B, D] or [batch_size_t, 4*D] if batch_size_t is not None
+        )  # [B, D] or [batch_size_t, D] if batch_size_t is not None
         f_t = torch.sigmoid(
             f_t_input
-        )  # [B, D] or [batch_size_t, 4*D] if batch_size_t is not None
+        )  # [B, D] or [batch_size_t, D] if batch_size_t is not None
         g_t = torch.tanh(
             g_t_input
-        )  # [B, D] or [batch_size_t, 4*D] if batch_size_t is not None
+        )  # [B, D] or [batch_size_t, D] if batch_size_t is not None
         o_t = torch.sigmoid(
             o_t_input
-        )  # [B, D] or [batch_size_t, 4*D] if batch_size_t is not None
+        )  # [B, D] or [batch_size_t, D] if batch_size_t is not None
         if batch_size_t is None:
             c_t = f_t * c_prev + i_t * g_t
         else:
