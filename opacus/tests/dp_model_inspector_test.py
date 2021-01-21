@@ -23,6 +23,13 @@ class dp_model_inspector_test(unittest.TestCase):
         model = models.resnet50()
         self.assertFalse(inspector.validate(model))
 
+    def test_raises_for_eval_mode(self):
+        inspector = dp_inspector.DPModelInspector()
+        model = models.resnet50()
+        model = model.eval()
+        with self.assertRaises(dp_inspector.IncompatibleModuleException):
+            inspector.validate(model)
+
     def test_convert_batchnorm(self):
         inspector = dp_inspector.DPModelInspector()
         model = convert_batchnorm_modules(models.resnet50())
