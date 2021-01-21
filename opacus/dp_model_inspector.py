@@ -66,6 +66,19 @@ class DPModelInspector:
                 message="Model contains LSTM layers. It is recommended that they are"
                 "replaced with DPLSTM",
             ),
+            # Inspector to check that the module is in training mode
+            ModelInspector(
+                name="train_mode",
+                predicate=_is_in_training_mode,
+                message=(
+                    "Your model must be in training mode for the PrivacyEngine to compute "
+                    "per-sample gradients. You can put your model in training mode by simply calling "
+                    "module.train(). If you have part of the model that you want to keep frozen, "
+                    "the best approach is to split your model into a frozen backbone and a trainable "
+                    "head and passing only the head to the optimizer and PrivacyEngine. See an example "
+                    "in this colab: https://bit.ly/opacus-dev-day"
+                ),
+            ),
         ]
 
     def validate(self, model: nn.Module) -> bool:
@@ -125,6 +138,19 @@ def _is_valid_check(module: nn.Module) -> bool:
         True if ``module`` is supported by ``autograd_grad_sample``
     """
     return is_supported(module)
+
+
+def _is_in_training_mode(module: nn.Module) -> bool:
+    r"""
+    Checks if the ``module`` is in train mode
+
+    Args:
+        module: The model to validate.
+
+    Returns:
+        True if ``module`` is in train mode
+    """
+    return module.training
 
 
 def _conv_group_number_check(module: nn.Module) -> bool:
