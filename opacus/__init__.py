@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from version import __version__
+from .version import __version__
 
 from . import utils
 from .per_sample_gradient_clip import PerSampleGradientClipper
