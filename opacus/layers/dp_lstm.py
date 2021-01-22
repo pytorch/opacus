@@ -107,11 +107,11 @@ class DPLSTMLayer(nn.Module):
                 initial cell state of the DPLSTMCell
 
         Returns:
-            ``output, (h_n, c_n)`` where:
-            - ``output`` is of shape ``[T, B, H]`` and is a tensor containing the output
-                features (``h_t``) from the last layer of the DPLSTMCell for each timestep ``t``.
-            - ``h_n`` is of shape ``[B, H]`` and is a tensor containing the hidden state for ``t = T``.
-            - ``c_n`` is of shape ``[B, H]`` tensor containing the cell state for ``t = T``.
+            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H]`` and is a
+            tensor containing the output features (``h_t``) from the last layer of the
+            DPLSTMCell for each timestep ``t``. ``h_n`` is of shape ``[B, H]`` and is a
+            tensor containing the hidden state for ``t = T``. ``c_n`` is of shape ``[B, H]``
+            tensor containing the cell state for ``t = T``.
         """
 
         seq_length, batch_sz, _ = x.shape
@@ -195,17 +195,18 @@ class BidirectionalDPLSTMLayer(nn.Module):
 
         Args:
             x: Input sequence to the DPLSTM of shape ``[T, B, D]``
-            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:
-                    - h_0 of shape ``[P, B, H]  contains the initial hidden state
-                    - c_0 of shape ``[P, B, H]  contains the initial cell state
-                    This argument can be (and defaults to) None, in which case zero tensors will be used.
+            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where
+                ``h_0`` of shape ``[P, B, H]`` contains the initial hidden state, and
+                ``c_0`` of shape ``[P, B, H]``  contains the initial cell state. This
+                argument can be (and defaults to) None, in which case zero tensors
+                will be used.
 
          Returns:
-            ``output, (h_n, c_n)`` where:
-            - ``output`` is of shape ``[T, B, H * P]`` and is a tensor containing the output
-                features (``h_t``) from the last layer of the DPLSTM for each timestep ``t``.
-            - ``h_n`` is of shape ``[P, B, H]`` and contains the hidden state for ``t = T``.
-            - ``c_n`` is of shape ``[P, B, H]`` and contains the cell state for ``t = T``.
+            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H * P]`` and is a
+            tensor containing the output features (``h_t``) from the last layer of the
+            DPLSTM for each timestep ``t``. ``h_n`` is of shape ``[P, B, H]`` and contains
+            the hidden state for ``t = T``. ``c_n`` is of shape ``[P, B, H]`` and contains
+            the cell state for ``t = T``.
         """
 
         h0, c0 = state_init
@@ -289,16 +290,17 @@ class DPLSTM(ParamRenamedModule):
         Args:
             x: Input sequence to the DPLSTM of shape ``[T, B, D]``
             state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:
-                    - h_0 of shape ``[L*P, B, H]  contains the initial hidden state
-                    - c_0 of shape ``[L*P, B, H]  contains the initial cell state
-                    This argument can be (and defaults to) None, in which case zero tensors will be used.
+                - ``h_0`` of shape ``[L*P, B, H]`` contains the initial hidden state
+                - ``c_0`` of shape ``[L*P, B, H]`` contains the initial cell state
+
+                This argument can be (and defaults to) None, in which case zero tensors will be used.
 
          Returns:
-            ``output, (h_n, c_n)`` where:
-            - ``output`` is of shape ``[T, B, H * P]`` and is a tensor containing the output
-                features (``h_t``) from the last layer of the DPLSTM for each timestep ``t``.
-            - ``h_n`` is of shape ``[L * P, B, H]`` and contains the hidden state for ``t = T``.
-            - ``c_n`` is of shape ``[L * P, B, H]`` and contains the cell state for ``t = T``.
+            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H * P]`` and is a
+            tensor containing the output features (``h_t``) from the last layer of the DPLSTM
+            for each timestep ``t``. ``h_n`` is of shape ``[L * P, B, H]`` and contains the
+            hidden state for ``t = T``. ``c_n`` is of shape ``[L * P, B, H]`` and contains
+            the cell state for ``t = T``.
         """
 
         x = self._rearrange_batch_dim(x)
