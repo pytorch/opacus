@@ -5,11 +5,13 @@ import os
 import sys
 
 from setuptools import find_packages, setup
+from version import __version__
 
-
+# 3.6.8 is the final Windows binary release for 3.6.x
+# Google Colab also requires 3.6.9
 REQUIRED_MAJOR = 3
 REQUIRED_MINOR = 6
-REQUIRED_MICRO = 9
+REQUIRED_MICRO = 8
 
 # Check for python version
 if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR, REQUIRED_MICRO):
@@ -46,10 +48,9 @@ requirements_txt = os.path.join(src_dir, "requirements.txt")
 with open("requirements.txt", encoding="utf8") as f:
     required = f.read().splitlines()
 
-
 setup(
     name="opacus",
-    version="0.11.0",
+    version=__version__,
     author="The Opacus Team",
     description="Train PyTorch models with Differential Privacy",
     long_description=long_description,
@@ -81,5 +82,5 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering",
     ],
-    python_requires=">=3.6.9",
+    python_requires=f">={REQUIRED_MAJOR}.{REQUIRED_MINOR}.{REQUIRED_MICRO}",
 )
