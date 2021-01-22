@@ -93,6 +93,19 @@
                 <span class="n">message</span><span class="o">=</span><span class="s2">"Model contains LSTM layers. It is recommended that they are"</span>
                 <span class="s2">"replaced with DPLSTM"</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="c1"># Inspector to check that the module is in training mode</span>
+            <span class="n">ModelInspector</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"train_mode"</span><span class="p">,</span>
+                <span class="n">predicate</span><span class="o">=</span><span class="n">_is_in_training_mode</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">"Your model must be in training mode for the PrivacyEngine to compute "</span>
+                    <span class="s2">"per-sample gradients. You can put your model in training mode by simply calling "</span>
+                    <span class="s2">"module.train(). If you have part of the model that you want to keep frozen, "</span>
+                    <span class="s2">"the best approach is to split your model into a frozen backbone and a trainable "</span>
+                    <span class="s2">"head and passing only the head to the optimizer and PrivacyEngine. See an example "</span>
+                    <span class="s2">"in this colab: https://bit.ly/opacus-dev-day"</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
         <span class="p">]</span>
 
 <div class="viewcode-block" id="DPModelInspector.validate"><a class="viewcode-back" href="../../dp_model_inspector.html#opacus.dp_model_inspector.DPModelInspector.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -152,6 +165,19 @@
 <span class="sd">        True if ``module`` is supported by ``autograd_grad_sample``</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">is_supported</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_is_in_training_mode</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Checks if the ``module`` is in train mode</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: The model to validate.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if ``module`` is in train mode</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="n">training</span>
 
 
 <span class="k">def</span> <span class="nf">_conv_group_number_check</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>

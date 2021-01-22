@@ -134,11 +134,11 @@
 <span class="sd">                initial cell state of the DPLSTMCell</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            ``output, (h_n, c_n)`` where:</span>
-<span class="sd">            - ``output`` is of shape ``[T, B, H]`` and is a tensor containing the output</span>
-<span class="sd">                features (``h_t``) from the last layer of the DPLSTMCell for each timestep ``t``.</span>
-<span class="sd">            - ``h_n`` is of shape ``[B, H]`` and is a tensor containing the hidden state for ``t = T``.</span>
-<span class="sd">            - ``c_n`` is of shape ``[B, H]`` tensor containing the cell state for ``t = T``.</span>
+<span class="sd">            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H]`` and is a</span>
+<span class="sd">            tensor containing the output features (``h_t``) from the last layer of the</span>
+<span class="sd">            DPLSTMCell for each timestep ``t``. ``h_n`` is of shape ``[B, H]`` and is a</span>
+<span class="sd">            tensor containing the hidden state for ``t = T``. ``c_n`` is of shape ``[B, H]``</span>
+<span class="sd">            tensor containing the cell state for ``t = T``.</span>
 <span class="sd">        """</span>
 
         <span class="n">seq_length</span><span class="p">,</span> <span class="n">batch_sz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
@@ -222,17 +222,18 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            x: Input sequence to the DPLSTM of shape ``[T, B, D]``</span>
-<span class="sd">            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:</span>
-<span class="sd">                    - h_0 of shape ``[P, B, H]  contains the initial hidden state</span>
-<span class="sd">                    - c_0 of shape ``[P, B, H]  contains the initial cell state</span>
-<span class="sd">                    This argument can be (and defaults to) None, in which case zero tensors will be used.</span>
+<span class="sd">            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where</span>
+<span class="sd">                ``h_0`` of shape ``[P, B, H]`` contains the initial hidden state, and</span>
+<span class="sd">                ``c_0`` of shape ``[P, B, H]``  contains the initial cell state. This</span>
+<span class="sd">                argument can be (and defaults to) None, in which case zero tensors</span>
+<span class="sd">                will be used.</span>
 
 <span class="sd">         Returns:</span>
-<span class="sd">            ``output, (h_n, c_n)`` where:</span>
-<span class="sd">            - ``output`` is of shape ``[T, B, H * P]`` and is a tensor containing the output</span>
-<span class="sd">                features (``h_t``) from the last layer of the DPLSTM for each timestep ``t``.</span>
-<span class="sd">            - ``h_n`` is of shape ``[P, B, H]`` and contains the hidden state for ``t = T``.</span>
-<span class="sd">            - ``c_n`` is of shape ``[P, B, H]`` and contains the cell state for ``t = T``.</span>
+<span class="sd">            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H * P]`` and is a</span>
+<span class="sd">            tensor containing the output features (``h_t``) from the last layer of the</span>
+<span class="sd">            DPLSTM for each timestep ``t``. ``h_n`` is of shape ``[P, B, H]`` and contains</span>
+<span class="sd">            the hidden state for ``t = T``. ``c_n`` is of shape ``[P, B, H]`` and contains</span>
+<span class="sd">            the cell state for ``t = T``.</span>
 <span class="sd">        """</span>
 
         <span class="n">h0</span><span class="p">,</span> <span class="n">c0</span> <span class="o">=</span> <span class="n">state_init</span>
@@ -316,16 +317,17 @@
 <span class="sd">        Args:</span>
 <span class="sd">            x: Input sequence to the DPLSTM of shape ``[T, B, D]``</span>
 <span class="sd">            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:</span>
-<span class="sd">                    - h_0 of shape ``[L*P, B, H]  contains the initial hidden state</span>
-<span class="sd">                    - c_0 of shape ``[L*P, B, H]  contains the initial cell state</span>
-<span class="sd">                    This argument can be (and defaults to) None, in which case zero tensors will be used.</span>
+<span class="sd">                - ``h_0`` of shape ``[L*P, B, H]`` contains the initial hidden state</span>
+<span class="sd">                - ``c_0`` of shape ``[L*P, B, H]`` contains the initial cell state</span>
+
+<span class="sd">                This argument can be (and defaults to) None, in which case zero tensors will be used.</span>
 
 <span class="sd">         Returns:</span>
-<span class="sd">            ``output, (h_n, c_n)`` where:</span>
-<span class="sd">            - ``output`` is of shape ``[T, B, H * P]`` and is a tensor containing the output</span>
-<span class="sd">                features (``h_t``) from the last layer of the DPLSTM for each timestep ``t``.</span>
-<span class="sd">            - ``h_n`` is of shape ``[L * P, B, H]`` and contains the hidden state for ``t = T``.</span>
-<span class="sd">            - ``c_n`` is of shape ``[L * P, B, H]`` and contains the cell state for ``t = T``.</span>
+<span class="sd">            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H * P]`` and is a</span>
+<span class="sd">            tensor containing the output features (``h_t``) from the last layer of the DPLSTM</span>
+<span class="sd">            for each timestep ``t``. ``h_n`` is of shape ``[L * P, B, H]`` and contains the</span>
+<span class="sd">            hidden state for ``t = T``. ``c_n`` is of shape ``[L * P, B, H]`` and contains</span>
+<span class="sd">            the cell state for ``t = T``.</span>
 <span class="sd">        """</span>
 
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rearrange_batch_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>

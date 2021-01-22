@@ -50,22 +50,17 @@ We don’t expect you to use this directly: use DPLSTM instead :)</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Input sequence to the DPLSTM of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">D]</span></code></p></li>
-<li><p><strong>state_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]) – <dl>
-<dt>Initial state of the LSTM as a tuple <code class="docutils literal notranslate"><span class="pre">(h_0,</span> <span class="pre">c_0)</span></code>, where:</dt><dd><ul>
-<li><p>h_0 of shape <a href="#id1"><span class="problematic" id="id2">``</span></a>[P, B, H]  contains the initial hidden state</p></li>
-<li><p>c_0 of shape <a href="#id3"><span class="problematic" id="id4">``</span></a>[P, B, H]  contains the initial cell state</p></li>
-</ul>
-<p>This argument can be (and defaults to) None, in which case zero tensors will be used.</p>
+<li><p><strong>state_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]) – <dl class="simple">
+<dt>Initial state of the LSTM as a tuple <code class="docutils literal notranslate"><span class="pre">(h_0,</span> <span class="pre">c_0)</span></code>, where</dt><dd><p><code class="docutils literal notranslate"><span class="pre">h_0</span></code> of shape <code class="docutils literal notranslate"><span class="pre">[P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> contains the initial hidden state, and
+<code class="docutils literal notranslate"><span class="pre">c_0</span></code> of shape <code class="docutils literal notranslate"><span class="pre">[P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code>  contains the initial cell state. This
+argument can be (and defaults to) None, in which case zero tensors
+will be used.</p>
 </dd>
-<dt>Returns:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where:
-- <code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H</span> <span class="pre">*</span> <span class="pre">P]</span></code> and is a tensor containing the output</p>
-<blockquote>
-<div><p>features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the DPLSTM for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
-</div></blockquote>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
-</ul>
+<dt>Returns:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where, <code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H</span> <span class="pre">*</span> <span class="pre">P]</span></code> and is a
+tensor containing the output features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the
+DPLSTM for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>. <code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains
+the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>. <code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains
+the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p>
 </dd>
 </dl>
 </p></li>
@@ -113,20 +108,16 @@ Note that this must be a 1:1 mapping!</p>
 <li><p><strong>x</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Input sequence to the DPLSTM of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">D]</span></code></p></li>
 <li><p><strong>state_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]) – <dl>
 <dt>Initial state of the LSTM as a tuple <code class="docutils literal notranslate"><span class="pre">(h_0,</span> <span class="pre">c_0)</span></code>, where:</dt><dd><ul>
-<li><p>h_0 of shape <a href="#id5"><span class="problematic" id="id6">``</span></a>[L*P, B, H]  contains the initial hidden state</p></li>
-<li><p>c_0 of shape <a href="#id7"><span class="problematic" id="id8">``</span></a>[L*P, B, H]  contains the initial cell state</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">h_0</span></code> of shape <code class="docutils literal notranslate"><span class="pre">[L*P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> contains the initial hidden state</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c_0</span></code> of shape <code class="docutils literal notranslate"><span class="pre">[L*P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> contains the initial cell state</p></li>
 </ul>
 <p>This argument can be (and defaults to) None, in which case zero tensors will be used.</p>
 </dd>
-<dt>Returns:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where:
-- <code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H</span> <span class="pre">*</span> <span class="pre">P]</span></code> and is a tensor containing the output</p>
-<blockquote>
-<div><p>features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the DPLSTM for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
-</div></blockquote>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[L</span> <span class="pre">*</span> <span class="pre">P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[L</span> <span class="pre">*</span> <span class="pre">P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
-</ul>
+<dt>Returns:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where, <code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H</span> <span class="pre">*</span> <span class="pre">P]</span></code> and is a
+tensor containing the output features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the DPLSTM
+for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>. <code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[L</span> <span class="pre">*</span> <span class="pre">P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains the
+hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>. <code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[L</span> <span class="pre">*</span> <span class="pre">P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and contains
+the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p>
 </dd>
 </dl>
 </p></li>
@@ -187,20 +178,15 @@ where <code class="docutils literal notranslate"><span class="pre">h_0</span></c
 initial cell state of the DPLSTMCell</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and is a tensor containing the output</dt><dd><p>features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the DPLSTMCell for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch vmaster (1.7.0a0+57bffc3 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]</p>
 </dd>
-</dl>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> and is a tensor containing the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> tensor containing the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p></li>
-</ul>
-</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">output,</span> <span class="pre">(h_n,</span> <span class="pre">c_n)</span></code> where, <code class="docutils literal notranslate"><span class="pre">output</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> and is a
+tensor containing the output features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the
+DPLSTMCell for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>. <code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> and is a
+tensor containing the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>. <code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>
+tensor containing the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>

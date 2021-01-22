@@ -36,7 +36,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">privacy_analysis</span> <span class="k">as</span> <span class="n">tf_privacy</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">privacy_analysis</span>
 <span class="kn">from</span> <span class="nn">.dp_model_inspector</span> <span class="kn">import</span> <span class="n">DPModelInspector</span>
 <span class="kn">from</span> <span class="nn">.per_sample_gradient_clip</span> <span class="kn">import</span> <span class="n">PerSampleGradientClipper</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">clipping</span>
@@ -231,7 +231,7 @@
 
     <span class="k">def</span> <span class="nf">get_renyi_divergence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">rdp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-            <span class="n">tf_privacy</span><span class="o">.</span><span class="n">compute_rdp</span><span class="p">(</span>
+            <span class="n">privacy_analysis</span><span class="o">.</span><span class="n">compute_rdp</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -257,7 +257,7 @@
         <span class="k">if</span> <span class="n">target_delta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">target_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span>
         <span class="n">rdp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_renyi_divergence</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span>
-        <span class="k">return</span> <span class="n">tf_privacy</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">,</span> <span class="n">rdp</span><span class="p">,</span> <span class="n">target_delta</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">privacy_analysis</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">,</span> <span class="n">rdp</span><span class="p">,</span> <span class="n">target_delta</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="PrivacyEngine.zero_grad"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.zero_grad">[docs]</a>    <span class="k">def</span> <span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>
