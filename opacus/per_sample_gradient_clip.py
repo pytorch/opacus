@@ -253,6 +253,17 @@ class PerSampleGradientClipper:
         Returns:
             Iterator of parameter names and per-sample gradients
         """
+
+        no_grad_samples = [
+            n
+            for n, p in self.module.named_parameters()
+            if p.requires_grad and not hasattr(p, "grad_sample")
+        ]
+        if len(no_grad_samples) >= 1:
+            raise AttributeError(
+                f"The following layers do not have gradients: {no_grad_samples}. Are you sure they were included in the backward pass?"
+            )
+
         return (
             (n, p.grad_sample)
             for n, p in self.module.named_parameters()
