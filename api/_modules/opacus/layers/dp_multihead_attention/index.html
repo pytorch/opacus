@@ -193,10 +193,6 @@
                 <span class="sa">f</span><span class="s2">"query has as size of </span><span class="si">{</span><span class="n">embed_dim</span><span class="si">}</span><span class="s2"> while the embedding"</span>
                 <span class="s2">" size is </span><span class="si">{self.embed_dim}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">!=</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"key and value have different sizes </span><span class="si">{</span><span class="n">key</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="si">}</span><span class="s2">."</span>
-            <span class="p">)</span>
 
         <span class="n">head_dim</span> <span class="o">=</span> <span class="n">embed_dim</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span>
         <span class="k">if</span> <span class="n">head_dim</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">!=</span> <span class="n">embed_dim</span><span class="p">:</span>
