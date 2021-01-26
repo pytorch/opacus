@@ -268,7 +268,7 @@ jobs:
     steps:
       - checkout
       - pip_install
-      - run: pip install torchcsprng
+      - run: pip install torchcsprng hypothesis
       - unit_tests
 
   unittest_py37_torch_release:
@@ -277,7 +277,7 @@ jobs:
     steps:
       - checkout
       - pip_install
-      - run: pip install torchcsprng
+      - run: pip install torchcsprng hypothesis
       - unit_tests
 
   unittest_py38_torch_release:
@@ -286,7 +286,7 @@ jobs:
     steps:
       - checkout
       - pip_install
-      - run: pip install torchcsprng
+      - run: pip install torchcsprng hypothesis
       - unit_tests
 
   unittest_py38_torch_nightly:

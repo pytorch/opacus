@@ -166,10 +166,6 @@ class DPMultiheadAttention(nn.Module):
                 f"query has as size of {embed_dim} while the embedding"
                 " size is {self.embed_dim}"
             )
-        if key.size() != value.size():
-            raise ValueError(
-                f"key and value have different sizes {key.size()} vs {value.size()}."
-            )
 
         head_dim = embed_dim // self.num_heads
         if head_dim * self.num_heads != embed_dim:

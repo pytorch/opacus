@@ -43,6 +43,7 @@ DEV_REQUIRES = [
     "mypy>=0.760",
     "isort",
     "torchcsprng",
+    "hypothesis",
 ]
 
 
