@@ -69,11 +69,21 @@ class DPLSTM_test(DPModules_test):
 
         dp_lstm.load_state_dict(lstm.state_dict())
 
-        x = (
-            torch.randn([batch_size, seq_len, emb_size])
-            if batch_first
-            else torch.randn([seq_len, batch_size, emb_size])
-        )
+        if packed_input_flag == 0:
+            x = (
+                torch.randn([batch_size, seq_len, emb_size])
+                if batch_first
+                else torch.randn([seq_len, batch_size, emb_size])
+            )
+        elif packed_input_flag == 1:
+            x = _gen_packed_data(
+                batch_size, seq_len, emb_size, batch_first, sorted_=True
+            )
+        elif packed_input_flag == 2:
+            x = _gen_packed_data(
+                batch_size, seq_len, emb_size, batch_first, sorted_=False
+            )
+
         if zero_init:
             self.compare_forward_outputs(
                 lstm,
