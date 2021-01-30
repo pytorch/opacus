@@ -5,6 +5,11 @@ import torch
 import torch.nn as nn
 from opacus.layers import DPLSTM
 
+from typing import Optional, Tuple, Callable, Union
+
+import hypothesis.strategies as st
+from hypothesis import given, settings
+
 from .common import GradSampleHooks_test
 
 
@@ -25,62 +30,32 @@ class DPSLTMAdapter(nn.Module):
 
 
 class LSTM_test(GradSampleHooks_test):
-    def test_batch_first_bias(self):
-        N, T, D, H = 32, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=True, bias=True)
-        x = torch.randn([N, T, D])
-        self.run_test(x, lstm, batch_first=True)
+    @given(
+        N=st.sampled_from([32, 1]),
+        T=st.sampled_from([20]),
+        D=st.sampled_from([8]),
+        H=st.sampled_from([16]),
+        num_layers=st.sampled_from([1, 2]),
+        bias=st.booleans(),
+        batch_first=st.booleans(),
+    )
+    @settings(deadline=10000)
+    def test_batch_bias(
+        self,
+        N: int,
+        T: int,
+        D: int,
+        H: int,
+        num_layers: int,
+        bias: bool,
+        batch_first: bool,
+    ):
 
-    def test_batch_second_bias(self):
-        N, T, D, H = 32, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False, bias=True)
-        x = torch.randn([T, N, D])
-        self.run_test(x, lstm, batch_first=False)
-
-    def test_batch_first_nobias(self):
-        N, T, D, H = 32, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=True, bias=False)
-        x = torch.randn([N, T, D])
-        self.run_test(x, lstm, batch_first=True)
-
-    def test_batch_second_nobias(self):
-        N, T, D, H = 32, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False, bias=False)
-        x = torch.randn([T, N, D])
-        self.run_test(x, lstm, batch_first=False)
-
-    def test_batch_first_bias_two_layers(self):
-        N, T, D, H = 32, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=2, batch_first=True, bias=True)
-        x = torch.randn([N, T, D])
-        self.run_test(x, lstm, batch_first=True)
-
-    def test_batch_second_bias_two_layers(self):
-        N, T, D, H = 32, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=2, batch_first=False, bias=True)
-        x = torch.randn([T, N, D])
-        self.run_test(x, lstm, batch_first=False)
-
-    def test_batch_first_nobias_two_layers(self):
-        N, T, D, H = 32, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=2, batch_first=True, bias=False)
-        x = torch.randn([N, T, D])
-        self.run_test(x, lstm, batch_first=True)
-
-    def test_batch_second_nobias_two_layers(self):
-        N, T, D, H = 32, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=2, batch_first=False, bias=False)
-        x = torch.randn([T, N, D])
-        self.run_test(x, lstm, batch_first=False)
-
-    def test_batch_first_single_sample(self):
-        N, T, D, H = 1, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=True, bias=False)
-        x = torch.randn([N, T, D])
-        self.run_test(x, lstm, batch_first=True)
-
-    def test_batch_second_single_sample(self):
-        N, T, D, H = 1, 20, 8, 16
-        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False, bias=False)
-        x = torch.randn([T, N, D])
-        self.run_test(x, lstm, batch_first=False)
+        lstm = DPSLTMAdapter(
+            D, H, num_layers=num_layers, batch_first=batch_first, bias=bias
+        )
+        if batch_first:
+            x = torch.randn([N, T, D])
+        else:
+            x = torch.randn([T, N, D])
+        self.run_test(x, lstm, batch_first=batch_first)

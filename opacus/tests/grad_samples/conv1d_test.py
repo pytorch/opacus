@@ -1,93 +1,56 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+from typing import Optional, Tuple, Callable
+
+import hypothesis.strategies as st
 import torch
 import torch.nn as nn
+from hypothesis import given, settings
 
 from .common import GradSampleHooks_test
 
+expander = lambda x: 2 * x
+shrinker = lambda x: x // 2
+
 
 class Conv1d_test(GradSampleHooks_test):
-    def test_3d_input_expanding_1_group_kernel2(self):
-        N, C, W = 32, 3, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, 2 * C, kernel_size=2)
-        self.run_test(x, conv, batch_first=True)
+    @given(
+        N=st.sampled_from([32]),
+        C=st.sampled_from([3, 4, 12, 24]),
+        W=st.sampled_from([11, 10]),
+        out_channels_mapper=st.sampled_from([expander, shrinker]),
+        kernel_size=st.sampled_from([2, 3]),
+        stride=st.sampled_from([1, 2]),
+        padding=st.sampled_from([0, 2]),
+        groups=st.sampled_from([1, 2, 3, 12]),
+    )
+    @settings(deadline=10000)
+    def test_conv1d(
+        self,
+        N: int,
+        C: int,
+        W: int,
+        out_channels_mapper: Callable[[int], int],
+        kernel_size: int,
+        stride: int,
+        padding: int,
+        groups: int,
+    ):
 
-    def test_3d_input_shrinking_1_group_kernel2(self):
-        N, C, W = 32, 12, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, C // 2, kernel_size=2)
-        self.run_test(x, conv, batch_first=True)
+        out_channels = out_channels_mapper(C)
+        if (
+            C % groups != 0 or out_channels % groups != 0
+        ):  # since in_channels and out_channels must be divisible by groups
+            return
 
-    def test_3d_input_expanding_1_group_kernel2_stride2(self):
-        N, C, W = 32, 3, 10
         x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, 2 * C, kernel_size=2, stride=2)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_shrinking_1_group_kernel2_stride2(self):
-        N, C, W = 32, 12, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, C // 2, kernel_size=2, stride=2)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_expanding_1_group_kernel2_padding2(self):
-        N, C, W = 32, 3, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, 2 * C, kernel_size=2, padding=2)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_shrinking_1_group_kernel2_padding2(self):
-        N, C, W = 32, 12, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, C // 2, kernel_size=2, padding=2)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_expanding_1_group_kernel3(self):
-        N, C, W = 32, 4, 11
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, 2 * C, kernel_size=3)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_shrinking_1_group_kernel3(self):
-        N, C, W = 32, 12, 11
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, C // 2, kernel_size=3)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_expanding_2_groups_kernel2(self):
-        N, C, W = 32, 12, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, 2 * C, kernel_size=2, groups=2)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_shrinking_2_groups_kernel2(self):
-        N, C, W = 32, 12, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, C // 2, kernel_size=2, groups=2)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_expanding_3_groups_kernel2(self):
-        N, C, W = 32, 12, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, 2 * C, kernel_size=2, groups=3)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_shrinking_3_groups_kernel2(self):
-        N, C, W = 32, 12, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, C // 2, kernel_size=2, groups=3)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_expanding_12_groups_kernel2(self):
-        N, C, W = 32, 12, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, 2 * C, kernel_size=2, groups=12)
-        self.run_test(x, conv, batch_first=True)
-
-    def test_3d_input_shrinking_12_groups_kernel2(self):
-        N, C, W = 32, 24, 10
-        x = torch.randn([N, C, W])
-        conv = nn.Conv1d(C, C // 2, kernel_size=2, groups=12)
+        conv = nn.Conv1d(
+            in_channels=C,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            groups=groups,
+        )
         self.run_test(x, conv, batch_first=True)

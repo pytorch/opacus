@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+from typing import Optional, Tuple, Callable, Union
+
+import hypothesis.strategies as st
+from hypothesis import given, settings
+
 import torch
 import torch.nn as nn
 from opacus.layers import DPMultiheadAttention
@@ -30,122 +35,42 @@ class DPMultiheadAttentionAdapter(nn.Module):
 
 
 class MultiHeadAttention_test(GradSampleHooks_test):
-    def test_batch_second_no_extras_one_head(self):
-        N, T, D, P = 32, 20, 8, 1
+    @given(
+        N=st.sampled_from([32]),
+        T=st.sampled_from([20]),
+        D=st.sampled_from([8]),
+        P=st.sampled_from([1, 2]),
+        bias=st.booleans(),
+        add_bias_kv=st.booleans(),
+        add_zero_attn=st.booleans(),
+        kv_dim=st.booleans(),
+    )
+    @settings(deadline=10000)
+    def test_multihead_attention(
+        self,
+        N: int,
+        T: int,
+        D: int,
+        P: int,
+        bias: bool,
+        add_bias_kv: bool,
+        add_zero_attn: bool,
+        kv_dim: bool,
+    ):
+
+        if kv_dim:
+            kdim, vdim = D, D
+        else:
+            kdim, vdim = None, None
         attn = DPMultiheadAttentionAdapter(
             D,
             P,
-            bias=False,
-            add_bias_kv=False,
-            add_zero_attn=False,
+            bias=bias,
+            add_bias_kv=add_bias_kv,
+            add_zero_attn=add_zero_attn,
             dropout=0.0,
-        )
-        q = torch.randn([T, N, D])
-        k = torch.randn([T, N, D])
-        v = torch.randn([T, N, D])
-
-        x = torch.stack((q, k, v), dim=-1)
-
-        self.run_test(x, attn, batch_first=False)
-
-    def test_batch_second_no_extras_two_heads(self):
-        N, T, D, P = 32, 20, 8, 2
-        attn = DPMultiheadAttentionAdapter(
-            D,
-            P,
-            bias=False,
-            add_bias_kv=False,
-            add_zero_attn=False,
-            dropout=0.0,
-        )
-        q = torch.randn([T, N, D])
-        k = torch.randn([T, N, D])
-        v = torch.randn([T, N, D])
-        x = torch.stack((q, k, v), dim=-1)
-
-        self.run_test(x, attn, batch_first=False)
-
-    def test_batch_second_just_bias(self):
-        N, T, D, P = 32, 20, 8, 1
-        attn = DPMultiheadAttentionAdapter(
-            D,
-            P,
-            bias=True,
-            add_bias_kv=False,
-            add_zero_attn=False,
-            dropout=0.0,
-        )
-        q = torch.randn([T, N, D])
-        k = torch.randn([T, N, D])
-        v = torch.randn([T, N, D])
-        x = torch.stack((q, k, v), dim=-1)
-
-        self.run_test(x, attn, batch_first=False)
-
-    def test_batch_second_just_bias_kv(self):
-        N, T, D, P = 32, 20, 8, 1
-        attn = DPMultiheadAttentionAdapter(
-            D,
-            P,
-            bias=False,
-            add_bias_kv=True,
-            add_zero_attn=False,
-            dropout=0.0,
-        )
-        q = torch.randn([T, N, D])
-        k = torch.randn([T, N, D])
-        v = torch.randn([T, N, D])
-        x = torch.stack((q, k, v), dim=-1)
-
-        self.run_test(x, attn, batch_first=False)
-
-    def test_batch_second_just_zero_attn(self):
-        N, T, D, P = 32, 20, 8, 1
-        attn = DPMultiheadAttentionAdapter(
-            D,
-            P,
-            bias=False,
-            add_bias_kv=False,
-            add_zero_attn=True,
-            dropout=0.0,
-        )
-        q = torch.randn([T, N, D])
-        k = torch.randn([T, N, D])
-        v = torch.randn([T, N, D])
-        x = torch.stack((q, k, v), dim=-1)
-
-        self.run_test(x, attn, batch_first=False)
-
-    def test_batch_second_Just_kdim_vdim(self):
-        N, T, D, P = 32, 20, 8, 1
-        attn = DPMultiheadAttentionAdapter(
-            D,
-            P,
-            bias=False,
-            add_bias_kv=False,
-            add_zero_attn=False,
-            dropout=0.0,
-            kdim=D,
-            vdim=D,
-        )
-        q = torch.randn([T, N, D])
-        k = torch.randn([T, N, D])
-        v = torch.randn([T, N, D])
-        x = torch.stack((q, k, v), dim=-1)
-
-        self.run_test(x, attn, batch_first=False)
-
-    def test_batch_second_all_options(self):
-        N, T, D, P = 32, 20, 8, 1
-        attn = DPMultiheadAttentionAdapter(
-            D,
-            P,
-            bias=True,
-            add_bias_kv=True,
-            add_zero_attn=True,
-            dropout=0.0,  # We can't repro dropout so we don't test it at the moment
-            kdim=D,
-            vdim=D,
+            kdim=kdim,
+            vdim=vdim,
         )
         q = torch.randn([T, N, D])
         k = torch.randn([T, N, D])
