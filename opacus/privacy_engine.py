@@ -14,6 +14,57 @@ from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
 
+DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+
+
+def get_noise_multiplier(
+    epsilon: float,
+    delta: float,
+    sample_rate: float,
+    epochs: int,
+    alphas: List[float],
+    sigma_min: Optional[float] = 0.01,
+    sigma_max: Optional[float] = 10.0,
+) -> float:
+    r"""
+    Computes the noise level sigma to reach a total budget of (epsilon, delta)
+    at the end of epochs, with a given sample_rate
+
+    Args:
+        epsilon: the privacy budget's epsilon
+        delta: the privacy budget's delta
+        sample_rate: the sampling rate (usually batch_size / n_data)
+        epochs: the number of epochs to run
+        alphas: the list of orders at which to compute RDP
+
+    Returns:
+        The noise level sigma to ensure privacy budget of (epsilon, delta)
+
+    """
+    eps = float("inf")
+    while eps > epsilon:
+        sigma_max = 2 * sigma_max
+        rdp = privacy_analysis.compute_rdp(
+            sample_rate, sigma_max, epochs / sample_rate, alphas
+        )
+        eps = privacy_analysis.get_privacy_spent(alphas, rdp, delta)[0]
+        if sigma_max > 2000:
+            raise ValueError("The privacy budget is too low.")
+
+    while sigma_max - sigma_min > 0.01:
+        sigma = (sigma_min + sigma_max) / 2
+        rdp = privacy_analysis.compute_rdp(
+            sample_rate, sigma, epochs / sample_rate, alphas
+        )
+        eps = privacy_analysis.get_privacy_spent(alphas, rdp, delta)[0]
+
+        if eps < epsilon:
+            sigma_max = sigma
+        else:
+            sigma_min = sigma
+
+    return sigma
+
 
 class PrivacyEngine:
     r"""
@@ -40,12 +91,14 @@ class PrivacyEngine:
         module: nn.Module,
         batch_size: int,
         sample_size: int,
-        alphas: List[float],
-        noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
+        noise_multiplier: float = None,
+        alphas: List[float] = DEFAULT_ALPHAS,
         secure_rng: bool = False,
         batch_first: bool = True,
         target_delta: float = 1e-6,
+        target_epsilon: float = None,
+        epochs: float = None,
         loss_reduction: str = "mean",
         **misc_settings,
     ):
@@ -77,7 +130,17 @@ class PrivacyEngine:
         self.device = next(module.parameters()).device
         self.batch_size = batch_size
         self.sample_rate = batch_size / sample_size
-        self.noise_multiplier = noise_multiplier
+        if noise_multiplier is None:
+            assert (
+                target_epsilon is not None
+                and target_delta is not None
+                and epochs is not None
+            ), "If noise_multiplier is not specified, (target_epsilon, target_delta, epochs) should be given to the engine."
+            self.noise_multiplier = get_noise_multiplier(
+                target_epsilon, target_delta, self.sample_rate, epochs, alphas
+            )
+        else:
+            self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
         self.batch_first = batch_first
         self.target_delta = target_delta
@@ -228,6 +291,7 @@ class PrivacyEngine:
             Pair of epsilon and optimal order alpha.
         """
         if target_delta is None:
+            assert self.target_delta is not None
             target_delta = self.target_delta
         rdp = self.get_renyi_divergence() * self.steps
         return privacy_analysis.get_privacy_spent(self.alphas, rdp, target_delta)
