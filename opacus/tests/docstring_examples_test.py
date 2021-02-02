@@ -65,13 +65,13 @@ class DocstringExamplesTest(unittest.TestCase):
         # the docstring for opacus.privacy_engine.PrivacyEngine
         batch_size = 8
         sample_size = 64
+        sample_rate = batch_size / sample_size
 
         model = torch.nn.Linear(16, 32)  # An example model
         optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=batch_size,
-            sample_size=sample_size,
+            sample_rate=sample_rate,
             noise_multiplier=1.3,
             max_grad_norm=1.0,
         )
@@ -82,12 +82,12 @@ class DocstringExamplesTest(unittest.TestCase):
         # the docstring for opacus.privacy_engine.PrivacyEngine.to()
         batch_size = 8
         sample_size = 64
+        sample_rate = batch_size / sample_size
 
         model = torch.nn.Linear(16, 32)  # An example model. Default device is CPU
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=batch_size,
-            sample_size=sample_size,
+            sample_rate=sample_rate,
             noise_multiplier=0.8,
             max_grad_norm=0.5,
         )
@@ -104,6 +104,7 @@ class DocstringExamplesTest(unittest.TestCase):
         dataloader = []
         batch_size = 64
         sample_size = 256
+        sample_rate = batch_size / sample_size
 
         for _ in range(64):
             data = torch.randn(4, 16)
@@ -115,8 +116,7 @@ class DocstringExamplesTest(unittest.TestCase):
 
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=batch_size,
-            sample_size=sample_size,
+            sample_rate=sample_rate,
             noise_multiplier=0.8,
             max_grad_norm=0.5,
         )

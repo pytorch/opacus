@@ -21,6 +21,7 @@ import torchvision.transforms as transforms
 from opacus import PrivacyEngine
 from opacus.utils import stats
 from opacus.utils.module_modification import convert_batchnorm_modules
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 
@@ -143,13 +144,20 @@ def main():
     )
     parser.add_argument(
         "-b",
-        "--batch-size",
+        "--batch-size-test",
         default=256,
         type=int,
         metavar="N",
-        help="mini-batch size (default: 256), this is the total "
+        help="mini-batch size for test dataset (default: 256), this is the total "
         "batch size of all GPUs on the current node when "
         "using Data Parallel or Distributed Data Parallel",
+    )
+    parser.add_argument(
+        "--sample-rate",
+        default=0.005,
+        type=float,
+        metavar="SR",
+        help="sample rate used for batch construction (default: 0.005)",
     )
     parser.add_argument(
         "-na",
@@ -331,11 +339,13 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
         num_workers=args.workers,
-        drop_last=True,
         generator=generator,
+        batch_sampler=UniformWithReplacementSampler(
+            num_samples=len(train_dataset),
+            sample_rate=args.sample_rate,
+            generator=generator,
+        ),
     )
 
     test_dataset = CIFAR10(
@@ -343,7 +353,7 @@ def main():
     )
     test_loader = torch.utils.data.DataLoader(
         test_dataset,
-        batch_size=args.batch_size,
+        batch_size=args.batch_size_test,
         shuffle=False,
         num_workers=args.workers,
     )
@@ -370,8 +380,7 @@ def main():
     if not args.disable_dp:
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=args.batch_size * args.n_accumulation_steps,
-            sample_size=len(train_dataset),
+            sample_rate=args.sample_rate * args.n_accumulation_steps,
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,

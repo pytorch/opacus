@@ -14,6 +14,7 @@ from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
 
+
 DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
 
@@ -85,7 +86,7 @@ class PrivacyEngine:
         >>> import torch
         >>> model = torch.nn.Linear(16, 32)  # An example model
         >>> optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
-        >>> privacy_engine = PrivacyEngine(model, batch_size=batch_size, sample_size=sample_size, noise_multiplier=1.3, max_grad_norm=1.0)
+        >>> privacy_engine = PrivacyEngine(model, sample_rate=0.01, noise_multiplier=1.3, max_grad_norm=1.0)
         >>> privacy_engine.attach(optimizer)  # That's it! Now it's business as usual.
     """
 
@@ -93,6 +94,7 @@ class PrivacyEngine:
         self,
         module: nn.Module,
         *,  # As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally
+        sample_rate: Optional[float] = None,
         batch_size: Optional[int] = None,
         sample_size: Optional[int] = None,
         max_grad_norm: Union[float, List[float]],
@@ -109,13 +111,14 @@ class PrivacyEngine:
         r"""
         Args:
             module: The Pytorch module to which we are attaching the privacy engine
-            batch_size: Training batch size. Used in the privacy accountant.
-            sample_size: The size of the sample (dataset). Used in the privacy accountant.
             alphas: A list of RDP orders
             noise_multiplier: The ratio of the standard deviation of the Gaussian noise to
                 the L2-sensitivity of the function to which the noise is added
             max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm
                 higher than this will be clipped to this value.
+            batch_size: Training batch size. Used in the privacy accountant.
+            sample_size: The size of the sample (dataset). Used in the privacy accountant.
+            sample_rate: Sample rate used to build batches. Used in the privacy accountant.
             secure_rng: If on, it will use ``torchcsprng`` for secure random number generation.
                 Comes with a significant performance cost, therefore it's recommended that you
                 turn it off when just experimenting.
@@ -131,8 +134,9 @@ class PrivacyEngine:
         self.module = module
         self.batch_size = batch_size
         self.sample_size = sample_size
+        self.sample_rate = sample_rate
 
-        self.sample_rate = batch_size / sample_size
+        self._set_sample_rate()
 
         if noise_multiplier is None:
             if target_epsilon is None or target_delta is None or epochs is None:
@@ -155,23 +159,6 @@ class PrivacyEngine:
 
         self.device = next(module.parameters()).device
         self.steps = 0
-
-        if not self.batch_size or not isinstance(self.batch_size, int):
-            raise ValueError(
-                f"batch_size={self.batch_size} is not a valid value. Please provide a positive integer."
-            )
-
-        if not self.sample_size or not isinstance(self.sample_size, int):
-            raise ValueError(
-                f"sample_size={self.sample_size} is not a valid value. Please provide a positive integer."
-            )
-
-        if self.sample_rate > 1.0:
-            raise ValueError(
-                f"PrivacyEngine received a dataset sample size of {sample_size} "
-                f"but a batch of size {batch_size}. For correct privacy accounting "
-                f"the batch size must not be greater than the sample size."
-            )
 
         if self.noise_multiplier < 0:
             raise ValueError(
@@ -372,21 +359,6 @@ class PrivacyEngine:
         self.clipper.clip_and_accumulate()
         clip_values, batch_size = self.clipper.pre_step()
 
-        if batch_size > self.batch_size:
-            raise ValueError(
-                f"PrivacyEngine expected a batch of size {self.batch_size} "
-                f"but received a batch of size {batch_size}"
-            )
-
-        if batch_size < self.batch_size:
-            warnings.warn(
-                f"PrivacyEngine expected a batch of size {self.batch_size} "
-                f"but the last step received a batch of size {batch_size}. "
-                "This means that the privacy analysis will be a bit more "
-                "pessimistic. You can set `drop_last = True` in your PyTorch "
-                "dataloader to avoid this problem completely"
-            )
-
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
             noise = self._generate_noise(clip_value, p)
@@ -407,7 +379,7 @@ class PrivacyEngine:
             after instantiating the ``PrivacyEngine``.
 
             >>> model = torch.nn.Linear(16, 32)  # An example model. Default device is CPU
-            >>> privacy_engine = PrivacyEngine(model, batch_size=batch_size, sample_size=sample_size, noise_multiplier=0.8, max_grad_norm=0.5)
+            >>> privacy_engine = PrivacyEngine(model, sample_rate=0.01, noise_multiplier=0.8, max_grad_norm=0.5)
             >>> device = "cuda:3"  # GPU
             >>> model.to(device)  # If we move the model to GPU, we should call the to() method of the privacy engine (next line)
             >>> privacy_engine.to(device)
@@ -515,3 +487,44 @@ class PrivacyEngine:
             if self.device.type == "cpu"
             else torch.cuda.manual_seed(self.seed)
         )
+
+    def _set_sample_rate(self):
+        r"""
+        Determine the ``sample_rate``.
+
+        If a ``sample_rate`` is provided, it will be used.
+        If no ``sample_rate``is provided, the used ``sample_rate`` will be equal to
+        ``batch_size`` /  ``sample_size``.
+        """
+        if self.batch_size and not isinstance(self.batch_size, int):
+            raise ValueError(
+                f"batch_size={self.batch_size} is not a valid value. Please provide a positive integer."
+            )
+
+        if self.sample_size and not isinstance(self.sample_size, int):
+            raise ValueError(
+                f"sample_size={self.sample_size} is not a valid value. Please provide a positive integer."
+            )
+
+        if self.sample_rate is None:
+            if self.batch_size is None or self.sample_size is None:
+                raise ValueError(
+                    "You must provide (batch_size and sample_sizes) or sample_rate."
+                )
+            else:
+                self.sample_rate = self.batch_size / self.sample_size
+                if self.batch_size is not None or self.sample_size is not None:
+                    warnings.warn(
+                        "The sample rate will be defined from ``batch_size`` and ``sample_size``."
+                        "The returned privacy budget will be incorrect."
+                    )
+        else:
+            warnings.warn(
+                "A ``sample_rate`` has been provided."
+                "Thus, the provided ``batch_size``and ``sample_size`` will be ignored."
+            )
+
+        if self.sample_rate > 1.0:
+            raise ValueError(
+                f"sample_rate={self.sample_rate} is not a valid value. Please provide a float between 0 and 1."
+            )

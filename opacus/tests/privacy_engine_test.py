@@ -79,6 +79,7 @@ class PrivacyEngine_test(unittest.TestCase):
     def setUp(self):
         self.DATA_SIZE = 64
         self.BATCH_SIZE = 64
+        self.SAMPLE_RATE = self.BATCH_SIZE / self.DATA_SIZE
         self.LR = 0.5
         self.ALPHAS = [1 + x / 10.0 for x in range(1, 100, 10)]
         self.criterion = nn.CrossEntropyLoss()
@@ -128,8 +129,7 @@ class PrivacyEngine_test(unittest.TestCase):
                 privacy_engine_kwargs = self.privacy_default_params
             privacy_engine = PrivacyEngine(
                 model,
-                batch_size=self.BATCH_SIZE,
-                sample_size=self.DATA_SIZE,
+                sample_rate=self.SAMPLE_RATE,
                 alphas=self.ALPHAS,
                 **privacy_engine_kwargs,
             )
@@ -358,8 +358,7 @@ class PrivacyEngine_test(unittest.TestCase):
         """
         privacy_engine = PrivacyEngine(
             models.resnet18(),
-            batch_size=self.BATCH_SIZE,
-            sample_size=self.DATA_SIZE,
+            sample_rate=self.SAMPLE_RATE,
             alphas=self.ALPHAS,
             noise_multiplier=1.3,
             max_grad_norm=1,
@@ -464,15 +463,14 @@ class PrivacyEngine_test(unittest.TestCase):
 
     def test_sampling_rate_less_than_one(self):
         """
-        Tests that when the sampling rate in the privacy engine is less than 1.0
+        Tests that when the sampling rate in the privacy engine is more than 1.0
         we raise a ValueError
         """
-        self.BATCH_SIZE = 128
+        self.SAMPLE_RATE = 1.5
         with self.assertRaises(ValueError):
             PrivacyEngine(
                 SampleConvNet(),
-                batch_size=self.BATCH_SIZE,
-                sample_size=self.DATA_SIZE,
+                sample_rate=self.SAMPLE_RATE,
                 alphas=self.ALPHAS,
                 noise_multiplier=1.0,
                 max_grad_norm=1.0,

@@ -142,7 +142,7 @@ commands:
             mkdir mnist/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
-            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root mnist/data --n-runs 1 --device <<parameters.device>>
+            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.004 --epochs 1 --data-root mnist/data --n-runs 1 --device <<parameters.device>>
           when: always
       - store_test_results:
           path: mnist/test-reports
@@ -166,7 +166,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install tensorboard
-            python examples/cifar10.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 128 --epochs 1 --data-root cifar10/data --log-dir cifar10/logs --device <<parameters.device>>
+            python examples/cifar10.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.001 --epochs 1 --data-root cifar10/data --log-dir cifar10/logs --device <<parameters.device>>
           when: always
       - store_test_results:
           path: cifar10/test-reports
@@ -188,7 +188,7 @@ commands:
             mkdir dcgan/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
-            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root dcgan/data --device <<parameters.device>>
+            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --sample-rate 0.018 --epochs 1 --data-root dcgan/data --device <<parameters.device>>
           when: always
       - store_test_results:
           path: dcgan/test-reports
@@ -211,7 +211,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install --user datasets transformers
-            python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 8 --max-sequence-length 256 --epochs 1 --data-root imdb/data --device <<parameters.device>>
+            python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --sample-rate 0.00256 --max-sequence-length 256 --epochs 1 --data-root imdb/data --device <<parameters.device>>
           when: always
       - store_test_results:
           path: imdb/test-reports
@@ -237,7 +237,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install scikit-learn
-            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --batch-size=400 --n-lstm-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
+            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --sample-rate=0.05 --n-lstm-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
           when: always
       - store_test_results:
           path: charlstm/test-reports
