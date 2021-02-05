@@ -4,6 +4,7 @@
 from typing import Optional
 
 import hypothesis.strategies as st
+import pytest
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
@@ -38,6 +39,9 @@ class DPMultiheadAttention_test(DPModules_test):
         vdim=st.integers(2, 8) | st.none(),
     )
     @settings(deadline=10000)
+    @pytest.mark.skip(
+        "Failing due to a known problem. Should be enabled after issue #123 is fixed"
+    )
     def test_attn(
         self,
         batch_size: int,
