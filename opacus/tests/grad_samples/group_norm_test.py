@@ -13,6 +13,10 @@ from .common import GradSampleHooks_test
 
 
 class GroupNorm_test(GradSampleHooks_test):
+    """
+    We only test the case with ``affine=True`` here, because it is the only case that will actually
+    compute a gradient. There is no grad_sample from this module otherwise.
+    """
     @given(
         N=st.sampled_from([32]),
         C=st.sampled_from([16]),
