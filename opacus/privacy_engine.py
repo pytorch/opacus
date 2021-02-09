@@ -10,9 +10,9 @@ import torch
 from torch import nn
 
 from . import privacy_analysis
-from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
+from .validation import ModelValidator
 
 
 class PrivacyEngine:
@@ -114,7 +114,8 @@ class PrivacyEngine:
                 self.seed = int.from_bytes(os.urandom(8), byteorder="big", signed=True)
                 self.random_number_generator = self._set_seed(self.seed)
 
-        self.validator = DPModelInspector()
+        self.validator = ModelValidator()
+        self.validator.validate(module)
         self.clipper = None  # lazy initialization in attach
         self.misc_settings = misc_settings
 
