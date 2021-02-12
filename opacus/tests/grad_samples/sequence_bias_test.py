@@ -14,9 +14,9 @@ from .common import GradSampleHooks_test
 
 class SequenceBias_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32]),
-        T=st.sampled_from([20]),
-        D=st.sampled_from([8]),
+        N=st.integers(16,32),
+        T=st.integers(10,20),
+        D=st.integers(4,8),
     )
     @settings(deadline=10000)
     def test_batch_second(

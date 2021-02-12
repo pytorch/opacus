@@ -18,10 +18,10 @@ class GroupNorm_test(GradSampleHooks_test):
     compute a gradient. There is no grad_sample from this module otherwise.
     """
     @given(
-        N=st.sampled_from([32]),
-        C=st.sampled_from([16]),
-        H=st.sampled_from([8]),
-        W=st.sampled_from([10]),
+        N=st.integers(20, 32),
+        C=st.integers(1,8),
+        H=st.integers(5,10),
+        W=st.integers(4,8),
         num_groups=st.sampled_from([1, 4, "C"]),
     )
     @settings(deadline=10000)
@@ -37,6 +37,9 @@ class GroupNorm_test(GradSampleHooks_test):
         if num_groups == "C":
             num_groups = C
 
+        if C%num_groups != 0:
+            return
+            
         x = torch.randn([N, C, H, W])
         norm = nn.GroupNorm(num_groups=num_groups, num_channels=C, affine=True)
         self.run_test(x, norm, batch_first=True)

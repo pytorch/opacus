@@ -14,10 +14,10 @@ from .common import GradSampleHooks_test
 
 class LayerNorm_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32]),
-        Z=st.sampled_from([4]),
-        H=st.sampled_from([3]),
-        W=st.sampled_from([10]),
+        N=st.integers(16, 32),
+        Z=st.integers(1,4),
+        H=st.integers(1,3),
+        W=st.integers(5,10),
         input_dim=st.integers(2, 4),
         norm_dim=st.integers(1, 3),
     )

@@ -16,11 +16,11 @@ shrinker = lambda x: x // 2
 
 class Conv3d_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32]),
-        C=st.sampled_from([3]),
-        D=st.sampled_from([4, 5, 10]),
-        H=st.sampled_from([9, 10, 16]),
-        W=st.sampled_from([9, 10, 16]),
+        N=st.integers(16,32),
+        C=st.integers(2, 5),
+        D=st.integers(4, 10),
+        H=st.integers(9, 16),
+        W=st.integers(9, 16),
         out_channels_mapper=st.sampled_from([expander, shrinker]),
         kernel_size=st.sampled_from([2, 3, (1, 2, 3)]),
         stride=st.sampled_from([1, 2, (1, 2, 3)]),
@@ -52,15 +52,15 @@ class Conv3d_test(GradSampleHooks_test):
         self.run_test(x, conv, batch_first=True, atol=10e-6, rtol=10e-3)
 
     @given(
-        N=st.sampled_from([4]),
-        C=st.sampled_from([16, 32]),
-        D=st.sampled_from([12]),
-        H=st.sampled_from([12]),
-        W=st.sampled_from([12]),
+        N=st.integers(16,32),
+        C=st.integers(2,5),
+        D=st.integers(8, 12),
+        H=st.integers(4,7),
+        W=st.integers(8,12),
         out_channels_mapper=st.sampled_from([expander, shrinker]),
         kernel_size=st.sampled_from([3]),
         stride=st.sampled_from([1]),
-        groups=st.sampled_from([2, 4, 16]),
+        groups=st.integers(2, 16),
     )
     @settings(deadline=10000)
     def test_4d_inputs(

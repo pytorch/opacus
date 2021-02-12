@@ -14,9 +14,9 @@ from .common import GradSampleHooks_test
 
 class InstanceNorm1d_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32]),
-        C=st.sampled_from([3]),
-        W=st.sampled_from([10]),
+        N=st.integers(20, 32),
+        C=st.integers(1,3),
+        W=st.integers(5,10),
     )
     @settings(deadline=10000)
     def test_3d_input(

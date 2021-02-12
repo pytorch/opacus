@@ -14,10 +14,10 @@ from .common import GradSampleHooks_test
 
 class InstanceNorm2d_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32]),
-        C=st.sampled_from([3]),
-        W=st.sampled_from([10]),
-        H=st.sampled_from([8]),
+        N=st.integers(20, 32),
+        C=st.integers(1,3),
+        W=st.integers(5,10),
+        H=st.integers(4,8),
     )
     @settings(deadline=10000)
     def test_4d_input(

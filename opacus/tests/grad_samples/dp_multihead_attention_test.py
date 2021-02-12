@@ -36,9 +36,9 @@ class DPMultiheadAttentionAdapter(nn.Module):
 
 class MultiHeadAttention_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32]),
-        T=st.sampled_from([20]),
-        D=st.sampled_from([8]),
+        N=st.integers(16,32),
+        T=st.integers(16,20),
+        D=st.sampled_from([4]),
         P=st.sampled_from([1, 2]),
         bias=st.booleans(),
         add_bias_kv=st.booleans(),

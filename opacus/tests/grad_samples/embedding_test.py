@@ -14,13 +14,13 @@ from .common import GradSampleHooks_test
 
 class Embedding_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32]),
-        T=st.sampled_from([12]),
-        Q=st.sampled_from([4]),
-        R=st.sampled_from([2]),
-        V=st.sampled_from([128]),
-        D=st.sampled_from([17]),
-        dim=st.sampled_from([1, 2, 3, 4]),
+        N=st.integers(20,32),
+        T=st.integers(5,12),
+        Q=st.integers(1,4),
+        R=st.integers(1,2),
+        V=st.integers(2,32),
+        D=st.integers(10,17),
+        dim=st.integers(1, 4),
     )
     @settings(deadline=10000)
     def test_input_across_dims(

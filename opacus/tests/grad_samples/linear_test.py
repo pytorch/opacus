@@ -14,10 +14,10 @@ from .common import GradSampleHooks_test
 
 class Linear_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32]),
-        Z=st.sampled_from([4]),
-        H=st.sampled_from([3]),
-        W=st.sampled_from([10, 17]),
+        N=st.integers(16,32),
+        Z=st.integers(1,4),
+        H=st.integers(1,3),
+        W=st.integers(10, 17),
         input_dim=st.integers(2, 4),
         bias=st.booleans(),
     )

@@ -16,15 +16,15 @@ shrinker = lambda x: x // 2
 
 class Conv2d_test(GradSampleHooks_test):
     @given(
-        N=st.sampled_from([32, 48]),
-        C=st.sampled_from([3, 16, 32]),
-        H=st.sampled_from([9, 10, 16, 24]),
-        W=st.sampled_from([9, 10, 16, 24]),
+        N=st.integers(32, 48),
+        C=st.integers(3, 32),
+        H=st.integers(9, 24),
+        W=st.integers(9, 24),
         out_channels_mapper=st.sampled_from([expander, shrinker]),
-        kernel_size=st.sampled_from([2, 3]),
-        stride=st.sampled_from([1, 2]),
+        kernel_size=st.integers(2, 3),
+        stride=st.integers(1, 2),
         padding=st.sampled_from([0, 2]),
-        groups=st.sampled_from([1, 2, 4, 16]),
+        groups=st.integers(1, 16),
     )
     @settings(deadline=10000)
     def test_conv2d(
