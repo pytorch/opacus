@@ -23,7 +23,6 @@ from torch.functional import F
 from .utils.module_inspection import get_layer_type
 from .utils.tensor_utils import sum_over_all_but_batch_and_last_n, unfold3d
 
-
 def _create_or_extend_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
 ) -> None:
@@ -46,7 +45,7 @@ def _create_or_extend_grad_sample(
 
 
 def _create_or_accumulate_grad_sample(
-    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int, layer
+    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int, layer: LSTMLinear, max_batch_len: int
 ) -> None:
     """
     Creates a ``grad_sample`` attribute in the given parameter, or adds to it
@@ -59,10 +58,18 @@ def _create_or_accumulate_grad_sample(
         batch_dim: Position of the batch dimension in the shape of
             ``grad_sample``
     """
-    if hasattr(param, "grad_sample"):
-        param.grad_sample += grad_sample
+    if max_batch_len > 0:
+        if hasattr(param, "grad_sample"):
+            param.grad_sample[:grad_sample.shape[0]] += grad_sample
+        else:
+            param.grad_sample = torch.zeros(torch.Size([max_batch_len]) + grad_sample.shape[1:])
+            param.grad_sample[:grad_sample.shape[0]] = grad_sample        
     else:
-        param.grad_sample = grad_sample.clone()
+        if hasattr(param, "grad_sample"):
+            param.grad_sample += grad_sample
+        else:
+            print("clonning!")
+            param.grad_sample = grad_sample.clone()
 
 
 def _compute_linear_grad_sample(
@@ -70,7 +77,6 @@ def _compute_linear_grad_sample(
 ) -> None:
     """
     Computes per sample gradients for ``nn.Linear`` layer
-
     Args:
         layer: Layer
         A: Activations
@@ -91,7 +97,7 @@ def _compute_linear_grad_sample(
 
 
 def _compute_accumulate_linear_grad_sample(
-    layer: LSTMLinear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
+    layer: LSTMLinear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0, max_batch_len: int = 0
 ) -> None:
     """
     Computes per sample gradients for ``LSTMLinear`` layer
@@ -104,8 +110,10 @@ def _compute_accumulate_linear_grad_sample(
     """
 
     gs = torch.einsum("n...i,n...j->n...ij", B, A)
+    # print("gs_shape:", gs.shape)
+    # print(gs.shape,torch.einsum("n...ij->nij", gs).shape,torch.einsum("n...k->nk", B).shape)
     _create_or_accumulate_grad_sample(
-        layer.weight, torch.einsum("n...ij->nij", gs), batch_dim, layer
+        layer.weight, torch.einsum("n...ij->nij", gs), batch_dim, layer, max_batch_len
     )
 
     if layer.bias is not None:
@@ -114,6 +122,7 @@ def _compute_accumulate_linear_grad_sample(
             torch.einsum("n...k->nk", B),
             batch_dim,
             layer,
+            max_batch_len,
         )
 
 
