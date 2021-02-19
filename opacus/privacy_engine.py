@@ -230,7 +230,10 @@ class PrivacyEngine:
         if target_delta is None:
             target_delta = self.target_delta
         rdp = self.get_renyi_divergence() * self.steps
-        return privacy_analysis.get_privacy_spent(self.alphas, rdp, target_delta)
+        eps, best_alpha = privacy_analysis.get_privacy_spent(
+            self.alphas, rdp, target_delta
+        )
+        return float(eps), float(best_alpha)
 
     def zero_grad(self):
         """
