@@ -164,9 +164,7 @@ class SampleLSTMs():
 
     def init_lstms(self):
         lstm_unidirectional = DPLSTM(input_size=self.input_size, hidden_size=9, num_layers=2, bidirectional=False, batch_first=True)
-        print(len([p for p in lstm_unidirectional.parameters() if p.requires_grad]))
         lstm_bidirectional = DPLSTM(input_size=self.input_size, hidden_size=9, num_layers=2, bidirectional=True, batch_first=True)
-        print(len([p for p in lstm_bidirectional.parameters() if p.requires_grad]))
         self.lstms = [lstm_unidirectional, lstm_bidirectional]
 
     def step(self, data):

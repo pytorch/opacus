@@ -23,8 +23,6 @@ from opacus.layers.dp_lstm import LSTMLinear
 from .supported_layers_grad_samplers import _supported_layers_grad_samplers
 from .utils.module_inspection import get_layer_type, requires_grad
 
-from inspect import signature
-
 # work-around for https://github.com/pytorch/pytorch/issues/25723
 _hooks_disabled: bool = False
 
@@ -239,25 +237,5 @@ def _compute_grad_sample(
         get_layer_type(layer)
     )
 
-    if 'max_batch_len' in signature(compute_layer_grad_sample).parameters: # For compatibility with PackedSequences
-        max_batch_len = _get_batch_size(layer, A, batch_dim)
-        compute_layer_grad_sample(layer, A, B, max_batch_len=max_batch_len)
-    else:
-        compute_layer_grad_sample(layer, A, B)        
+    compute_layer_grad_sample(layer, A, B)        
 
-
-def _get_batch_size(layer, A, batch_dim):
-    if batch_dim != 0:
-        return 0
-
-    if hasattr(layer, 'max_batch_len'):
-        return layer.max_batch_len
-
-    max_batch_len = 0
-    for out in layer.activations:
-        if out.shape[0] > max_batch_len:
-            max_batch_len = out.shape[0]
-
-    max_batch_len = max(max_batch_len, A.shape[batch_dim])
-    layer.max_batch_len = max_batch_len
-    return max_batch_len

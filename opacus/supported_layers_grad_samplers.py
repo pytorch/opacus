@@ -45,7 +45,7 @@ def _create_or_extend_grad_sample(
 
 
 def _create_or_accumulate_grad_sample(
-    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int, layer: LSTMLinear, max_batch_len: int
+    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int, layer: LSTMLinear
 ) -> None:
     """
     Creates a ``grad_sample`` attribute in the given parameter, or adds to it
@@ -58,6 +58,8 @@ def _create_or_accumulate_grad_sample(
         batch_dim: Position of the batch dimension in the shape of
             ``grad_sample``
     """
+
+    max_batch_len = _get_batch_size(layer, grad_sample)
     if max_batch_len > 0:
         if hasattr(param, "grad_sample"):
             param.grad_sample[:grad_sample.shape[0]] += grad_sample
@@ -68,7 +70,6 @@ def _create_or_accumulate_grad_sample(
         if hasattr(param, "grad_sample"):
             param.grad_sample += grad_sample
         else:
-            print("clonning!")
             param.grad_sample = grad_sample.clone()
 
 
@@ -97,7 +98,7 @@ def _compute_linear_grad_sample(
 
 
 def _compute_accumulate_linear_grad_sample(
-    layer: LSTMLinear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0, max_batch_len: int = 0
+    layer: LSTMLinear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
 ) -> None:
     """
     Computes per sample gradients for ``LSTMLinear`` layer
@@ -110,10 +111,8 @@ def _compute_accumulate_linear_grad_sample(
     """
 
     gs = torch.einsum("n...i,n...j->n...ij", B, A)
-    # print("gs_shape:", gs.shape)
-    # print(gs.shape,torch.einsum("n...ij->nij", gs).shape,torch.einsum("n...k->nk", B).shape)
     _create_or_accumulate_grad_sample(
-        layer.weight, torch.einsum("n...ij->nij", gs), batch_dim, layer, max_batch_len
+        layer.weight, torch.einsum("n...ij->nij", gs), batch_dim, layer
     )
 
     if layer.bias is not None:
@@ -122,7 +121,6 @@ def _compute_accumulate_linear_grad_sample(
             torch.einsum("n...k->nk", B),
             batch_dim,
             layer,
-            max_batch_len,
         )
 
 
@@ -294,6 +292,16 @@ def _compute_embedding_grad_sample(
     torch.backends.cudnn.deterministic = saved
 
     _create_or_extend_grad_sample(layer.weight, grad_sample, batch_dim)
+
+
+def _get_batch_size(layer, grad_sample):
+    max_batch_len = 0
+    for out in layer.activations:
+        if out.shape[0] > max_batch_len:
+            max_batch_len = out.shape[0]
+
+    max_batch_len = max(max_batch_len, grad_sample.shape[0])
+    return max_batch_len
 
 
 _supported_layers_grad_samplers = {
