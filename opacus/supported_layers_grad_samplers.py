@@ -60,17 +60,11 @@ def _create_or_accumulate_grad_sample(
     """
 
     max_batch_len = _get_batch_size(layer, grad_sample)
-    if max_batch_len > 0:
-        if hasattr(param, "grad_sample"):
-            param.grad_sample[:grad_sample.shape[0]] += grad_sample
-        else:
-            param.grad_sample = torch.zeros(torch.Size([max_batch_len]) + grad_sample.shape[1:])
-            param.grad_sample[:grad_sample.shape[0]] = grad_sample        
+    if hasattr(param, "grad_sample"):
+        param.grad_sample[:grad_sample.shape[0]] += grad_sample
     else:
-        if hasattr(param, "grad_sample"):
-            param.grad_sample += grad_sample
-        else:
-            param.grad_sample = grad_sample.clone()
+        param.grad_sample = torch.zeros(torch.Size([max_batch_len]) + grad_sample.shape[1:])
+        param.grad_sample[:grad_sample.shape[0]] = grad_sample        
 
 
 def _compute_linear_grad_sample(
