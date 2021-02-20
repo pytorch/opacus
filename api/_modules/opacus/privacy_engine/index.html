@@ -42,6 +42,9 @@
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">clipping</span>
 
 
+<span class="n">DEFAULT_ALPHAS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
+
+
 <div class="viewcode-block" id="PrivacyEngine"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine">[docs]</a><span class="k">class</span> <span class="nc">PrivacyEngine</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The main component of Opacus is the ``PrivacyEngine``.</span>
@@ -58,21 +61,22 @@
 <span class="sd">        &gt;&gt;&gt; import torch</span>
 <span class="sd">        &gt;&gt;&gt; model = torch.nn.Linear(16, 32)  # An example model</span>
 <span class="sd">        &gt;&gt;&gt; optimizer = torch.optim.SGD(model.parameters(), lr=0.05)</span>
-<span class="sd">        &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size, sample_size, alphas=range(2,32), noise_multiplier=1.3, max_grad_norm=1.0)</span>
+<span class="sd">        &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size=batch_size, sample_size=sample_size, noise_multiplier=1.3, max_grad_norm=1.0)</span>
 <span class="sd">        &gt;&gt;&gt; privacy_engine.attach(optimizer)  # That's it! Now it's business as usual.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
-        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">sample_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">alphas</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>  <span class="c1"># As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sample_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">max_grad_norm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="n">alphas</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_ALPHAS</span><span class="p">,</span>
+        <span class="n">target_delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">secure_rng</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">target_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
         <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
         <span class="o">**</span><span class="n">misc_settings</span><span class="p">,</span>
     <span class="p">):</span>
@@ -92,29 +96,60 @@
 <span class="sd">            batch_first: Flag to indicate if the input tensor to the corresponding module</span>
 <span class="sd">                has the first dimension representing the batch. If set to True, dimensions on</span>
 <span class="sd">                input tensor will be ``[batch_size, ..., ...]``.</span>
-<span class="sd">            target_delta: The target delta</span>
+<span class="sd">            target_delta: The target delta. If unset, we will set it for you.</span>
 <span class="sd">            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
 <span class="sd">                is a sum or a mean operation. Can take values "sum" or "mean"</span>
 <span class="sd">            **misc_settings: Other arguments to the init</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span> <span class="o">=</span> <span class="n">secure_rng</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span> <span class="o">=</span> <span class="n">alphas</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">/</span> <span class="n">sample_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="o">=</span> <span class="n">sample_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">=</span> <span class="n">noise_multiplier</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span> <span class="o">=</span> <span class="n">max_grad_norm</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span> <span class="o">=</span> <span class="n">alphas</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span> <span class="o">=</span> <span class="n">target_delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span> <span class="o">=</span> <span class="n">secure_rng</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">=</span> <span class="n">loss_reduction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span> <span class="o">=</span> <span class="n">misc_settings</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">/</span> <span class="n">sample_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"batch_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a positive integer."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"sample_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a positive integer."</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"PrivacyEngine received a dataset sample size of </span><span class="si">{</span><span class="n">sample_size</span><span class="si">}</span><span class="s2"> "</span>
                 <span class="sa">f</span><span class="s2">"but a batch of size </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">. For correct privacy accounting "</span>
-                <span class="sa">f</span><span class="s2">"the batch size must be less than the sample size."</span>
+                <span class="sa">f</span><span class="s2">"the batch size must not be greater than the sample size."</span>
             <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"noise_multiplier=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a float &gt;= 0."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"max_grad_norm=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a float &gt; 0."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"target_delta unset. Setting it to an order of magnitude less than 1/sample_size."</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -143,9 +178,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validator</span> <span class="o">=</span> <span class="n">DPModelInspector</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># lazy initialization in attach</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span> <span class="o">=</span> <span class="n">misc_settings</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">=</span> <span class="n">loss_reduction</span>
 
 <div class="viewcode-block" id="PrivacyEngine.detach"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.detach">[docs]</a>    <span class="k">def</span> <span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
@@ -257,7 +289,10 @@
         <span class="k">if</span> <span class="n">target_delta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">target_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span>
         <span class="n">rdp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_renyi_divergence</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span>
-        <span class="k">return</span> <span class="n">privacy_analysis</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">,</span> <span class="n">rdp</span><span class="p">,</span> <span class="n">target_delta</span><span class="p">)</span></div>
+        <span class="n">eps</span><span class="p">,</span> <span class="n">best_alpha</span> <span class="o">=</span> <span class="n">privacy_analysis</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">,</span> <span class="n">rdp</span><span class="p">,</span> <span class="n">target_delta</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">best_alpha</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="PrivacyEngine.zero_grad"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.zero_grad">[docs]</a>    <span class="k">def</span> <span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>
@@ -330,7 +365,7 @@
 <span class="sd">            after instantiating the ``PrivacyEngine``.</span>
 
 <span class="sd">            &gt;&gt;&gt; model = torch.nn.Linear(16, 32)  # An example model. Default device is CPU</span>
-<span class="sd">            &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size, sample_size, alphas=range(5,64), noise_multiplier=0.8, max_grad_norm=0.5)</span>
+<span class="sd">            &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size=batch_size, sample_size=sample_size, noise_multiplier=0.8, max_grad_norm=0.5)</span>
 <span class="sd">            &gt;&gt;&gt; device = "cuda:3"  # GPU</span>
 <span class="sd">            &gt;&gt;&gt; model.to(device)  # If we move the model to GPU, we should call the to() method of the privacy engine (next line)</span>
 <span class="sd">            &gt;&gt;&gt; privacy_engine.to(device)</span>

@@ -28,12 +28,12 @@
 <span id="clipping-utils"></span><h1>Clipping Utils<a class="headerlink" href="#module-opacus.utils.clipping" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="opacus.utils.clipping.ClippingMethod">
-<em class="property">class </em><code class="sig-prename descclassname">opacus.utils.clipping.</code><code class="sig-name descname">ClippingMethod</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ClippingMethod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ClippingMethod" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">opacus.utils.clipping.</span></code><code class="sig-name descname"><span class="pre">ClippingMethod</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ClippingMethod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.clipping.ClippingMethod" title="Permalink to this definition">¶</a></dt>
 <dd><p>An enumeration.</p>
 </dd></dl>
 <dl class="py class">
 <dt id="opacus.utils.clipping.ConstantFlatClipper">
-<em class="property">class </em><code class="sig-prename descclassname">opacus.utils.clipping.</code><code class="sig-name descname">ConstantFlatClipper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flat_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantFlatClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">opacus.utils.clipping.</span></code><code class="sig-name descname"><span class="pre">ConstantFlatClipper</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flat_value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantFlatClipper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper" title="Permalink to this definition">¶</a></dt>
 <dd><p>A clipper that clips all gradients in such a way that their norm is
 at most equal to a specified value. This value is shared for all
 layers in a model. Note that the process of clipping really involves
@@ -51,7 +51,7 @@ This threshold value is used for all layers.</p>
 </dl>
 <dl class="py method">
 <dt id="opacus.utils.clipping.ConstantFlatClipper.calc_clipping_factors">
-<code class="sig-name descname">calc_clipping_factors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">norms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantFlatClipper.calc_clipping_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">calc_clipping_factors</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantFlatClipper.calc_clipping_factors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the clipping factor based on the given
 norm of gradients for all layers, so that the new
 norm of clipped gradients is at most equal to
@@ -72,7 +72,7 @@ for all layers.</p>
 </dd></dl>
 <dl class="py method">
 <dt id="opacus.utils.clipping.ConstantFlatClipper.is_per_layer">
-<em class="property">property </em><code class="sig-name descname">is_per_layer</code><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_per_layer</span></code><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns indicator as to whether different clipping is applied
 to each layer in the model. For this clipper, it is False.</p>
 <dl class="field-list simple">
@@ -86,7 +86,7 @@ to each layer in the model. For this clipper, it is False.</p>
 </dd></dl>
 <dl class="py method">
 <dt id="opacus.utils.clipping.ConstantFlatClipper.thresholds">
-<em class="property">property </em><code class="sig-name descname">thresholds</code><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.thresholds" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">thresholds</span></code><a class="headerlink" href="#opacus.utils.clipping.ConstantFlatClipper.thresholds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns singleton tensor of dimension (1,) containing
 the common threshold value used for clipping all
 layers in the model.</p>
@@ -102,7 +102,7 @@ layers in the model.</p>
 </dd></dl>
 <dl class="py class">
 <dt id="opacus.utils.clipping.ConstantPerLayerClipper">
-<em class="property">class </em><code class="sig-prename descclassname">opacus.utils.clipping.</code><code class="sig-name descname">ConstantPerLayerClipper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flat_values</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantPerLayerClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">opacus.utils.clipping.</span></code><code class="sig-name descname"><span class="pre">ConstantPerLayerClipper</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flat_values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantPerLayerClipper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper" title="Permalink to this definition">¶</a></dt>
 <dd><p>A clipper that clips all gradients in such a way that their norm is
 at most equal to a specified value. This value is specified for each
 layer in a model. Note that the process of clipping really involves
@@ -120,7 +120,7 @@ value before clipping.</p>
 </dl>
 <dl class="py method">
 <dt id="opacus.utils.clipping.ConstantPerLayerClipper.calc_clipping_factors">
-<code class="sig-name descname">calc_clipping_factors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">norms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantPerLayerClipper.calc_clipping_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">calc_clipping_factors</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#ConstantPerLayerClipper.calc_clipping_factors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates separate clipping factors for each layer based on
 its corresponding norm of gradients, such that its new norm is
 at most equal to the flat value specified for that layer when
@@ -141,7 +141,7 @@ clipping factor per layer.</p>
 </dd></dl>
 <dl class="py method">
 <dt id="opacus.utils.clipping.ConstantPerLayerClipper.is_per_layer">
-<em class="property">property </em><code class="sig-name descname">is_per_layer</code><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_per_layer</span></code><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns indicator as to whether different clipping is applied
 to each layer in the model. For this clipper, it is True.</p>
 <dl class="field-list simple">
@@ -155,7 +155,7 @@ to each layer in the model. For this clipper, it is True.</p>
 </dd></dl>
 <dl class="py method">
 <dt id="opacus.utils.clipping.ConstantPerLayerClipper.thresholds">
-<em class="property">property </em><code class="sig-name descname">thresholds</code><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.thresholds" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">thresholds</span></code><a class="headerlink" href="#opacus.utils.clipping.ConstantPerLayerClipper.thresholds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tensor of values that are used to normalize gradients for
 each layer such that the norm at most equals the corresponding
 value before clipping.</p>
@@ -171,11 +171,11 @@ value before clipping.</p>
 </dd></dl>
 <dl class="py class">
 <dt id="opacus.utils.clipping.NormClipper">
-<em class="property">class </em><code class="sig-prename descclassname">opacus.utils.clipping.</code><code class="sig-name descname">NormClipper</code><a class="reference internal" href="_modules/opacus/utils/clipping.html#NormClipper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.NormClipper" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">opacus.utils.clipping.</span></code><code class="sig-name descname"><span class="pre">NormClipper</span></code><a class="reference internal" href="_modules/opacus/utils/clipping.html#NormClipper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.clipping.NormClipper" title="Permalink to this definition">¶</a></dt>
 <dd><p>An abstract class to calculate the clipping factor</p>
 <dl class="py method">
 <dt id="opacus.utils.clipping.NormClipper.calc_clipping_factors">
-<code class="sig-name descname">calc_clipping_factors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">norms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#NormClipper.calc_clipping_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.utils.clipping.NormClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">calc_clipping_factors</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/clipping.html#NormClipper.calc_clipping_factors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.clipping.NormClipper.calc_clipping_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the clipping factor(s) based on the given
 parameters. A concrete subclass must implement this.</p>
 <dl class="field-list simple">
@@ -189,7 +189,7 @@ parameters. A concrete subclass must implement this.</p>
 </dd></dl>
 <dl class="py method">
 <dt id="opacus.utils.clipping.NormClipper.is_per_layer">
-<em class="property">property </em><code class="sig-name descname">is_per_layer</code><a class="headerlink" href="#opacus.utils.clipping.NormClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_per_layer</span></code><a class="headerlink" href="#opacus.utils.clipping.NormClipper.is_per_layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Depending on type of clipper, returns indicator as to whether
 different clipping is applied to each layer in the model.</p>
 <dl class="field-list simple">
@@ -204,7 +204,7 @@ to each layer in the model.</p>
 </dd></dl>
 <dl class="py method">
 <dt id="opacus.utils.clipping.NormClipper.thresholds">
-<em class="property">property </em><code class="sig-name descname">thresholds</code><a class="headerlink" href="#opacus.utils.clipping.NormClipper.thresholds" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">thresholds</span></code><a class="headerlink" href="#opacus.utils.clipping.NormClipper.thresholds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Depending on the type of clipper, returns threshold values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>

@@ -28,7 +28,7 @@
 <span id="model-validation"></span><h1>Model Validation<a class="headerlink" href="#module-opacus.dp_model_inspector" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="opacus.dp_model_inspector.DPModelInspector">
-<em class="property">class </em><code class="sig-prename descclassname">opacus.dp_model_inspector.</code><code class="sig-name descname">DPModelInspector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">should_throw</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#DPModelInspector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.dp_model_inspector.DPModelInspector" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">opacus.dp_model_inspector.</span></code><code class="sig-name descname"><span class="pre">DPModelInspector</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">should_throw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#DPModelInspector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.dp_model_inspector.DPModelInspector" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Class to validate if a given module meets the requirements for attaching</dt><dd><p><code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>.</p>
 </dd>
@@ -42,7 +42,7 @@ return False in case of validation error</p>
 </dl>
 <dl class="py method">
 <dt id="opacus.dp_model_inspector.DPModelInspector.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#DPModelInspector.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.dp_model_inspector.DPModelInspector.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#DPModelInspector.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.dp_model_inspector.DPModelInspector.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs the validation on the model and all its submodules.</p>
 <p>Validation comprises a series of individual
 <a class="reference internal" href="module_inspection.html#opacus.utils.module_inspection.ModelInspector" title="opacus.utils.module_inspection.ModelInspector"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelInspectors</span></code></a>,
@@ -82,7 +82,7 @@ validation failure.</p>
 </dd></dl>
 <dl class="py exception">
 <dt id="opacus.dp_model_inspector.IncompatibleModuleException">
-<em class="property">exception </em><code class="sig-prename descclassname">opacus.dp_model_inspector.</code><code class="sig-name descname">IncompatibleModuleException</code><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#IncompatibleModuleException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#opacus.dp_model_inspector.IncompatibleModuleException" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span> </em><code class="sig-prename descclassname"><span class="pre">opacus.dp_model_inspector.</span></code><code class="sig-name descname"><span class="pre">IncompatibleModuleException</span></code><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#IncompatibleModuleException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.dp_model_inspector.IncompatibleModuleException" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception class to be thrown in case
 the given model contains incompatible modules.</p>
 </dd></dl>
