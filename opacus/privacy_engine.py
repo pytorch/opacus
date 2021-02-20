@@ -15,6 +15,9 @@ from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
 
 
+DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+
+
 class PrivacyEngine:
     r"""
     The main component of Opacus is the ``PrivacyEngine``.
@@ -31,21 +34,22 @@ class PrivacyEngine:
         >>> import torch
         >>> model = torch.nn.Linear(16, 32)  # An example model
         >>> optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
-        >>> privacy_engine = PrivacyEngine(model, batch_size, sample_size, alphas=range(2,32), noise_multiplier=1.3, max_grad_norm=1.0)
+        >>> privacy_engine = PrivacyEngine(model, batch_size=batch_size, sample_size=sample_size, noise_multiplier=1.3, max_grad_norm=1.0)
         >>> privacy_engine.attach(optimizer)  # That's it! Now it's business as usual.
     """
 
     def __init__(
         self,
         module: nn.Module,
-        batch_size: int,
-        sample_size: int,
-        alphas: List[float],
+        *,  # As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally
+        batch_size: Optional[int] = None,
+        sample_size: Optional[int] = None,
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
+        alphas: List[float] = DEFAULT_ALPHAS,
+        target_delta: Optional[float] = None,
         secure_rng: bool = False,
         batch_first: bool = True,
-        target_delta: float = 1e-6,
         loss_reduction: str = "mean",
         **misc_settings,
     ):
@@ -65,29 +69,60 @@ class PrivacyEngine:
             batch_first: Flag to indicate if the input tensor to the corresponding module
                 has the first dimension representing the batch. If set to True, dimensions on
                 input tensor will be ``[batch_size, ..., ...]``.
-            target_delta: The target delta
+            target_delta: The target delta. If unset, we will set it for you.
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
             **misc_settings: Other arguments to the init
         """
-        self.steps = 0
+
         self.module = module
-        self.secure_rng = secure_rng
-        self.alphas = alphas
-        self.device = next(module.parameters()).device
         self.batch_size = batch_size
-        self.sample_rate = batch_size / sample_size
+        self.sample_size = sample_size
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
-        self.batch_first = batch_first
+        self.alphas = alphas
         self.target_delta = target_delta
+        self.secure_rng = secure_rng
+        self.batch_first = batch_first
+        self.loss_reduction = loss_reduction
+        self.misc_settings = misc_settings
+
+        self.device = next(module.parameters()).device
+        self.sample_rate = batch_size / sample_size
+        self.steps = 0
+
+        if not self.batch_size or not isinstance(self.batch_size, int):
+            raise ValueError(
+                f"batch_size={self.batch_size} is not a valid value. Please provide a positive integer."
+            )
+
+        if not self.sample_size or not isinstance(self.sample_size, int):
+            raise ValueError(
+                f"sample_size={self.sample_size} is not a valid value. Please provide a positive integer."
+            )
 
         if self.sample_rate > 1.0:
             raise ValueError(
                 f"PrivacyEngine received a dataset sample size of {sample_size} "
                 f"but a batch of size {batch_size}. For correct privacy accounting "
-                f"the batch size must be less than the sample size."
+                f"the batch size must not be greater than the sample size."
             )
+
+        if self.noise_multiplier < 0:
+            raise ValueError(
+                f"noise_multiplier={self.noise_multiplier} is not a valid value. Please provide a float >= 0."
+            )
+
+        if isinstance(self.max_grad_norm, float) and self.max_grad_norm <= 0:
+            raise ValueError(
+                f"max_grad_norm={self.max_grad_norm} is not a valid value. Please provide a float > 0."
+            )
+
+        if not self.target_delta:
+            warnings.warn(
+                "target_delta unset. Setting it to an order of magnitude less than 1/sample_size."
+            )
+            self.target_delta = 0.1 * (1 / self.sample_size)
 
         if self.secure_rng:
             try:
@@ -116,9 +151,6 @@ class PrivacyEngine:
 
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
-        self.misc_settings = misc_settings
-
-        self.loss_reduction = loss_reduction
 
     def detach(self):
         r"""
@@ -306,7 +338,7 @@ class PrivacyEngine:
             after instantiating the ``PrivacyEngine``.
 
             >>> model = torch.nn.Linear(16, 32)  # An example model. Default device is CPU
-            >>> privacy_engine = PrivacyEngine(model, batch_size, sample_size, alphas=range(5,64), noise_multiplier=0.8, max_grad_norm=0.5)
+            >>> privacy_engine = PrivacyEngine(model, batch_size=batch_size, sample_size=sample_size, noise_multiplier=0.8, max_grad_norm=0.5)
             >>> device = "cuda:3"  # GPU
             >>> model.to(device)  # If we move the model to GPU, we should call the to() method of the privacy engine (next line)
             >>> privacy_engine.to(device)

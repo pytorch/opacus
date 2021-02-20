@@ -70,9 +70,8 @@ class DocstringExamplesTest(unittest.TestCase):
         optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
         privacy_engine = PrivacyEngine(
             model,
-            batch_size,
-            sample_size,
-            alphas=range(2, 32),
+            batch_size=batch_size,
+            sample_size=sample_size,
             noise_multiplier=1.3,
             max_grad_norm=1.0,
         )
@@ -87,9 +86,8 @@ class DocstringExamplesTest(unittest.TestCase):
         model = torch.nn.Linear(16, 32)  # An example model. Default device is CPU
         privacy_engine = PrivacyEngine(
             model,
-            batch_size,
-            sample_size,
-            alphas=range(5, 64),
+            batch_size=batch_size,
+            sample_size=sample_size,
             noise_multiplier=0.8,
             max_grad_norm=0.5,
         )
@@ -117,9 +115,8 @@ class DocstringExamplesTest(unittest.TestCase):
 
         privacy_engine = PrivacyEngine(
             model,
-            batch_size,
-            sample_size,
-            alphas=range(5, 64),
+            batch_size=batch_size,
+            sample_size=sample_size,
             noise_multiplier=0.8,
             max_grad_norm=0.5,
         )
