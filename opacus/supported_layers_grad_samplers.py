@@ -287,16 +287,6 @@ def _compute_embedding_grad_sample(
     _create_or_extend_grad_sample(layer.weight, grad_sample, batch_dim)
 
 
-def _get_batch_size(layer, grad_sample):
-    max_batch_len = 0
-    for out in layer.activations:
-        if out.shape[0] > max_batch_len:
-            max_batch_len = out.shape[0]
-
-    max_batch_len = max(max_batch_len, grad_sample.shape[0])
-    return max_batch_len
-
-
 _supported_layers_grad_samplers = {
     "Embedding": _compute_embedding_grad_sample,
     "Linear": _compute_linear_grad_sample,
