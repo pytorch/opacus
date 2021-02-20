@@ -8,7 +8,7 @@ from hypothesis import given, settings
 from opacus.layers import DPLSTM
 
 from .common import GradSampleHooks_test
-
+from opacus.utils.packed_sequences import _gen_packed_data
 
 class DPSLTMAdapter(nn.Module):
     """
@@ -35,6 +35,9 @@ class LSTM_test(GradSampleHooks_test):
         num_layers=st.sampled_from([1, 2]),
         bias=st.booleans(),
         batch_first=st.booleans(),
+        bidirectional=st.booleans(),
+        using_packed_sequences=st.booleans(),
+        packed_sequences_sorted=st.booleans(),
     )
     @settings(deadline=30000)
     def test_lstm(
@@ -46,13 +49,19 @@ class LSTM_test(GradSampleHooks_test):
         num_layers: int,
         bias: bool,
         batch_first: bool,
+        bidirectional: bool,
+        using_packed_sequences: bool,
+        packed_sequences_sorted: bool,
     ):
 
         lstm = DPSLTMAdapter(
-            D, H, num_layers=num_layers, batch_first=batch_first, bias=bias
+            D, H, num_layers=num_layers, batch_first=batch_first, bias=bias, bidirectional=bidirectional
         )
-        if batch_first:
-            x = torch.randn([N, T, D])
+        if using_packed_sequences:
+            x = _gen_packed_data(N, T, D, batch_first, packed_sequences_sorted)
         else:
-            x = torch.randn([T, N, D])
+            if batch_first:
+                x = torch.randn([N, T, D])
+            else:
+                x = torch.randn([T, N, D])
         self.run_test(x, lstm, batch_first=batch_first)

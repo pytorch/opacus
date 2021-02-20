@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
-from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -13,8 +12,6 @@ from opacus.utils.module_inspection import get_layer_type, requires_grad
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
-from opacus.layers import DPLSTM
-from torch.nn.utils.rnn import PackedSequence, pad_sequence, pack_padded_sequence
 
 
 def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
@@ -33,76 +30,6 @@ def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
         grad_sample_aggregated /= b_sz
 
     return grad_sample_aggregated
-
-
-def _gen_packed_data(
-    minibatch_size: int,
-    max_seq_length: int,
-    input_dim: int,
-    batch_first: bool,
-    sorted_: Optional[bool] = False,
-) -> PackedSequence:
-    """
-    This is used to generate random PackedSequence data, sampled from a normal distribution, for testing DPLSTM.
-
-    Args:
-        minibatch_size : Total number of sequences to generate
-        max_seq_length : The maximum number of timesteps of a sequence
-        input_dim : The embedding dimension of a sequence at any timestep
-        batch_first : If this is true, data is first generated using a padded sequence of dimension (minibatch_size x max_seq_len x input_dim) , else: (max_seq_length x minibatch_size x input_dim)
-        sorted_ : If this is true then the original generated data used to produce the PackedSequence will already be ordered based on sequence lengths, else a random order and the 'sorted_indices'
-                    and 'unsorted_indices' fields will be None.
-
-    Return Value:
-        packed_data : A PackedSequence object with its data sampled from a normal distribution.
-    """
-
-    if batch_first:
-        data = []
-        seq_lengths = []
-        for i in range(minibatch_size):
-            seq_length = torch.randint(1, max_seq_length + 1, (1,)).item()
-            seq_lengths.append(seq_length)
-            data.append(torch.randn(seq_length, input_dim))
-
-        if sorted_:
-            key = lambda x: x.shape[0]
-            data = sorted(data, key=key, reverse=True)
-            seq_lengths = sorted(seq_lengths, reverse=True)
-            packed_data = pack_padded_sequence(
-                pad_sequence(data, batch_first=True),
-                seq_lengths,
-                batch_first=True,
-                enforce_sorted=True,
-            )
-        else:
-            packed_data = pack_padded_sequence(
-                pad_sequence(data, batch_first=True),
-                seq_lengths,
-                batch_first=True,
-                enforce_sorted=False,
-            )
-    else:
-        seq_lengths = [
-            torch.randint(1, max_seq_length + 1, (1,)).item()
-            for i in range(minibatch_size)
-        ]
-        if sorted_:
-            seq_lengths = sorted(seq_lengths, reverse=True)
-        padded_data = torch.zeros((max_seq_length, minibatch_size, input_dim))
-        for i in range(minibatch_size):
-            padded_data[: seq_lengths[i], i, :] = torch.randn(seq_lengths[i], input_dim)
-
-        if sorted_:
-            packed_data = pack_padded_sequence(
-                padded_data, seq_lengths, batch_first=False, enforce_sorted=True
-            )
-        else:
-            packed_data = pack_padded_sequence(
-                padded_data, seq_lengths, batch_first=False, enforce_sorted=False
-            )
-
-    return packed_data
 
 
 class SampleConvNet(nn.Module):
@@ -147,56 +74,6 @@ class SampleConvNet(nn.Module):
     def name(self):
         return "SampleConvNet"
 
-class SampleLSTMs():
-    input_size = 20
-    max_seq_length = 30
-    def __init__(self, model_initializer, **kwargs):
-        self.criterion = nn.MSELoss()
-        self.init_lstms()
-        fn_kwargs = kwargs.copy()
-
-        for idx, lstm in enumerate(self.lstms):
-            if 'state_dict' in kwargs:
-                fn_kwargs['state_dict'] = kwargs['state_dict'][idx]
-
-            model, optimizer = model_initializer(model=lstm, **fn_kwargs)
-            self.lstms[idx] = [model, optimizer]
-
-    def init_lstms(self):
-        lstm_unidirectional = DPLSTM(input_size=self.input_size, hidden_size=9, num_layers=2, bidirectional=False, batch_first=True)
-        lstm_bidirectional = DPLSTM(input_size=self.input_size, hidden_size=9, num_layers=2, bidirectional=True, batch_first=True)
-        self.lstms = [lstm_unidirectional, lstm_bidirectional]
-
-    def step(self, data):
-        for x in data:
-            for lstm, optimizer in self.lstms:
-                optimizer.zero_grad()
-                output, (hn, cn) = lstm(x)
-                y = torch.zeros_like(output[0])
-                loss = self.criterion(output[0], y)
-                loss.backward()
-                optimizer.step()
-
-    def name(self):
-        return "SampleLSTMs"
-
-    def state_dicts(self):
-        dicts = []
-        for model, _ in self.lstms:
-            dicts.append(model.state_dict())
-        return dicts
-
-    def get_models(self):
-        models = []
-        for i in self.lstms:
-            models.append(i[0])
-        return models
-
-    def get_optimizers(self):
-        optimizers = []
-        for i in self.lstms:
-            optimizers.append(i[1])
-        return optimizers
 
 class PrivacyEngine_test(unittest.TestCase):
     def setUp(self):
@@ -205,35 +82,22 @@ class PrivacyEngine_test(unittest.TestCase):
         self.SAMPLE_RATE = self.BATCH_SIZE / self.DATA_SIZE
         self.LR = 0.5
         self.ALPHAS = [1 + x / 10.0 for x in range(1, 100, 10)]
-        self.criterion_cnn = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss()
 
-        self.setUp_data_cnn()
-        self.setUp_data_lstm()
-
-        self.original_model_lstms = SampleLSTMs(self.setUp_init_model)
-        self.private_model_lstms = SampleLSTMs(self.setUp_init_model, 
+        self.setUp_data()
+        self.original_model, self.original_optimizer = self.setUp_init_model()
+        self.private_model, self.private_optimizer = self.setUp_init_model(
             private=True,
-            state_dict=self.original_model_lstms.state_dicts(),
+            state_dict=self.original_model.state_dict(),
             noise_multiplier=1.3,
             max_grad_norm=1.0,
         )
 
-        self.original_model_lstms.step(self.dl_lstm)
-        self.private_model_lstms.step(self.dl_lstm)
-
-        self.original_model_cnn, self.original_optimizer_cnn = self.setUp_init_model()
-        self.private_model_cnn, self.private_optimizer_cnn = self.setUp_init_model(
-            private=True,
-            state_dict=self.original_model_cnn.state_dict(),
-            noise_multiplier=1.3,
-            max_grad_norm=1.0,
+        self.original_grads_norms = self.setUp_model_step(
+            self.original_model, self.original_optimizer
         )
-
-        self.original_grads_norms_cnn = self.setUp_model_step(
-            self.original_model_cnn, self.original_optimizer_cnn
-        )
-        self.private_grads_norms_cnn = self.setUp_model_step(
-            self.private_model_cnn, self.private_optimizer_cnn
+        self.private_grads_norms = self.setUp_model_step(
+            self.private_model, self.private_optimizer
         )
         self.privacy_default_params = {
             "noise_multiplier": 1.0,
@@ -241,8 +105,8 @@ class PrivacyEngine_test(unittest.TestCase):
             "secure_rng": False,
         }
 
-    def setUp_data_cnn(self):
-        self.ds_cnn = FakeData(
+    def setUp_data(self):
+        self.ds = FakeData(
             size=self.DATA_SIZE,
             image_size=(1, 35, 35),
             num_classes=10,
@@ -250,11 +114,7 @@ class PrivacyEngine_test(unittest.TestCase):
                 [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
             ),
         )
-        self.dl_cnn = DataLoader(self.ds_cnn, batch_size=self.BATCH_SIZE)
-
-    def setUp_data_lstm(self):
-        ds_lstm = _gen_packed_data(self.DATA_SIZE, SampleLSTMs.max_seq_length, SampleLSTMs.input_size, True)
-        self.dl_lstm = [ds_lstm]
+        self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
 
     def setUp_init_model(
         self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
@@ -277,16 +137,12 @@ class PrivacyEngine_test(unittest.TestCase):
 
         return model, optimizer
 
-    def setUp_model_step(self, model: nn.Module, optimizer: torch.optim.Optimizer, model_name: str = 'cnn'):
+    def setUp_model_step(self, model: nn.Module, optimizer: torch.optim.Optimizer):
 
-        if model_name == 'cnn':
-            dl = self.dl_cnn
-            criterion = self.criterion_cnn
-
-        for x, y in dl:
+        for x, y in self.dl:
             optimizer.zero_grad()
             logits = model(x)
-            loss = criterion(logits, y)
+            loss = self.criterion(logits, y)
             loss.backward()
             optimizer.step()
 
@@ -336,74 +192,52 @@ class PrivacyEngine_test(unittest.TestCase):
 
     def test_privacy_analysis_alpha_in_alphas(self):
         target_delta = 1e-5
-        eps, alpha = self.private_optimizer_cnn.privacy_engine.get_privacy_spent(
+        eps, alpha = self.private_optimizer.privacy_engine.get_privacy_spent(
             target_delta
         )
         self.assertTrue(alpha in self.ALPHAS)
 
-        for optimizer in self.private_model_lstms.get_optimizers():
-            _, alpha = optimizer.privacy_engine.get_privacy_spent(target_delta)
-            self.assertTrue(alpha in self.ALPHAS)
-
     def test_privacy_analysis_epsilon(self):
         target_delta = 1e-5
-        eps, alpha = self.private_optimizer_cnn.privacy_engine.get_privacy_spent(
+        eps, alpha = self.private_optimizer.privacy_engine.get_privacy_spent(
             target_delta
         )
         self.assertTrue(eps > 0)
-
-        for optimizer in self.private_model_lstms.get_optimizers():
-            eps, _ = optimizer.privacy_engine.get_privacy_spent(target_delta)
-            self.assertTrue(eps > 0)
 
     def test_gradients_change(self):
         """
         Test that gradients are different after one step of SGD
         """
         for layer_grad, private_layer_grad in zip(
-            [p.grad for p in self.original_model_cnn.parameters() if p.requires_grad],
-            [p.grad for p in self.private_model_cnn.parameters() if p.requires_grad],
+            [p.grad for p in self.original_model.parameters() if p.requires_grad],
+            [p.grad for p in self.private_model.parameters() if p.requires_grad],
         ):
             self.assertFalse(torch.allclose(layer_grad, private_layer_grad))
-
-        for model, private_model in zip(self.original_model_lstms.get_models(), self.private_model_lstms.get_models()):
-            for layer_grad, private_layer_grad in zip(
-                [p.grad for p in model.parameters() if p.requires_grad],
-                [p.grad for p in private_model.parameters() if p.requires_grad],
-            ):
-                self.assertFalse(torch.allclose(layer_grad, private_layer_grad))
 
     def test_model_weights_change(self):
         """
         Test that the updated models are different after one step of SGD
         """
         for layer, private_layer in zip(
-            [p for p in self.original_model_cnn.parameters() if p.requires_grad],
-            [p for p in self.private_model_cnn.parameters() if p.requires_grad],
+            [p for p in self.original_model.parameters() if p.requires_grad],
+            [p for p in self.private_model.parameters() if p.requires_grad],
         ):
             self.assertFalse(torch.allclose(layer, private_layer))
-
-        for model, private_model in zip(self.original_model_lstms.get_models(), self.private_model_lstms.get_models()):
-            for layer, private_layer in zip(
-                [p for p in model.parameters() if p.requires_grad],
-                [p for p in private_model.parameters() if p.requires_grad],
-            ):
-                self.assertFalse(torch.allclose(layer, private_layer))
 
     def test_grad_consistency(self):
         model, optimizer = self.setUp_init_model(
             private=True,
-            state_dict=self.original_model_cnn.state_dict(),
+            state_dict=self.original_model.state_dict(),
             noise_multiplier=0,
             max_grad_norm=999,
         )
 
         grad_sample_aggregated = {}
 
-        for x, y in self.dl_cnn:
+        for x, y in self.dl:
             optimizer.zero_grad()
             logits = model(x)
-            loss = self.criterion_cnn(logits, y)
+            loss = self.criterion(logits, y)
             loss.backward()
 
             # collect all per-sample gradients before we take the step
@@ -463,35 +297,6 @@ class PrivacyEngine_test(unittest.TestCase):
                     f"Layer: {layer_name}. Private gradients with noise 0 doesn't match original",
                 )
 
-
-        original_lstms = SampleLSTMs(self.setUp_init_model)
-        private_lstms = SampleLSTMs(self.setUp_init_model, 
-            private=True,
-            state_dict=self.original_model_lstms.state_dicts(),
-            noise_multiplier=0,
-            max_grad_norm=999,
-        )
-
-        for _ in range(3):
-            original_lstms.step(self.dl_lstm)
-            private_lstms.step(self.dl_lstm)
-
-        for original_model, private_model in zip(original_lstms.get_models(), private_lstms.get_models()):
-            for layer_name, private_layer in private_model.named_children():
-                if not requires_grad(private_layer):
-                    continue
-
-                original_layer = getattr(original_model, layer_name)
-
-                for layer, private_layer in zip(
-                    [p.grad for p in original_layer.parameters() if p.requires_grad],
-                    [p.grad for p in private_layer.parameters() if p.requires_grad],
-                ):
-                    self.assertTrue(
-                        torch.allclose(layer, private_layer, atol=10e-4, rtol=10e-2),
-                        f"Layer: {layer_name}. Private gradients with noise 0 doesn't match original",
-                    )
-
     def test_grad_matches_original_per_layer_clipping(self):
         original_model, orignial_optimizer = self.setUp_init_model()
         private_model, private_optimizer = self.setUp_init_model(
@@ -528,7 +333,7 @@ class PrivacyEngine_test(unittest.TestCase):
         """
         model, optimizer = self.setUp_init_model(
             private=True,
-            state_dict=self.original_model_cnn.state_dict(),
+            state_dict=self.original_model.state_dict(),
             noise_multiplier=1.3,
             max_grad_norm=999,
         )
@@ -537,7 +342,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
         model, optimizer = self.setUp_init_model(
             private=True,
-            state_dict=self.original_model_cnn.state_dict(),
+            state_dict=self.original_model.state_dict(),
             noise_multiplier=1.3,
             max_grad_norm=999,
         )
@@ -559,7 +364,7 @@ class PrivacyEngine_test(unittest.TestCase):
             max_grad_norm=1,
         )
         with self.assertRaises(IncompatibleModuleException):
-            privacy_engine.attach(self.private_optimizer_cnn)
+            privacy_engine.attach(self.private_optimizer)
 
     def test_deterministic_run(self):
         """
@@ -636,7 +441,7 @@ class PrivacyEngine_test(unittest.TestCase):
         """
         model, optimizer = self.setUp_init_model(
             private=True,
-            state_dict=self.original_model_cnn.state_dict(),
+            state_dict=self.original_model.state_dict(),
             noise_multiplier=1.3,
             max_grad_norm=999,
             secure_rng=True,
@@ -646,7 +451,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
         model, optimizer = self.setUp_init_model(
             private=True,
-            state_dict=self.original_model_cnn.state_dict(),
+            state_dict=self.original_model.state_dict(),
             noise_multiplier=1.3,
             max_grad_norm=999,
             secure_rng=True,

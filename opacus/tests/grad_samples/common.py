@@ -12,6 +12,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.testing import assert_allclose
 
+from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
+from typing import List, Optional, Union
+
 
 def expander(x, factor: int = 2):
     return x * factor
@@ -53,8 +56,11 @@ class ModelWithLoss(nn.Module):
 
     def forward(self, x):
         x = self.wrapped_module(x)
-        y = torch.zeros_like(x)
-        loss = self.criterion(x, y)
+        if type(x) is PackedSequence:
+            loss = _compute_loss_packedsequences(self.criterion, x)
+        else:
+            y = torch.zeros_like(x)
+            loss = self.criterion(x, y)
         return loss
 
 
@@ -84,7 +90,7 @@ class GradSampleHooks_test(unittest.TestCase):
 
     def compute_microbatch_grad_sample(
         self,
-        x: torch.Tensor,
+        x: Union[torch.Tensor, List[torch.Tensor]],
         module: nn.Module,
         batch_first=True,
         loss_reduction="mean",
@@ -112,7 +118,7 @@ class GradSampleHooks_test(unittest.TestCase):
         for p in module.parameters():
             p.microbatch_grad_sample = []
 
-        if not batch_first:
+        if not batch_first and type(x) is not list:
             # This allows us to iterate with x_i
             x = x.transpose(0, 1)
 
@@ -149,7 +155,7 @@ class GradSampleHooks_test(unittest.TestCase):
 
     def compute_opacus_grad_sample(
         self,
-        x: torch.Tensor,
+        x: Union[torch.Tensor, PackedSequence],
         module: nn.Module,
         batch_first=True,
         loss_reduction="mean",
@@ -188,7 +194,7 @@ class GradSampleHooks_test(unittest.TestCase):
 
     def run_test(
         self,
-        x: torch.Tensor,
+        x: Union[torch.Tensor, PackedSequence],
         module: nn.Module,
         batch_first=True,
         atol=10e-6,
@@ -213,16 +219,22 @@ class GradSampleHooks_test(unittest.TestCase):
 
     def run_test_with_reduction(
         self,
-        x: torch.Tensor,
+        x: Union[torch.Tensor, PackedSequence],
         module: nn.Module,
         batch_first=True,
         loss_reduction="mean",
         atol=10e-6,
         rtol=10e-5,
     ):
-        microbatch_grad_samples = self.compute_microbatch_grad_sample(
-            x, module, batch_first=batch_first, loss_reduction=loss_reduction
-        )
+        if type(x) is PackedSequence:            
+            x_unpacked = _unpack_packedsequences(x)
+            microbatch_grad_samples = self.compute_microbatch_grad_sample(
+                x_unpacked, module, batch_first=batch_first, loss_reduction=loss_reduction
+            )
+        else:
+            microbatch_grad_samples = self.compute_microbatch_grad_sample(
+                x, module, batch_first=batch_first, loss_reduction=loss_reduction
+            )
 
         opacus_grad_samples = self.compute_opacus_grad_sample(
             x, module, batch_first=batch_first, loss_reduction=loss_reduction
@@ -298,3 +310,84 @@ class GradSampleHooks_test(unittest.TestCase):
                 f"A total of {len(failed)} values do not match "
                 f"for loss_reduction={loss_reduction}: \n\t{failed_str}"
             )
+
+
+def _unpack_packedsequences(X: PackedSequence) -> List[torch.Tensor]:
+    r"""
+    Produces a list of tensors from X (PackedSequence) such that this list was used to create X with batch_first=True
+
+    Args:
+        X: A PackedSequence from which the output list of tensors will be produced.
+
+    Returns:
+        unpacked_data: The list of tensors produced from X.
+    """
+
+    X_padded = pad_packed_sequence(X)
+    X_padded = X_padded[0].permute((1,0,2))
+    
+    if X.sorted_indices is not None:
+        X_padded = X_padded[X.sorted_indices]
+    
+    seq_lens = _compute_seq_lengths(X.batch_sizes)
+    unpacked_data = [0] * len(seq_lens)
+    for idx, length in enumerate(seq_lens):
+        unpacked_data[idx] = X_padded[idx][:length, :]
+
+    return unpacked_data
+
+def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
+    r"""
+    Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).
+
+    Args:
+        batch_sizes: Contains the batch sizes as stored in a PackedSequence
+
+    Returns:
+        running_seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence.
+        It's a list of the same length as batch_sizes.
+    """
+
+    max_batch_size = batch_sizes[0]
+    if len(batch_sizes) == 1:
+        return [1] * max_batch_size
+
+    running_seq = 0
+    running_seq_lengths = []
+    for i in range(1, len(batch_sizes)):
+        delta = batch_sizes[i - 1].item() - batch_sizes[i].item()
+        running_seq += 1
+        running_seq_lengths += delta * [running_seq]
+
+    running_seq += 1
+    running_seq_lengths += batch_sizes[-1].item() * [running_seq]
+    running_seq_lengths.reverse()
+    return running_seq_lengths
+
+def _compute_loss_packedsequences(criterion: nn.L1Loss, x: PackedSequence) -> torch.Tensor:
+    r"""
+    This function computes the loss in a different way for 'mean' reduced L1 loss while for 'sum' reduced L1 loss,
+    it computes the same way as with non-packed data. For 'mean' reduced L1 loss, it transforms x (PackedSequence)
+    into a list of tensors such that this list of tensors was used to create this PackedSequence in the first 
+    place using batch_first=True and then takes the mean of the loss values produced from applying criterion on 
+    each sequence sample.  
+
+    Args:
+        criterion: An L1 loss function with reduction either set to 'sum' or 'mean'.
+        x: Data in the form of a PackedSequence. 
+
+    Returns:
+        A loss variable, reduced either using summation or averaging from L1 errors.
+    """
+
+    if criterion.reduction == 'sum':
+        y = torch.zeros_like(x[0])
+        return criterion(x[0], y)
+    elif criterion.reduction == 'mean':
+        x = _unpack_packedsequences(x)
+        loss_sum = 0
+        for x_i in x:
+            y_i = torch.zeros_like(x_i)
+            loss_sum += criterion(x_i, y_i)
+        loss_mean = loss_sum / len(x)
+        return loss_mean

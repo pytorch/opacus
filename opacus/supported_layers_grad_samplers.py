@@ -59,13 +59,12 @@ def _create_or_accumulate_grad_sample(
             ``grad_sample``
     """
 
-    max_batch_len = _get_batch_size(layer, grad_sample)
     if hasattr(param, "grad_sample"):
         param.grad_sample[:grad_sample.shape[0]] += grad_sample
     else:
+        max_batch_len = layer.max_batch_len
         param.grad_sample = torch.zeros(torch.Size([max_batch_len]) + grad_sample.shape[1:])
         param.grad_sample[:grad_sample.shape[0]] = grad_sample        
-
 
 def _compute_linear_grad_sample(
     layer: nn.Linear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
