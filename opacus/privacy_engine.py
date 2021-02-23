@@ -14,6 +14,57 @@ from .dp_model_inspector import DPModelInspector
 from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
 
+DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+
+
+def get_noise_multiplier(
+    target_epsilon: float,
+    target_delta: float,
+    sample_rate: float,
+    epochs: int,
+    alphas: List[float],
+    sigma_min: Optional[float] = 0.01,
+    sigma_max: Optional[float] = 10.0,
+) -> float:
+    r"""
+    Computes the noise level sigma to reach a total budget of (target_epsilon, target_delta)
+    at the end of epochs, with a given sample_rate
+
+    Args:
+        target_epsilon: the privacy budget's epsilon
+        target_delta: the privacy budget's delta
+        sample_rate: the sampling rate (usually batch_size / n_data)
+        epochs: the number of epochs to run
+        alphas: the list of orders at which to compute RDP
+
+    Returns:
+        The noise level sigma to ensure privacy budget of (target_epsilon, target_delta)
+
+    """
+    eps = float("inf")
+    while eps > target_epsilon:
+        sigma_max = 2 * sigma_max
+        rdp = privacy_analysis.compute_rdp(
+            sample_rate, sigma_max, epochs / sample_rate, alphas
+        )
+        eps = privacy_analysis.get_privacy_spent(alphas, rdp, target_delta)[0]
+        if sigma_max > 2000:
+            raise ValueError("The privacy budget is too low.")
+
+    while sigma_max - sigma_min > 0.01:
+        sigma = (sigma_min + sigma_max) / 2
+        rdp = privacy_analysis.compute_rdp(
+            sample_rate, sigma, epochs / sample_rate, alphas
+        )
+        eps = privacy_analysis.get_privacy_spent(alphas, rdp, target_delta)[0]
+
+        if eps < target_epsilon:
+            sigma_max = sigma
+        else:
+            sigma_min = sigma
+
+    return sigma
+
 
 DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
@@ -44,12 +95,14 @@ class PrivacyEngine:
         *,  # As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally
         batch_size: Optional[int] = None,
         sample_size: Optional[int] = None,
-        noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
+        noise_multiplier: Optional[float] = None,
         alphas: List[float] = DEFAULT_ALPHAS,
-        target_delta: Optional[float] = None,
         secure_rng: bool = False,
         batch_first: bool = True,
+        target_delta: float = 1e-6,
+        target_epsilon: Optional[float] = None,
+        epochs: Optional[float] = None,
         loss_reduction: str = "mean",
         **misc_settings,
     ):
@@ -78,7 +131,20 @@ class PrivacyEngine:
         self.module = module
         self.batch_size = batch_size
         self.sample_size = sample_size
-        self.noise_multiplier = noise_multiplier
+
+        self.sample_rate = batch_size / sample_size
+
+        if noise_multiplier is None:
+            if target_epsilon is None or target_delta is None or epochs is None:
+                raise ValueError(
+                    "If noise_multiplier is not specified, (target_epsilon, target_delta, epochs) should be given to the engine."
+                )
+            self.noise_multiplier = get_noise_multiplier(
+                target_epsilon, target_delta, self.sample_rate, epochs, alphas
+            )
+        else:
+            self.noise_multiplier = noise_multiplier
+
         self.max_grad_norm = max_grad_norm
         self.alphas = alphas
         self.target_delta = target_delta
@@ -88,7 +154,6 @@ class PrivacyEngine:
         self.misc_settings = misc_settings
 
         self.device = next(module.parameters()).device
-        self.sample_rate = batch_size / sample_size
         self.steps = 0
 
         if not self.batch_size or not isinstance(self.batch_size, int):
@@ -260,6 +325,10 @@ class PrivacyEngine:
             Pair of epsilon and optimal order alpha.
         """
         if target_delta is None:
+            if self.target_delta is None:
+                raise ValueError(
+                    "If self.target_delta is not specified, target_delta should be set as argument to get_privacy_spent."
+                )
             target_delta = self.target_delta
         rdp = self.get_renyi_divergence() * self.steps
         eps, best_alpha = privacy_analysis.get_privacy_spent(
