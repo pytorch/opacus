@@ -22,6 +22,7 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from opacus import PrivacyEngine
 from opacus.utils.module_modification import convert_batchnorm_modules
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from tqdm import tqdm
 
 
@@ -31,6 +32,12 @@ parser.add_argument(
     "--workers", type=int, help="number of data loading workers", default=2
 )
 parser.add_argument("--batch-size", type=int, default=64, help="input batch size")
+parser.add_argument(
+    "--sample-rate",
+    type=float,
+    default=0.018,
+    help="sample rate used for batch construction",
+)
 parser.add_argument(
     "--imageSize",
     type=int,
@@ -162,12 +169,16 @@ if opt.secure_rng:
 
 else:
     generator = None
+
 dataloader = torch.utils.data.DataLoader(
     dataset,
-    batch_size=opt.batch_size,
-    shuffle=True,
     num_workers=int(opt.workers),
     generator=generator,
+    batch_sampler=UniformWithReplacementSampler(
+        num_samples=len(dataset),
+        sample_rate=opt.sample_rate,
+        generator=generator,
+    ),
 )
 
 device = torch.device(opt.device)
@@ -285,8 +296,7 @@ optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
 privacy_engine = PrivacyEngine(
     netD,
-    batch_size=opt.batch_size,
-    sample_size=len(dataloader.dataset),
+    sample_rate=opt.sample_rate,
     alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
     noise_multiplier=opt.sigma,
     max_grad_norm=opt.max_per_sample_grad_norm,

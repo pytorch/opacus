@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 from opacus import PrivacyEngine
 from opacus.layers import DPLSTM
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
@@ -29,11 +30,19 @@ parser.add_argument(
 )
 parser.add_argument(
     "-b",
-    "--batch-size",
-    default=800,
+    "--batch-size-test",
+    default=1600,
     type=int,
     metavar="N",
-    help="mini-batch size (default: 800)",
+    help="mini-batch size for test dataset (default: 1600)",
+)
+parser.add_argument(
+    "-sr",
+    "--sample-rate",
+    default=0.05,
+    type=float,
+    metavar="SR",
+    help="sample rate used for batch construction (default: 0.05)",
 )
 parser.add_argument(
     "--embedding-size", default=64, type=int, help="Character embedding dimension"
@@ -372,18 +381,18 @@ def main():
 
     train_loader = DataLoader(
         train_ds,
-        batch_size=args.batch_size,
-        shuffle=True,
         num_workers=8,
         pin_memory=True,
-        drop_last=True,  # Avoid wasting precious privacy budget
         generator=generator,
+        batch_sampler=UniformWithReplacementSampler(
+            num_samples=len(train_ds), sample_rate=args.sample_rate, generator=generator
+        ),
         collate_fn=padded_collate,
     )
 
     test_loader = DataLoader(
         test_ds,
-        batch_size=2 * args.batch_size,
+        batch_size=args.batch_size_test,
         shuffle=False,
         num_workers=8,
         pin_memory=True,
@@ -396,8 +405,7 @@ def main():
     if not args.disable_dp:
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=args.batch_size,
-            sample_size=len(train_ds),
+            sample_rate=args.sample_rate,
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,

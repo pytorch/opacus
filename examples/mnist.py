@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from opacus import PrivacyEngine
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
@@ -102,12 +103,12 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(description="PyTorch MNIST Example")
     parser.add_argument(
-        "-b",
-        "--batch-size",
-        type=int,
-        default=64,
-        metavar="B",
-        help="input batch size for training (default: 64)",
+        "-sr",
+        "--sample-rate",
+        type=float,
+        default=0.001,
+        metavar="SR",
+        help="sample rate used for batch construction (default: 0.001)",
     )
     parser.add_argument(
         "--test-batch-size",
@@ -211,21 +212,26 @@ def main():
     else:
         generator = None
 
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(
-            args.data_root,
-            train=True,
-            download=True,
-            transform=transforms.Compose(
-                [
-                    transforms.ToTensor(),
-                    transforms.Normalize((MNIST_MEAN,), (MNIST_STD,)),
-                ]
-            ),
+    train_dataset = datasets.MNIST(
+        args.data_root,
+        train=True,
+        download=True,
+        transform=transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((MNIST_MEAN,), (MNIST_STD,)),
+            ]
         ),
-        batch_size=args.batch_size,
-        shuffle=True,
+    )
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset,
         generator=generator,
+        batch_sampler=UniformWithReplacementSampler(
+            num_samples=len(train_dataset),
+            sample_rate=args.sample_rate,
+            generator=generator,
+        ),
         **kwargs,
     )
     test_loader = torch.utils.data.DataLoader(
@@ -251,8 +257,7 @@ def main():
         if not args.disable_dp:
             privacy_engine = PrivacyEngine(
                 model,
-                batch_size=args.batch_size,
-                sample_size=len(train_loader.dataset),
+                sample_rate=args.sample_rate,
                 alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
                 noise_multiplier=args.sigma,
                 max_grad_norm=args.max_per_sample_grad_norm,
@@ -272,7 +277,7 @@ def main():
 
     repro_str = (
         f"{model.name()}_{args.lr}_{args.sigma}_"
-        f"{args.max_per_sample_grad_norm}_{args.batch_size}_{args.epochs}"
+        f"{args.max_per_sample_grad_norm}_{args.sample_rate}_{args.epochs}"
     )
     torch.save(run_results, f"run_results_{repro_str}.pt")
 

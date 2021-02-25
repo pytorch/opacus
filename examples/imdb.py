@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 from datasets import load_dataset
 from opacus import PrivacyEngine
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torch.functional import F
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
@@ -124,11 +125,19 @@ def main():
     parser = argparse.ArgumentParser(description="PyTorch IMDB Example")
     parser.add_argument(
         "-b",
-        "--batch-size",
+        "--batch-size-test",
         type=int,
         default=64,
         metavar="B",
-        help="input batch size for training (default: 64)",
+        help="input batch size for test (default: 64)",
+    )
+    parser.add_argument(
+        "-sr",
+        "--sample-rate",
+        type=float,
+        default=0.00256,
+        metavar="SR",
+        help="sample rate used for batch construction (default: 0.00256)",
     )
     parser.add_argument(
         "-n",
@@ -243,18 +252,20 @@ def main():
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
         num_workers=args.workers,
-        drop_last=True,
         generator=generator,
+        batch_sampler=UniformWithReplacementSampler(
+            num_samples=len(train_dataset),
+            sample_rate=args.sample_rate,
+            generator=generator,
+        ),
         collate_fn=padded_collate,
         pin_memory=True,
     )
 
     test_loader = torch.utils.data.DataLoader(
         test_dataset,
-        batch_size=args.batch_size,
+        batch_size=args.batch_size_test,
         shuffle=False,
         num_workers=args.workers,
         collate_fn=padded_collate,
@@ -267,8 +278,7 @@ def main():
     if not args.disable_dp:
         privacy_engine = PrivacyEngine(
             model,
-            batch_size=args.batch_size,
-            sample_size=len(train_dataset),
+            sample_rate=args.sample_rate,
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,

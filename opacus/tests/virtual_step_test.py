@@ -42,6 +42,7 @@ class GradientAccumulation_test(unittest.TestCase):
     def setUp(self):
         self.DATA_SIZE = 64
         self.BATCH_SIZE = 16
+        self.SAMPLE_RATE = self.BATCH_SIZE / self.DATA_SIZE
         self.LR = 0  # we want to call optimizer.step() without modifying the model
         self.ALPHAS = [1 + x / 10.0 for x in range(1, 100, 10)]
         self.criterion = nn.CrossEntropyLoss()
@@ -83,8 +84,7 @@ class GradientAccumulation_test(unittest.TestCase):
     def setUp_privacy_engine(self, batch_size):
         self.privacy_engine = PrivacyEngine(
             self.model,
-            batch_size=batch_size,
-            sample_size=self.DATA_SIZE,
+            sample_rate=batch_size / self.DATA_SIZE,
             alphas=self.ALPHAS,
             noise_multiplier=0,
             max_grad_norm=999,
@@ -262,25 +262,3 @@ class GradientAccumulation_test(unittest.TestCase):
                             f"Accumulated clipped gradients haven't been erased "
                             f"¨for {param_name}",
                         )
-
-    def test_throws_wrong_batch_size(self):
-        """
-        If we accumulate the wrong number of gradients and feed this batch to
-        the privacy engine, we expect a failure.
-        """
-        self.setUp_privacy_engine(2 * self.BATCH_SIZE)
-        data = iter(self.dl)  # 4 batches of size 4 each
-
-        # consuming a batch that is smaller than expected should work
-        self.calc_per_sample_grads(data, num_steps=1)
-        with self.assertWarns(Warning):
-            self.optimizer.step()
-            self.optimizer.zero_grad()
-
-        # consuming a larger batch than expected should fail
-        for _ in range(2):
-            self.calc_per_sample_grads(data, num_steps=1)
-            self.optimizer.virtual_step()
-        with self.assertRaises(ValueError):
-            self.calc_per_sample_grads(data, num_steps=1)
-            self.optimizer.step()
