@@ -80,6 +80,7 @@ def _concat_sequence_directions(
     Args:
         forward: list/tuple containing n tensors, representing the output of the forward layer.
         reverse: list/tuple containing n tensors, representing the output of the backward layer.
+        dim: the dimension along which the sequence of tensors within forward and reverse will be concatenated.
     Returns:
         output: list/tuple containing n concatenated tensors.
     """
@@ -454,8 +455,6 @@ class DPLSTM(ParamRenamedModule):
         if isinstance(x, PackedSequence):
             x, batch_sizes, sorted_indices, unsorted_indices = x
             B = batch_sizes[0].item()
-            seq_length = batch_sizes.size(0)
-            batch_sz = None
             _, D = x.shape
             x = x.split(tuple(batch_sizes))
         else:
