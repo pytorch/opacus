@@ -16,6 +16,14 @@ from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
 from typing import List, Optional, Union
 
 
+def expander(x, factor: int = 2):
+    return x * factor
+
+
+def shrinker(x, factor: int = 2):
+    return max(1, x // factor)  # if avoid returning 0 for x == 1
+
+
 class ModelWithLoss(nn.Module):
     """
     To test the gradients of a module, we need to have a loss.
