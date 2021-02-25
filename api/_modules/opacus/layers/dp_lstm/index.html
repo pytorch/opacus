@@ -26,12 +26,104 @@
 <div class="body" role="main">
 <h1>Source code for opacus.layers.dp_lstm</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">from</span> <span class="nn">torch.nn.utils.rnn</span> <span class="kn">import</span> <span class="n">PackedSequence</span>
 
 <span class="kn">from</span> <span class="nn">.param_rename</span> <span class="kn">import</span> <span class="n">ParamRenamedModule</span>
+
+<span class="kn">from</span> <span class="nn">torch.nn.utils.rnn</span> <span class="kn">import</span> <span class="n">pad_sequence</span><span class="p">,</span> <span class="n">pack_padded_sequence</span>
+
+
+<span class="k">def</span> <span class="nf">_compute_seq_lengths</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        batch_sizes: Contains the batch sizes as stored in a PackedSequence</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        running_seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence.</span>
+<span class="sd">        It's a list of the same length as batch_sizes.</span>
+<span class="sd">    """</span>
+
+    <span class="n">max_batch_size</span> <span class="o">=</span> <span class="n">batch_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">max_batch_size</span>
+
+    <span class="n">running_seq</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">running_seq_lengths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">)):</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">batch_sizes</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">-</span> <span class="n">batch_sizes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">running_seq</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">running_seq_lengths</span> <span class="o">+=</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">[</span><span class="n">running_seq</span><span class="p">]</span>
+
+    <span class="n">running_seq</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">running_seq_lengths</span> <span class="o">+=</span> <span class="n">batch_sizes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="p">[</span><span class="n">running_seq</span><span class="p">]</span>
+    <span class="n">running_seq_lengths</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">running_seq_lengths</span>
+
+
+<span class="k">def</span> <span class="nf">_compute_last_states</span><span class="p">(</span>
+    <span class="n">h_n</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">c_n</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">seq_lengths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Given h and c values of all time steps, this function computes the h and c values for each sequence at their last timestep (this can vary across sequences with different sequence lengths).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        h_n: A list of hidden state values across all timesteps.</span>
+<span class="sd">        c_n: A list of cell state values across all timesteps.</span>
+<span class="sd">        seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence. This can be computed using the _compute_seq_lengths function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        h_last: Contains the last hidden state values for each of the sequences.</span>
+<span class="sd">                If the i'th sequence has a length of l_i, then h_last[i,:] contains the hidden state corresponding to the i'th sequence at timestep l_i.</span>
+<span class="sd">        c_last: The structure is the same as h_last, except that it contains the last cell state values for each of the sequences.</span>
+<span class="sd">    """</span>
+
+    <span class="n">max_batch_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq_lengths</span><span class="p">)</span>
+    <span class="n">hidden_size</span> <span class="o">=</span> <span class="n">h_n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">h_last</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_batch_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span>
+    <span class="n">c_last</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_batch_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">seq_len</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">seq_lengths</span><span class="p">):</span>
+        <span class="n">h_last</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">h_n</span><span class="p">[</span><span class="n">seq_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">c_last</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">c_n</span><span class="p">[</span><span class="n">seq_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="k">return</span> <span class="n">h_last</span><span class="p">,</span> <span class="n">c_last</span>
+
+
+<span class="k">def</span> <span class="nf">_concat_sequence_directions</span><span class="p">(</span>
+    <span class="n">forward</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+    <span class="n">reverse</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+    <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Given two list/tuple of same length containing tensors, this function returns a concatenation along dimension d. So, output[i] : concatenation of forward[i] and reverse[i] along dimension dim.</span>
+<span class="sd">    forward[i] and reverse[i] should have the same shape. This function is used for concatenating the outputs of the forward and reverse layer of a bidirectional LSTM.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        forward: list/tuple containing n tensors, representing the output of the forward layer.</span>
+<span class="sd">        reverse: list/tuple containing n tensors, representing the output of the backward layer.</span>
+<span class="sd">        dim: the dimension along which the sequence of tensors within forward and reverse will be concatenated.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        output: list/tuple containing n concatenated tensors.</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">forward</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reverse</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"The forward and reverse layer output sequences should have the same length"</span>
+        <span class="p">)</span>
+
+    <span class="n">seq_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">forward</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">seq_length</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seq_length</span><span class="p">):</span>
+        <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">forward</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">reverse</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output</span>
 
 
 <div class="viewcode-block" id="LSTMLinear"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.LSTMLinear">[docs]</a><span class="k">class</span> <span class="nc">LSTMLinear</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
@@ -76,17 +168,40 @@
             <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="o">-</span><span class="n">stdv</span><span class="p">,</span> <span class="n">stdv</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DPLSTMCell.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">h_prev</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">c_prev</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">h_prev</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">c_prev</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">batch_size_t</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-        <span class="n">gates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="p">(</span><span class="n">h_prev</span><span class="p">)</span>  <span class="c1"># [B, 4*D]</span>
+
+        <span class="k">if</span> <span class="n">batch_size_t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="p">(</span><span class="n">h_prev</span><span class="p">)</span>  <span class="c1"># [B, 4*D]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="p">(</span>
+                <span class="n">h_prev</span><span class="p">[:</span><span class="n">batch_size_t</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="p">)</span>  <span class="c1"># [batch_size_t, 4*D]</span>
+
         <span class="n">i_t_input</span><span class="p">,</span> <span class="n">f_t_input</span><span class="p">,</span> <span class="n">g_t_input</span><span class="p">,</span> <span class="n">o_t_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
             <span class="n">gates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">1</span>
         <span class="p">)</span>
-        <span class="n">i_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">i_t_input</span><span class="p">)</span>  <span class="c1"># [B, D]</span>
-        <span class="n">f_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">f_t_input</span><span class="p">)</span>  <span class="c1"># [B, D]</span>
-        <span class="n">g_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">g_t_input</span><span class="p">)</span>  <span class="c1"># [B, D]</span>
-        <span class="n">o_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">o_t_input</span><span class="p">)</span>  <span class="c1"># [B, D]</span>
-        <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_prev</span> <span class="o">+</span> <span class="n">i_t</span> <span class="o">*</span> <span class="n">g_t</span>
+        <span class="n">i_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span>
+            <span class="n">i_t_input</span>
+        <span class="p">)</span>  <span class="c1"># [B, D] or [batch_size_t, D] if batch_size_t is not None</span>
+        <span class="n">f_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span>
+            <span class="n">f_t_input</span>
+        <span class="p">)</span>  <span class="c1"># [B, D] or [batch_size_t, D] if batch_size_t is not None</span>
+        <span class="n">g_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span>
+            <span class="n">g_t_input</span>
+        <span class="p">)</span>  <span class="c1"># [B, D] or [batch_size_t, D] if batch_size_t is not None</span>
+        <span class="n">o_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span>
+            <span class="n">o_t_input</span>
+        <span class="p">)</span>  <span class="c1"># [B, D] or [batch_size_t, D] if batch_size_t is not None</span>
+        <span class="k">if</span> <span class="n">batch_size_t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_prev</span> <span class="o">+</span> <span class="n">i_t</span> <span class="o">*</span> <span class="n">g_t</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_prev</span><span class="p">[:</span><span class="n">batch_size_t</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">i_t</span> <span class="o">*</span> <span class="n">g_t</span>
+
         <span class="n">h_t</span> <span class="o">=</span> <span class="n">o_t</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_t</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div></div>
@@ -121,8 +236,9 @@
 
 <div class="viewcode-block" id="DPLSTMLayer.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMLayer.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">],</span>
         <span class="n">state_init</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">batch_sizes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Implements the forward pass of the DPLSTMLayer when a sequence is given in input.</span>
@@ -132,6 +248,8 @@
 <span class="sd">            state_init: Initial state of the LSTMCell as a tuple ``(h_0, c_0)``</span>
 <span class="sd">                where ``h_0`` is the initial hidden state and ``c_0`` is the</span>
 <span class="sd">                initial cell state of the DPLSTMCell</span>
+<span class="sd">            batch_sizes: Contains the batch sizes as stored in PackedSequence</span>
+
 
 <span class="sd">        Returns:</span>
 <span class="sd">            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H]`` and is a</span>
@@ -141,29 +259,56 @@
 <span class="sd">            tensor containing the cell state for ``t = T``.</span>
 <span class="sd">        """</span>
 
-        <span class="n">seq_length</span><span class="p">,</span> <span class="n">batch_sz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">batch_sizes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">seq_length</span> <span class="o">=</span> <span class="n">batch_sizes</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+                <span class="n">batch_sizes</span> <span class="o">=</span> <span class="n">batch_sizes</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seq_length</span><span class="p">,</span> <span class="n">batch_sz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="n">h_0</span><span class="p">,</span> <span class="n">c_0</span> <span class="o">=</span> <span class="n">state_init</span>
 
         <span class="n">h_n</span> <span class="o">=</span> <span class="p">[</span><span class="n">h_0</span><span class="p">]</span>
         <span class="n">c_n</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_0</span><span class="p">]</span>
+        <span class="n">batch_size_prev</span> <span class="o">=</span> <span class="n">h_0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seq_length</span><span class="p">):</span>
-            <span class="n">h_next</span><span class="p">,</span> <span class="n">c_next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">h_n</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">c_n</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">batch_sizes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">batch_size_t</span> <span class="o">=</span> <span class="n">batch_sizes</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="n">delta</span> <span class="o">=</span> <span class="n">batch_size_t</span> <span class="o">-</span> <span class="n">batch_size_prev</span>
+                <span class="k">if</span> <span class="n">delta</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">h_cat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">h_n</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">h_0</span><span class="p">[</span><span class="n">batch_size_prev</span><span class="p">:</span><span class="n">batch_size_t</span><span class="p">,</span> <span class="p">:]),</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">c_cat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">c_n</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">c_0</span><span class="p">[</span><span class="n">batch_size_prev</span><span class="p">:</span><span class="n">batch_size_t</span><span class="p">,</span> <span class="p">:]),</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">h_next</span><span class="p">,</span> <span class="n">c_next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">h_cat</span><span class="p">,</span> <span class="n">c_cat</span><span class="p">,</span> <span class="n">batch_size_t</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">h_next</span><span class="p">,</span> <span class="n">c_next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">h_n</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">c_n</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">batch_size_t</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">h_next</span><span class="p">,</span> <span class="n">c_next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">h_n</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">c_n</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">:</span>
                 <span class="n">h_next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout_layer</span><span class="p">(</span><span class="n">h_next</span><span class="p">)</span>
             <span class="n">h_n</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h_next</span><span class="p">)</span>
             <span class="n">c_n</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c_next</span><span class="p">)</span>
+            <span class="n">batch_size_prev</span> <span class="o">=</span> <span class="n">h_next</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="n">h_n</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">h_n</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [T, B, H], init step not part of output</span>
+        <span class="k">if</span> <span class="n">batch_sizes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">h_n</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">h_n</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [T, B, H], init step not part of output</span>
 
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">h_n</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="k">else</span> <span class="n">h_n</span><span class="p">,</span>  <span class="c1"># Flip the output...</span>
-            <span class="p">(</span><span class="n">h_n</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">c_n</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>  <span class="c1"># ... But not the states</span>
-        <span class="p">)</span></div></div>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">h_n</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="k">else</span> <span class="n">h_n</span><span class="p">,</span>  <span class="c1"># Flip the output...</span>
+                <span class="p">(</span><span class="n">h_n</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">c_n</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>  <span class="c1"># ... But not the states</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seq_lengths</span> <span class="o">=</span> <span class="n">_compute_seq_lengths</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">)</span>
+            <span class="n">h_temp</span><span class="p">,</span> <span class="n">c_temp</span> <span class="o">=</span> <span class="n">h_n</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">c_n</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">h_last</span><span class="p">,</span> <span class="n">c_last</span> <span class="o">=</span> <span class="n">_compute_last_states</span><span class="p">(</span><span class="n">h_temp</span><span class="p">,</span> <span class="n">c_temp</span><span class="p">,</span> <span class="n">seq_lengths</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span><span class="p">:</span>
+                <span class="n">h_temp</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">h_temp</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">h_temp</span><span class="p">,</span> <span class="p">(</span><span class="n">h_last</span><span class="p">,</span> <span class="n">c_last</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="BidirectionalDPLSTMLayer"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer">[docs]</a><span class="k">class</span> <span class="nc">BidirectionalDPLSTMLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
@@ -209,6 +354,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
         <span class="n">state_init</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">batch_sizes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Implements the forward pass of the DPLSTM when a sequence is input.</span>
@@ -241,10 +387,13 @@
         <span class="n">h0_f</span><span class="p">,</span> <span class="n">h0_r</span> <span class="o">=</span> <span class="n">h0</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># each of shape [B, H] for their layer</span>
         <span class="n">c0_f</span><span class="p">,</span> <span class="n">c0_r</span> <span class="o">=</span> <span class="n">c0</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># each of shape [B, H] for their layer</span>
 
-        <span class="n">out_f</span><span class="p">,</span> <span class="p">(</span><span class="n">h_f</span><span class="p">,</span> <span class="n">c_f</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0_f</span><span class="p">,</span> <span class="n">c0_f</span><span class="p">))</span>
-        <span class="n">out_r</span><span class="p">,</span> <span class="p">(</span><span class="n">h_r</span><span class="p">,</span> <span class="n">c_r</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0_r</span><span class="p">,</span> <span class="n">c0_r</span><span class="p">))</span>
+        <span class="n">out_f</span><span class="p">,</span> <span class="p">(</span><span class="n">h_f</span><span class="p">,</span> <span class="n">c_f</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0_f</span><span class="p">,</span> <span class="n">c0_f</span><span class="p">),</span> <span class="n">batch_sizes</span><span class="p">)</span>
+        <span class="n">out_r</span><span class="p">,</span> <span class="p">(</span><span class="n">h_r</span><span class="p">,</span> <span class="n">c_r</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0_r</span><span class="p">,</span> <span class="n">c0_r</span><span class="p">),</span> <span class="n">batch_sizes</span><span class="p">)</span>
 
-        <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">out_f</span><span class="p">,</span> <span class="n">out_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [T, B, H * P]</span>
+        <span class="k">if</span> <span class="n">batch_sizes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">out_f</span><span class="p">,</span> <span class="n">out_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [T, B, H * P]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">_concat_sequence_directions</span><span class="p">(</span><span class="n">out_f</span><span class="p">,</span> <span class="n">out_r</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">h_f</span><span class="p">,</span> <span class="n">h_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [P, B, H]</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c_f</span><span class="p">,</span> <span class="n">c_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [P, B, H]</span>
@@ -300,7 +449,7 @@
 
 <div class="viewcode-block" id="DPLSTM.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">PackedSequence</span><span class="p">],</span>
         <span class="n">state_init</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sa">r</span><span class="sd">"""</span>
@@ -315,7 +464,7 @@
 <span class="sd">            - P: number of directions (2 if bidirectional, else 1)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x: Input sequence to the DPLSTM of shape ``[T, B, D]``</span>
+<span class="sd">            x: Input sequence to the DPLSTM of shape ``[T, B, D]``. Or it can be a PackedSequence.</span>
 <span class="sd">            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:</span>
 <span class="sd">                - ``h_0`` of shape ``[L*P, B, H]`` contains the initial hidden state</span>
 <span class="sd">                - ``c_0`` of shape ``[L*P, B, H]`` contains the initial cell state</span>
@@ -330,8 +479,18 @@
 <span class="sd">            the cell state for ``t = T``.</span>
 <span class="sd">        """</span>
 
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rearrange_batch_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">T</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">PackedSequence</span><span class="p">):</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">batch_sizes</span><span class="p">,</span> <span class="n">sorted_indices</span><span class="p">,</span> <span class="n">unsorted_indices</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">B</span> <span class="o">=</span> <span class="n">batch_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sorted_indices</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">unsorted_indices</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">batch_sizes</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rearrange_batch_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">T</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+
         <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span>
         <span class="n">P</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span> <span class="k">else</span> <span class="mi">1</span>
         <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span>
@@ -349,6 +508,8 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">h_0s</span> <span class="o">=</span> <span class="n">h_0s</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="n">L</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">H</span><span class="p">])</span>
+            <span class="n">h_0s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_permute_hidden</span><span class="p">(</span><span class="n">h_0s</span><span class="p">,</span> <span class="n">sorted_indices</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">c_0s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">c_0s</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
                 <span class="n">L</span><span class="p">,</span>
@@ -360,6 +521,7 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">c_0s</span> <span class="o">=</span> <span class="n">c_0s</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="n">L</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">H</span><span class="p">])</span>
+            <span class="n">c_0s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_permute_hidden</span><span class="p">(</span><span class="n">c_0s</span><span class="p">,</span> <span class="n">sorted_indices</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
         <span class="n">hs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">cs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -368,7 +530,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span><span class="p">:</span>
                 <span class="n">h0</span> <span class="o">=</span> <span class="n">h0</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                 <span class="n">c0</span> <span class="o">=</span> <span class="n">c0</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">c0</span><span class="p">))</span>
+            <span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">c0</span><span class="p">),</span> <span class="n">batch_sizes</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional</span><span class="p">:</span>
                 <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [1, B, H]</span>
                 <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [1, B, H]</span>
@@ -378,8 +540,32 @@
 
         <span class="n">hs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">hs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [L * P, B, H]</span>
         <span class="n">cs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># [L * P, B, H]</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rearrange_batch_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="p">(</span><span class="n">hs</span><span class="p">,</span> <span class="n">cs</span><span class="p">)</span></div>
+
+        <span class="k">if</span> <span class="n">batch_sizes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">seq_lengths</span> <span class="o">=</span> <span class="n">_compute_seq_lengths</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">)</span>
+            <span class="n">packed_data</span> <span class="o">=</span> <span class="n">pack_padded_sequence</span><span class="p">(</span>
+                <span class="n">pad_sequence</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">seq_lengths</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">PackedSequence</span><span class="p">(</span>
+                <span class="n">packed_data</span><span class="p">,</span> <span class="n">batch_sizes</span><span class="p">,</span> <span class="n">sorted_indices</span><span class="p">,</span> <span class="n">unsorted_indices</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rearrange_batch_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_permute_hidden</span><span class="p">(</span><span class="n">hs</span><span class="p">,</span> <span class="n">unsorted_indices</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_permute_hidden</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">unsorted_indices</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_permute_hidden</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">permutation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">permutation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span><span class="p">[:,</span> <span class="n">permutation</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">elif</span> <span class="n">dim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">permutation</span><span class="p">,</span> <span class="p">:]</span>
 
     <span class="k">def</span> <span class="nf">_rearrange_batch_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>  <span class="c1"># batch is by default in second dimension</span>
