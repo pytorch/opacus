@@ -6,7 +6,7 @@ import torch.nn as nn
 from opacus.layers import DPLSTM
 
 from .common import GradSampleHooks_test
-
+from opacus.utils.packed_sequences import _gen_packed_data
 
 class DPSLTMAdapter(nn.Module):
     """
@@ -83,4 +83,52 @@ class LSTM_test(GradSampleHooks_test):
         N, T, D, H = 1, 20, 8, 16
         lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False, bias=False)
         x = torch.randn([T, N, D])
+        self.run_test(x, lstm, batch_first=False)
+
+    def test_batch_first_unidirectional_PackedSequences_unsorted(self):
+        N, T, D, H = 32, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=True)
+        x = _gen_packed_data(N, T, D, True, False)
+        self.run_test(x, lstm, batch_first=True)
+
+    def test_batch_first_unidirectional_PackedSequences_sorted(self):
+        N, T, D, H = 32, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=True)
+        x = _gen_packed_data(N, T, D, True, True)
+        self.run_test(x, lstm, batch_first=True)
+
+    def test_batch_first_bidirectional_PackedSequences_unsorted(self):
+        N, T, D, H = 32, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=True, bidirectional=True)
+        x = _gen_packed_data(N, T, D, True, False)
+        self.run_test(x, lstm, batch_first=True)
+
+    def test_batch_first_bidirectional_PackedSequences_sorted(self):
+        N, T, D, H = 32, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=True, bidirectional=True)
+        x = _gen_packed_data(N, T, D, True, True)
+        self.run_test(x, lstm, batch_first=True)
+
+    def test_batch_second_unidirectional_PackedSequences_unsorted(self):
+        N, T, D, H = 32, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False)
+        x = _gen_packed_data(N, T, D, False, False)
+        self.run_test(x, lstm, batch_first=False)
+
+    def test_batch_second_unidirectional_PackedSequences_sorted(self):
+        N, T, D, H = 32, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False)
+        x = _gen_packed_data(N, T, D, False, True)
+        self.run_test(x, lstm, batch_first=False)
+
+    def test_batch_second_bidirectional_PackedSequences_unsorted(self):
+        N, T, D, H = 32, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False, bidirectional=True)
+        x = _gen_packed_data(N, T, D, False, False)
+        self.run_test(x, lstm, batch_first=False)
+
+    def test_batch_second_bidirectional_PackedSequences_sorted(self):
+        N, T, D, H = 32, 20, 8, 16
+        lstm = DPSLTMAdapter(D, H, num_layers=1, batch_first=False, bidirectional=True)
+        x = _gen_packed_data(N, T, D, False, True)
         self.run_test(x, lstm, batch_first=False)
