@@ -1,6 +1,6 @@
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, PackedSequence
 import torch
-from typing import List, Optional, Tuple, Union
+from typing import Optional
 
 
 def _gen_packed_data(
