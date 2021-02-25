@@ -41,6 +41,7 @@
 <span class="kn">from</span> <span class="nn">.per_sample_gradient_clip</span> <span class="kn">import</span> <span class="n">PerSampleGradientClipper</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">clipping</span>
 
+
 <span class="n">DEFAULT_ALPHAS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
 
 
@@ -93,9 +94,6 @@
     <span class="k">return</span> <span class="n">sigma</span>
 
 
-<span class="n">DEFAULT_ALPHAS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
-
-
 <div class="viewcode-block" id="PrivacyEngine"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine">[docs]</a><span class="k">class</span> <span class="nc">PrivacyEngine</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The main component of Opacus is the ``PrivacyEngine``.</span>
@@ -112,7 +110,7 @@
 <span class="sd">        &gt;&gt;&gt; import torch</span>
 <span class="sd">        &gt;&gt;&gt; model = torch.nn.Linear(16, 32)  # An example model</span>
 <span class="sd">        &gt;&gt;&gt; optimizer = torch.optim.SGD(model.parameters(), lr=0.05)</span>
-<span class="sd">        &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size=batch_size, sample_size=sample_size, noise_multiplier=1.3, max_grad_norm=1.0)</span>
+<span class="sd">        &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, sample_rate=0.01, noise_multiplier=1.3, max_grad_norm=1.0)</span>
 <span class="sd">        &gt;&gt;&gt; privacy_engine.attach(optimizer)  # That's it! Now it's business as usual.</span>
 <span class="sd">    """</span>
 
@@ -120,6 +118,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>  <span class="c1"># As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally</span>
+        <span class="n">sample_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">sample_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">max_grad_norm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
@@ -136,13 +135,14 @@
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            module: The Pytorch module to which we are attaching the privacy engine</span>
-<span class="sd">            batch_size: Training batch size. Used in the privacy accountant.</span>
-<span class="sd">            sample_size: The size of the sample (dataset). Used in the privacy accountant.</span>
 <span class="sd">            alphas: A list of RDP orders</span>
 <span class="sd">            noise_multiplier: The ratio of the standard deviation of the Gaussian noise to</span>
 <span class="sd">                the L2-sensitivity of the function to which the noise is added</span>
 <span class="sd">            max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm</span>
 <span class="sd">                higher than this will be clipped to this value.</span>
+<span class="sd">            batch_size: Training batch size. Used in the privacy accountant.</span>
+<span class="sd">            sample_size: The size of the sample (dataset). Used in the privacy accountant.</span>
+<span class="sd">            sample_rate: Sample rate used to build batches. Used in the privacy accountant.</span>
 <span class="sd">            secure_rng: If on, it will use ``torchcsprng`` for secure random number generation.</span>
 <span class="sd">                Comes with a significant performance cost, therefore it's recommended that you</span>
 <span class="sd">                turn it off when just experimenting.</span>
@@ -158,8 +158,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="o">=</span> <span class="n">sample_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">/</span> <span class="n">sample_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_sample_rate</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">noise_multiplier</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">target_epsilon</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">target_delta</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">epochs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -183,23 +184,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"batch_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a positive integer."</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"sample_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a positive integer."</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"PrivacyEngine received a dataset sample size of </span><span class="si">{</span><span class="n">sample_size</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="sa">f</span><span class="s2">"but a batch of size </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">. For correct privacy accounting "</span>
-                <span class="sa">f</span><span class="s2">"the batch size must not be greater than the sample size."</span>
-            <span class="p">)</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"noise_multiplier=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a float &gt;= 0."</span>
@@ -211,10 +195,13 @@
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s2">"target_delta unset. Setting it to an order of magnitude less than 1/sample_size."</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"target_delta unset. Setting it to an order of magnitude less than 1/sample_size."</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Please provide a target_delta."</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -399,21 +386,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">clip_and_accumulate</span><span class="p">()</span>
         <span class="n">clip_values</span><span class="p">,</span> <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">pre_step</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"PrivacyEngine expected a batch of size </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="sa">f</span><span class="s2">"but received a batch of size </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"PrivacyEngine expected a batch of size </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="sa">f</span><span class="s2">"but the last step received a batch of size </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">. "</span>
-                <span class="s2">"This means that the privacy analysis will be a bit more "</span>
-                <span class="s2">"pessimistic. You can set `drop_last = True` in your PyTorch "</span>
-                <span class="s2">"dataloader to avoid this problem completely"</span>
-            <span class="p">)</span>
-
         <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">clip_value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">clip_values</span><span class="p">):</span>
             <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_noise</span><span class="p">(</span><span class="n">clip_value</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
@@ -434,7 +406,7 @@
 <span class="sd">            after instantiating the ``PrivacyEngine``.</span>
 
 <span class="sd">            &gt;&gt;&gt; model = torch.nn.Linear(16, 32)  # An example model. Default device is CPU</span>
-<span class="sd">            &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, batch_size=batch_size, sample_size=sample_size, noise_multiplier=0.8, max_grad_norm=0.5)</span>
+<span class="sd">            &gt;&gt;&gt; privacy_engine = PrivacyEngine(model, sample_rate=0.01, noise_multiplier=0.8, max_grad_norm=0.5)</span>
 <span class="sd">            &gt;&gt;&gt; device = "cuda:3"  # GPU</span>
 <span class="sd">            &gt;&gt;&gt; model.to(device)  # If we move the model to GPU, we should call the to() method of the privacy engine (next line)</span>
 <span class="sd">            &gt;&gt;&gt; privacy_engine.to(device)</span>
@@ -541,7 +513,48 @@
             <span class="n">torch</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cpu"</span>
             <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_sample_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Determine the ``sample_rate``.</span>
+
+<span class="sd">        If a ``sample_rate`` is provided, it will be used.</span>
+<span class="sd">        If no ``sample_rate``is provided, the used ``sample_rate`` will be equal to</span>
+<span class="sd">        ``batch_size`` /  ``sample_size``.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"batch_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a positive integer."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"sample_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a positive integer."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"You must provide (batch_size and sample_sizes) or sample_rate."</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                        <span class="s2">"The sample rate will be defined from ``batch_size`` and ``sample_size``."</span>
+                        <span class="s2">"The returned privacy budget will be incorrect."</span>
+                    <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"A ``sample_rate`` has been provided."</span>
+                <span class="s2">"Thus, the provided ``batch_size``and ``sample_size`` will be ignored."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"sample_rate=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span><span class="si">}</span><span class="s2"> is not a valid value. Please provide a float between 0 and 1."</span>
+            <span class="p">)</span></div>
 </pre></div>
 </div>
 </div>

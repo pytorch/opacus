@@ -84,8 +84,7 @@
 <span class="hljs-attr">optimizer</span> = SGD(model.parameters(), <span class="hljs-attr">lr=0.05)</span>  <span class="hljs-comment"># your optimizer</span>
 <span class="hljs-attr">privacy_engine</span> = PrivacyEngine(
     model,
-    batch_size,
-    sample_size,
+    <span class="hljs-attr">sample_rate=0.01,</span>
     <span class="hljs-attr">alphas=[1,</span> <span class="hljs-number">10</span>, <span class="hljs-number">100</span>],
     <span class="hljs-attr">noise_multiplier=1.3,</span>
     <span class="hljs-attr">max_grad_norm=1.0,</span>
