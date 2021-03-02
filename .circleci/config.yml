@@ -188,7 +188,7 @@ commands:
             mkdir dcgan/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
-            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --sample-rate 0.018 --epochs 1 --data-root dcgan/data --device <<parameters.device>>
+            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --sample-rate 0.01 --epochs 1 --data-root dcgan/data --device <<parameters.device>>
           when: always
       - store_test_results:
           path: dcgan/test-reports
