@@ -23,6 +23,7 @@ from torch.functional import F
 from .utils.module_inspection import get_layer_type
 from .utils.tensor_utils import sum_over_all_but_batch_and_last_n, unfold3d
 
+
 def _create_or_extend_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
 ) -> None:
@@ -45,7 +46,7 @@ def _create_or_extend_grad_sample(
 
 
 def _create_or_accumulate_grad_sample(
-    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int, layer: LSTMLinear
+    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int, layer
 ) -> None:
     """
     Creates a ``grad_sample`` attribute in the given parameter, or adds to it
@@ -58,19 +59,18 @@ def _create_or_accumulate_grad_sample(
         batch_dim: Position of the batch dimension in the shape of
             ``grad_sample``
     """
-
     if hasattr(param, "grad_sample"):
-        param.grad_sample[:grad_sample.shape[0]] += grad_sample
+        param.grad_sample += grad_sample
     else:
-        max_batch_len = layer.max_batch_len
-        param.grad_sample = torch.zeros(torch.Size([max_batch_len]) + grad_sample.shape[1:])
-        param.grad_sample[:grad_sample.shape[0]] = grad_sample        
+        param.grad_sample = grad_sample.clone()
+
 
 def _compute_linear_grad_sample(
     layer: nn.Linear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
 ) -> None:
     """
     Computes per sample gradients for ``nn.Linear`` layer
+
     Args:
         layer: Layer
         A: Activations
