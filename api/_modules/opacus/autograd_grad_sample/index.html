@@ -50,6 +50,7 @@
 <span class="kn">from</span> <span class="nn">.supported_layers_grad_samplers</span> <span class="kn">import</span> <span class="n">_supported_layers_grad_samplers</span>
 <span class="kn">from</span> <span class="nn">.utils.module_inspection</span> <span class="kn">import</span> <span class="n">get_layer_type</span><span class="p">,</span> <span class="n">requires_grad</span>
 
+
 <span class="c1"># work-around for https://github.com/pytorch/pytorch/issues/25723</span>
 <span class="n">_hooks_disabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -240,15 +241,13 @@
 
     <span class="c1"># Outside of the LSTM there is "batch_first" but not for the Linear inside the LSTM</span>
     <span class="n">batch_dim</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">batch_first</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">is</span> <span class="n">LSTMLinear</span> <span class="k">else</span> <span class="mi">1</span>
+
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="n">A</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">A</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">activations</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s1">'max_batch_len'</span><span class="p">):</span>
-        <span class="n">layer</span><span class="o">.</span><span class="n">max_batch_len</span> <span class="o">=</span> <span class="n">_get_batch_size</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">batch_dim</span><span class="p">)</span>
-
-    <span class="n">n</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">max_batch_len</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_dim</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
         <span class="n">B</span> <span class="o">=</span> <span class="n">backprops</span> <span class="o">*</span> <span class="n">n</span>
     <span class="k">elif</span> <span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"sum"</span><span class="p">:</span>
@@ -266,29 +265,7 @@
     <span class="n">compute_layer_grad_sample</span> <span class="o">=</span> <span class="n">_supported_layers_grad_samplers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="n">get_layer_type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
     <span class="p">)</span>
-
-    <span class="n">compute_layer_grad_sample</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>        
-
-    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s1">'max_batch_len'</span><span class="p">):</span>
-        <span class="k">del</span> <span class="n">layer</span><span class="o">.</span><span class="n">max_batch_len</span>
-
-
-<span class="k">def</span> <span class="nf">_get_batch_size</span><span class="p">(</span><span class="n">layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">grad_sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    Computes and returns the maximum batch size which is the maximum of the dimension values</span>
-<span class="sd">    along 'batch_dim' axis over layer.activations + [grad_sample], where layer.activations is </span>
-<span class="sd">    a list. If layer.activations is a not a list, then return grad_sample.shape[batch_dim]. </span>
-<span class="sd">    """</span>
-    
-    <span class="n">max_batch_len</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">layer</span><span class="o">.</span><span class="n">activations</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_dim</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_batch_len</span><span class="p">:</span>
-                <span class="n">max_batch_len</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_dim</span><span class="p">]</span>
-
-    <span class="n">max_batch_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_batch_len</span><span class="p">,</span> <span class="n">grad_sample</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_dim</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">max_batch_len</span>
-
+    <span class="n">compute_layer_grad_sample</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
