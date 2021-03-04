@@ -208,7 +208,11 @@ def _compute_conv_grad_sample(
     # get A and B in shape depending on the Conv layer
     if layer_type == "Conv2d":
         A = torch.nn.functional.unfold(
-            A, layer.kernel_size, padding=layer.padding, stride=layer.stride
+            A,
+            layer.kernel_size,
+            padding=layer.padding,
+            stride=layer.stride,
+            dilation=layer.dilation,
         )
         B = B.reshape(n, -1, A.shape[-1])
     elif layer_type == "Conv1d":
@@ -220,10 +224,17 @@ def _compute_conv_grad_sample(
             (1, layer.kernel_size[0]),
             padding=(0, layer.padding[0]),
             stride=(1, layer.stride[0]),
+            dilation=(1, layer.dilation[0]),
         )
         B = B.reshape(n, -1, A.shape[-1])
     elif layer_type == "Conv3d":
-        A = unfold3d(A, layer.kernel_size, layer.padding, layer.stride)
+        A = unfold3d(
+            A,
+            kernel_size=layer.kernel_size,
+            padding=layer.padding,
+            stride=layer.stride,
+            dilation=layer.dilation,
+        )
         B = B.reshape(n, -1, A.shape[-1])
 
     # n=batch_sz; o=num_out_channels; p=(num_in_channels/groups)*kernel_sz

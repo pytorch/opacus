@@ -76,6 +76,7 @@ def unfold3d(
     kernel_size: Union[int, Tuple[int, int, int]],
     padding: Union[int, Tuple[int, int, int]] = 0,
     stride: Union[int, Tuple[int, int, int]] = 1,
+    dilation: Union[int, Tuple[int, int, int]] = 1,
 ):
     r"""
     Extracts sliding local blocks from an batched input tensor.
@@ -88,6 +89,7 @@ def unfold3d(
         kernel_size: the size of the sliding blocks
         padding: implicit zero padding to be added on both sides of input
         stride: the stride of the sliding blocks in the input spatial dimensions
+        dilation: the spacing between the kernel points.
 
     Example:
         >>> B, C, D, H, W = 3, 4, 5, 6, 7
@@ -113,6 +115,12 @@ def unfold3d(
 
     if isinstance(stride, int):
         stride = (stride, stride, stride)
+
+    if isinstance(dilation, int):
+        dilation = (dilation, dilation, dilation)
+
+    if dilation != (1, 1, 1):
+        raise NotImplementedError(f"dilation={dilation} not supported. We'd love a PR!")
 
     batch_size, channels, _, _, _ = tensor.shape
 

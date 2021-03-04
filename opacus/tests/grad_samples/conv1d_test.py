@@ -20,6 +20,7 @@ class Conv1d_test(GradSampleHooks_test):
         kernel_size=st.integers(2, 3),
         stride=st.integers(1, 2),
         padding=st.integers(0, 2),
+        dilation=st.integers(1, 2),
         groups=st.integers(1, 12),
     )
     @settings(deadline=10000)
@@ -32,6 +33,7 @@ class Conv1d_test(GradSampleHooks_test):
         kernel_size: int,
         stride: int,
         padding: int,
+        dilation: int,
         groups: int,
     ):
 
@@ -48,6 +50,7 @@ class Conv1d_test(GradSampleHooks_test):
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
+            dilation=dilation,
             groups=groups,
         )
         self.run_test(x, conv, batch_first=True, atol=10e-5, rtol=10e-4)
