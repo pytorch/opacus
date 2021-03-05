@@ -63,7 +63,7 @@ def _create_or_accumulate_grad_sample(
         param.grad_sample[:grad_sample.shape[0]] += grad_sample
     else:
         max_batch_len = layer.max_batch_len
-        param.grad_sample = torch.zeros(torch.Size([max_batch_len]) + grad_sample.shape[1:])
+        param.grad_sample = torch.zeros(torch.Size([max_batch_len]) + grad_sample.shape[1:], device=grad_sample.device)
         param.grad_sample[:grad_sample.shape[0]] = grad_sample        
 
 def _compute_linear_grad_sample(
