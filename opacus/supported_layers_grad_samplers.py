@@ -23,6 +23,7 @@ from torch.functional import F
 from .utils.module_inspection import get_layer_type
 from .utils.tensor_utils import sum_over_all_but_batch_and_last_n, unfold3d
 
+
 def _create_or_extend_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
 ) -> None:
@@ -60,11 +61,15 @@ def _create_or_accumulate_grad_sample(
     """
 
     if hasattr(param, "grad_sample"):
-        param.grad_sample[:grad_sample.shape[0]] += grad_sample
+        param.grad_sample[: grad_sample.shape[0]] += grad_sample
     else:
         max_batch_len = layer.max_batch_len
-        param.grad_sample = torch.zeros(torch.Size([max_batch_len]) + grad_sample.shape[1:], device=grad_sample.device)
-        param.grad_sample[:grad_sample.shape[0]] = grad_sample        
+        param.grad_sample = torch.zeros(
+            torch.Size([max_batch_len]) + grad_sample.shape[1:],
+            device=grad_sample.device,
+        )
+        param.grad_sample[: grad_sample.shape[0]] = grad_sample
+
 
 def _compute_linear_grad_sample(
     layer: nn.Linear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0

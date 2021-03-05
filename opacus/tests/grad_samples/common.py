@@ -226,10 +226,13 @@ class GradSampleHooks_test(unittest.TestCase):
         atol=10e-6,
         rtol=10e-5,
     ):
-        if type(x) is PackedSequence:            
+        if type(x) is PackedSequence:
             x_unpacked = _unpack_packedsequences(x)
             microbatch_grad_samples = self.compute_microbatch_grad_sample(
-                x_unpacked, module, batch_first=batch_first, loss_reduction=loss_reduction
+                x_unpacked,
+                module,
+                batch_first=batch_first,
+                loss_reduction=loss_reduction,
             )
         else:
             microbatch_grad_samples = self.compute_microbatch_grad_sample(
@@ -324,17 +327,18 @@ def _unpack_packedsequences(X: PackedSequence) -> List[torch.Tensor]:
     """
 
     X_padded = pad_packed_sequence(X)
-    X_padded = X_padded[0].permute((1,0,2))
-    
+    X_padded = X_padded[0].permute((1, 0, 2))
+
     if X.sorted_indices is not None:
         X_padded = X_padded[X.sorted_indices]
-    
+
     seq_lens = _compute_seq_lengths(X.batch_sizes)
     unpacked_data = [0] * len(seq_lens)
     for idx, length in enumerate(seq_lens):
         unpacked_data[idx] = X_padded[idx][:length, :]
 
     return unpacked_data
+
 
 def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
     r"""
@@ -364,26 +368,29 @@ def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
     running_seq_lengths.reverse()
     return running_seq_lengths
 
-def _compute_loss_packedsequences(criterion: nn.L1Loss, x: PackedSequence) -> torch.Tensor:
+
+def _compute_loss_packedsequences(
+    criterion: nn.L1Loss, x: PackedSequence
+) -> torch.Tensor:
     r"""
     This function computes the loss in a different way for 'mean' reduced L1 loss while for 'sum' reduced L1 loss,
     it computes the same way as with non-packed data. For 'mean' reduced L1 loss, it transforms x (PackedSequence)
-    into a list of tensors such that this list of tensors was used to create this PackedSequence in the first 
-    place using batch_first=True and then takes the mean of the loss values produced from applying criterion on 
-    each sequence sample.  
+    into a list of tensors such that this list of tensors was used to create this PackedSequence in the first
+    place using batch_first=True and then takes the mean of the loss values produced from applying criterion on
+    each sequence sample.
 
     Args:
         criterion: An L1 loss function with reduction either set to 'sum' or 'mean'.
-        x: Data in the form of a PackedSequence. 
+        x: Data in the form of a PackedSequence.
 
     Returns:
         A loss variable, reduced either using summation or averaging from L1 errors.
     """
 
-    if criterion.reduction == 'sum':
+    if criterion.reduction == "sum":
         y = torch.zeros_like(x[0])
         return criterion(x[0], y)
-    elif criterion.reduction == 'mean':
+    elif criterion.reduction == "mean":
         x = _unpack_packedsequences(x)
         loss_sum = 0
         for x_i in x:

@@ -10,6 +10,7 @@ from opacus.layers import DPLSTM
 from .common import GradSampleHooks_test
 from opacus.utils.packed_sequences import _gen_packed_data
 
+
 class DPSLTMAdapter(nn.Module):
     """
     Adapter for DPLSTM.
@@ -55,7 +56,12 @@ class LSTM_test(GradSampleHooks_test):
     ):
 
         lstm = DPSLTMAdapter(
-            D, H, num_layers=num_layers, batch_first=batch_first, bias=bias, bidirectional=bidirectional
+            D,
+            H,
+            num_layers=num_layers,
+            batch_first=batch_first,
+            bias=bias,
+            bidirectional=bidirectional,
         )
         if using_packed_sequences:
             x = _gen_packed_data(N, T, D, batch_first, packed_sequences_sorted)

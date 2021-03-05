@@ -218,7 +218,7 @@ def _compute_grad_sample(
     else:
         A = layer.activations
 
-    if not hasattr(layer, 'max_batch_len'):
+    if not hasattr(layer, "max_batch_len"):
         layer.max_batch_len = _get_batch_size(layer, A, batch_dim)
 
     n = layer.max_batch_len
@@ -240,19 +240,21 @@ def _compute_grad_sample(
         get_layer_type(layer)
     )
 
-    compute_layer_grad_sample(layer, A, B)        
+    compute_layer_grad_sample(layer, A, B)
 
-    if (not isinstance(layer.activations, list) or len(layer.activations) == 0) and hasattr(layer, 'max_batch_len'):
+    if (
+        not isinstance(layer.activations, list) or len(layer.activations) == 0
+    ) and hasattr(layer, "max_batch_len"):
         del layer.max_batch_len
 
 
 def _get_batch_size(layer: nn.Module, grad_sample: torch.Tensor, batch_dim: int) -> int:
     r"""
     Computes and returns the maximum batch size which is the maximum of the dimension values
-    along 'batch_dim' axis over layer.activations + [grad_sample], where layer.activations is 
-    a list. If layer.activations is a not a list, then return grad_sample.shape[batch_dim]. 
+    along 'batch_dim' axis over layer.activations + [grad_sample], where layer.activations is
+    a list. If layer.activations is a not a list, then return grad_sample.shape[batch_dim].
     """
-    
+
     max_batch_len = 0
     if isinstance(layer.activations, list):
         for out in layer.activations:
@@ -261,4 +263,3 @@ def _get_batch_size(layer: nn.Module, grad_sample: torch.Tensor, batch_dim: int)
 
     max_batch_len = max(max_batch_len, grad_sample.shape[batch_dim])
     return max_batch_len
-
