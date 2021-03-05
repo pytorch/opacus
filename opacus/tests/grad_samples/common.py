@@ -3,17 +3,15 @@
 
 import io
 import unittest
-from typing import Dict
+from typing import Dict, List, Union
 
 import numpy as np
 import opacus
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.testing import assert_allclose
-
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
-from typing import List, Union
+from torch.testing import assert_allclose
 
 
 def expander(x, factor: int = 2):

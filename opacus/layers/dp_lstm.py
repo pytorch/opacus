@@ -3,11 +3,10 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import PackedSequence
+from torch.nn.utils.rnn import (PackedSequence, pack_padded_sequence,
+                                pad_sequence)
 
 from .param_rename import ParamRenamedModule
-
-from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 
 
 def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:

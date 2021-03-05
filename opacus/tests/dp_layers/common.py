@@ -9,8 +9,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.testing import assert_allclose
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
+from torch.testing import assert_allclose
 
 
 def clone_module(module: nn.Module) -> nn.Module:

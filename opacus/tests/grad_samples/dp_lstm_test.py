@@ -6,9 +6,9 @@ import torch
 import torch.nn as nn
 from hypothesis import given, settings
 from opacus.layers import DPLSTM
+from opacus.utils.packed_sequences import _gen_packed_data
 
 from .common import GradSampleHooks_test
-from opacus.utils.packed_sequences import _gen_packed_data
 
 
 class DPSLTMAdapter(nn.Module):
