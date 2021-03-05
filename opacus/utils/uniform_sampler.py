@@ -34,7 +34,7 @@ class UniformWithReplacementSampler(Sampler):
             )
 
     def __len__(self):
-        return self.num_samples
+        return int(1 / self.sample_rate)
 
     def __iter__(self):
         num_batches = int(1 / self.sample_rate)
