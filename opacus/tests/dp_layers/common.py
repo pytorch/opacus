@@ -3,7 +3,7 @@
 
 import io
 import unittest
-from typing import Callable, Optional, Sequence, Tuple, Union, List
+from typing import Callable, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch

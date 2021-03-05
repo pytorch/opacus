@@ -13,7 +13,7 @@ import torch.nn.functional as F
 from torch.testing import assert_allclose
 
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
-from typing import List, Optional, Union
+from typing import List, Union
 
 
 def expander(x, factor: int = 2):
