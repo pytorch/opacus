@@ -285,6 +285,8 @@ def padded_collate(batch, padding_idx=0):
 
 
 def train(model, criterion, optimizer, train_loader, epoch, device="cuda:0"):
+    model.train()
+
     accs = []
     losses = []
     for x, y in tqdm(train_loader):
@@ -319,6 +321,8 @@ def train(model, criterion, optimizer, train_loader, epoch, device="cuda:0"):
 
 
 def test(model, test_loader, privacy_engine, device="cuda:0"):
+    model.eval()
+
     accs = []
     with torch.no_grad():
         for x, y in tqdm(test_loader):
