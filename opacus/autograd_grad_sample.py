@@ -214,13 +214,15 @@ def _compute_grad_sample(
 
     # Outside of the LSTM there is "batch_first" but not for the Linear inside the LSTM
     batch_dim = 0 if batch_first or type(layer) is LSTMLinear else 1
-
     if isinstance(layer.activations, list):
         A = layer.activations.pop()
     else:
         A = layer.activations
 
-    n = A.shape[batch_dim]
+    if not hasattr(layer, "max_batch_len"):
+        layer.max_batch_len = _get_batch_size(layer, A, batch_dim)
+
+    n = layer.max_batch_len
     if loss_reduction == "mean":
         B = backprops * n
     elif loss_reduction == "sum":
@@ -238,4 +240,27 @@ def _compute_grad_sample(
     compute_layer_grad_sample = _supported_layers_grad_samplers.get(
         get_layer_type(layer)
     )
+
     compute_layer_grad_sample(layer, A, B)
+
+    if (
+        not isinstance(layer.activations, list) or len(layer.activations) == 0
+    ) and hasattr(layer, "max_batch_len"):
+        del layer.max_batch_len
+
+
+def _get_batch_size(layer: nn.Module, grad_sample: torch.Tensor, batch_dim: int) -> int:
+    r"""
+    Computes and returns the maximum batch size which is the maximum of the dimension values
+    along 'batch_dim' axis over layer.activations + [grad_sample], where layer.activations is
+    a list. If layer.activations is a not a list, then return grad_sample.shape[batch_dim].
+    """
+
+    max_batch_len = 0
+    if isinstance(layer.activations, list):
+        for out in layer.activations:
+            if out.shape[batch_dim] > max_batch_len:
+                max_batch_len = out.shape[batch_dim]
+
+    max_batch_len = max(max_batch_len, grad_sample.shape[batch_dim])
+    return max_batch_len
