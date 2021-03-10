@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.13.0
+### New features
+* PackedSequence support for DPLSTM (#150) (thanks @touqir14 !)
+### Miscellaneous
+* Pytest moved to dev installation (#144)
+
 ## v0.12.0
 This version introduces a **mildly-breaking change**: the privacy engine will now support sampling with variable batch size, just like in the Abadi et al. paper. To accommodate this feature, we have made `batch_size` a kwarg (no longer positional). We are also enforcing that all kwargs must not be specified positionally. If you had code that passed kwargs positionally, you will find an error (which will be very simple to fix).
 ### New features
