@@ -37,6 +37,7 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR, REQUIRED_MICRO):
 
 DEV_REQUIRES = [
     "black",
+    "pytest",
     "flake8",
     "sphinx",
     "sphinx-autodoc-typehints",
