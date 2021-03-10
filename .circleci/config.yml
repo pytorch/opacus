@@ -268,7 +268,7 @@ jobs:
     steps:
       - checkout
       - pip_install
-      - run: pip install torchcsprng hypothesis
+      - run: pip install torchcsprng hypothesis pytest
       - unit_tests
 
   unittest_py37_torch_release:
@@ -277,7 +277,7 @@ jobs:
     steps:
       - checkout
       - pip_install
-      - run: pip install torchcsprng hypothesis
+      - run: pip install torchcsprng hypothesis pytest
       - unit_tests
 
   unittest_py38_torch_release:
@@ -286,7 +286,7 @@ jobs:
     steps:
       - checkout
       - pip_install
-      - run: pip install torchcsprng hypothesis
+      - run: pip install torchcsprng hypothesis pytest
       - unit_tests
 
   unittest_py38_torch_nightly:
@@ -304,6 +304,7 @@ jobs:
     steps:
       - checkout
       - pip_install
+      - run: pip install pytest
       - mnist_integration_test:
           device: "cpu"
 
@@ -316,6 +317,7 @@ jobs:
       - checkout
       - py_3_6_setup
       - pip_install
+      - run: pip install pytest
       - run_nvidia_smi
       - mnist_integration_test:
           device: "cuda"
