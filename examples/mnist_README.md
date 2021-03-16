@@ -29,7 +29,7 @@ If the run is successful, expect to see
 Train Epoch: 1    Loss: 0.912457 (ε = 0.71, δ = 1e-05) for α = 18.0
 ...
 100%|██████████| 240/240 [00:22<00:00, 10.79it/s]
-Train Epoch: 15   Loss: 0.404850 (ε = 1.18, δ = 1e-05) for α = 17.0
+Train Epoch: 15   Loss: 0.404850 (ε = 1.16, δ = 1e-05) for α = 17.0
 100%|██████████| 10/10 [00:01<00:00,  6.76it/s]
 
 Test set: Average loss: 0.0004, Accuracy: 9486/10000 (94.86%)
@@ -43,19 +43,19 @@ Command: `--disable-dp --n=20 --lr=.1 -sr=0.004`
 
 Result: accuracy averaged over 10 runs 98.94% ± 0.32%
 
-**(7.10, 10<sup>-5</sup>)-DP**
+**(6.86, 10<sup>-5</sup>)-DP**
 
 Command: `-n=45 --lr=.25 --sigma=.7 -c=1.5 -sr=0.004`
 
 Result: accuracy averaged over 10 runs 97.09% ± 0.17%
 
-**(3.01, 10<sup>-5</sup>)-DP**
+**(2.91, 10<sup>-5</sup>)-DP**
 
 Command: `-n 60 --lr=.15 --sigma=1.1 -c=1.0 -sr=0.004`
 
 Result: accuracy averaged over 10 runs 96.78% ± 0.21%
 
-**(1.19, 10<sup>-5</sup>)-DP**
+**(1.16, 10<sup>-5</sup>)-DP**
 
 Command: `-n=15 --lr=.25 --sigma=1.3 -c=1.5 -sr=0.004`
 
