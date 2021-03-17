@@ -1,3 +1,5 @@
+#!/bin/bash
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 # Borrowed from https://github.com/OpenMined/PySyft
 
 [string]$TORCH_VERSION=$args[0]
