@@ -140,6 +140,9 @@ commands:
             mkdir mnist
             mkdir mnist/data
             mkdir mnist/test-reports
+            sudo apt-get update
+            sudo apt-get install libjpeg-turbo8-dev
+            sudo "$(which python)" -m pip install --upgrade git+git://github.com/pytorch/vision.git@814c4f08bc9296a314ecb9e216648e0d059a3edc
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.004 --epochs 1 --data-root mnist/data --n-runs 1 --device <<parameters.device>>
