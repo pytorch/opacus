@@ -71,8 +71,7 @@ def _apply_dp_sgd_analysis(
 
 
 def compute_dp_sgd_privacy(
-    sample_size: int,
-    batch_size: int,
+    sample_rate: float,
     noise_multiplier: float,
     epochs: int,
     delta: float,
@@ -86,8 +85,7 @@ def compute_dp_sgd_privacy(
     DP-SGD privacy analysis to find the privacy loss epsilon and optimal order alpha.
 
     Args:
-        sample_size : The size of the sample (dataset)
-        batch_size : Batch size
+        sample_rate : probability of each sample from the dataset to be selected for a next batch
         noise_multiplier : The ratio of the standard deviation of the Gaussian noise
             to the L2-sensitivity of the function to which the noise is added
         epochs : Number of epochs
@@ -102,10 +100,9 @@ def compute_dp_sgd_privacy(
         ValueError
             When batch size is greater than sample size
     """
-    sample_rate = batch_size / sample_size
     if sample_rate > 1:
-        raise ValueError("sample_size must be larger than the batch size.")
-    steps = epochs * math.ceil(sample_size / batch_size)
+        raise ValueError("sample_rate must be no greater than 1")
+    steps = epochs * math.ceil(1 / sample_rate)
 
     return _apply_dp_sgd_analysis(
         sample_rate, noise_multiplier, steps, alphas, delta, verbose
@@ -115,32 +112,25 @@ def compute_dp_sgd_privacy(
 def main():
     parser = argparse.ArgumentParser(description="RDP computation")
     parser.add_argument(
-        "-s",
-        "--dataset-size",
-        type=int,
-        default=60000,
-        help="Training dataset size (default: 60_000)",
-    )
-    parser.add_argument(
-        "-b",
-        "--batch-size",
-        type=int,
-        default=256,
-        help="Input batch size (default: 256)",
+        "-r",
+        "--sample-rate",
+        type=float,
+        required=True,
+        help="Input sample rate (probability of each sample from the dataset to be selected for a next batch)",
     )
     parser.add_argument(
         "-n",
-        "--noise_multiplier",
+        "--noise-multiplier",
         type=float,
-        default=1.12,
-        help="Noise multiplier (default: 1.12)",
+        required=True,
+        help="Noise multiplier",
     )
     parser.add_argument(
         "-e",
         "--epochs",
         type=int,
-        default=60,
-        help="Number of epochs to train (default: 60)",
+        required=True,
+        help="Number of epochs to train",
     )
     parser.add_argument(
         "-d", "--delta", type=float, default=1e-5, help="Targeted delta (default: 1e-5)"
@@ -161,8 +151,7 @@ def main():
     args = parser.parse_args()
 
     compute_dp_sgd_privacy(
-        args.dataset_size,
-        args.batch_size,
+        args.sample_rate,
         args.noise_multiplier,
         args.epochs,
         args.delta,
