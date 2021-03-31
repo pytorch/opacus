@@ -30,8 +30,7 @@ pip install -e .
 optimizer = SGD(model.parameters(), lr=<span class="hljs-number">0.05</span>)
 privacy_engine = PrivacyEngine(
     model,
-    batch_size,
-    sample_size,
+    sample_rate=<span class="hljs-number">0.01</span>,
     alphas=[<span class="hljs-number">1</span>, <span class="hljs-number">10</span>, <span class="hljs-number">100</span>],
     noise_multiplier=<span class="hljs-number">1.3</span>,
     max_grad_norm=<span class="hljs-number">1.0</span>,
