@@ -1,0 +1,16 @@
+torchvision>=0.9.1
+tqdm>=4.40
+requests>=2.25.1
+black
+pytest
+flake8
+sphinx
+sphinx-autodoc-typehints
+mypy>=0.760
+isort
+torchcsprng
+hypothesis
+tensorboard
+datasets
+transformers
+scikit-learn
