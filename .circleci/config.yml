@@ -6,15 +6,16 @@ version: 2.1
 
 commands:
 
-  py_3_6_setup:
-    description: "Install and switch to Python 3.6.9; also install pip and pytest."
+  py_3_7_setup:
+    description: "Install and switch to Python 3.7.10; also install pip and pytest."
     steps:
       - run:
-          name: "Setup Python v3.6.9 environment"
+          name: "Setup Python v3.7.10 environment"
           command: |
-            pyenv install -s 3.6.9
-            pyenv global 3.6.9
-            pyenv local 3.6.9
+            cd /opt/circleci/.pyenv && git pull && cd -
+            pyenv install -s 3.7.10
+            pyenv global 3.7.10
+            pyenv local 3.7.10
             pyenv versions
             echo "In venv: $(pyenv local) - $(python -V), $(pip -V)"
             sudo "$(which python)" -m pip install --upgrade pip
@@ -40,15 +41,6 @@ commands:
           name: "Run Nvidia-SMI"
           command: |
             nvidia-smi
-
-  pip_install:
-    description: "Simple install via pip with no extra deps to build the website."
-    steps:
-      - run:
-          name: "Simple PIP install"
-          command: |
-            echo "Using $(python -V) ($(which python))"
-            sudo "$(which python)" -m pip install -e .
 
   pip_dev_install:
     description: "Install dependencies via pip, including extra deps. Also supports more options, such as building on top of PyTorch nightly."
@@ -140,9 +132,6 @@ commands:
             mkdir mnist
             mkdir mnist/data
             mkdir mnist/test-reports
-            sudo apt-get update
-            sudo apt-get install libjpeg-turbo8-dev
-            sudo "$(which python)" -m pip install --upgrade git+git://github.com/pytorch/vision.git@814c4f08bc9296a314ecb9e216648e0d059a3edc
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.004 --epochs 1 --data-root mnist/data --n-runs 1 --device <<parameters.device>>
@@ -253,34 +242,23 @@ commands:
 
 jobs:
 
-  lint_py36_torch_release:
+  lint_py37_torch_release:
     docker:
-      - image: cimg/python:3.6.9
+      - image: cimg/python:3.7
     steps:
       - checkout
-      - run: pip install black flake8 isort
-      - pip_install
+      - pip_dev_install
       - lint_flake8
       - lint_black
       - isort
       # - mypy_check  TODO re-enable
-
-  unittest_py36_torch_release:
-    docker:
-      - image: cimg/python:3.6.9
-    steps:
-      - checkout
-      - pip_install
-      - run: pip install torchcsprng hypothesis pytest
-      - unit_tests
 
   unittest_py37_torch_release:
     docker:
       - image: cimg/python:3.7
     steps:
       - checkout
-      - pip_install
-      - run: pip install torchcsprng hypothesis pytest
+      - pip_dev_install
       - unit_tests
 
   unittest_py38_torch_release:
@@ -288,39 +266,44 @@ jobs:
       - image: cimg/python:3.8
     steps:
       - checkout
-      - pip_install
-      - run: pip install torchcsprng hypothesis pytest
+      - pip_dev_install
       - unit_tests
 
-  unittest_py38_torch_nightly:
+  unittest_py39_torch_release:
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - pip_dev_install
+      - unit_tests
+
+  unittest_py39_torch_nightly:
+    docker:
+      - image: cimg/python:3.9
     steps:
       - checkout
       - pip_dev_install:
           args: "-n"
       - unit_tests
 
-  integrationtest_py36_torch_release_cpu:
+  integrationtest_py37_torch_release_cpu:
     docker:
-      - image: cimg/python:3.6.9
+      - image: cimg/python:3.7
     steps:
       - checkout
-      - pip_install
-      - run: pip install pytest
+      - pip_dev_install
       - mnist_integration_test:
           device: "cpu"
 
-  integrationtest_py36_torch_release_cuda:
+  integrationtest_py37_torch_release_cuda:
     machine:
       resource_class: gpu.nvidia.small
-      image: ubuntu-1604-cuda-10.1:201909-23
+      image: ubuntu-1604-cuda-11.1:202012-01
     steps:
       - update_gpg_key
       - checkout
-      - py_3_6_setup
-      - pip_install
-      - run: pip install pytest
+      - py_3_7_setup
+      - pip_dev_install
       - run_nvidia_smi
       - mnist_integration_test:
           device: "cuda"
@@ -336,7 +319,7 @@ jobs:
 
   auto_deploy_site:
     docker:
-      - image: cimg/python:3.8-node
+      - image: cimg/python:3.9-node
     steps:
       - run: node --version
       - run: yarn --version
@@ -361,19 +344,19 @@ aliases:
 workflows:
   commit:
     jobs:
-      - lint_py36_torch_release:
-          filters: *exclude_ghpages
-      - unittest_py36_torch_release:
+      - lint_py37_torch_release:
           filters: *exclude_ghpages
       - unittest_py37_torch_release:
           filters: *exclude_ghpages
       - unittest_py38_torch_release:
           filters: *exclude_ghpages
-      - unittest_py38_torch_nightly:
+      - unittest_py39_torch_release:
           filters: *exclude_ghpages
-      - integrationtest_py36_torch_release_cpu:
+      - unittest_py39_torch_nightly:
           filters: *exclude_ghpages
-      - integrationtest_py36_torch_release_cuda:
+      - integrationtest_py37_torch_release_cpu:
+          filters: *exclude_ghpages
+      - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
 
   nightly:
@@ -385,11 +368,11 @@ workflows:
               only:
                 - master
     jobs:
-      - unittest_py38_torch_nightly:
+      - unittest_py39_torch_nightly:
           filters: *exclude_ghpages
-      - integrationtest_py36_torch_release_cpu:
+      - integrationtest_py37_torch_release_cpu:
           filters: *exclude_ghpages
-      - integrationtest_py36_torch_release_cuda:
+      - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
 
   website_deployment:
