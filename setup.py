@@ -8,7 +8,6 @@ from setuptools import find_packages, setup
 
 
 # 3.6.8 is the final Windows binary release for 3.6.x
-# Google Colab also requires 3.6.9
 REQUIRED_MAJOR = 3
 REQUIRED_MINOR = 6
 REQUIRED_MICRO = 8
@@ -35,18 +34,6 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR, REQUIRED_MICRO):
     )
     sys.exit(error)
 
-DEV_REQUIRES = [
-    "black",
-    "pytest",
-    "flake8",
-    "sphinx",
-    "sphinx-autodoc-typehints",
-    "mypy>=0.760",
-    "isort",
-    "torchcsprng",
-    "hypothesis",
-]
-
 
 src_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -56,6 +43,9 @@ with open("README.md", "r", encoding="utf8") as fh:
 requirements_txt = os.path.join(src_dir, "requirements.txt")
 with open("requirements.txt", encoding="utf8") as f:
     required = f.read().splitlines()
+
+with open("dev_requirements.txt", encoding="utf8") as f:
+    dev_required = f.read().splitlines()
 
 setup(
     name="opacus",
@@ -71,7 +61,7 @@ setup(
     },
     license="Apache-2.0",
     install_requires=required,
-    extras_require={"dev": DEV_REQUIRES},
+    extras_require={"dev": dev_required},
     packages=find_packages(),
     keywords=[
         "PyTorch",
