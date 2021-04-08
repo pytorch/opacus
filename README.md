@@ -60,6 +60,8 @@ Checkout the [FAQ](https://opacus.ai/docs/faq) page for answers to some of the m
 ## Contributing
 See the [CONTRIBUTING](https://github.com/pytorch/opacus/tree/master/CONTRIBUTING.md) file for how to help out.
 
+Do also check out our README files inside the repo to learn how the code is organized.
+
 ## References
 * [Mironov, Ilya. "Rényi differential privacy." 2017 IEEE 30th Computer Security Foundations Symposium (CSF). IEEE, 2017.](https://arxiv.org/abs/1702.07476)
 * [Abadi, Martin, et al. "Deep learning with differential privacy." Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security. ACM, 2016.](https://arxiv.org/abs/1607.00133)
