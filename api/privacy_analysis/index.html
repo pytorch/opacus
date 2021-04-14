@@ -74,7 +74,12 @@ of the function is 1.</p></li>
 <dt id="opacus.privacy_analysis.get_privacy_spent">
 <code class="sig-prename descclassname"><span class="pre">opacus.privacy_analysis.</span></code><code class="sig-name descname"><span class="pre">get_privacy_spent</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orders</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rdp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_analysis.html#get_privacy_spent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_analysis.get_privacy_spent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes epsilon given a list of Renyi Differential Privacy (RDP) values at
-multiple RDP orders and target <code class="docutils literal notranslate"><span class="pre">delta</span></code>.</p>
+multiple RDP orders and target <code class="docutils literal notranslate"><span class="pre">delta</span></code>.
+The computation of epslion, i.e. conversion from RDP to (eps, delta)-DP,
+is based on the theorem presented in the following work:
+Borja Balle et al. “Hypothesis testing interpretations and Renyi differential privacy.”
+International Conference on Artificial Intelligence and Statistics. PMLR, 2020.
+Particullary, Theorem 21 in the arXiv version <a class="reference external" href="https://arxiv.org/abs/1905.09982">https://arxiv.org/abs/1905.09982</a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
