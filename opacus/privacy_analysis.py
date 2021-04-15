@@ -271,12 +271,7 @@ def get_privacy_spent(
     orders: Union[List[float], float], rdp: Union[List[float], float], delta: float
 ) -> Tuple[float, float]:
     r"""Computes epsilon given a list of Renyi Differential Privacy (RDP) values at
-    multiple RDP orders and target ``delta``. 
-    The computation of epslion, i.e. conversion from RDP to (eps, delta)-DP,
-    is based on the theorem presented in the following work: 
-    Borja Balle et al. "Hypothesis testing interpretations and Renyi differential privacy." 
-    International Conference on Artificial Intelligence and Statistics. PMLR, 2020.
-    Particullary, Theorem 21 in the arXiv version https://arxiv.org/abs/1905.09982.
+    multiple RDP orders and target ``delta``.
 
     Args:
         orders: An array (or a scalar) of orders (alphas).
@@ -299,8 +294,8 @@ def get_privacy_spent(
             f"\torders_vec = {orders_vec}\n"
             f"\trdp_vec = {rdp_vec}\n"
         )
-    
-    eps = rdp_vec - (np.log(delta) + np.log(orders_vec)) / (orders_vec - 1) + np.log((orders_vec - 1)/orders_vec)
+
+    eps = rdp_vec - math.log(delta) / (orders_vec - 1)
 
     # special case when there is no privacy
     if np.isnan(eps).all():
