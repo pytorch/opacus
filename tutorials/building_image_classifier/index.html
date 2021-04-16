@@ -206,7 +206,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [4]:</div>
+<div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision.datasets</span> <span class="kn">import</span> <span class="n">CIFAR10</span>
@@ -238,18 +238,6 @@
     <span class="n">num_workers</span><span class="o">=</span><span class="n">NUM_WORKERS</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-<div class="output_wrapper">
-<div class="output">
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Files already downloaded and verified
-Files already downloaded and verified
-</pre>
-</div>
 </div>
 </div>
 </div>
@@ -309,17 +297,17 @@ Files already downloaded and verified
 <pre>
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
 <span class="ansi-red-fg">IncompatibleModuleException</span>               Traceback (most recent call last)
-<span class="ansi-green-fg">&lt;ipython-input-6-162c21ea82b7&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span><span class="ansi-blue-fg">()</span>
+<span class="ansi-green-fg">&lt;ipython-input-11-c3648acc319a&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
 <span class="ansi-green-intense-fg ansi-bold">      2</span> 
 <span class="ansi-green-intense-fg ansi-bold">      3</span> inspector <span class="ansi-blue-fg">=</span> DPModelInspector<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">)</span>
 <span class="ansi-green-fg">----&gt; 4</span><span class="ansi-red-fg"> </span>inspector<span class="ansi-blue-fg">.</span>validate<span class="ansi-blue-fg">(</span>model<span class="ansi-blue-fg">)</span>
 
-<span class="ansi-green-fg">/usr/local/lib/python3.7/dist-packages/opacus/dp_model_inspector.py</span> in <span class="ansi-cyan-fg">validate</span><span class="ansi-blue-fg">(self, model)</span>
-<span class="ansi-green-intense-fg ansi-bold">    124</span>                 <span class="ansi-green-fg">if</span> inspector<span class="ansi-blue-fg">.</span>violators<span class="ansi-blue-fg">:</span>
-<span class="ansi-green-intense-fg ansi-bold">    125</span>                     message <span class="ansi-blue-fg">+=</span> <span class="ansi-blue-fg">f"\n{inspector.message}: {inspector.violators}"</span>
-<span class="ansi-green-fg">--&gt; 126</span><span class="ansi-red-fg">             </span><span class="ansi-green-fg">raise</span> IncompatibleModuleException<span class="ansi-blue-fg">(</span>message<span class="ansi-blue-fg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">    127</span>         <span class="ansi-green-fg">return</span> valid
-<span class="ansi-green-intense-fg ansi-bold">    128</span> 
+<span class="ansi-green-fg">/mnt/xarfuse/uid-179429/a7a74ae2-seed-nspid4026531836-ns-4026531840/opacus/dp_model_inspector.py</span> in <span class="ansi-cyan-fg">validate</span><span class="ansi-blue-fg">(self, model)</span>
+<span class="ansi-green-intense-fg ansi-bold">    115</span>                 <span class="ansi-green-fg">if</span> inspector<span class="ansi-blue-fg">.</span>violators<span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">    116</span>                     message <span class="ansi-blue-fg">+=</span> <span class="ansi-blue-fg">f"\n{inspector.message}: {inspector.violators}"</span>
+<span class="ansi-green-fg">--&gt; 117</span><span class="ansi-red-fg">             </span><span class="ansi-green-fg">raise</span> IncompatibleModuleException<span class="ansi-blue-fg">(</span>message<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    118</span>         <span class="ansi-green-fg">return</span> valid
+<span class="ansi-green-intense-fg ansi-bold">    119</span> 
 
 <span class="ansi-red-fg">IncompatibleModuleException</span>: Model contains incompatible modules.
 Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn2', 'Main.layer1.1.bn1', 'Main.layer1.1.bn2', 'Main.layer2.0.bn1', 'Main.layer2.0.bn2', 'Main.layer2.0.downsample.1', 'Main.layer2.1.bn1', 'Main.layer2.1.bn2', 'Main.layer3.0.bn1', 'Main.layer3.0.bn2', 'Main.layer3.0.downsample.1', 'Main.layer3.1.bn1', 'Main.layer3.1.bn2', 'Main.layer4.0.bn1', 'Main.layer4.0.bn2', 'Main.layer4.0.downsample.1', 'Main.layer4.1.bn1', 'Main.layer4.1.bn2']</pre>
@@ -390,7 +378,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [9]:</div>
+<div class="prompt input_prompt">In [36]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
@@ -537,7 +525,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [13]:</div>
+<div class="prompt input_prompt">In [14]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
@@ -582,7 +570,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [14]:</div>
+<div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
@@ -597,288 +585,59 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="output">
 <div class="output_area">
 <div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:   0%|          | 0/20 [00:00&lt;?, ?epoch/s]</pre>
+<div class="output_subarea output_widget_view" id="84cd538e-69e4-45e1-963d-c23b5d45bca3">
+<script type="text/javascript">
+var element = $('#84cd538e-69e4-45e1-963d-c23b5d45bca3');
+</script>
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id": "a0521999fa9d45219724acf70b3b4469", "version_major": 2, "version_minor": 0}
+</script>
 </div>
 </div>
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 1 	Loss: 2.493264 Acc@1: 12.096774 (ε = 0.10, δ = 1e-05)
-	Train Epoch: 1 	Loss: 2.761356 Acc@1: 14.456262 (ε = 14.58, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:   5%|▌         | 1/20 [01:05&lt;20:38, 65.21s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 2 	Loss: 1.955629 Acc@1: 25.641026 (ε = 17.11, δ = 1e-05)
-	Train Epoch: 2 	Loss: 1.767638 Acc@1: 37.946047 (ε = 19.29, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  10%|█         | 2/20 [02:10&lt;19:32, 65.11s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 3 	Loss: 1.648330 Acc@1: 46.835443 (ε = 20.79, δ = 1e-05)
-	Train Epoch: 3 	Loss: 1.723294 Acc@1: 46.021707 (ε = 22.31, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  15%|█▌        | 3/20 [03:15&lt;18:28, 65.22s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 4 	Loss: 1.556890 Acc@1: 50.769231 (ε = 23.78, δ = 1e-05)
-	Train Epoch: 4 	Loss: 1.730266 Acc@1: 48.891415 (ε = 25.08, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  20%|██        | 4/20 [04:20&lt;17:22, 65.18s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 5 	Loss: 1.592981 Acc@1: 53.968254 (ε = 26.15, δ = 1e-05)
-	Train Epoch: 5 	Loss: 1.692724 Acc@1: 51.628847 (ε = 27.26, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  25%|██▌       | 5/20 [05:26&lt;16:20, 65.35s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 6 	Loss: 1.790667 Acc@1: 50.000000 (ε = 28.33, δ = 1e-05)
-	Train Epoch: 6 	Loss: 1.691323 Acc@1: 52.989614 (ε = 29.45, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  30%|███       | 6/20 [06:31&lt;15:15, 65.41s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 7 	Loss: 1.557785 Acc@1: 54.014599 (ε = 30.52, δ = 1e-05)
-	Train Epoch: 7 	Loss: 1.674198 Acc@1: 54.527030 (ε = 31.63, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  35%|███▌      | 7/20 [07:36&lt;14:07, 65.17s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 8 	Loss: 1.935706 Acc@1: 50.000000 (ε = 32.61, δ = 1e-05)
-	Train Epoch: 8 	Loss: 1.673220 Acc@1: 56.032113 (ε = 33.45, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  40%|████      | 8/20 [08:41&lt;13:00, 65.06s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 9 	Loss: 1.574659 Acc@1: 52.830189 (ε = 34.26, δ = 1e-05)
-	Train Epoch: 9 	Loss: 1.657451 Acc@1: 57.054291 (ε = 35.10, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  45%|████▌     | 9/20 [09:46&lt;11:56, 65.16s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 10 	Loss: 1.855417 Acc@1: 57.037037 (ε = 35.90, δ = 1e-05)
-	Train Epoch: 10 	Loss: 1.649551 Acc@1: 58.181273 (ε = 36.74, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  50%|█████     | 10/20 [10:51&lt;10:49, 64.98s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 11 	Loss: 1.901847 Acc@1: 58.823529 (ε = 37.54, δ = 1e-05)
-	Train Epoch: 11 	Loss: 1.637535 Acc@1: 58.539230 (ε = 38.38, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  55%|█████▌    | 11/20 [11:56&lt;09:44, 65.00s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 12 	Loss: 1.689841 Acc@1: 56.349206 (ε = 39.19, δ = 1e-05)
-	Train Epoch: 12 	Loss: 1.627441 Acc@1: 59.299434 (ε = 40.02, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  60%|██████    | 12/20 [13:01&lt;08:40, 65.10s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 13 	Loss: 1.931030 Acc@1: 57.983193 (ε = 40.83, δ = 1e-05)
-	Train Epoch: 13 	Loss: 1.631124 Acc@1: 59.830398 (ε = 41.67, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  65%|██████▌   | 13/20 [14:06&lt;07:36, 65.15s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 14 	Loss: 1.670289 Acc@1: 58.741259 (ε = 42.47, δ = 1e-05)
-	Train Epoch: 14 	Loss: 1.601755 Acc@1: 60.857855 (ε = 43.31, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  70%|███████   | 14/20 [15:11&lt;06:30, 65.07s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 15 	Loss: 1.663538 Acc@1: 61.206897 (ε = 44.11, δ = 1e-05)
-	Train Epoch: 15 	Loss: 1.578390 Acc@1: 61.596206 (ε = 44.95, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  75%|███████▌  | 15/20 [16:16&lt;05:24, 64.91s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 16 	Loss: 1.691741 Acc@1: 61.946903 (ε = 45.72, δ = 1e-05)
-	Train Epoch: 16 	Loss: 1.591795 Acc@1: 61.336092 (ε = 46.37, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  80%|████████  | 16/20 [17:21&lt;04:19, 64.91s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 17 	Loss: 1.885407 Acc@1: 55.384615 (ε = 46.99, δ = 1e-05)
-	Train Epoch: 17 	Loss: 1.612365 Acc@1: 61.411545 (ε = 47.64, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  85%|████████▌ | 17/20 [18:26&lt;03:15, 65.04s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 18 	Loss: 1.843095 Acc@1: 61.744966 (ε = 48.26, δ = 1e-05)
-	Train Epoch: 18 	Loss: 1.617456 Acc@1: 61.773505 (ε = 48.91, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  90%|█████████ | 18/20 [19:31&lt;02:10, 65.12s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 19 	Loss: 1.120436 Acc@1: 69.354839 (ε = 49.53, δ = 1e-05)
-	Train Epoch: 19 	Loss: 1.571179 Acc@1: 62.916583 (ε = 50.18, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch:  95%|█████████▌| 19/20 [20:36&lt;01:04, 64.96s/epoch]</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 20 	Loss: 1.641913 Acc@1: 62.015504 (ε = 50.80, δ = 1e-05)
-	Train Epoch: 20 	Loss: 1.562555 Acc@1: 62.999958 (ε = 51.45, δ = 1e-05)
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>Epoch: 100%|██████████| 20/20 [21:41&lt;00:00, 65.07s/epoch]
+<pre>	Train Epoch: 1 	Loss: 2.732535 Acc@1: 7.812500 (ε = 0.19, δ = 1e-05)
+	Train Epoch: 1 	Loss: 2.782132 Acc@1: 14.128576 (ε = 16.04, δ = 1e-05)
+	Train Epoch: 2 	Loss: 1.730190 Acc@1: 36.718750 (ε = 18.66, δ = 1e-05)
+	Train Epoch: 2 	Loss: 1.761741 Acc@1: 38.355100 (ε = 20.83, δ = 1e-05)
+	Train Epoch: 3 	Loss: 1.542238 Acc@1: 50.781250 (ε = 22.43, δ = 1e-05)
+	Train Epoch: 3 	Loss: 1.723531 Acc@1: 45.565143 (ε = 23.96, δ = 1e-05)
+	Train Epoch: 4 	Loss: 1.949715 Acc@1: 42.187500 (ε = 25.43, δ = 1e-05)
+	Train Epoch: 4 	Loss: 1.720563 Acc@1: 49.109919 (ε = 26.85, δ = 1e-05)
+	Train Epoch: 5 	Loss: 1.774229 Acc@1: 51.562500 (ε = 27.92, δ = 1e-05)
+	Train Epoch: 5 	Loss: 1.714577 Acc@1: 51.698539 (ε = 29.03, δ = 1e-05)
+	Train Epoch: 6 	Loss: 1.405191 Acc@1: 60.156250 (ε = 30.10, δ = 1e-05)
+	Train Epoch: 6 	Loss: 1.675316 Acc@1: 53.976213 (ε = 31.21, δ = 1e-05)
+	Train Epoch: 7 	Loss: 1.554456 Acc@1: 52.343750 (ε = 32.28, δ = 1e-05)
+	Train Epoch: 7 	Loss: 1.685776 Acc@1: 54.909049 (ε = 33.39, δ = 1e-05)
+	Train Epoch: 8 	Loss: 1.778377 Acc@1: 53.125000 (ε = 34.46, δ = 1e-05)
+	Train Epoch: 8 	Loss: 1.696506 Acc@1: 56.012904 (ε = 35.36, δ = 1e-05)
+	Train Epoch: 9 	Loss: 1.904890 Acc@1: 54.687500 (ε = 36.17, δ = 1e-05)
+	Train Epoch: 9 	Loss: 1.639168 Acc@1: 57.668688 (ε = 37.00, δ = 1e-05)
+	Train Epoch: 10 	Loss: 1.614231 Acc@1: 53.906250 (ε = 37.81, δ = 1e-05)
+	Train Epoch: 10 	Loss: 1.641604 Acc@1: 58.652052 (ε = 38.65, δ = 1e-05)
+	Train Epoch: 11 	Loss: 1.678383 Acc@1: 55.468750 (ε = 39.45, δ = 1e-05)
+	Train Epoch: 11 	Loss: 1.627174 Acc@1: 59.343905 (ε = 40.29, δ = 1e-05)
+	Train Epoch: 12 	Loss: 1.534639 Acc@1: 62.500000 (ε = 41.09, δ = 1e-05)
+	Train Epoch: 12 	Loss: 1.627389 Acc@1: 59.732587 (ε = 41.93, δ = 1e-05)
+	Train Epoch: 13 	Loss: 1.565778 Acc@1: 63.281250 (ε = 42.74, δ = 1e-05)
+	Train Epoch: 13 	Loss: 1.611232 Acc@1: 60.743159 (ε = 43.58, δ = 1e-05)
+	Train Epoch: 14 	Loss: 1.529223 Acc@1: 62.500000 (ε = 44.38, δ = 1e-05)
+	Train Epoch: 14 	Loss: 1.614406 Acc@1: 60.886971 (ε = 45.22, δ = 1e-05)
+	Train Epoch: 15 	Loss: 1.445196 Acc@1: 66.406250 (ε = 46.02, δ = 1e-05)
+	Train Epoch: 15 	Loss: 1.589295 Acc@1: 61.427239 (ε = 46.86, δ = 1e-05)
+	Train Epoch: 16 	Loss: 1.733013 Acc@1: 59.375000 (ε = 47.67, δ = 1e-05)
+	Train Epoch: 16 	Loss: 1.577568 Acc@1: 61.866449 (ε = 48.46, δ = 1e-05)
+	Train Epoch: 17 	Loss: 1.845230 Acc@1: 55.468750 (ε = 49.09, δ = 1e-05)
+	Train Epoch: 17 	Loss: 1.578402 Acc@1: 62.010261 (ε = 49.73, δ = 1e-05)
+	Train Epoch: 18 	Loss: 1.565229 Acc@1: 64.843750 (ε = 50.35, δ = 1e-05)
+	Train Epoch: 18 	Loss: 1.542843 Acc@1: 63.432836 (ε = 51.00, δ = 1e-05)
+	Train Epoch: 19 	Loss: 1.447579 Acc@1: 65.625000 (ε = 51.62, δ = 1e-05)
+	Train Epoch: 19 	Loss: 1.541139 Acc@1: 63.219061 (ε = 52.27, δ = 1e-05)
+	Train Epoch: 20 	Loss: 1.561364 Acc@1: 65.625000 (ε = 52.89, δ = 1e-05)
+	Train Epoch: 20 	Loss: 1.576318 Acc@1: 62.624378 (ε = 53.54, δ = 1e-05)
+
 </pre>
 </div>
 </div>
@@ -894,7 +653,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [15]:</div>
+<div class="prompt input_prompt">In [41]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">top1_acc</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
@@ -907,7 +666,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>	Test set:Loss: 1.783089 Acc: 59.612342 
+<pre>	Test set:Loss: 2.015386 Acc: 56.615902 
 </pre>
 </div>
 </div>
@@ -964,8 +723,8 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </tr>
 <tr>
 <td>Private ResNet</td>
-<td>59.61</td>
-<td>51.45</td>
+<td>56.61</td>
+<td>53.54</td>
 </tr>
 </tbody>
 </table>

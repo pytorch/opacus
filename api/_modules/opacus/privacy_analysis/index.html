@@ -298,12 +298,7 @@
     <span class="n">orders</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="n">rdp</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Computes epsilon given a list of Renyi Differential Privacy (RDP) values at</span>
-<span class="sd">    multiple RDP orders and target ``delta``. </span>
-<span class="sd">    The computation of epslion, i.e. conversion from RDP to (eps, delta)-DP,</span>
-<span class="sd">    is based on the theorem presented in the following work: </span>
-<span class="sd">    Borja Balle et al. "Hypothesis testing interpretations and Renyi differential privacy." </span>
-<span class="sd">    International Conference on Artificial Intelligence and Statistics. PMLR, 2020.</span>
-<span class="sd">    Particullary, Theorem 21 in the arXiv version https://arxiv.org/abs/1905.09982.</span>
+<span class="sd">    multiple RDP orders and target ``delta``.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        orders: An array (or a scalar) of orders (alphas).</span>
@@ -326,8 +321,8 @@
             <span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="s2">orders_vec = </span><span class="si">{</span><span class="n">orders_vec</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
             <span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="s2">rdp_vec = </span><span class="si">{</span><span class="n">rdp_vec</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
         <span class="p">)</span>
-    
-    <span class="n">eps</span> <span class="o">=</span> <span class="n">rdp_vec</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">orders_vec</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">orders_vec</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">orders_vec</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">orders_vec</span><span class="p">)</span>
+
+    <span class="n">eps</span> <span class="o">=</span> <span class="n">rdp_vec</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">orders_vec</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># special case when there is no privacy</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
