@@ -166,23 +166,6 @@ class PrivacyEngine_test(unittest.TestCase):
             model, optimizer = self.setUp_init_model(private=True, model=model)
             self.setUp_model_step(model, optimizer)
 
-    def test_attach_delete_attach(self):
-        model, optimizer = self.setUp_init_model(private=True)
-        self.setUp_model_step(model, optimizer)
-        del optimizer.privacy_engine
-        model, optimizer = self.setUp_init_model(private=True, model=model)
-        self.setUp_model_step(model, optimizer)
-
-    def test_attach_delete_detach(self):
-        model, optimizer = self.setUp_init_model(private=True)
-        self.setUp_model_step(model, optimizer)
-        pe = optimizer.privacy_engine
-        pe.detach()
-        try:
-            pe.clipper.__del__()
-        except ValueError as e:
-            self.fail(f"Detaching hooks twice! {e}")
-
     def test_attach_detach_attach(self):
         model, optimizer = self.setUp_init_model(private=True)
         self.setUp_model_step(model, optimizer)
@@ -356,15 +339,17 @@ class PrivacyEngine_test(unittest.TestCase):
         Test that the privacy engine throws on attach
         if there are unsupported modules
         """
+        resnet = models.resnet18()
+        optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
         privacy_engine = PrivacyEngine(
-            models.resnet18(),
+            resnet,
             sample_rate=self.SAMPLE_RATE,
             alphas=self.ALPHAS,
             noise_multiplier=1.3,
             max_grad_norm=1,
         )
         with self.assertRaises(IncompatibleModuleException):
-            privacy_engine.attach(self.private_optimizer)
+            privacy_engine.attach(optimizer)
 
     def test_deterministic_run(self):
         """

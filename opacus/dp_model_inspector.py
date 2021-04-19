@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+from opacus.grad_sample import GradSampleModule
+from opacus.utils.module_inspection import ModelInspector, get_layer_type
 from torch import nn
-
-from .autograd_grad_sample import is_supported
-from .utils.module_inspection import ModelInspector, get_layer_type
 
 
 class IncompatibleModuleException(Exception):
@@ -137,7 +136,7 @@ def _is_valid_check(module: nn.Module) -> bool:
     Returns:
         True if ``module`` is supported by ``autograd_grad_sample``
     """
-    return is_supported(module)
+    return GradSampleModule.is_supported(module)
 
 
 def _is_in_training_mode(module: nn.Module) -> bool:

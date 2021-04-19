@@ -34,9 +34,9 @@ Notes:
 from typing import Callable, Iterator, Optional, Tuple
 
 import torch
+from opacus.grad_sample import GradSampleModule
 from torch import nn
 
-from . import autograd_grad_sample
 from .utils.clipping import NormClipper
 from .utils.tensor_utils import calc_sample_norms
 
@@ -49,7 +49,7 @@ class PerSampleGradientClipper:
 
     def __init__(
         self,
-        module: nn.Module,
+        module: GradSampleModule,
         norm_clipper: NormClipper,
         batch_first: bool = True,
         loss_reduction: str = "mean",
@@ -77,16 +77,12 @@ class PerSampleGradientClipper:
                 is a sum or a mean operation. Can take values ``sum`` or ``mean``
         """
         self.module = module
-        autograd_grad_sample.add_hooks(
-            self.module, batch_first=batch_first, loss_reduction=loss_reduction
-        )
         self.norm_clipper = norm_clipper
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
 
         self._reset_aggregated_state()
 
-        self.hooks_attached = True
         self.on_batch_clip_func = None
 
     def set_on_batch_clip_func(self, on_batch_clip_func: Callable[..., None]) -> None:
@@ -98,21 +94,6 @@ class PerSampleGradientClipper:
             on_batch_clip_func: Function to be called after clipping
         """
         self.on_batch_clip_func = on_batch_clip_func
-
-    def __del__(self):
-        r"""
-        Destructor to remove all attached hooks from the module when the clipper
-        object is deleted
-        """
-        self.close()
-
-    def close(self) -> None:
-        r"""
-        Removes backward hooks from the module
-        """
-        if self.hooks_attached:  # do not close twice
-            autograd_grad_sample.remove_hooks(self.module)
-        self.hooks_attached = False
 
     def __repr__(self):
         return f"PerSampleGradientClipModuleHook on {self.module}"

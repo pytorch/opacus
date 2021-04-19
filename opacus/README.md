@@ -5,11 +5,11 @@ These developer notes can help you ramp up on this codebase. For any question, h
 The code in Opacus is structured as such:
 
     .
+    ├── grad_sample/                         # (folder) All the logic to compute per-sample gradients
     ├── layers/                              # (folder) Reimplemented layers made compatible with Opacus
     ├── utils/                               # (folder) Extra utils
     ├── tests/                               # (folder) All the tests are here.
     |
-    ├── autograd_grad_sample.py             # All the logic to compute per-sample gradients
     ├── dp_model_inspector.py               # Checks that your nn.Module is compatible with DP Training
     ├── per_sample_gradient_clipping.py     # Contains the clipper class and logic
     ├── privacy_engine.py                   # Main entry point for customers
