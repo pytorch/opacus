@@ -11,6 +11,10 @@ from torch import nn
 
 from . import privacy_analysis
 from .dp_model_inspector import DPModelInspector
+from .layers.dp_ddp import (
+    DifferentiallyPrivateDistributedDataParallel,
+    average_gradients,
+)
 from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
 
@@ -128,12 +132,21 @@ class PrivacyEngine:
             **misc_settings: Other arguments to the init
         """
 
+        self.steps = 0
         self.module = module
+
         self.batch_size = batch_size
         self.sample_size = sample_size
         self.sample_rate = sample_rate
-
         self._set_sample_rate()
+
+        if isinstance(module, DifferentiallyPrivateDistributedDataParallel):
+            rank = torch.distributed.get_rank()
+            n_replicas = torch.distributed.get_world_size()
+            self.sample_rate *= n_replicas
+        else:
+            rank = 0
+            n_replicas = 1
 
         if noise_multiplier is None:
             if target_epsilon is None or target_delta is None or epochs is None:
@@ -153,6 +166,8 @@ class PrivacyEngine:
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
         self.misc_settings = misc_settings
+        self.n_replicas = n_replicas
+        self.rank = rank
 
         self.device = next(module.parameters()).device
         self.steps = 0
@@ -177,6 +192,7 @@ class PrivacyEngine:
                 raise ValueError("Please provide a target_delta.")
 
         if self.secure_rng:
+            self.seed = None
             try:
                 import torchcsprng as csprng
             except ImportError as e:
@@ -203,6 +219,14 @@ class PrivacyEngine:
 
         self.validator = DPModelInspector()
         self.clipper = None  # lazy initialization in attach
+
+    def state_dict(self):
+        return {
+            "steps": self.steps,
+        }
+
+    def load_state_dict(self, state_dict):
+        self.steps = state_dict["steps"]
 
     def detach(self):
         r"""
@@ -269,6 +293,10 @@ class PrivacyEngine:
 
         def dp_step(self, closure=None):
             self.privacy_engine.step()
+            if isinstance(
+                self.privacy_engine.module, DifferentiallyPrivateDistributedDataParallel
+            ):
+                average_gradients(self.privacy_engine.module)
             self.original_step(closure)
 
         optimizer.privacy_engine = self
@@ -362,7 +390,7 @@ class PrivacyEngine:
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
             noise = self._generate_noise(clip_value, p)
-            if self.loss_reduction == "mean":
+            if self.loss_reduction == "mean" and self.rank == 0:
                 noise /= batch_size
             p.grad += noise
 
