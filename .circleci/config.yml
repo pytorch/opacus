@@ -119,6 +119,7 @@ commands:
       - store_artifacts:
           path: unittest-reports
 
+
   mnist_integration_test:
     description: "Runs MNIST example end to end"
     parameters:
@@ -316,6 +317,23 @@ jobs:
       - dcgan_integration_test:
           device: "cuda"
 
+  unittest_multi_gpu:
+    machine:
+      resource_class: gpu.medium
+      image: ubuntu-1604-cuda-11.1:202012-01
+    steps:
+      - update_gpg_key
+      - checkout
+      - py_3_7_setup
+      - pip_dev_install
+      - run_nvidia_smi
+      - run:
+          name: "Unit test multi_gpu"
+          no_output_timeout: 1h
+          command: |
+            mkdir unittest-multigpu-reports
+            python -m unittest opacus.tests.multigpu_gradcheck.GradientComputationTest.test_gradient_correct
+
 
   auto_deploy_site:
     docker:
@@ -353,6 +371,8 @@ workflows:
       - unittest_py39_torch_release:
           filters: *exclude_ghpages
       - unittest_py39_torch_nightly:
+          filters: *exclude_ghpages
+      - unittest_multi_gpu:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cpu:
           filters: *exclude_ghpages
