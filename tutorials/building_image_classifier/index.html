@@ -129,8 +129,9 @@
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">MAX_GRAD_NORM</span> <span class="o">=</span> <span class="mf">1.2</span>
-<span class="n">NOISE_MULTIPLIER</span> <span class="o">=</span> <span class="o">.</span><span class="mi">38</span>
+<span class="n">EPSILON</span> <span class="o">=</span> <span class="mf">50.0</span>
 <span class="n">DELTA</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">EPOCHS</span> <span class="o">=</span> <span class="mi">20</span>
 
 <span class="n">LR</span> <span class="o">=</span> <span class="mf">1e-3</span>
 <span class="n">NUM_WORKERS</span> <span class="o">=</span> <span class="mi">2</span>
@@ -328,7 +329,8 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.utils</span> <span class="kn">import</span> <span class="n">module_modification</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.dp_model_inspector</span> <span class="kn">import</span> <span class="n">DPModelInspector</span>
+<span class="kn">from</span> <span class="nn">opacus.utils</span> <span class="kn">import</span> <span class="n">module_modification</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">module_modification</span><span class="o">.</span><span class="n">convert_batchnorm_modules</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 <span class="n">inspector</span> <span class="o">=</span> <span class="n">DPModelInspector</span><span class="p">()</span>
@@ -420,7 +422,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We now attach the privacy engine initialized with the privacy hyperparameters defined earlier. There’s also the enigmatic-looking parameter <code>alphas</code>, which we won’t touch for the time being.</p>
+<p>We now attach the privacy engine initialized with the privacy hyperparameters defined earlier.</p>
 </div>
 </div>
 </div>
@@ -431,16 +433,17 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus</span> <span class="kn">import</span> <span class="n">PrivacyEngine</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using sigma=</span><span class="si">{</span><span class="n">NOISE_MULTIPLIER</span><span class="si">}</span><span class="s2"> and C=</span><span class="si">{</span><span class="n">MAX_GRAD_NORM</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
 <span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span>
     <span class="n">model</span><span class="p">,</span>
     <span class="n">sample_rate</span><span class="o">=</span><span class="n">SAMPLE_RATE</span> <span class="o">*</span> <span class="n">N_ACCUMULATION_STEPS</span><span class="p">,</span>
-    <span class="n">alphas</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">64</span><span class="p">)),</span>
-    <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">NOISE_MULTIPLIER</span><span class="p">,</span>
+    <span class="n">epochs</span> <span class="o">=</span> <span class="n">EPOCHS</span><span class="p">,</span>
+    <span class="n">target_epsilon</span> <span class="o">=</span> <span class="n">EPSILON</span><span class="p">,</span>
+    <span class="n">target_delta</span> <span class="o">=</span> <span class="n">DELTA</span><span class="p">,</span>
     <span class="n">max_grad_norm</span><span class="o">=</span><span class="n">MAX_GRAD_NORM</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">privacy_engine</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using sigma=</span><span class="si">{</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="si">}</span><span class="s2"> and C=</span><span class="si">{</span><span class="n">MAX_GRAD_NORM</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -450,7 +453,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Using sigma=0.38 and C=1.2
+<pre>Using sigma=0.39066894531249996 and C=1.2
 </pre>
 </div>
 </div>
@@ -575,7 +578,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Epoch"</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">"epoch"</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">EPOCHS</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Epoch"</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">"epoch"</span><span class="p">):</span>
     <span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -585,9 +588,9 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="output">
 <div class="output_area">
 <div class="prompt"></div>
-<div class="output_subarea output_widget_view" id="89f3f1bf-d1f5-4273-b777-96879028cc72">
+<div class="output_subarea output_widget_view" id="915dde6d-5670-4761-b8fa-1ce2cdbb062c">
 <script type="text/javascript">
-var element = $('#89f3f1bf-d1f5-4273-b777-96879028cc72');
+var element = $('#915dde6d-5670-4761-b8fa-1ce2cdbb062c');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "a0521999fa9d45219724acf70b3b4469", "version_major": 2, "version_minor": 0}
@@ -597,46 +600,46 @@ var element = $('#89f3f1bf-d1f5-4273-b777-96879028cc72');
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 1 	Loss: 2.732535 Acc@1: 7.812500 (ε = 0.19, δ = 1e-05)
-	Train Epoch: 1 	Loss: 2.782132 Acc@1: 14.128576 (ε = 16.04, δ = 1e-05)
-	Train Epoch: 2 	Loss: 1.730190 Acc@1: 36.718750 (ε = 18.66, δ = 1e-05)
-	Train Epoch: 2 	Loss: 1.761741 Acc@1: 38.355100 (ε = 20.83, δ = 1e-05)
-	Train Epoch: 3 	Loss: 1.542238 Acc@1: 50.781250 (ε = 22.43, δ = 1e-05)
-	Train Epoch: 3 	Loss: 1.723531 Acc@1: 45.565143 (ε = 23.96, δ = 1e-05)
-	Train Epoch: 4 	Loss: 1.949715 Acc@1: 42.187500 (ε = 25.43, δ = 1e-05)
-	Train Epoch: 4 	Loss: 1.720563 Acc@1: 49.109919 (ε = 26.85, δ = 1e-05)
-	Train Epoch: 5 	Loss: 1.774229 Acc@1: 51.562500 (ε = 27.92, δ = 1e-05)
-	Train Epoch: 5 	Loss: 1.714577 Acc@1: 51.698539 (ε = 29.03, δ = 1e-05)
-	Train Epoch: 6 	Loss: 1.405191 Acc@1: 60.156250 (ε = 30.10, δ = 1e-05)
-	Train Epoch: 6 	Loss: 1.675316 Acc@1: 53.976213 (ε = 31.21, δ = 1e-05)
-	Train Epoch: 7 	Loss: 1.554456 Acc@1: 52.343750 (ε = 32.28, δ = 1e-05)
-	Train Epoch: 7 	Loss: 1.685776 Acc@1: 54.909049 (ε = 33.39, δ = 1e-05)
-	Train Epoch: 8 	Loss: 1.778377 Acc@1: 53.125000 (ε = 34.46, δ = 1e-05)
-	Train Epoch: 8 	Loss: 1.696506 Acc@1: 56.012904 (ε = 35.36, δ = 1e-05)
-	Train Epoch: 9 	Loss: 1.904890 Acc@1: 54.687500 (ε = 36.17, δ = 1e-05)
-	Train Epoch: 9 	Loss: 1.639168 Acc@1: 57.668688 (ε = 37.00, δ = 1e-05)
-	Train Epoch: 10 	Loss: 1.614231 Acc@1: 53.906250 (ε = 37.81, δ = 1e-05)
-	Train Epoch: 10 	Loss: 1.641604 Acc@1: 58.652052 (ε = 38.65, δ = 1e-05)
-	Train Epoch: 11 	Loss: 1.678383 Acc@1: 55.468750 (ε = 39.45, δ = 1e-05)
-	Train Epoch: 11 	Loss: 1.627174 Acc@1: 59.343905 (ε = 40.29, δ = 1e-05)
-	Train Epoch: 12 	Loss: 1.534639 Acc@1: 62.500000 (ε = 41.09, δ = 1e-05)
-	Train Epoch: 12 	Loss: 1.627389 Acc@1: 59.732587 (ε = 41.93, δ = 1e-05)
-	Train Epoch: 13 	Loss: 1.565778 Acc@1: 63.281250 (ε = 42.74, δ = 1e-05)
-	Train Epoch: 13 	Loss: 1.611232 Acc@1: 60.743159 (ε = 43.58, δ = 1e-05)
-	Train Epoch: 14 	Loss: 1.529223 Acc@1: 62.500000 (ε = 44.38, δ = 1e-05)
-	Train Epoch: 14 	Loss: 1.614406 Acc@1: 60.886971 (ε = 45.22, δ = 1e-05)
-	Train Epoch: 15 	Loss: 1.445196 Acc@1: 66.406250 (ε = 46.02, δ = 1e-05)
-	Train Epoch: 15 	Loss: 1.589295 Acc@1: 61.427239 (ε = 46.86, δ = 1e-05)
-	Train Epoch: 16 	Loss: 1.733013 Acc@1: 59.375000 (ε = 47.67, δ = 1e-05)
-	Train Epoch: 16 	Loss: 1.577568 Acc@1: 61.866449 (ε = 48.46, δ = 1e-05)
-	Train Epoch: 17 	Loss: 1.845230 Acc@1: 55.468750 (ε = 49.09, δ = 1e-05)
-	Train Epoch: 17 	Loss: 1.578402 Acc@1: 62.010261 (ε = 49.73, δ = 1e-05)
-	Train Epoch: 18 	Loss: 1.565229 Acc@1: 64.843750 (ε = 50.35, δ = 1e-05)
-	Train Epoch: 18 	Loss: 1.542843 Acc@1: 63.432836 (ε = 51.00, δ = 1e-05)
-	Train Epoch: 19 	Loss: 1.447579 Acc@1: 65.625000 (ε = 51.62, δ = 1e-05)
-	Train Epoch: 19 	Loss: 1.541139 Acc@1: 63.219061 (ε = 52.27, δ = 1e-05)
-	Train Epoch: 20 	Loss: 1.561364 Acc@1: 65.625000 (ε = 52.89, δ = 1e-05)
-	Train Epoch: 20 	Loss: 1.576318 Acc@1: 62.624378 (ε = 53.54, δ = 1e-05)
+<pre>	Train Epoch: 1 	Loss: 2.466799 Acc@1: 6.015038 (ε = 0.19, δ = 1e-05)
+	Train Epoch: 1 	Loss: 2.756456 Acc@1: 15.440945 (ε = 15.05, δ = 1e-05)
+	Train Epoch: 2 	Loss: 1.833895 Acc@1: 32.743363 (ε = 17.42, δ = 1e-05)
+	Train Epoch: 2 	Loss: 1.761252 Acc@1: 39.067485 (ε = 19.25, δ = 1e-05)
+	Train Epoch: 3 	Loss: 1.695080 Acc@1: 39.837398 (ε = 20.83, δ = 1e-05)
+	Train Epoch: 3 	Loss: 1.720105 Acc@1: 45.711227 (ε = 22.30, δ = 1e-05)
+	Train Epoch: 4 	Loss: 1.819673 Acc@1: 47.500000 (ε = 23.44, δ = 1e-05)
+	Train Epoch: 4 	Loss: 1.718392 Acc@1: 49.307456 (ε = 24.63, δ = 1e-05)
+	Train Epoch: 5 	Loss: 1.500666 Acc@1: 54.263566 (ε = 25.77, δ = 1e-05)
+	Train Epoch: 5 	Loss: 1.696978 Acc@1: 51.634321 (ε = 26.96, δ = 1e-05)
+	Train Epoch: 6 	Loss: 1.613977 Acc@1: 55.102041 (ε = 27.92, δ = 1e-05)
+	Train Epoch: 6 	Loss: 1.673508 Acc@1: 53.700716 (ε = 28.81, δ = 1e-05)
+	Train Epoch: 7 	Loss: 1.732500 Acc@1: 54.961832 (ε = 29.67, δ = 1e-05)
+	Train Epoch: 7 	Loss: 1.653139 Acc@1: 55.314249 (ε = 30.56, δ = 1e-05)
+	Train Epoch: 8 	Loss: 2.000197 Acc@1: 45.378151 (ε = 31.42, δ = 1e-05)
+	Train Epoch: 8 	Loss: 1.660172 Acc@1: 56.365417 (ε = 32.31, δ = 1e-05)
+	Train Epoch: 9 	Loss: 1.739170 Acc@1: 53.435115 (ε = 33.16, δ = 1e-05)
+	Train Epoch: 9 	Loss: 1.660854 Acc@1: 57.160337 (ε = 34.05, δ = 1e-05)
+	Train Epoch: 10 	Loss: 1.821048 Acc@1: 61.538462 (ε = 34.91, δ = 1e-05)
+	Train Epoch: 10 	Loss: 1.671403 Acc@1: 57.878141 (ε = 35.80, δ = 1e-05)
+	Train Epoch: 11 	Loss: 1.829778 Acc@1: 56.363636 (ε = 36.48, δ = 1e-05)
+	Train Epoch: 11 	Loss: 1.653203 Acc@1: 59.206898 (ε = 37.16, δ = 1e-05)
+	Train Epoch: 12 	Loss: 1.198817 Acc@1: 69.285714 (ε = 37.82, δ = 1e-05)
+	Train Epoch: 12 	Loss: 1.612061 Acc@1: 60.019966 (ε = 38.51, δ = 1e-05)
+	Train Epoch: 13 	Loss: 1.815248 Acc@1: 59.440559 (ε = 39.17, δ = 1e-05)
+	Train Epoch: 13 	Loss: 1.624833 Acc@1: 60.071468 (ε = 39.85, δ = 1e-05)
+	Train Epoch: 14 	Loss: 1.390235 Acc@1: 64.925373 (ε = 40.51, δ = 1e-05)
+	Train Epoch: 14 	Loss: 1.608195 Acc@1: 60.789435 (ε = 41.20, δ = 1e-05)
+	Train Epoch: 15 	Loss: 1.818439 Acc@1: 59.854015 (ε = 41.86, δ = 1e-05)
+	Train Epoch: 15 	Loss: 1.573655 Acc@1: 61.606028 (ε = 42.55, δ = 1e-05)
+	Train Epoch: 16 	Loss: 2.107299 Acc@1: 50.393701 (ε = 43.20, δ = 1e-05)
+	Train Epoch: 16 	Loss: 1.567964 Acc@1: 62.248880 (ε = 43.89, δ = 1e-05)
+	Train Epoch: 17 	Loss: 1.558405 Acc@1: 67.832168 (ε = 44.55, δ = 1e-05)
+	Train Epoch: 17 	Loss: 1.582644 Acc@1: 62.352727 (ε = 45.24, δ = 1e-05)
+	Train Epoch: 18 	Loss: 1.352990 Acc@1: 65.693431 (ε = 45.89, δ = 1e-05)
+	Train Epoch: 18 	Loss: 1.566869 Acc@1: 62.675304 (ε = 46.58, δ = 1e-05)
+	Train Epoch: 19 	Loss: 1.534263 Acc@1: 62.295082 (ε = 47.24, δ = 1e-05)
+	Train Epoch: 19 	Loss: 1.555477 Acc@1: 63.490872 (ε = 47.93, δ = 1e-05)
+	Train Epoch: 20 	Loss: 1.671935 Acc@1: 57.142857 (ε = 48.58, δ = 1e-05)
+	Train Epoch: 20 	Loss: 1.552867 Acc@1: 63.719261 (ε = 49.27, δ = 1e-05)
 
 </pre>
 </div>
@@ -666,7 +669,7 @@ var element = $('#89f3f1bf-d1f5-4273-b777-96879028cc72');
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>	Test set:Loss: 2.015386 Acc: 56.615902 
+<pre>	Test set:Loss: 1.804842 Acc: 59.246440 
 </pre>
 </div>
 </div>
@@ -685,7 +688,8 @@ var element = $('#89f3f1bf-d1f5-4273-b777-96879028cc72');
 <div class="text_cell_render border-box-sizing rendered_html">
 <ol>
 <li>Generally speaking, differentially private training is enough of a regularizer by itself. Adding any more regularization (such as dropouts or data augmentation) is unnecessary and typically hurts performance.</li>
-<li>Tuning MAX_GRAD_NORM is very important. Start with a low noise multiplier like .1, this should give comparable performance to a non-private model. Then do a grid search for the optimal MAX_GRAD_NORM value. The grid can be in the range [.1, 10]</li>
+<li>Tuning MAX_GRAD_NORM is very important. Start with a low noise multiplier like .1, this should give comparable performance to a non-private model. Then do a grid search for the optimal MAX_GRAD_NORM value. The grid can be in the range [.1, 10].</li>
+<li>You can play around with the level of privacy, EPSILON.  Smaller EPSILON means more privacy, more noise -- and hence lower accuracy.  Reducing EPSILON to 5.0 reduces the Top 1 Accuracy to around 53%.  One useful technique is to pre-train a model on public (non-private) data, before completing the training on the private training data.  See the workbook at <a href="https://bit.ly/opacus-dev-day">bit.ly/opacus-dev-day</a> for an example.</li>
 </ol>
 </div>
 </div>
