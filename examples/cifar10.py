@@ -25,6 +25,28 @@ from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 
+def convnet(num_classes):
+    return nn.Sequential(
+        nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
+        nn.ReLU(),
+        nn.AvgPool2d(kernel_size=2, stride=2),
+
+        nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+        nn.ReLU(),
+        nn.AvgPool2d(kernel_size=2, stride=2),
+
+        nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+        nn.ReLU(),
+        nn.AvgPool2d(kernel_size=2, stride=2),
+
+        nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+        nn.ReLU(),
+
+        nn.AdaptiveAvgPool2d((1, 1)),
+        nn.Flatten(start_dim=1, end_dim=-1),
+        nn.Linear(128, num_classes, bias=True),
+    )
+
 
 def save_checkpoint(state, is_best, filename="checkpoint.tar"):
     torch.save(state, filename)
@@ -154,7 +176,7 @@ def main():
     )
     parser.add_argument(
         "--sample-rate",
-        default=0.005,
+        default=0.04,
         type=float,
         metavar="SR",
         help="sample rate used for batch construction (default: 0.005)",
@@ -170,7 +192,7 @@ def main():
     parser.add_argument(
         "--lr",
         "--learning-rate",
-        default=0.001,
+        default=0.1,
         type=float,
         metavar="LR",
         help="initial learning rate",
@@ -182,10 +204,10 @@ def main():
     parser.add_argument(
         "--wd",
         "--weight-decay",
-        default=5e-4,
+        default=0,
         type=float,
         metavar="W",
-        help="SGD weight decay (default: 1e-4)",
+        help="SGD weight decay",
         dest="weight_decay",
     )
     parser.add_argument(
@@ -222,7 +244,7 @@ def main():
     parser.add_argument(
         "--sigma",
         type=float,
-        default=1.0,
+        default=1.5,
         metavar="S",
         help="Noise multiplier (default 1.0)",
     )
@@ -230,7 +252,7 @@ def main():
         "-c",
         "--max-per-sample-grad_norm",
         type=float,
-        default=1.0,
+        default=10.0,
         metavar="C",
         help="Clip per-sample gradients to this norm (default 1.0)",
     )
@@ -272,8 +294,14 @@ def main():
     parser.add_argument(
         "--optim",
         type=str,
-        default="Adam",
+        default="SGD",
         help="Optimizer to use (Adam, RMSprop, SGD)",
+    )
+    parser.add_argument(
+        "--lr-schedule",
+        type=str,
+        choices=["constant", "cos"],
+        default="cos"
     )
 
     args = parser.parse_args()
@@ -360,7 +388,7 @@ def main():
 
     best_acc1 = 0
     device = torch.device(args.device)
-    model = convert_batchnorm_modules(models.resnet18(num_classes=10))
+    model = convnet(num_classes=10)
     model = model.to(device)
 
     if args.optim == "SGD":
@@ -390,6 +418,11 @@ def main():
         privacy_engine.attach(optimizer)
 
     for epoch in range(args.start_epoch, args.epochs + 1):
+        if args.lr_schedule == "cos":
+            lr = args.lr * 0.5 * (1 + np.cos(np.pi * epoch / (args.epochs + 1)))
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = lr
+
         train(args, model, train_loader, optimizer, epoch, device)
         top1_acc = test(args, model, test_loader, device)
 
@@ -400,7 +433,7 @@ def main():
         save_checkpoint(
             {
                 "epoch": epoch + 1,
-                "arch": "ResNet18",
+                "arch": "Convnet",
                 "state_dict": model.state_dict(),
                 "best_acc1": best_acc1,
                 "optimizer": optimizer.state_dict(),
