@@ -16,32 +16,27 @@ import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
-import torchvision.models as models
 import torchvision.transforms as transforms
 from opacus import PrivacyEngine
 from opacus.utils import stats
-from opacus.utils.module_modification import convert_batchnorm_modules
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
+
 
 def convnet(num_classes):
     return nn.Sequential(
         nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
         nn.ReLU(),
         nn.AvgPool2d(kernel_size=2, stride=2),
-
         nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
         nn.ReLU(),
         nn.AvgPool2d(kernel_size=2, stride=2),
-
         nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
         nn.ReLU(),
         nn.AvgPool2d(kernel_size=2, stride=2),
-
         nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
         nn.ReLU(),
-
         nn.AdaptiveAvgPool2d((1, 1)),
         nn.Flatten(start_dim=1, end_dim=-1),
         nn.Linear(128, num_classes, bias=True),
@@ -298,10 +293,7 @@ def main():
         help="Optimizer to use (Adam, RMSprop, SGD)",
     )
     parser.add_argument(
-        "--lr-schedule",
-        type=str,
-        choices=["constant", "cos"],
-        default="cos"
+        "--lr-schedule", type=str, choices=["constant", "cos"], default="cos"
     )
 
     args = parser.parse_args()
@@ -421,7 +413,7 @@ def main():
         if args.lr_schedule == "cos":
             lr = args.lr * 0.5 * (1 + np.cos(np.pi * epoch / (args.epochs + 1)))
             for param_group in optimizer.param_groups:
-                param_group['lr'] = lr
+                param_group["lr"] = lr
 
         train(args, model, train_loader, optimizer, epoch, device)
         top1_acc = test(args, model, test_loader, device)
