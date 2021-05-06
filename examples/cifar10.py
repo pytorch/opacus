@@ -8,6 +8,7 @@ Runs CIFAR10 training with differential privacy.
 import argparse
 import os
 import shutil
+import sys
 
 import numpy as np
 import torch
@@ -18,10 +19,27 @@ import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
 import torchvision.transforms as transforms
 from opacus import PrivacyEngine
+from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.utils import stats
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
+
+
+def setup():
+    if sys.platform == "win32":
+        raise NotImplementedError("Windows version of multi-GPU is not supported yet.")
+    else:
+        # initialize the process group
+        torch.distributed.init_process_group(
+            init_method="env://",
+            backend="nccl",
+        )
+
+
+def cleanup():
+    torch.distributed.destroy_process_group()
 
 
 def convnet(num_classes):
@@ -135,6 +153,7 @@ def test(args, model, test_loader, device):
     return np.mean(top1_acc)
 
 
+# flake8: noqa: C901
 def main():
     parser = argparse.ArgumentParser(description="PyTorch CIFAR10 DP Training")
     parser.add_argument(
@@ -295,8 +314,19 @@ def main():
     parser.add_argument(
         "--lr-schedule", type=str, choices=["constant", "cos"], default="cos"
     )
+    parser.add_argument(
+        "--local_rank",
+        type=int,
+        default=-1,
+        help="Local rank if multi-GPU training, -1 for single GPU training",
+    )
 
     args = parser.parse_args()
+
+    distributed = False
+    if args.local_rank != -1:
+        setup()
+        distributed = True
 
     if args.disable_dp and args.n_accumulation_steps > 1:
         raise ValueError("Virtual steps only works with enabled DP")
@@ -379,9 +409,18 @@ def main():
     )
 
     best_acc1 = 0
+    if distributed and args.device == "cuda":
+        args.device = "cuda:" + str(args.local_rank)
     device = torch.device(args.device)
+
     model = convnet(num_classes=10)
     model = model.to(device)
+
+    if distributed:
+        if not args.disable_dp:
+            model = DPDDP(model)
+        else:
+            model = DDP(model, device_ids=[args.local_rank])
 
     if args.optim == "SGD":
         optimizer = optim.SGD(
@@ -433,6 +472,9 @@ def main():
             is_best,
             filename=args.checkpoint_file + ".tar",
         )
+
+    if args.local_rank != -1:
+        cleanup()
 
 
 if __name__ == "__main__":
