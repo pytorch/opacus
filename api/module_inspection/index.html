@@ -24,13 +24,13 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="module-opacus.utils.module_inspection">
+<section id="module-opacus.utils.module_inspection">
 <span id="module-inspection"></span><h1>Module Inspection<a class="headerlink" href="#module-opacus.utils.module_inspection" title="Permalink to this headline">¶</a></h1>
 <p>This module includes utils for inspecting model layers using specified
 predicates to check for conditions, getting layer type etc.</p>
 <dl class="py class">
-<dt id="opacus.utils.module_inspection.ModelInspector">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">opacus.utils.module_inspection.</span></code><code class="sig-name descname"><span class="pre">ModelInspector</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_leaf_nodes_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#ModelInspector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.ModelInspector" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.utils.module_inspection.ModelInspector">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">opacus.utils.module_inspection.</span></span><span class="sig-name descname"><span class="pre">ModelInspector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_leaf_nodes_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#ModelInspector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.ModelInspector" title="Permalink to this definition">¶</a></dt>
 <dd><p>An inspector of models given a specific predicate. If a module
 has children the predicate is checked on all children recursively.</p>
 <p class="rubric">Example</p>
@@ -56,8 +56,8 @@ leaf nodes are the ones that have parameters of their own.</p></li>
 <p><code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">model:</span> <span class="pre">isinstance(model,</span> <span class="pre">nn.Sequential)</span></code></p>
 <p>will always return True unless <code class="docutils literal notranslate"><span class="pre">check_leaf_nodes_only</span></code> is set.</p>
 <dl class="py method">
-<dt id="opacus.utils.module_inspection.ModelInspector.validate">
-<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#ModelInspector.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.ModelInspector.validate" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.utils.module_inspection.ModelInspector.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#ModelInspector.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.ModelInspector.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks if the provided module satisfies the predicate specified
 upon creation of the <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelInspector</span></code>.</p>
 <dl class="field-list simple">
@@ -75,8 +75,8 @@ and satisfied.</p>
 </dd></dl>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.utils.module_inspection.get_layer_type">
-<code class="sig-prename descclassname"><span class="pre">opacus.utils.module_inspection.</span></code><code class="sig-name descname"><span class="pre">get_layer_type</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#get_layer_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.get_layer_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.utils.module_inspection.get_layer_type">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_inspection.</span></span><span class="sig-name descname"><span class="pre">get_layer_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#get_layer_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.get_layer_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the name of the type of the given layer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -92,8 +92,8 @@ is being queried.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.utils.module_inspection.has_no_param">
-<code class="sig-prename descclassname"><span class="pre">opacus.utils.module_inspection.</span></code><code class="sig-name descname"><span class="pre">has_no_param</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#has_no_param"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.has_no_param" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.utils.module_inspection.has_no_param">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_inspection.</span></span><span class="sig-name descname"><span class="pre">has_no_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#has_no_param"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.has_no_param" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks if a module does not have any parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -109,8 +109,8 @@ parameters.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.utils.module_inspection.requires_grad">
-<code class="sig-prename descclassname"><span class="pre">opacus.utils.module_inspection.</span></code><code class="sig-name descname"><span class="pre">requires_grad</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#requires_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.requires_grad" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.utils.module_inspection.requires_grad">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_inspection.</span></span><span class="sig-name descname"><span class="pre">requires_grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_inspection.html#requires_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_inspection.requires_grad" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks if any parameters in a specified module require gradients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -128,7 +128,7 @@ be applied recursively to sub-modules of the specified module</p></li>
 </dd>
 </dl>
 </dd></dl>
-</div>
+</section>
 </div>
 </div>
 </div>

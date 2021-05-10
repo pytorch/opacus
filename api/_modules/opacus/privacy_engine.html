@@ -417,9 +417,15 @@
         <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">clip_value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">clip_values</span><span class="p">):</span>
             <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_noise</span><span class="p">(</span><span class="n">clip_value</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
                 <span class="n">noise</span> <span class="o">/=</span> <span class="n">batch_size</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">+=</span> <span class="n">noise</span></div>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Noise only gets added on first worker</span>
+                <span class="c1"># This is easy to reason about for loss_reduction=sum</span>
+                <span class="c1"># For loss_reduction=mean, noise will get further divided by</span>
+                <span class="c1"># world_size as gradients are averaged.</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">+=</span> <span class="n">noise</span></div>
 
 <div class="viewcode-block" id="PrivacyEngine.to"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.to">[docs]</a>    <span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]):</span>
         <span class="sd">"""</span>

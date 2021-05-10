@@ -24,12 +24,12 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="module-opacus.utils.module_modification">
+<section id="module-opacus.utils.module_modification">
 <span id="module-modification"></span><h1>Module Modification<a class="headerlink" href="#module-opacus.utils.module_modification" title="Permalink to this headline">¶</a></h1>
 <p>This module includes utils for modifying model layers, replacing layers etc.</p>
 <dl class="py function">
-<dt id="opacus.utils.module_modification.convert_batchnorm_modules">
-<code class="sig-prename descclassname"><span class="pre">opacus.utils.module_modification.</span></code><code class="sig-name descname"><span class="pre">convert_batchnorm_modules</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">model</span></em>, <em class="sig-param"><span class="pre">converter=&lt;function</span> <span class="pre">_batchnorm_to_groupnorm&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_modification.html#convert_batchnorm_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_modification.convert_batchnorm_modules" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.utils.module_modification.convert_batchnorm_modules">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_modification.</span></span><span class="sig-name descname"><span class="pre">convert_batchnorm_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">model</span></em>, <em class="sig-param"><span class="pre">converter=&lt;function</span> <span class="pre">_batchnorm_to_groupnorm&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_modification.html#convert_batchnorm_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_modification.convert_batchnorm_modules" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts all BatchNorm modules to another module
 (defaults to GroupNorm) that is privacy compliant.</p>
 <dl class="field-list simple">
@@ -62,8 +62,8 @@ isn’t provided.</p>
 </div>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.utils.module_modification.nullify_batchnorm_modules">
-<code class="sig-prename descclassname"><span class="pre">opacus.utils.module_modification.</span></code><code class="sig-name descname"><span class="pre">nullify_batchnorm_modules</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_modification.html#nullify_batchnorm_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_modification.nullify_batchnorm_modules" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.utils.module_modification.nullify_batchnorm_modules">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_modification.</span></span><span class="sig-name descname"><span class="pre">nullify_batchnorm_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_modification.html#nullify_batchnorm_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_modification.nullify_batchnorm_modules" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replaces all the BatchNorm submodules (e.g. <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html#torch.nn.BatchNorm1d" title="(in PyTorch v1.8.0a0+56b43f4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.BatchNorm1d</span></code></a>,
 <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html#torch.nn.BatchNorm2d" title="(in PyTorch v1.8.0a0+56b43f4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.BatchNorm2d</span></code></a> etc.) in <code class="docutils literal notranslate"><span class="pre">root</span></code> with <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Identity.html#torch.nn.Identity" title="(in PyTorch v1.8.0a0+56b43f4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Identity</span></code></a>.</p>
 <dl class="field-list simple">
@@ -83,8 +83,8 @@ Identity. <code class="docutils literal notranslate"><span class="pre">root</spa
 will heavily affect convergence of the model.</p>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.utils.module_modification.replace_all_modules">
-<code class="sig-prename descclassname"><span class="pre">opacus.utils.module_modification.</span></code><code class="sig-name descname"><span class="pre">replace_all_modules</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_modification.html#replace_all_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_modification.replace_all_modules" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.utils.module_modification.replace_all_modules">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_modification.</span></span><span class="sig-name descname"><span class="pre">replace_all_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/module_modification.html#replace_all_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_modification.replace_all_modules" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts all the submodules (of root) that have the same
 type as target_class, given a converter, a module root,
 and a target class type.</p>
@@ -119,7 +119,7 @@ converter. root is modified and is equal to the return value.</p>
 </pre></div>
 </div>
 </dd></dl>
-</div>
+</section>
 </div>
 </div>
 </div>

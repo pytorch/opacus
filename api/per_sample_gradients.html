@@ -24,9 +24,9 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="per-sample-gradients">
+<section id="per-sample-gradients">
 <h1>Per Sample Gradients<a class="headerlink" href="#per-sample-gradients" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-opacus.autograd_grad_sample">
+<section id="module-opacus.autograd_grad_sample">
 <span id="autograd-grad-sample"></span><h2>Autograd Grad Sample<a class="headerlink" href="#module-opacus.autograd_grad_sample" title="Permalink to this headline">¶</a></h2>
 <p><em>Based on</em> <a class="reference external" href="https://github.com/cybertronai/autograd-hacks">https://github.com/cybertronai/autograd-hacks</a></p>
 <p>This module provides functions to capture per-sample gradients by using hooks.</p>
@@ -37,8 +37,8 @@ way of implementing this as of now (your suggestions and contributions are
 very welcome). The behaviour has been verified to be correct for the layers
 currently supported by opacus.</p>
 <dl class="py function">
-<dt id="opacus.autograd_grad_sample.add_hooks">
-<code class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></code><code class="sig-name descname"><span class="pre">add_hooks</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#add_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.add_hooks" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.autograd_grad_sample.add_hooks">
+<span class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></span><span class="sig-name descname"><span class="pre">add_hooks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#add_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.add_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds hooks to model to save activations and backprop values.
 The hooks will</p>
 <ol class="arabic simple">
@@ -62,18 +62,18 @@ batch is always in the second dimension).</p></li>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.autograd_grad_sample.disable_hooks">
-<code class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></code><code class="sig-name descname"><span class="pre">disable_hooks</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#disable_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.disable_hooks" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.autograd_grad_sample.disable_hooks">
+<span class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></span><span class="sig-name descname"><span class="pre">disable_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#disable_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.disable_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Globally disables all hooks installed by this library.</p>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.autograd_grad_sample.enable_hooks">
-<code class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></code><code class="sig-name descname"><span class="pre">enable_hooks</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#enable_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.enable_hooks" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.autograd_grad_sample.enable_hooks">
+<span class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></span><span class="sig-name descname"><span class="pre">enable_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#enable_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.enable_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Globally enables all hooks installed by this library.</p>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.autograd_grad_sample.is_supported">
-<code class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></code><code class="sig-name descname"><span class="pre">is_supported</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#is_supported"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.is_supported" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.autograd_grad_sample.is_supported">
+<span class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></span><span class="sig-name descname"><span class="pre">is_supported</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#is_supported"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.is_supported" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks if the <code class="docutils literal notranslate"><span class="pre">layer</span></code> is supported by this library.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -89,8 +89,8 @@ capturing per-sample gradients is available.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt id="opacus.autograd_grad_sample.remove_hooks">
-<code class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></code><code class="sig-name descname"><span class="pre">remove_hooks</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#remove_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.remove_hooks" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.autograd_grad_sample.remove_hooks">
+<span class="sig-prename descclassname"><span class="pre">opacus.autograd_grad_sample.</span></span><span class="sig-name descname"><span class="pre">remove_hooks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/autograd_grad_sample.html#remove_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.autograd_grad_sample.remove_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes hooks added by <code class="docutils literal notranslate"><span class="pre">add_hooks()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -98,15 +98,15 @@ capturing per-sample gradients is available.</p>
 </dd>
 </dl>
 </dd></dl>
-</div>
-<div class="section" id="module-opacus.supported_layers_grad_samplers">
+</section>
+<section id="module-opacus.supported_layers_grad_samplers">
 <span id="layers-grad-samplers"></span><h2>Layers Grad Samplers<a class="headerlink" href="#module-opacus.supported_layers_grad_samplers" title="Permalink to this headline">¶</a></h2>
 <p>This module is a collection of grad samplers - methods to calculate per sample gradients
 for a layer given two tensors: activations (module inputs) and
 backpropagations (gradient values propagated from downstream layers).</p>
 <dl class="py attribute">
-<dt id="opacus.supported_layers_grad_samplers._supported_layers_grad_samplers">
-<code class="sig-prename descclassname"><span class="pre">opacus.supported_layers_grad_samplers.</span></code><code class="sig-name descname"><span class="pre">_supported_layers_grad_samplers</span></code><a class="headerlink" href="#opacus.supported_layers_grad_samplers._supported_layers_grad_samplers" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="opacus.supported_layers_grad_samplers._supported_layers_grad_samplers">
+<span class="sig-prename descclassname"><span class="pre">opacus.supported_layers_grad_samplers.</span></span><span class="sig-name descname"><span class="pre">_supported_layers_grad_samplers</span></span><a class="headerlink" href="#opacus.supported_layers_grad_samplers._supported_layers_grad_samplers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mapping
 from layer name to corresponding grad sampler</p>
 <dl class="field-list simple">
@@ -115,8 +115,8 @@ from layer name to corresponding grad sampler</p>
 </dd>
 </dl>
 </dd></dl>
-</div>
-</div>
+</section>
+</section>
 </div>
 </div>
 </div>
