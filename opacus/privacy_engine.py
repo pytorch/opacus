@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+import math
 import os
 import types
 import warnings
 from typing import List, Optional, Tuple, Union
 
 import torch
+from scipy.stats import planck
 from torch import nn
 
 from . import privacy_analysis
@@ -91,6 +93,7 @@ class PrivacyEngine:
         >>> privacy_engine.attach(optimizer)  # That's it! Now it's business as usual.
     """
 
+    # flake8: noqa: C901
     def __init__(
         self,
         module: nn.Module,
@@ -107,6 +110,7 @@ class PrivacyEngine:
         target_epsilon: Optional[float] = None,
         epochs: Optional[float] = None,
         loss_reduction: str = "mean",
+        poisson: bool = False,
         **misc_settings,
     ):
         r"""
@@ -135,6 +139,8 @@ class PrivacyEngine:
         self.steps = 0
         self.module = module
 
+        self.poisson = poisson
+        self.loss_reduction = loss_reduction
         self.batch_size = batch_size
         self.sample_size = sample_size
         self.sample_rate = sample_rate
@@ -147,6 +153,19 @@ class PrivacyEngine:
         else:
             rank = 0
             n_replicas = 1
+
+        if poisson:
+            # TODO: Check directly if sampler is UniformSampler when sampler gets passed to the Engine (in the future)
+            if sample_size is None:
+                raise ValueError(
+                    "If using Poisson sampling, sample_size should get passed to the PrivacyEngine."
+                )
+
+            # Number of empty batches follows a geometric distribution
+            # Planck is the same distribution but its parameter is the (negative) log of the geometric's parameter
+            self._poisson_empty_batches_distribution = planck(
+                -math.log(1 - self.sample_rate) * self.sample_size
+            )
 
         if noise_multiplier is None:
             if target_epsilon is None or target_delta is None or epochs is None:
@@ -164,7 +183,6 @@ class PrivacyEngine:
         self.target_delta = target_delta
         self.secure_rng = secure_rng
         self.batch_first = batch_first
-        self.loss_reduction = loss_reduction
         self.misc_settings = misc_settings
         self.n_replicas = n_replicas
         self.rank = rank
@@ -291,17 +309,31 @@ class PrivacyEngine:
             self.privacy_engine.zero_grad()
             self.original_zero_grad()
 
-        def dp_step(self, closure=None):
-            self.privacy_engine.step()
+        def dp_step(self, closure=None, is_empty=False):
+            self.privacy_engine.step(is_empty)
             if isinstance(
                 self.privacy_engine.module, DifferentiallyPrivateDistributedDataParallel
             ):
                 average_gradients(self.privacy_engine.module)
             self.original_step(closure)
 
+        def poisson_dp_step(self, closure=None):
+            # Perform one step as usual
+            self.dp_step(closure)
+
+            # Taking empty steps to simulate empty batches
+            num_empty_batches = self.privacy_engine._sample_poisson_empty_batches()
+            for _ in range(num_empty_batches):
+                self.zero_grad()
+                self.dp_step(closure, is_empty=True)
+
         optimizer.privacy_engine = self
+
+        optimizer.dp_step = types.MethodType(dp_step, optimizer)
         optimizer.original_step = optimizer.step
-        optimizer.step = types.MethodType(dp_step, optimizer)
+        optimizer.step = types.MethodType(
+            poisson_dp_step if self.poisson else dp_step, optimizer
+        )
 
         optimizer.original_zero_grad = optimizer.zero_grad
         optimizer.zero_grad = types.MethodType(dp_zero_grad, optimizer)
@@ -313,6 +345,22 @@ class PrivacyEngine:
 
         # create a cross reference for detaching
         self.optimizer = optimizer
+
+        if self.poisson:
+            # Optional initial step on empty batch
+            num_empty_batches = self._sample_poisson_empty_batches()
+            for _ in range(num_empty_batches):
+                self.optimizer.zero_grad()
+                for p in self.module.parameters():
+                    if p.requires_grad:
+                        p.grad = torch.zeros_like(p)
+                self.optimizer.dp_step(closure=None, is_empty=True)
+
+    def _sample_poisson_empty_batches(self):
+        """
+        Samples an integer which is equal to the number of (consecutive) empty batches when doing Poisson sampling
+        """
+        return self._poisson_empty_batches_distribution.rvs(size=1)[0]
 
     def get_renyi_divergence(self):
         rdp = torch.tensor(
@@ -367,9 +415,14 @@ class PrivacyEngine:
         if self.clipper is not None:
             self.clipper.zero_grad()
 
-    def step(self):
+    def step(self, is_empty: bool = False):
         """
         Takes a step for the privacy engine.
+
+        Args:
+            is_empty: Whether the step is taken on an empty batch
+                In this case, we do not call clip_and_accumulate since there are no
+                per sample gradients.
 
         Notes:
             You should not call this method directly. Rather, by attaching your
@@ -384,8 +437,20 @@ class PrivacyEngine:
 
         """
         self.steps += 1
-        self.clipper.clip_and_accumulate()
-        clip_values, batch_size = self.clipper.pre_step()
+        if not is_empty:
+            self.clipper.clip_and_accumulate()
+            clip_values, batch_size = self.clipper.pre_step()
+        else:
+            clip_values = (
+                self.max_grad_norm
+                if type(self.max_grad_norm) is list
+                else [
+                    self.max_grad_norm
+                    for p in self.module.parameters()
+                    if p.requires_grad
+                ]
+            )
+            batch_size = self.avg_batch_size
 
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
@@ -399,6 +464,12 @@ class PrivacyEngine:
                 # For loss_reduction=mean, noise will get further divided by
                 # world_size as gradients are averaged.
                 p.grad += noise
+
+            # For poisson, we are not supposed to know the batch size
+            # We have to divide by avg_batch_size instead of batch_size
+            if self.poisson and self.loss_reduction == "mean":
+                p.grad *= batch_size / self.avg_batch_size
+
 
     def to(self, device: Union[str, torch.device]):
         """
@@ -552,11 +623,19 @@ class PrivacyEngine:
                         "The sample rate will be defined from ``batch_size`` and ``sample_size``."
                         "The returned privacy budget will be incorrect."
                     )
+
+            self.avg_batch_size = self.sample_rate * self.sample_size
         else:
             warnings.warn(
                 "A ``sample_rate`` has been provided."
                 "Thus, the provided ``batch_size``and ``sample_size`` will be ignored."
             )
+            if self.poisson:
+                if self.loss_reduction == "mean" and not self.sample_size:
+                    raise ValueError(
+                        "Sample size has to be provided if using Poisson and loss_reduction=mean."
+                    )
+                self.avg_batch_size = self.sample_rate * self.sample_size
 
         if self.sample_rate > 1.0:
             raise ValueError(
