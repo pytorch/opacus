@@ -28,12 +28,14 @@
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
 
+<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">types</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">planck</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">privacy_analysis</span>
@@ -118,6 +120,7 @@
 <span class="sd">        &gt;&gt;&gt; privacy_engine.attach(optimizer)  # That's it! Now it's business as usual.</span>
 <span class="sd">    """</span>
 
+    <span class="c1"># flake8: noqa: C901</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -134,6 +137,7 @@
         <span class="n">target_epsilon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">epochs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+        <span class="n">poisson</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">misc_settings</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
@@ -162,6 +166,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span> <span class="o">=</span> <span class="n">poisson</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">=</span> <span class="n">loss_reduction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="o">=</span> <span class="n">sample_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
@@ -174,6 +180,19 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">rank</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">n_replicas</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">poisson</span><span class="p">:</span>
+            <span class="c1"># TODO: Check directly if sampler is UniformSampler when sampler gets passed to the Engine (in the future)</span>
+            <span class="k">if</span> <span class="n">sample_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"If using Poisson sampling, sample_size should get passed to the PrivacyEngine."</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Number of empty batches follows a geometric distribution</span>
+            <span class="c1"># Planck is the same distribution but its parameter is the (negative) log of the geometric's parameter</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_poisson_empty_batches_distribution</span> <span class="o">=</span> <span class="n">planck</span><span class="p">(</span>
+                <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">noise_multiplier</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">target_epsilon</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">target_delta</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">epochs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -191,7 +210,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">target_delta</span> <span class="o">=</span> <span class="n">target_delta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span> <span class="o">=</span> <span class="n">secure_rng</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">=</span> <span class="n">loss_reduction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">misc_settings</span> <span class="o">=</span> <span class="n">misc_settings</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_replicas</span> <span class="o">=</span> <span class="n">n_replicas</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="n">rank</span>
@@ -318,17 +336,31 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">original_zero_grad</span><span class="p">()</span>
 
-        <span class="k">def</span> <span class="nf">dp_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="k">def</span> <span class="nf">dp_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_empty</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">is_empty</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span>
             <span class="p">):</span>
                 <span class="n">average_gradients</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">original_step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
 
+        <span class="k">def</span> <span class="nf">poisson_dp_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="c1"># Perform one step as usual</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dp_step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
+
+            <span class="c1"># Taking empty steps to simulate empty batches</span>
+            <span class="n">num_empty_batches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">_sample_poisson_empty_batches</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_empty_batches</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dp_step</span><span class="p">(</span><span class="n">closure</span><span class="p">,</span> <span class="n">is_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
         <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">dp_step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">original_step</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span>
+            <span class="n">poisson_dp_step</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span> <span class="k">else</span> <span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span>
+        <span class="p">)</span>
 
         <span class="n">optimizer</span><span class="o">.</span><span class="n">original_zero_grad</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_zero_grad</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
@@ -339,7 +371,23 @@
         <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">virtual_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 
         <span class="c1"># create a cross reference for detaching</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span><span class="p">:</span>
+            <span class="c1"># Optional initial step on empty batch</span>
+            <span class="n">num_empty_batches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_poisson_empty_batches</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_empty_batches</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">dp_step</span><span class="p">(</span><span class="n">closure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_sample_poisson_empty_batches</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Samples an integer which is equal to the number of (consecutive) empty batches when doing Poisson sampling</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_poisson_empty_batches_distribution</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">get_renyi_divergence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">rdp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
@@ -394,9 +442,14 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="PrivacyEngine.step"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PrivacyEngine.step"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_empty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        Takes a step for the privacy engine.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            is_empty: Whether the step is taken on an empty batch</span>
+<span class="sd">                In this case, we do not call clip_and_accumulate since there are no</span>
+<span class="sd">                per sample gradients.</span>
 
 <span class="sd">        Notes:</span>
 <span class="sd">            You should not call this method directly. Rather, by attaching your</span>
@@ -411,8 +464,20 @@
 
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">clip_and_accumulate</span><span class="p">()</span>
-        <span class="n">clip_values</span><span class="p">,</span> <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">pre_step</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_empty</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">clip_and_accumulate</span><span class="p">()</span>
+            <span class="n">clip_values</span><span class="p">,</span> <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">pre_step</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">clip_values</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span>
+                <span class="k">else</span> <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span>
+                    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg_batch_size</span>
 
         <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">clip_value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">clip_values</span><span class="p">):</span>
@@ -425,7 +490,13 @@
                 <span class="c1"># This is easy to reason about for loss_reduction=sum</span>
                 <span class="c1"># For loss_reduction=mean, noise will get further divided by</span>
                 <span class="c1"># world_size as gradients are averaged.</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">+=</span> <span class="n">noise</span></div>
+                <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">+=</span> <span class="n">noise</span>
+
+            <span class="c1"># For poisson, we are not supposed to know the batch size</span>
+            <span class="c1"># We have to divide by avg_batch_size instead of batch_size</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">*=</span> <span class="n">batch_size</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg_batch_size</span></div>
+
 
 <div class="viewcode-block" id="PrivacyEngine.to"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.to">[docs]</a>    <span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]):</span>
         <span class="sd">"""</span>
@@ -579,11 +650,19 @@
                         <span class="s2">"The sample rate will be defined from ``batch_size`` and ``sample_size``."</span>
                         <span class="s2">"The returned privacy budget will be incorrect."</span>
                     <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">avg_batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s2">"A ``sample_rate`` has been provided."</span>
                 <span class="s2">"Thus, the provided ``batch_size``and ``sample_size`` will be ignored."</span>
             <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"Sample size has to be provided if using Poisson and loss_reduction=mean."</span>
+                    <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">avg_batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
