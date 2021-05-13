@@ -6,10 +6,10 @@ import unittest
 from typing import Dict, List, Union
 
 import numpy as np
-import opacus
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from opacus.grad_sample import GradSampleModule
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
 from torch.testing import assert_allclose
 
@@ -175,8 +175,9 @@ class GradSampleHooks_test(unittest.TestCase):
         torch.manual_seed(0)
         np.random.seed(0)
 
-        gs_module = clone_module(module)
-        opacus.autograd_grad_sample.add_hooks(gs_module, loss_reduction, batch_first)
+        gs_module = GradSampleModule(
+            clone_module(module), batch_first=batch_first, loss_reduction=loss_reduction
+        )
         grad_sample_module = ModelWithLoss(gs_module, loss_reduction)
 
         grad_sample_module.zero_grad()
@@ -185,7 +186,7 @@ class GradSampleHooks_test(unittest.TestCase):
 
         opacus_grad_samples = {
             name: p.grad_sample
-            for name, p in grad_sample_module.wrapped_module.named_parameters()
+            for name, p in grad_sample_module.wrapped_module._module.named_parameters()
         }
 
         return opacus_grad_samples
@@ -241,7 +242,12 @@ class GradSampleHooks_test(unittest.TestCase):
             x, module, batch_first=batch_first, loss_reduction=loss_reduction
         )
 
-        assert microbatch_grad_samples.keys() == opacus_grad_samples.keys()
+        if microbatch_grad_samples.keys() != opacus_grad_samples.keys():
+            raise ValueError(
+                "Keys not matching! "
+                f"Keys only in microbatch: {microbatch_grad_samples.keys() - opacus_grad_samples.keys()}; "
+                f"Keys only in Opacus: {opacus_grad_samples.keys() - microbatch_grad_samples.keys()}"
+            )
 
         self.check_shapes(microbatch_grad_samples, opacus_grad_samples, loss_reduction)
         self.check_values(

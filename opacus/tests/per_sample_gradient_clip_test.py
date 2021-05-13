@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus import PerSampleGradientClipper
+from opacus.grad_sample import GradSampleModule
 from opacus.utils.clipping import ConstantFlatClipper, ConstantPerLayerClipper
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -78,6 +79,10 @@ class PerSampleGradientClipper_test(unittest.TestCase):
         # Deep copy
         self.clipped_model = SampleConvNet()  # create the structure
         self.clipped_model.load_state_dict(self.original_model.state_dict())  # fill it
+
+        self.clipped_model = GradSampleModule(
+            self.clipped_model
+        )  # TODO change this as we refactor clipper
 
         # Intentionally clipping to a very small value
         norm_clipper = (

@@ -29,10 +29,10 @@ class DPSLTMAdapter(nn.Module):
 
 class LSTM_test(GradSampleHooks_test):
     @given(
-        N=st.integers(1, 4),
-        T=st.integers(1, 8),
-        D=st.integers(4, 7),
-        H=st.integers(5, 10),
+        N=st.integers(1, 3),
+        T=st.integers(1, 3),
+        D=st.integers(4, 5),
+        H=st.integers(8, 10),
         num_layers=st.sampled_from([1, 2]),
         bias=st.booleans(),
         batch_first=st.booleans(),
@@ -54,7 +54,6 @@ class LSTM_test(GradSampleHooks_test):
         using_packed_sequences: bool,
         packed_sequences_sorted: bool,
     ):
-
         lstm = DPSLTMAdapter(
             D,
             H,

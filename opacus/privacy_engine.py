@@ -8,6 +8,7 @@ import warnings
 from typing import List, Optional, Tuple, Union
 
 import torch
+from opacus.grad_sample import GradSampleModule
 from scipy.stats import planck
 from torch import nn
 
@@ -137,8 +138,6 @@ class PrivacyEngine:
         """
 
         self.steps = 0
-        self.module = module
-
         self.poisson = poisson
         self.loss_reduction = loss_reduction
         self.batch_size = batch_size
@@ -153,6 +152,8 @@ class PrivacyEngine:
         else:
             rank = 0
             n_replicas = 1
+
+        self.module = GradSampleModule(module)
 
         if poisson:
             # TODO: Check directly if sampler is UniformSampler when sampler gets passed to the Engine (in the future)
@@ -254,11 +255,16 @@ class PrivacyEngine:
         the model and the optimizer to their original states (i.e. all
         added attributes/methods will be removed).
         """
+        # 1. Fix optimizer
         optim = self.optimizer
-        optim.privacy_engine = None
-        self.clipper.close()
         optim.step = types.MethodType(optim.original_step, optim)
-        del optim.virtual_step
+        delattr(optim, "privacy_engine")
+        delattr(optim, "original_step")
+        delattr(optim, "original_zero_grad")
+        delattr(optim, "virtual_step")
+
+        # 2. Fix module
+        self.module._close()
 
     def attach(self, optimizer: torch.optim.Optimizer):
         r"""
@@ -279,6 +285,17 @@ class PrivacyEngine:
         Args:
             optimizer: The optimizer to which the privacy engine will attach
         """
+        if hasattr(optimizer, "privacy_engine"):
+            if optimizer.privacy_engine != self:
+                raise ValueError(
+                    f"Trying to attach to optimizer: {optimizer}, but that optimizer is "
+                    f"already attached to a different Privacy Engine: {optimizer.privacy_engine}."
+                )
+            else:
+                warnings.warn(
+                    "Trying to attach twice to the same optimizer. Nothing to do."
+                )
+                return
 
         self.validator.validate(self.module)
         norm_clipper = (
@@ -469,7 +486,6 @@ class PrivacyEngine:
             # We have to divide by avg_batch_size instead of batch_size
             if self.poisson and self.loss_reduction == "mean":
                 p.grad *= batch_size / self.avg_batch_size
-
 
     def to(self, device: Union[str, torch.device]):
         """
