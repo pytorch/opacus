@@ -141,6 +141,13 @@ class DPLSTMCell(nn.Module):
         for weight in self.parameters():
             nn.init.uniform_(weight, -stdv, stdv)
 
+    def set_max_batch_length(self, max_batch_length: int) -> None:
+        """
+        Sets max batch length
+        """
+        self.ih.max_batch_len = max_batch_length
+        self.hh.max_batch_len = max_batch_length
+
     def forward(
         self,
         x: torch.Tensor,
@@ -148,7 +155,6 @@ class DPLSTMCell(nn.Module):
         c_prev: torch.Tensor,
         batch_size_t: Optional[int] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-
         if batch_size_t is None:
             gates = self.ih(x) + self.hh(h_prev)  # [B, 4*D]
         else:
@@ -207,6 +213,12 @@ class DPLSTMLayer(nn.Module):
         )
 
         self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else None
+
+    def set_max_batch_length(self, max_batch_length: int) -> None:
+        """
+        Sets max batch length. Useful for PackedSequences
+        """
+        self.cell.set_max_batch_length(max_batch_length)
 
     def forward(
         self,
@@ -323,6 +335,13 @@ class BidirectionalDPLSTMLayer(nn.Module):
             dropout=dropout,
             reverse=True,
         )
+
+    def set_max_batch_length(self, max_batch_length: int) -> None:
+        """
+        Sets max batch length
+        """
+        self.forward_layer.set_max_batch_length(max_batch_length)
+        self.reverse_layer.set_max_batch_length(max_batch_length)
 
     def forward(
         self,
@@ -458,6 +477,8 @@ class DPLSTM(ParamRenamedModule):
             B = batch_sizes[0].item()
             _, D = x.shape
             x = x.split(tuple(batch_sizes))
+            for layer in self.layers:
+                layer.set_max_batch_length(B)
         else:
             sorted_indices = None
             unsorted_indices = None
