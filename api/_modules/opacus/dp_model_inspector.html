@@ -28,10 +28,9 @@
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
 
+<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.module_inspection</span> <span class="kn">import</span> <span class="n">ModelInspector</span><span class="p">,</span> <span class="n">get_layer_type</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
-
-<span class="kn">from</span> <span class="nn">.autograd_grad_sample</span> <span class="kn">import</span> <span class="n">is_supported</span>
-<span class="kn">from</span> <span class="nn">.utils.module_inspection</span> <span class="kn">import</span> <span class="n">ModelInspector</span><span class="p">,</span> <span class="n">get_layer_type</span>
 
 
 <div class="viewcode-block" id="IncompatibleModuleException"><a class="viewcode-back" href="../../dp_model_inspector.html#opacus.dp_model_inspector.IncompatibleModuleException">[docs]</a><span class="k">class</span> <span class="nc">IncompatibleModuleException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -164,7 +163,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        True if ``module`` is supported by ``autograd_grad_sample``</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">is_supported</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">GradSampleModule</span><span class="o">.</span><span class="n">is_supported</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_is_in_training_mode</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>

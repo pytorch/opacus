@@ -61,9 +61,9 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">autograd_grad_sample</span>
 <span class="kn">from</span> <span class="nn">.utils.clipping</span> <span class="kn">import</span> <span class="n">NormClipper</span>
 <span class="kn">from</span> <span class="nn">.utils.tensor_utils</span> <span class="kn">import</span> <span class="n">calc_sample_norms</span>
 
@@ -76,7 +76,7 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">GradSampleModule</span><span class="p">,</span>
         <span class="n">norm_clipper</span><span class="p">:</span> <span class="n">NormClipper</span><span class="p">,</span>
         <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
@@ -104,16 +104,12 @@
 <span class="sd">                is a sum or a mean operation. Can take values ``sum`` or ``mean``</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
-        <span class="n">autograd_grad_sample</span><span class="o">.</span><span class="n">add_hooks</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span>
-        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">norm_clipper</span> <span class="o">=</span> <span class="n">norm_clipper</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">=</span> <span class="n">loss_reduction</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_aggregated_state</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">hooks_attached</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on_batch_clip_func</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="PerSampleGradientClipper.set_on_batch_clip_func"><a class="viewcode-back" href="../../per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper.set_on_batch_clip_func">[docs]</a>    <span class="k">def</span> <span class="nf">set_on_batch_clip_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on_batch_clip_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -125,21 +121,6 @@
 <span class="sd">            on_batch_clip_func: Function to be called after clipping</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on_batch_clip_func</span> <span class="o">=</span> <span class="n">on_batch_clip_func</span></div>
-
-    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Destructor to remove all attached hooks from the module when the clipper</span>
-<span class="sd">        object is deleted</span>
-<span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-
-<div class="viewcode-block" id="PerSampleGradientClipper.close"><a class="viewcode-back" href="../../per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Removes backward hooks from the module</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks_attached</span><span class="p">:</span>  <span class="c1"># do not close twice</span>
-            <span class="n">autograd_grad_sample</span><span class="o">.</span><span class="n">remove_hooks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">hooks_attached</span> <span class="o">=</span> <span class="kc">False</span></div>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"PerSampleGradientClipModuleHook on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="si">}</span><span class="s2">"</span>

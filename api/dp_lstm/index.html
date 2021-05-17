@@ -71,6 +71,16 @@ the cell state for <code class="docutils literal notranslate"><span class="pre">
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.set_max_batch_length">
+<span class="sig-name descname"><span class="pre">set_max_batch_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_batch_length</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#BidirectionalDPLSTMLayer.set_max_batch_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.set_max_batch_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets max batch length</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="opacus.layers.dp_lstm.DPLSTM">
@@ -158,6 +168,16 @@ registered hooks while the latter silently ignores them.</p>
 <span class="sig-name descname"><span class="pre">reset_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell.reset_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.reset_parameters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resets parameters by initializing them from an uniform distribution.</p>
 </dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_lstm.DPLSTMCell.set_max_batch_length">
+<span class="sig-name descname"><span class="pre">set_max_batch_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_batch_length</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMCell.set_max_batch_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMCell.set_max_batch_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets max batch length</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="opacus.layers.dp_lstm.DPLSTMLayer">
@@ -188,6 +208,16 @@ tensor containing the output features (<code class="docutils literal notranslate
 DPLSTMCell for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>. <code class="docutils literal notranslate"><span class="pre">h_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> and is a
 tensor containing the hidden state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>. <code class="docutils literal notranslate"><span class="pre">c_n</span></code> is of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>
 tensor containing the cell state for <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">T</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_lstm.DPLSTMLayer.set_max_batch_length">
+<span class="sig-name descname"><span class="pre">set_max_batch_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_batch_length</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_lstm.html#DPLSTMLayer.set_max_batch_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_lstm.DPLSTMLayer.set_max_batch_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets max batch length. Useful for PackedSequences</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>

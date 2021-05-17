@@ -168,6 +168,13 @@
         <span class="k">for</span> <span class="n">weight</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="o">-</span><span class="n">stdv</span><span class="p">,</span> <span class="n">stdv</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="DPLSTMCell.set_max_batch_length"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.set_max_batch_length">[docs]</a>    <span class="k">def</span> <span class="nf">set_max_batch_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Sets max batch length</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="o">.</span><span class="n">max_batch_len</span> <span class="o">=</span> <span class="n">max_batch_length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="o">.</span><span class="n">max_batch_len</span> <span class="o">=</span> <span class="n">max_batch_length</span></div>
+
 <div class="viewcode-block" id="DPLSTMCell.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
@@ -175,7 +182,6 @@
         <span class="n">c_prev</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
         <span class="n">batch_size_t</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-
         <span class="k">if</span> <span class="n">batch_size_t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="p">(</span><span class="n">h_prev</span><span class="p">)</span>  <span class="c1"># [B, 4*D]</span>
         <span class="k">else</span><span class="p">:</span>
@@ -234,6 +240,12 @@
         <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">dropout_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span> <span class="k">if</span> <span class="n">dropout</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DPLSTMLayer.set_max_batch_length"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMLayer.set_max_batch_length">[docs]</a>    <span class="k">def</span> <span class="nf">set_max_batch_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Sets max batch length. Useful for PackedSequences</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell</span><span class="o">.</span><span class="n">set_max_batch_length</span><span class="p">(</span><span class="n">max_batch_length</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DPLSTMLayer.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.DPLSTMLayer.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -350,6 +362,13 @@
             <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
             <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
+
+<div class="viewcode-block" id="BidirectionalDPLSTMLayer.set_max_batch_length"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.set_max_batch_length">[docs]</a>    <span class="k">def</span> <span class="nf">set_max_batch_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Sets max batch length</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forward_layer</span><span class="o">.</span><span class="n">set_max_batch_length</span><span class="p">(</span><span class="n">max_batch_length</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reverse_layer</span><span class="o">.</span><span class="n">set_max_batch_length</span><span class="p">(</span><span class="n">max_batch_length</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="BidirectionalDPLSTMLayer.forward"><a class="viewcode-back" href="../../../dp_lstm.html#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -485,6 +504,8 @@
             <span class="n">B</span> <span class="o">=</span> <span class="n">batch_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">set_max_batch_length</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">sorted_indices</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">unsorted_indices</span> <span class="o">=</span> <span class="kc">None</span>

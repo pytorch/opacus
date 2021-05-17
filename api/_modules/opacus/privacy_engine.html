@@ -35,6 +35,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">planck</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 
@@ -164,8 +165,6 @@
 <span class="sd">        """</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span> <span class="o">=</span> <span class="n">poisson</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">=</span> <span class="n">loss_reduction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
@@ -180,6 +179,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">rank</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">n_replicas</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">GradSampleModule</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">poisson</span><span class="p">:</span>
             <span class="c1"># TODO: Check directly if sampler is UniformSampler when sampler gets passed to the Engine (in the future)</span>
@@ -281,11 +282,16 @@
 <span class="sd">        the model and the optimizer to their original states (i.e. all</span>
 <span class="sd">        added attributes/methods will be removed).</span>
 <span class="sd">        """</span>
+        <span class="c1"># 1. Fix optimizer</span>
         <span class="n">optim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span>
-        <span class="n">optim</span><span class="o">.</span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">optim</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">optim</span><span class="o">.</span><span class="n">original_step</span><span class="p">,</span> <span class="n">optim</span><span class="p">)</span>
-        <span class="k">del</span> <span class="n">optim</span><span class="o">.</span><span class="n">virtual_step</span></div>
+        <span class="nb">delattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">"privacy_engine"</span><span class="p">)</span>
+        <span class="nb">delattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">"original_step"</span><span class="p">)</span>
+        <span class="nb">delattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">"original_zero_grad"</span><span class="p">)</span>
+        <span class="nb">delattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">"virtual_step"</span><span class="p">)</span>
+
+        <span class="c1"># 2. Fix module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">_close</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="PrivacyEngine.attach"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.attach">[docs]</a>    <span class="k">def</span> <span class="nf">attach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
@@ -306,6 +312,17 @@
 <span class="sd">        Args:</span>
 <span class="sd">            optimizer: The optimizer to which the privacy engine will attach</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="s2">"privacy_engine"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span> <span class="o">!=</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Trying to attach to optimizer: </span><span class="si">{</span><span class="n">optimizer</span><span class="si">}</span><span class="s2">, but that optimizer is "</span>
+                    <span class="sa">f</span><span class="s2">"already attached to a different Privacy Engine: </span><span class="si">{</span><span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"Trying to attach twice to the same optimizer. Nothing to do."</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
         <span class="n">norm_clipper</span> <span class="o">=</span> <span class="p">(</span>
@@ -496,7 +513,6 @@
             <span class="c1"># We have to divide by avg_batch_size instead of batch_size</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">*=</span> <span class="n">batch_size</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg_batch_size</span></div>
-
 
 <div class="viewcode-block" id="PrivacyEngine.to"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.to">[docs]</a>    <span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]):</span>
         <span class="sd">"""</span>

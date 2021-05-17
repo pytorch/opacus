@@ -60,7 +60,7 @@ pass. It then puts them in each parameter’s <code class="docutils literal notr
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Module to which backward hooks are added and for which per-sample
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code>) – Module to which backward hooks are added and for which per-sample
 gradients are clipped</p></li>
 <li><p><strong>norm_clipper</strong> (<a class="reference internal" href="clipping.html#opacus.utils.clipping.NormClipper" title="opacus.utils.clipping.NormClipper"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormClipper</span></code></a>) – A norm clipper object of class
 <a class="reference internal" href="clipping.html#opacus.utils.clipping.NormClipper" title="opacus.utils.clipping.NormClipper"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormClipper</span></code></a> which encapsulated different
@@ -84,16 +84,6 @@ is a sum or a mean operation. Can take values <code class="docutils literal notr
 <a class="reference internal" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step" title="opacus.per_sample_gradient_clip.PerSampleGradientClipper.pre_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pre_step()</span></code></a>
 will populate the <code class="docutils literal notranslate"><span class="pre">.grad</span></code> field with the average gradient over the entire batch of size
 <code class="docutils literal notranslate"><span class="pre">(N-1)*</span> <span class="pre">B</span> <span class="pre">+</span> <span class="pre">b</span></code> with <code class="docutils literal notranslate"><span class="pre">b</span> <span class="pre">&lt;=</span> <span class="pre">B</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="opacus.per_sample_gradient_clip.PerSampleGradientClipper.close">
-<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/per_sample_gradient_clip.html#PerSampleGradientClipper.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.per_sample_gradient_clip.PerSampleGradientClipper.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes backward hooks from the module</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
