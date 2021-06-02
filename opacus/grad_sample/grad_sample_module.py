@@ -165,7 +165,11 @@ class GradSampleModule(nn.Module):
         forward_input: List[torch.Tensor],
         _forward_output: torch.Tensor,
     ):
-        if not requires_grad(module) or not module.training:
+        if (
+            not requires_grad(module)
+            or not module.training
+            or not torch.is_grad_enabled()
+        ):
             return
 
         if not self.hooks_enabled:
