@@ -14,5 +14,13 @@
   "dependencies": {
     "prismjs": "^1.23.0",
     "bl": "^1.2.3"
+  },
+  "resolutions": {
+    "trim-newlines": "3.0.1",
+    "normalize-url": "4.5.1",
+    "highlight.js" : "10.5.0",
+    "react-dev-utils": "11.0.4",
+    "immer": "8.0.1",
+    "prismjs": "1.23.0"
   }
 }
