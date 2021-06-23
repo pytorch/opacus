@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.14.0
+### New features
+* Major refactoring - per-sample gradient computation is separated into its own module - GradSampleModule (#175)
+* Improved RDP to (eps, delta)-DP conversion (#162)
+* Multi-GPU support (#166)
+### Bug fixes
+* Handle empty batches in Poisson sampling (#164)
+* Fixed memory leak from no_grad execution (#180)
+
 ## v0.13.0
 ### New features
 * PackedSequence support for DPLSTM (#150) (thanks @touqir14 !)
