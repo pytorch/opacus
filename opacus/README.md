@@ -1,22 +1,6 @@
 # Developer Notes
 These developer notes can help you ramp up on this codebase. For any question, hit us up on the [forums](https://discuss.pytorch.org/c/opacus/29)!
 
-## Code structure
-The code in Opacus is structured as such:
-
-    .
-    ├── grad_sample/                         # (folder) All the logic to compute per-sample gradients
-    ├── layers/                              # (folder) Reimplemented layers made compatible with Opacus
-    ├── utils/                               # (folder) Extra utils
-    ├── tests/                               # (folder) All the tests are here.
-    |
-    ├── dp_model_inspector.py               # Checks that your nn.Module is compatible with DP Training
-    ├── per_sample_gradient_clipping.py     # Contains the clipper class and logic
-    ├── privacy_engine.py                   # Main entry point for customers
-    ├── supported_layers_grad_samplers.py   # Contains the list of supported layers
-    ├── privacy_engine.py                   # Main entry point for customers
-    └── README.md                           # This file
-
 
 ## Supported modules
 Opacus only works with supported ``nn.Module``s. The following modules are supported:

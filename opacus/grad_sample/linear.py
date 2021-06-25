@@ -13,6 +13,7 @@ def compute_linear_grad_sample(
 ) -> None:
     """
     Computes per sample gradients for ``nn.Linear`` layer
+
     Args:
         layer: Layer
         A: Activations

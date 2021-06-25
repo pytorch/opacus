@@ -36,11 +36,12 @@ class GradSampleModule(nn.Module):
 
     def del_grad_sample(self):
         """
-        Deletes .grad_sample from this module's parameters.
-        Why del? Normally, `zero_grad()` would do p.grad.zero_() and keep the allocation.
+        Deletes ``.grad_sample`` from this module's parameters.
+
+        Why del? Normally, ``zero_grad()`` would do ``p.grad.zero_()`` and keep the allocation.
         Normal grads can do this, because their shape is always the same.
         Grad samples do not behave like this, because they accumulate over the batch dim.
-        If you have batch_size=32 and size (12, 16) and you backprop twice, you should
+        If you have ``batch_size=32`` and size (12, 16) and you backprop twice, you should
         expect to have grad_samples of size [64, 12, 16]. If you backprop once more,
         then you'll get size [96, 12, 16] and so on.
         So when you zero out, you should be left with nothing so you can start over.
@@ -58,6 +59,7 @@ class GradSampleModule(nn.Module):
         """
         Returns the standard nn.Module wrapped by this, eliminating all traces
         of grad samples and hooks
+
         Returns:
             The wrapped module
         """
@@ -70,11 +72,12 @@ class GradSampleModule(nn.Module):
         The hooks will
         1. save activations into param.activations during forward pass
         2. compute per-sample gradients in params.grad_sample during backward pass.
-        Call "remove_hooks(model)" to disable this.
+        Call ``remove_hooks(model)`` to disable this.
+
         Args:
             model: the model to which hooks are added
             loss_type: either "mean" or "sum" depending on whether backpropped
-            loss was averaged or summed over batch (default: "mean")
+                loss was averaged or summed over batch (default: "mean")
             batch_dim: the batch dimension (default: 0)
         """
         if hasattr(self._module, "autograd_grad_sample_hooks"):
@@ -102,7 +105,7 @@ class GradSampleModule(nn.Module):
 
     def remove_hooks(self) -> None:
         """
-        Removes hooks added by add_hooks()
+        Removes hooks added by ``add_hooks()``
         """
         self.disable_hooks()
         if not hasattr(self, "autograd_grad_sample_hooks"):
@@ -125,7 +128,7 @@ class GradSampleModule(nn.Module):
 
     def enable_hooks(self) -> None:
         r"""
-        The opposite of disable_hooks(). Hooks are always enabled unless you explicitly
+        The opposite of ``disable_hooks()``. Hooks are always enabled unless you explicitly
         disable them so you don't need to call this unless you want to re-enable them.
         """
         self.hooks_enabled = True
@@ -187,7 +190,7 @@ class GradSampleModule(nn.Module):
         loss_reduction: str,
         batch_first: bool,
     ):
-        """Capture backprops in backward pass and store per-sample gradients."""
+        """Captures backprops in backward pass and store per-sample gradients."""
         if not self.hooks_enabled:
             return
 
@@ -217,7 +220,7 @@ class GradSampleModule(nn.Module):
             module: the module for which per-sample gradients are computed
             backprops: the captured backprops
             loss_reduction: either "mean" or "sum" depending on whether backpropped
-            loss was averaged or summed over batch
+                loss was averaged or summed over batch
             batch_first: True is batch dimension is first
         """
         if not hasattr(module, "activations"):
