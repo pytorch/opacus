@@ -1,14 +1,32 @@
-Per Sample Gradients
-====================
+Gradient Sample Module
+======================
 
-Autograd Grad Sample
-^^^^^^^^^^^^^^^^^^^^
-
-.. automodule:: opacus.autograd_grad_sample
+.. automodule:: opacus.grad_sample.grad_sample_module
     :members:
 
-Layers Grad Samplers
-^^^^^^^^^^^^^^^^^^^^
+.. automodule:: opacus.grad_sample.conv
+    :members:
 
-.. automodule:: opacus.supported_layers_grad_samplers
+.. automodule:: opacus.grad_sample.dp_lstm
+    :members:
+
+.. automodule:: opacus.grad_sample.dp_multihead_attention
+    :members:
+
+.. automodule:: opacus.grad_sample.embedding
+    :members:
+
+.. automodule:: opacus.grad_sample.group_norm
+    :members:
+
+.. automodule:: opacus.grad_sample.instance_norm
+    :members:
+
+.. automodule:: opacus.grad_sample.layer_norm
+    :members:
+
+.. automodule:: opacus.grad_sample.linear
+    :members:
+
+.. automodule:: opacus.grad_sample.utils
     :members:

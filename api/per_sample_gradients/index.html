@@ -24,14 +24,378 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="per-sample-gradients">
-<h1>Per Sample Gradients<a class="headerlink" href="#per-sample-gradients" title="Permalink to this headline">¶</a></h1>
-<section id="autograd-grad-sample">
-<h2>Autograd Grad Sample<a class="headerlink" href="#autograd-grad-sample" title="Permalink to this headline">¶</a></h2>
-</section>
-<section id="layers-grad-samplers">
-<h2>Layers Grad Samplers<a class="headerlink" href="#layers-grad-samplers" title="Permalink to this headline">¶</a></h2>
-</section>
+<section id="module-opacus.grad_sample.grad_sample_module">
+<span id="gradient-sample-module"></span><h1>Gradient Sample Module<a class="headerlink" href="#module-opacus.grad_sample.grad_sample_module" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.grad_sample_module.</span></span><span class="sig-name descname"><span class="pre">GradSampleModule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extends nn.Module so that its parameter tensors have an extra field called .grad_sample.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.add_hooks">
+<span class="sig-name descname"><span class="pre">add_hooks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.add_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.add_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds hooks to model to save activations and backprop values.
+The hooks will
+1. save activations into param.activations during forward pass
+2. compute per-sample gradients in params.grad_sample during backward pass.
+Call <code class="docutils literal notranslate"><span class="pre">remove_hooks(model)</span></code> to disable this.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – the model to which hooks are added</p></li>
+<li><p><strong>loss_type</strong> – either “mean” or “sum” depending on whether backpropped
+loss was averaged or summed over batch (default: “mean”)</p></li>
+<li><p><strong>batch_dim</strong> – the batch dimension (default: 0)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.capture_backprops_hook">
+<span class="sig-name descname"><span class="pre">capture_backprops_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_forward_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forward_output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.capture_backprops_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.capture_backprops_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Captures backprops in backward pass and store per-sample gradients.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.del_grad_sample">
+<span class="sig-name descname"><span class="pre">del_grad_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.del_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.del_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes <code class="docutils literal notranslate"><span class="pre">.grad_sample</span></code> from this module’s parameters.</p>
+<p>Why del? Normally, <code class="docutils literal notranslate"><span class="pre">zero_grad()</span></code> would do <code class="docutils literal notranslate"><span class="pre">p.grad.zero_()</span></code> and keep the allocation.
+Normal grads can do this, because their shape is always the same.
+Grad samples do not behave like this, because they accumulate over the batch dim.
+If you have <code class="docutils literal notranslate"><span class="pre">batch_size=32</span></code> and size (12, 16) and you backprop twice, you should
+expect to have grad_samples of size [64, 12, 16]. If you backprop once more,
+then you’ll get size [96, 12, 16] and so on.
+So when you zero out, you should be left with nothing so you can start over.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.disable_hooks">
+<span class="sig-name descname"><span class="pre">disable_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.disable_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.disable_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Globally disable all hooks installed by this library.
+Why is this needed? As per <a class="reference external" href="https://github.com/pytorch/pytorch/issues/25723">https://github.com/pytorch/pytorch/issues/25723</a>, there is
+a bug in Autograd that makes removing hooks do nothing if the graph was already
+constructed. For this reason, we have this method to at least turn them off.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.enable_hooks">
+<span class="sig-name descname"><span class="pre">enable_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.enable_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.enable_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>The opposite of <code class="docutils literal notranslate"><span class="pre">disable_hooks()</span></code>. Hooks are always enabled unless you explicitly
+disable them so you don’t need to call this unless you want to re-enable them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.is_supported">
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">is_supported</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.is_supported"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.is_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this module is supported</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.parametrized_modules">
+<span class="sig-name descname"><span class="pre">parametrized_modules</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.parametrized_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.parametrized_modules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively iterates over all submodules, returning those that
+have parameters (as opposed to “wrapper modules” that just organize modules).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.rearrange_grad_samples">
+<span class="sig-name descname"><span class="pre">rearrange_grad_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backprops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.rearrange_grad_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.rearrange_grad_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rearrange activations and grad_samples based on loss reduction and batch dim</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – the module for which per-sample gradients are computed</p></li>
+<li><p><strong>backprops</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – the captured backprops</p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – either “mean” or “sum” depending on whether backpropped
+loss was averaged or summed over batch</p></li>
+<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – True is batch dimension is first</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.remove_hooks">
+<span class="sig-name descname"><span class="pre">remove_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.remove_hooks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.remove_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes hooks added by <code class="docutils literal notranslate"><span class="pre">add_hooks()</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.to_standard_module">
+<span class="sig-name descname"><span class="pre">to_standard_module</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.to_standard_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.to_standard_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the standard nn.Module wrapped by this, eliminating all traces
+of grad samples and hooks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The wrapped module</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.trainable_modules">
+<span class="sig-name descname"><span class="pre">trainable_modules</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.trainable_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.trainable_modules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively iterates over all submodules, returning those that
+have parameters and are trainable (ie they want a grad).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.zero_grad">
+<span class="sig-name descname"><span class="pre">zero_grad</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.zero_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.zero_grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets gradients of all model parameters to zero. See similar function
+under <a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.Optimizer</span></code></a> for more context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>set_to_none</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – instead of setting to zero, set the grads to None.
+See <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.optim.Optimizer.zero_grad.html#torch.optim.Optimizer.zero_grad" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">torch.optim.Optimizer.zero_grad()</span></code></a> for details.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.UnsupportedModuleError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.grad_sample_module.</span></span><span class="sig-name descname"><span class="pre">UnsupportedModuleError</span></span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#UnsupportedModuleError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.UnsupportedModuleError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<span class="target" id="module-opacus.grad_sample.conv"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.conv.compute_conv_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.conv.</span></span><span class="sig-name descname"><span class="pre">compute_conv_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/conv.html#compute_conv_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.conv.compute_conv_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for convolutional layers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Conv2d</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Conv1d</span></code>]) – Layer</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
+<li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-opacus.grad_sample.dp_lstm"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.dp_lstm.compute_lstm_linear_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.dp_lstm.</span></span><span class="sig-name descname"><span class="pre">compute_lstm_linear_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/dp_lstm.html#compute_lstm_linear_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.dp_lstm.compute_lstm_linear_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for <code class="docutils literal notranslate"><span class="pre">LSTMLinear</span></code> layer. The DPLSTM class is written using
+this layer as its building block.</p>
+<p>class</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<a class="reference internal" href="dp_lstm.html#opacus.layers.dp_lstm.LSTMLinear" title="opacus.layers.dp_lstm.LSTMLinear"><code class="xref py py-class docutils literal notranslate"><span class="pre">LSTMLinear</span></code></a>) – Layer</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
+<li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-opacus.grad_sample.dp_multihead_attention"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.dp_multihead_attention.compute_sequence_bias_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.dp_multihead_attention.</span></span><span class="sig-name descname"><span class="pre">compute_sequence_bias_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/dp_multihead_attention.html#compute_sequence_bias_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.dp_multihead_attention.compute_sequence_bias_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for <code class="docutils literal notranslate"><span class="pre">SequenceBias</span></code> layer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<a class="reference internal" href="dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias" title="opacus.layers.dp_multihead_attention.SequenceBias"><code class="xref py py-class docutils literal notranslate"><span class="pre">SequenceBias</span></code></a>) – Layer</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
+<li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-opacus.grad_sample.embedding"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.embedding.compute_embedding_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.embedding.</span></span><span class="sig-name descname"><span class="pre">compute_embedding_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/embedding.html#compute_embedding_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.embedding.compute_embedding_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for <code class="docutils literal notranslate"><span class="pre">nn.Embedding</span></code> layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Embedding</span></code>) – Layer</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
+<li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-opacus.grad_sample.group_norm"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.group_norm.compute_group_norm_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.group_norm.</span></span><span class="sig-name descname"><span class="pre">compute_group_norm_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/group_norm.html#compute_group_norm_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.group_norm.compute_group_norm_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for GroupNorm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">GroupNorm</span></code>) – Layer</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
+<li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-opacus.grad_sample.instance_norm"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.instance_norm.compute_instance_norm_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.instance_norm.</span></span><span class="sig-name descname"><span class="pre">compute_instance_norm_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/instance_norm.html#compute_instance_norm_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.instance_norm.compute_instance_norm_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for InstanceNorm layers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">InstanceNorm1d</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">InstanceNorm2d</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">InstanceNorm3d</span></code>]) – Layer</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
+<li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-opacus.grad_sample.layer_norm"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.layer_norm.compute_layer_norm_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.layer_norm.</span></span><span class="sig-name descname"><span class="pre">compute_layer_norm_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/layer_norm.html#compute_layer_norm_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.layer_norm.compute_layer_norm_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for LayerNorm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LayerNorm</span></code>) – Layer</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
+<li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-opacus.grad_sample.linear"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.linear.compute_linear_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.linear.</span></span><span class="sig-name descname"><span class="pre">compute_linear_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/linear.html#compute_linear_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.linear.compute_linear_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for <code class="docutils literal notranslate"><span class="pre">nn.Linear</span></code> layer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Linear</span></code>) – Layer</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
+<li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-opacus.grad_sample.utils"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.utils.create_or_accumulate_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.utils.</span></span><span class="sig-name descname"><span class="pre">create_or_accumulate_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/utils.html#create_or_accumulate_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.utils.create_or_accumulate_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> attribute in the given parameter, or adds to it
+if the <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> attribute already exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>param</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Parameter to which <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> will be added</p></li>
+<li><p><strong>grad_sample</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Per-sample gradients tensor. Must be of the same
+shape as <code class="docutils literal notranslate"><span class="pre">param</span></code> with extra batch dimension</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.utils.create_or_extend_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.utils.</span></span><span class="sig-name descname"><span class="pre">create_or_extend_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/utils.html#create_or_extend_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.utils.create_or_extend_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> attribute in the given parameter, or appends to it
+if the <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> attribute already exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>param</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Parameter to which <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> will be added</p></li>
+<li><p><strong>grad_sample</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Per-sample gradients tensor. Must be of the same
+shape as <code class="docutils literal notranslate"><span class="pre">param</span></code> with extra batch dimension</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Position of the batch dimension in the shape of
+<code class="docutils literal notranslate"><span class="pre">grad_sample</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.utils.register_grad_sampler">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.utils.</span></span><span class="sig-name descname"><span class="pre">register_grad_sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_class_or_classes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/utils.html#register_grad_sampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.utils.register_grad_sampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers the decorated function as the <code class="docutils literal notranslate"><span class="pre">grad_sampler</span></code> of <code class="docutils literal notranslate"><span class="pre">target_class_or_classes</span></code>, which is
+the function that will be invoked every time you want to compute a per-sample gradient
+of <code class="docutils literal notranslate"><span class="pre">target_class_or_classes</span></code>. The signature of every grad_sampler is always the same:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_grad_sampler</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">MyCustomClass</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">compute_grad_sample</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">activations</span><span class="p">,</span> <span class="n">backprops</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="k">pass</span>
+</pre></div>
+</div>
+<p>It may help you to take a look at the existing grad_samplers inside Opacus, under <code class="docutils literal notranslate"><span class="pre">opacus.grad_sample.</span></code></p>
+</dd></dl>
 </section>
 </div>
 </div>
@@ -45,11 +409,7 @@
 <li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">Privacy Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">Gradient Clipping</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Per Sample Gradients</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#autograd-grad-sample">Autograd Grad Sample</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#layers-grad-samplers">Layers Grad Samplers</a></li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Gradient Sample Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dp_model_inspector.html">Model Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="layers.html">DP Layers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>

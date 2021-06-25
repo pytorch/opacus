@@ -30,6 +30,7 @@
  | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
@@ -53,6 +54,8 @@
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.add_hooks">add_hooks() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.attach">attach() (opacus.privacy_engine.PrivacyEngine method)</a>
 </li>
 </ul></td>
@@ -80,17 +83,35 @@
 </ul></li>
 <li><a href="tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms">calc_sample_norms() (in module opacus.utils.tensor_utils)</a>
 </li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.capture_backprops_hook">capture_backprops_hook() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
 <li><a href="stats.html#opacus.utils.stats.clear">clear() (in module opacus.utils.stats)</a>
 </li>
 <li><a href="per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper.clip_and_accumulate">clip_and_accumulate() (opacus.per_sample_gradient_clip.PerSampleGradientClipper method)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="clipping.html#opacus.utils.clipping.ClippingMethod">ClippingMethod (class in opacus.utils.clipping)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.conv.compute_conv_grad_sample">compute_conv_grad_sample() (in module opacus.grad_sample.conv)</a>
 </li>
 <li><a href="compute_dp_sgd_privacy.html#opacus.scripts.compute_dp_sgd_privacy.compute_dp_sgd_privacy">compute_dp_sgd_privacy() (in module opacus.scripts.compute_dp_sgd_privacy)</a>
 </li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.embedding.compute_embedding_grad_sample">compute_embedding_grad_sample() (in module opacus.grad_sample.embedding)</a>
+</li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.group_norm.compute_group_norm_grad_sample">compute_group_norm_grad_sample() (in module opacus.grad_sample.group_norm)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.instance_norm.compute_instance_norm_grad_sample">compute_instance_norm_grad_sample() (in module opacus.grad_sample.instance_norm)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.layer_norm.compute_layer_norm_grad_sample">compute_layer_norm_grad_sample() (in module opacus.grad_sample.layer_norm)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.linear.compute_linear_grad_sample">compute_linear_grad_sample() (in module opacus.grad_sample.linear)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.dp_lstm.compute_lstm_linear_grad_sample">compute_lstm_linear_grad_sample() (in module opacus.grad_sample.dp_lstm)</a>
+</li>
 <li><a href="privacy_analysis.html#opacus.privacy_analysis.compute_rdp">compute_rdp() (in module opacus.privacy_analysis)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.dp_multihead_attention.compute_sequence_bias_grad_sample">compute_sequence_bias_grad_sample() (in module opacus.grad_sample.dp_multihead_attention)</a>
 </li>
 <li><a href="clipping.html#opacus.utils.clipping.ConstantFlatClipper">ConstantFlatClipper (class in opacus.utils.clipping)</a>
 </li>
@@ -98,19 +119,27 @@
 </li>
 <li><a href="module_modification.html#opacus.utils.module_modification.convert_batchnorm_modules">convert_batchnorm_modules() (in module opacus.utils.module_modification)</a>
 </li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.utils.create_or_accumulate_grad_sample">create_or_accumulate_grad_sample() (in module opacus.grad_sample.utils)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.utils.create_or_extend_grad_sample">create_or_extend_grad_sample() (in module opacus.grad_sample.utils)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="D">D</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.del_grad_sample">del_grad_sample() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.detach">detach() (opacus.privacy_engine.PrivacyEngine method)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.disable_hooks">disable_hooks() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
 </li>
 <li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM">DPLSTM (class in opacus.layers.dp_lstm)</a>
 </li>
-<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell">DPLSTMCell (class in opacus.layers.dp_lstm)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell">DPLSTMCell (class in opacus.layers.dp_lstm)</a>
+</li>
 <li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMLayer">DPLSTMLayer (class in opacus.layers.dp_lstm)</a>
 </li>
 <li><a href="dp_model_inspector.html#opacus.dp_model_inspector.DPModelInspector">DPModelInspector (class in opacus.dp_model_inspector)</a>
@@ -119,11 +148,20 @@
 </li>
 </ul></td>
 </tr></table>
+<h2 id="E">E</h2>
+<table class="indextable genindextable" style="width: 100%"><tr>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.enable_hooks">enable_hooks() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
+</ul></td>
+</tr></table>
 <h2 id="F">F</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="dp_lstm.html#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.forward">forward() (opacus.layers.dp_lstm.BidirectionalDPLSTMLayer method)</a>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.forward">forward() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
 <ul>
+<li><a href="dp_lstm.html#opacus.layers.dp_lstm.BidirectionalDPLSTMLayer.forward">(opacus.layers.dp_lstm.BidirectionalDPLSTMLayer method)</a>
+</li>
 <li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTM.forward">(opacus.layers.dp_lstm.DPLSTM method)</a>
 </li>
 <li><a href="dp_lstm.html#opacus.layers.dp_lstm.DPLSTMCell.forward">(opacus.layers.dp_lstm.DPLSTMCell method)</a>
@@ -142,13 +180,15 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="module_inspection.html#opacus.utils.module_inspection.get_layer_type">get_layer_type() (in module opacus.utils.module_inspection)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="privacy_analysis.html#opacus.privacy_analysis.get_privacy_spent">get_privacy_spent() (in module opacus.privacy_analysis)</a>
 <ul>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_privacy_spent">(opacus.privacy_engine.PrivacyEngine method)</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule">GradSampleModule (class in opacus.grad_sample.grad_sample_module)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="H">H</h2>
@@ -170,6 +210,10 @@
 <li><a href="clipping.html#opacus.utils.clipping.NormClipper.is_per_layer">(opacus.utils.clipping.NormClipper property)</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.is_supported">is_supported() (opacus.grad_sample.grad_sample_module.GradSampleModule class method)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="L">L</h2>
@@ -195,6 +239,26 @@
 
       <ul>
 <li><a href="dp_model_inspector.html#module-opacus.dp_model_inspector">opacus.dp_model_inspector</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.conv">opacus.grad_sample.conv</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.dp_lstm">opacus.grad_sample.dp_lstm</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.dp_multihead_attention">opacus.grad_sample.dp_multihead_attention</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.embedding">opacus.grad_sample.embedding</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.grad_sample_module">opacus.grad_sample.grad_sample_module</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.group_norm">opacus.grad_sample.group_norm</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.instance_norm">opacus.grad_sample.instance_norm</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.layer_norm">opacus.grad_sample.layer_norm</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.linear">opacus.grad_sample.linear</a>
+</li>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.utils">opacus.grad_sample.utils</a>
 </li>
 <li><a href="dp_lstm.html#module-opacus.layers.dp_lstm">opacus.layers.dp_lstm</a>
 </li>
@@ -243,6 +307,78 @@
 </li>
 </ul></li>
 <li>
+    opacus.grad_sample.conv
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.conv">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.dp_lstm
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.dp_lstm">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.dp_multihead_attention
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.dp_multihead_attention">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.embedding
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.embedding">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.grad_sample_module
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.grad_sample_module">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.group_norm
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.group_norm">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.instance_norm
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.instance_norm">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.layer_norm
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.layer_norm">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.linear
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.linear">module</a>
+</li>
+</ul></li>
+<li>
+    opacus.grad_sample.utils
+
+      <ul>
+<li><a href="per_sample_gradients.html#module-opacus.grad_sample.utils">module</a>
+</li>
+</ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li>
     opacus.layers.dp_lstm
 
       <ul>
@@ -277,8 +413,6 @@
 <li><a href="privacy_engine.html#module-opacus.privacy_engine">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     opacus.scripts.compute_dp_sgd_privacy
 
@@ -326,6 +460,8 @@
 <h2 id="P">P</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.parametrized_modules">parametrized_modules() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
 <li><a href="per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper">PerSampleGradientClipper (class in opacus.per_sample_gradient_clip)</a>
 </li>
 </ul></td>
@@ -339,14 +475,20 @@
 <h2 id="R">R</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.rearrange_grad_samples">rearrange_grad_samples() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.utils.register_grad_sampler">register_grad_sampler() (in module opacus.grad_sample.utils)</a>
+</li>
 <li><a href="stats.html#opacus.utils.stats.remove">remove() (in module opacus.utils.stats)</a>
 </li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.remove_hooks">remove_hooks() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="module_modification.html#opacus.utils.module_modification.replace_all_modules">replace_all_modules() (in module opacus.utils.module_modification)</a>
 </li>
 <li><a href="module_inspection.html#opacus.utils.module_inspection.requires_grad">requires_grad() (in module opacus.utils.module_inspection)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="stats.html#opacus.utils.stats.reset">reset() (in module opacus.utils.stats)</a>
 <ul>
 <li><a href="stats.html#opacus.utils.stats.Stat.reset">(opacus.utils.stats.Stat method)</a>
@@ -398,6 +540,10 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.to">to() (opacus.privacy_engine.PrivacyEngine method)</a>
 </li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.to_standard_module">to_standard_module() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.trainable_modules">trainable_modules() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="U">U</h2>
@@ -407,6 +553,8 @@
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.UnsupportedModuleError">UnsupportedModuleError</a>
+</li>
 <li><a href="stats.html#opacus.utils.stats.update">update() (in module opacus.utils.stats)</a>
 </li>
 </ul></td>
@@ -428,8 +576,10 @@
 <h2 id="Z">Z</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper.zero_grad">zero_grad() (opacus.per_sample_gradient_clip.PerSampleGradientClipper method)</a>
+<li><a href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.zero_grad">zero_grad() (opacus.grad_sample.grad_sample_module.GradSampleModule method)</a>
 <ul>
+<li><a href="per_sample_gradient_clip.html#opacus.per_sample_gradient_clip.PerSampleGradientClipper.zero_grad">(opacus.per_sample_gradient_clip.PerSampleGradientClipper method)</a>
+</li>
 <li><a href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.zero_grad">(opacus.privacy_engine.PrivacyEngine method)</a>
 </li>
 </ul></li>
@@ -447,7 +597,7 @@
 <li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">Privacy Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">Gradient Clipping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="per_sample_gradients.html">Per Sample Gradients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="per_sample_gradients.html">Gradient Sample Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dp_model_inspector.html">Model Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="layers.html">DP Layers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
