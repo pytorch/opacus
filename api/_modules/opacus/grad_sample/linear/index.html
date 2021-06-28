@@ -47,10 +47,8 @@
 <span class="sd">        B: Backpropagations</span>
 <span class="sd">        batch_dim: Batch dimension position</span>
 <span class="sd">    """</span>
-    <span class="n">gs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"n...i,n...j-&gt;n...ij"</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
-    <span class="n">create_or_extend_grad_sample</span><span class="p">(</span>
-        <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"n...ij-&gt;nij"</span><span class="p">,</span> <span class="n">gs</span><span class="p">),</span> <span class="n">batch_dim</span>
-    <span class="p">)</span>
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"n...i,n...j-&gt;nij"</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+    <span class="n">create_or_extend_grad_sample</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">gs</span><span class="p">,</span> <span class="n">batch_dim</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 
         <span class="n">create_or_extend_grad_sample</span><span class="p">(</span>
