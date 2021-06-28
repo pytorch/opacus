@@ -25,10 +25,8 @@ def compute_lstm_linear_grad_sample(
         batch_dim: Batch dimension position
     """
 
-    gs = torch.einsum("n...i,n...j->n...ij", B, A)
-    create_or_accumulate_grad_sample(
-        layer.weight, torch.einsum("n...ij->nij", gs), layer
-    )
+    gs = torch.einsum("n...i,n...j->nij", B, A)
+    create_or_accumulate_grad_sample(layer.weight, gs, layer)
 
     if layer.bias is not None:
         create_or_accumulate_grad_sample(

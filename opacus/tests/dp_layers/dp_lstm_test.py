@@ -46,7 +46,7 @@ class DPLSTM_test(DPModules_test):
             0, 2
         ),  # 0 indicates no packed sequence input, 1 indicates packed sequence input in sorted order, 2 indicates packed sequence input in unsorted order
     )
-    @settings(deadline=10000)
+    @settings(deadline=20000)
     def test_lstm(
         self,
         batch_size: int,
