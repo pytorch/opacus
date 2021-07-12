@@ -8,9 +8,10 @@ import warnings
 from typing import List, Optional, Tuple, Union
 
 import torch
-from opacus.grad_sample import GradSampleModule
 from scipy.stats import planck
 from torch import nn
+
+from opacus.grad_sample import GradSampleModule
 
 from . import privacy_analysis
 from .dp_model_inspector import DPModelInspector
@@ -20,7 +21,6 @@ from .layers.dp_ddp import (
 )
 from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
-
 
 DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
@@ -145,8 +145,6 @@ class PrivacyEngine:
         self.sample_rate = sample_rate
         self._set_sample_rate()
 
-        # TODO: store the module type in a custom field?
-
         if isinstance(
             module, DifferentiallyPrivateDistributedDataParallel
         ) or isinstance(module, torch.nn.parallel.DistributedDataParallel):
@@ -159,9 +157,17 @@ class PrivacyEngine:
 
         self.module = GradSampleModule(module)
 
-        # TODO: add the hooks later? Check which parameters are accessed
         if isinstance(module, torch.nn.parallel.DistributedDataParallel):
-            self.module.add_ddp_hook(engine=self)
+            # Check that the clipper will be per-layer (once initialized)
+            if isinstance(self.max_grad_norm, list) or (
+                self.misc_settings.get("experimental", False)
+                and self.misc_settings.get("clip_per_layer", False)
+            ):
+                self.module.add_ddp_hook(engine=self)
+            else:
+                raise ValueError(
+                    "The Opacus DDP hook only supports per-layer clipping."
+                )
 
         if poisson:
             # TODO: Check directly if sampler is UniformSampler when sampler gets passed to the Engine (in the future)

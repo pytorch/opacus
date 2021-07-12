@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
 from opacus.utils.module_inspection import requires_grad
-
 from opacus.utils.tensor_utils import calc_sample_norms
 
 
@@ -109,30 +108,12 @@ class GradSampleModule(nn.Module):
         Special function to enable DDP support on top of a GradSampleModule
         """
 
-        # self.n_params = len(
-        #     [n for n, p in self.module.named_parameters() if p.requires_grad]
-        # )
+        self.ddp_hook_activated = True
 
         # We store the number of layers for the per-layer clipping
         self.n_params = 0
-        self.ddp_hook_activated = True
 
-        # TODO: should we use self._module.parameters() instead?
-
-        # for module in self.trainable_modules():
-        #     if type(module) in self.GRAD_SAMPLERS:
-        #         self.n_params += 1
-        #         self.autograd_grad_sample_hooks.append(
-        #             module.register_hook(
-        #                 partial(
-        #                     self.ddp_backward_callback,
-        #                     engine,
-        #                     module,
-        #                 )
-        #             )
-        #         )
-
-        # We iterate over the parameters and not the submodules
+        # Each layer has its own callback to clip/noise
         for p in self.parameters():
             if p.requires_grad:
                 self.n_params += 1
@@ -143,6 +124,11 @@ class GradSampleModule(nn.Module):
         Removes hooks added by add_hooks()
         """
         self.disable_hooks()
+
+        if self.ddp_hook_activated:
+            pass
+            # TODO: remove DDP hooks
+
         if not hasattr(self, "autograd_grad_sample_hooks"):
             raise ValueError("Asked to remove hooks, but no hooks found")
         else:
