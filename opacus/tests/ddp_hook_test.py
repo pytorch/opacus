@@ -15,6 +15,7 @@ import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torchvision.models import mobilenet_v3_small
 
 PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
@@ -96,13 +97,6 @@ def demo_basic(rank, world_size, weight, dp, noise_multiplier=0, max_grad_norm=1
     model.net2.bias.requires_grad = False
     model.net2.weight.requires_grad = False
 
-    # Synchronize the model
-    params = list(model.parameters())
-    with torch.no_grad():
-        for p in params:
-            dist.broadcast(p.data, 0)
-    # print(f"Weight after synchronization: {model.net1.weight.data}")
-
     if dp:
         ddp_model = DPDDP(model)
         engine = PrivacyEngine(
@@ -122,17 +116,12 @@ def demo_basic(rank, world_size, weight, dp, noise_multiplier=0, max_grad_norm=1
     if dp:
         engine.attach(optimizer)
 
-    # if rank == 0:
-    #     print(model.net1.weight)
     optimizer.zero_grad()
     labels = torch.randn(batch_size, 5).to(device)
 
     outputs = ddp_model(torch.randn(batch_size, 10).to(device))
     loss_fn(outputs, labels).backward()
     optimizer.step()
-
-    # if rank == 0:
-    #     print(model.net1.weight)
 
     weight.copy_(model.net1.weight.data.cpu())
 
@@ -149,14 +138,12 @@ def demo_ddp_hook(rank, world_size, weight, dp, noise_multiplier, max_grad_norm)
 
     # create model and move it to GPU with id rank
     model = ToyModel().to(device)
-    # print(f"Initial weight: {model.net1.weight.data}")
 
     model.net1.bias.requires_grad = False
     model.net2.bias.requires_grad = False
     model.net2.weight.requires_grad = False
 
     ddp_model = DDP(model, device_ids=[device])
-    # print(f"Initial weight after DDP wrapping: {ddp_model.module.net1.weight.data}")
 
     if dp:
         engine = PrivacyEngine(
@@ -181,12 +168,42 @@ def demo_ddp_hook(rank, world_size, weight, dp, noise_multiplier, max_grad_norm)
     loss_fn(outputs, labels).backward()
     optimizer.step()
 
-    # if rank == 0:
-    #     print(model.net1.weight)
-
     weight.copy_(model.net1.weight.data.cpu())
 
     del ddp_model
+    cleanup()
+
+
+def add_remove_ddp_hooks(
+    rank, world_size, remaining_hooks, dp, noise_multiplier=0, max_grad_norm=1e8
+):
+    device = setup_and_get_device(rank, world_size, nonce=2)
+
+    model = ToyModel().to(device)
+    ddp_model = nn.parallel.DistributedDataParallel(model, device_ids=[device])
+
+    engine = PrivacyEngine(
+        ddp_model,
+        batch_size=1,
+        sample_size=10,
+        alphas=PRIVACY_ALPHAS,
+        noise_multiplier=noise_multiplier,
+        max_grad_norm=[max_grad_norm],
+    )
+
+    optimizer = optim.SGD(ddp_model.parameters(), lr=1)
+
+    engine.attach(optimizer)
+
+    remaining_hooks["attached"] = {
+        p: p._backward_hooks for p in engine.module.parameters() if p._backward_hooks
+    }
+    engine.detach()
+
+    remaining_hooks["detached"] = {
+        p: p._backward_hooks for p in engine.module.parameters() if p._backward_hooks
+    }
+
     cleanup()
 
 
@@ -265,9 +282,28 @@ class GradientComputationTest(unittest.TestCase):
             max_grad_norm=1.0,
         )
 
-        # print(f"Naive DDP weight:")
-        # print(weight_ddp_naive)
-        # print("DDP hook weight:")
-        # print(weight_ddp_hook)
+        self.assertTrue(
+            torch.norm(weight_ddp_naive - weight_ddp_hook) < 1e-7,
+            f"DDP naive: {weight_ddp_naive}\nDDP hook: {weight_ddp_hook}",
+        )
 
-        self.assertTrue(torch.norm(weight_ddp_naive - weight_ddp_hook) < 1e-7)
+    def test_add_remove_ddp_hooks(self):
+
+        remaining_hooks = {
+            "attached": None,
+            "detached": None,
+        }
+
+        run_function(
+            add_remove_ddp_hooks,
+            remaining_hooks,
+            dp=True,
+            noise_multiplier=0.1,
+            max_grad_norm=1.0,
+        )
+
+        assert remaining_hooks["attached"], f"There are no hooks."
+
+        assert not remaining_hooks[
+            "detached"
+        ], f"Some hooks remain after .remove_hooks(): {remaining_hooks}"

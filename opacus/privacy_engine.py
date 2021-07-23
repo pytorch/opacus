@@ -5,11 +5,12 @@ import math
 import os
 import types
 import warnings
+from functools import partial
 from typing import List, Optional, Tuple, Union
 
 import torch
 from scipy.stats import planck
-from torch import nn
+from torch import Tensor, nn
 
 from opacus.grad_sample import GradSampleModule
 from opacus.utils.tensor_utils import calc_sample_norms_one_layer
@@ -327,7 +328,8 @@ class PrivacyEngine:
 
         if isinstance(self.module._module, torch.nn.parallel.DistributedDataParallel):
             if isinstance(norm_clipper, clipping.ConstantPerLayerClipper):
-                self.module.add_ddp_hook(engine=self)
+                # The DDP hooks are stored in `self.privacy_engine.module.ddp_hooks`
+                self._register_ddp_hooks()
             else:
                 raise ValueError(
                     """The Opacus DDP hook only supports constant per-layer clipping.
@@ -378,10 +380,8 @@ class PrivacyEngine:
         optimizer.zero_grad = types.MethodType(dp_zero_grad, optimizer)
 
         def virtual_step(self):
-
-            # TODO: add support for virtual step in the DDP hook too
             if hasattr(self.module, "ddp_hooks"):
-                raise NotImplementedError("DDP hook does not support virtual step yet.")
+                raise NotImplementedError("DDP hook does not support virtual steps.")
             self.privacy_engine.virtual_step()
 
         optimizer.virtual_step = types.MethodType(virtual_step, optimizer)
@@ -580,65 +580,81 @@ class PrivacyEngine:
         """
         self.clipper.clip_and_accumulate()
 
-    def _register_ddp_hooks(self):
+    def _local_layer_ddp_hook(
+        self, p: torch.Tensor, threshold: float, grad: torch.Tensor
+    ):
         """
-        [WIP]
+        Backward hook attached to parameter `p`.
+        It replaces `grad` by `new_grad` using the per-sample gradients stored in p.grad_sample
+
+        Args:
+            # engine: the privacy engine (to get the DP options and clipping values)
+            p: the layer to clip and noise
+            threshold: the flat clipping value for that layer
+            grad: the gradient (unused, but this argument required to be a valid hook)
+
+        The hook operates like ``PrivacyEngine.step()``, but on a single layer:
+            1. clip_and_accumulate
+            2. get the clip_values to scale the noise
+            3. add the noise
         """
 
-        # Store the DDP hooks (one per layer). GradSample module knows how to remove them.
-        self.module.ddp_hooks = []
+        # Similar to `ConstantPerLayerClipper.pre_step()`
+        batch_size = p.grad_sample.shape[0]
+        clip_value = self.clipper.norm_clipper.thresholds.norm(2)
+
+        # Similar to `ConstantPerLayerClipper.calc_clipping_factors`)
+        norms = calc_sample_norms_one_layer(p.grad_sample)
+        per_sample_clip_factor = (threshold / (norms + 1e-6)).clamp(max=1.0)
+
+        # Do the clipping
+        summed_grad = self.clipper._weighted_sum(per_sample_clip_factor, p.grad_sample)
+
+        # Accumulate the summed gradient for this mini-batch
+        if hasattr(p, "summed_grad"):
+            p.summed_grad += summed_grad
+        else:
+            p.summed_grad = summed_grad
+
+        del p.grad_sample
+
+        # Average (or sum) across the batch
+        new_grad = self.clipper._scale_summed_grad(p.summed_grad, batch_size)
+        del p.summed_grad
+
+        # Only one GPU adds noise
+        if self.rank == 0:
+            noise = self._generate_noise_grad(clip_value, new_grad)
+            if self.loss_reduction == "mean":
+                noise /= batch_size
+            new_grad += noise
+
+        # Poisson uses avg_batch_size instead of batch_size
+        if self.poisson and self.loss_reduction == "mean":
+            new_grad *= batch_size / self.avg_batch_size
+
+        return new_grad
+
+    def _register_ddp_hooks(self):
+        """
+        Adds hooks for DP training over DistributedDataParallel.
+
+        Each layer has a hook that clips and noises the gradients as soon as they are ready.
+        """
 
         # `thresholds` is a tensor with `len(params)` thresholds (i.e. max layer norm)
         params = (p for p in self.module.parameters() if p.requires_grad)
         thresholds = self.clipper.norm_clipper.thresholds
 
+        # Register and store the DDP hooks (one per layer). GradSampleModule knows how to remove them.
+        self.module.ddp_hooks = []
         for p, threshold in zip(params, thresholds):
             if not p.requires_grad:
                 continue
 
-            # Similar to `ConstantPerLayerClipper.pre_step()`
-            batch_size = p.grad_sample.shape[0]
-            clip_value = thresholds.norm(2)
-
-            # TODO: check that the function is not erased/mutable?
-            # TODO: partial() instead of closure?
-            # TODO: chain multiple hooks for clarity?
-            def local_layer_ddp_hook(grad):
-                # Similar to `ConstantPerLayerClipper.calc_clipping_factors`)
-                norms = calc_sample_norms_one_layer(p.grad_sample)
-                per_sample_clip_factor = threshold / (norms + 1e-6).clamp(max=1.0)
-
-                # Do the clipping
-                summed_grad = self.clipper._weighted_sum(
-                    per_sample_clip_factor, p.grad_sample
-                )
-
-                # Accumulate the summed gradient for this mini-batch
-                if hasattr(p, "summed_grad"):
-                    p.summed_grad += summed_grad
-                else:
-                    p.summed_grad = summed_grad
-
-                del p.grad_sample
-
-                # Average (or sum) across the batch
-                new_grad = self.clipper._scale_summed_grad(p.summed_grad, batch_size)
-                del p.summed_grad
-
-                # Only one GPU adds noise
-                if self.rank == 0:
-                    noise = self._generate_noise(clip_value, p)
-                    if self.loss_reduction == "mean":
-                        noise /= batch_size
-                    new_grad += noise
-
-                # Poisson uses avg_batch_size instead of batch_size
-                if self.poisson and self.loss_reduction == "mean":
-                    new_grad *= batch_size / self.avg_batch_size
-
-                return new_grad
-
-            self.module.ddp_hooks.append(p.register_hook(local_layer_ddp_hook))
+            self.module.ddp_hooks.append(
+                p.register_hook(partial(self._local_layer_ddp_hook, p, threshold))
+            )
 
     def _generate_noise(
         self, max_grad_norm: float, reference: nn.parameter.Parameter
@@ -651,7 +667,7 @@ class PrivacyEngine:
 
         Args:
             max_grad_norm : The maximum norm of the per-sample gradients.
-            reference : The reference, based on which the dimention of the
+            reference : The reference, based on which the dimension of the
                 noise tensor will be determined
 
         Returns:
@@ -667,6 +683,35 @@ class PrivacyEngine:
                 generator=self.random_number_generator,
             )
         return torch.zeros(reference.grad.shape, device=self.device)
+
+    def _generate_noise_grad(
+        engine, max_grad_norm: float, grad: torch.Tensor
+    ) -> torch.Tensor:
+        r"""
+        Generates a tensor of Gaussian noise of the same shape as ``grad``.
+        Exactly like `_generate_noise` with `grad = reference.grad`.
+
+        The generated tensor has zero mean and standard deviation
+        sigma = ``noise_multiplier x max_grad_norm ``
+
+        Args:
+            max_grad_norm : The maximum norm of the per-sample gradients.
+            grad : The gradient of the reference, based on which the dimension of the
+                noise tensor will be determined
+
+        Returns:
+            the generated noise with noise zero and standard
+            deviation of ``noise_multiplier x max_grad_norm ``
+        """
+        if engine.noise_multiplier > 0 and max_grad_norm > 0:
+            return torch.normal(
+                0,
+                engine.noise_multiplier * max_grad_norm,
+                grad.shape,
+                device=engine.device,
+                generator=engine.random_number_generator,
+            )
+        return torch.zeros(grad.shape, device=engine.device)
 
     def _set_seed(self, seed: int):
         r"""

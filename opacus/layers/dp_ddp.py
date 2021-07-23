@@ -17,7 +17,13 @@ def average_gradients(model):
 class DifferentiallyPrivateDistributedDataParallel(nn.Module):
     def __init__(self, model):
         super().__init__()
-        # TODO: We should synchronize the model at the beginning
+
+        # Synchronize the model
+        params = list(model.parameters())
+        with torch.no_grad():
+            for p in params:
+                torch.distributed.broadcast(p.data, 0)
+
         self.module = model
 
     def forward(self, *args, **kwargs):
