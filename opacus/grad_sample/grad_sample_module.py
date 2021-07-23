@@ -108,7 +108,7 @@ class GradSampleModule(nn.Module):
         Special function to enable DDP support on top of a GradSampleModule
         """
 
-        self.ddp_hook_activated = True
+        self.ddp_hooks = True
 
         # We store the number of layers for the per-layer clipping
         self.n_params = 0
@@ -125,7 +125,7 @@ class GradSampleModule(nn.Module):
         """
         self.disable_hooks()
 
-        if self.ddp_hook_activated:
+        if self.ddp_hooks:
             pass
             # TODO: remove DDP hooks
 
@@ -316,7 +316,6 @@ class GradSampleModule(nn.Module):
         del p.grad_sample
 
         # Average (or sum) across the batch
-        # TODO: add support for Poisson batch sampling
         res = engine.clipper._scale_summed_grad(p.summed_grad, batch_size)
 
         del p.summed_grad

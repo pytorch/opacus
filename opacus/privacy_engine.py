@@ -159,9 +159,9 @@ class PrivacyEngine:
 
         if isinstance(module, torch.nn.parallel.DistributedDataParallel):
             # Check that the clipper will be per-layer (once initialized)
-            if isinstance(self.max_grad_norm, list) or (
-                self.misc_settings.get("experimental", False)
-                and self.misc_settings.get("clip_per_layer", False)
+            if isinstance(max_grad_norm, list) or (
+                misc_settings.get("experimental", False)
+                and misc_settings.get("clip_per_layer", False)
             ):
                 self.module.add_ddp_hook(engine=self)
             else:
@@ -341,13 +341,19 @@ class PrivacyEngine:
             self.original_zero_grad()
 
         def dp_step(self, closure=None, is_empty=False):
+            # When the DDP hooks are activated, there is no need for ``PrivacyEngine.step()``
+            # because the clipping and noising are performed by the hooks at the end of the backward pass
+            if hasattr(self.privacy_engine.module, "ddp_hooks"):
+                # We just update the accountant
+                self.privacy_engine.steps += 1
 
-            self.privacy_engine.step(is_empty)
-            if isinstance(
-                self.privacy_engine.module._module,
-                DifferentiallyPrivateDistributedDataParallel,
-            ):
-                average_gradients(self.privacy_engine.module)
+            else:
+                self.privacy_engine.step(is_empty)
+                if isinstance(
+                    self.privacy_engine.module._module,
+                    DifferentiallyPrivateDistributedDataParallel,
+                ):
+                    average_gradients(self.privacy_engine.module)
             self.original_step(closure)
 
         def poisson_dp_step(self, closure=None):
@@ -365,15 +371,9 @@ class PrivacyEngine:
         optimizer.dp_step = types.MethodType(dp_step, optimizer)
         optimizer.original_step = optimizer.step
 
-        # When the DDP hook is enabled, we don't need to monkey-patch the optimizer step
-        # because the clipping and noising are performed by the hook at the end of the backward pass
-        if (not hasattr(self.module, "ddp_hook_activated")) or (
-            self.module.ddp_hook_activated == False
-        ):
-            optimizer.step = types.MethodType(
-                poisson_dp_step if self.poisson else dp_step, optimizer
-            )
-            # TODO: check the accounting
+        optimizer.step = types.MethodType(
+            poisson_dp_step if self.poisson else dp_step, optimizer
+        )
 
         optimizer.original_zero_grad = optimizer.zero_grad
         optimizer.zero_grad = types.MethodType(dp_zero_grad, optimizer)
@@ -381,9 +381,7 @@ class PrivacyEngine:
         def virtual_step(self):
 
             # TODO: add support for virtual step in the DDP hook too
-            if (hasattr(self.module, "ddp_hook_activated")) and (
-                self.module.ddp_hook_activated
-            ):
+            if hasattr(self.module, "ddp_hooks"):
                 raise NotImplementedError("DDP hook does not support virtual step yet.")
             self.privacy_engine.virtual_step()
 
