@@ -286,7 +286,7 @@ class GradSampleModule(nn.Module):
 
     def ddp_backward_callback(self, engine, p, grad):
         """
-        This hook operates like PrivacyEngine.step(), but on a single layer:
+        This hook operates like ``PrivacyEngine.step()``, but on a single layer:
         1. clip_and_accumulate
         2. get the clip_values with clipper.pre_step()
         3. add the noise
