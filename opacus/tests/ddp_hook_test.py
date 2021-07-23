@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import os
-import sys
-import unittest
-import time
 import random
+import sys
+import time
+import unittest
 from unittest.main import main
 
 import torch
@@ -15,7 +15,6 @@ import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
-
 
 PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
@@ -112,9 +111,7 @@ def demo_basic(rank, world_size, weight, dp, noise_multiplier=0, max_grad_norm=1
             sample_size=10 * batch_size,
             alphas=PRIVACY_ALPHAS,
             noise_multiplier=noise_multiplier,
-            max_grad_norm=max_grad_norm,
-            experimental=True,
-            clip_per_layer=True,
+            max_grad_norm=[max_grad_norm],
         )
         engine.random_number_generator = engine._set_seed(0)
     else:
@@ -168,9 +165,7 @@ def demo_ddp_hook(rank, world_size, weight, dp, noise_multiplier, max_grad_norm)
             sample_size=10 * batch_size,
             alphas=PRIVACY_ALPHAS,
             noise_multiplier=noise_multiplier,
-            max_grad_norm=max_grad_norm,
-            experimental=True,
-            clip_per_layer=True,
+            max_grad_norm=[max_grad_norm],
         )
         engine.random_number_generator = engine._set_seed(0)
 

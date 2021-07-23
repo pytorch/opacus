@@ -12,6 +12,7 @@ from scipy.stats import planck
 from torch import nn
 
 from opacus.grad_sample import GradSampleModule
+from opacus.utils.tensor_utils import calc_sample_norms_one_layer
 
 from . import privacy_analysis
 from .dp_model_inspector import DPModelInspector
@@ -156,18 +157,6 @@ class PrivacyEngine:
             n_replicas = 1
 
         self.module = GradSampleModule(module)
-
-        if isinstance(module, torch.nn.parallel.DistributedDataParallel):
-            # Check that the clipper will be per-layer (once initialized)
-            if isinstance(max_grad_norm, list) or (
-                misc_settings.get("experimental", False)
-                and misc_settings.get("clip_per_layer", False)
-            ):
-                self.module.add_ddp_hook(engine=self)
-            else:
-                raise ValueError(
-                    "The Opacus DDP hook only supports per-layer clipping."
-                )
 
         if poisson:
             # TODO: Check directly if sampler is UniformSampler when sampler gets passed to the Engine (in the future)
@@ -335,6 +324,16 @@ class PrivacyEngine:
             self.batch_first,
             self.loss_reduction,
         )
+
+        if isinstance(self.module._module, torch.nn.parallel.DistributedDataParallel):
+            if isinstance(norm_clipper, clipping.ConstantPerLayerClipper):
+                self.module.add_ddp_hook(engine=self)
+            else:
+                raise ValueError(
+                    """The Opacus DDP hook only supports constant per-layer clipping.
+                     If you need a different clipper for simple (not optimized) distributed training,
+                     you can use `opacus.layers.dp_ddp.DifferentiallyPrivateDistributedDataParallel`"""
+                )
 
         def dp_zero_grad(self):
             self.privacy_engine.zero_grad()
@@ -580,6 +579,66 @@ class PrivacyEngine:
             gradients after every mini-batch. We can thus handle batches of arbitrary size.
         """
         self.clipper.clip_and_accumulate()
+
+    def _register_ddp_hooks(self):
+        """
+        [WIP]
+        """
+
+        # Store the DDP hooks (one per layer). GradSample module knows how to remove them.
+        self.module.ddp_hooks = []
+
+        # `thresholds` is a tensor with `len(params)` thresholds (i.e. max layer norm)
+        params = (p for p in self.module.parameters() if p.requires_grad)
+        thresholds = self.clipper.norm_clipper.thresholds
+
+        for p, threshold in zip(params, thresholds):
+            if not p.requires_grad:
+                continue
+
+            # Similar to `ConstantPerLayerClipper.pre_step()`
+            batch_size = p.grad_sample.shape[0]
+            clip_value = thresholds.norm(2)
+
+            # TODO: check that the function is not erased/mutable?
+            # TODO: partial() instead of closure?
+            # TODO: chain multiple hooks for clarity?
+            def local_layer_ddp_hook(grad):
+                # Similar to `ConstantPerLayerClipper.calc_clipping_factors`)
+                norms = calc_sample_norms_one_layer(p.grad_sample)
+                per_sample_clip_factor = threshold / (norms + 1e-6).clamp(max=1.0)
+
+                # Do the clipping
+                summed_grad = self.clipper._weighted_sum(
+                    per_sample_clip_factor, p.grad_sample
+                )
+
+                # Accumulate the summed gradient for this mini-batch
+                if hasattr(p, "summed_grad"):
+                    p.summed_grad += summed_grad
+                else:
+                    p.summed_grad = summed_grad
+
+                del p.grad_sample
+
+                # Average (or sum) across the batch
+                new_grad = self.clipper._scale_summed_grad(p.summed_grad, batch_size)
+                del p.summed_grad
+
+                # Only one GPU adds noise
+                if self.rank == 0:
+                    noise = self._generate_noise(clip_value, p)
+                    if self.loss_reduction == "mean":
+                        noise /= batch_size
+                    new_grad += noise
+
+                # Poisson uses avg_batch_size instead of batch_size
+                if self.poisson and self.loss_reduction == "mean":
+                    new_grad *= batch_size / self.avg_batch_size
+
+                return new_grad
+
+            self.module.ddp_hooks.append(p.register_hook(local_layer_ddp_hook))
 
     def _generate_noise(
         self, max_grad_norm: float, reference: nn.parameter.Parameter

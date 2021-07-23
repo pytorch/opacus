@@ -17,6 +17,7 @@ from opacus.utils.module_modification import (
 )
 from opacus.utils.tensor_utils import (
     calc_sample_norms,
+    calc_sample_norms_one_layer,
     sum_over_all_but_batch_and_last_n,
 )
 
@@ -166,6 +167,10 @@ class DocstringExamplesTest(unittest.TestCase):
 
         self.assertTrue(
             calc_sample_norms([("1", t1), ("2", t2)])[0].shape, torch.Size([1, 2])
+        )
+
+        self.assertTrue(
+            (calc_sample_norms_one_layer(t1) == calc_sample_norms([("1", t1)])[0]).all()
         )
 
         tensor = torch.ones(1, 2, 3, 4, 5)
