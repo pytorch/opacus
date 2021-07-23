@@ -500,16 +500,14 @@ class PrivacyEngine:
 
         params = (p for p in self.module.parameters() if p.requires_grad)
         for p, clip_value in zip(params, clip_values):
-            noise = self._generate_noise(clip_value, p)
-            if self.loss_reduction == "mean":
-                noise /= batch_size
-
-            # TODO: Why do we need to generate noise on every GPU if only rank0 will use it?
             if self.rank == 0:
                 # Noise only gets added on first worker
                 # This is easy to reason about for loss_reduction=sum
                 # For loss_reduction=mean, noise will get further divided by
                 # world_size as gradients are averaged.
+                noise = self._generate_noise(clip_value, p)
+                if self.loss_reduction == "mean":
+                    noise /= batch_size
                 p.grad += noise
 
             # For poisson, we are not supposed to know the batch size

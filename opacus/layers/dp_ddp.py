@@ -8,7 +8,8 @@ import torch.nn as nn
 def average_gradients(model):
     world_size = torch.distributed.get_world_size()
     for param in model.parameters():
-        if not param.requires_grad: continue
+        if not param.requires_grad:
+            continue
         torch.distributed.all_reduce(param.grad, op=torch.distributed.ReduceOp.SUM)
         param.grad /= world_size
 

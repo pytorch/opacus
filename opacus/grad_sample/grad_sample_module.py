@@ -333,12 +333,11 @@ class GradSampleModule(nn.Module):
         #         f"max_grad_norm: {engine.max_grad_norm} \nclipping_tresh: {clipping_thresh}\nclip_value: {clip_value}"
         #     )
 
-        noise = _generate_noise_ddp(engine, clip_value, res)
-        if engine.loss_reduction == "mean":
-            noise /= batch_size
-
         # Only one GPU adds noise
         if engine.rank == 0:
+            noise = _generate_noise_ddp(engine, clip_value, res)
+            if engine.loss_reduction == "mean":
+                noise /= batch_size
             res += noise
 
         return res
