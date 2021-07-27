@@ -107,7 +107,7 @@ class GradSampleHooks_test(unittest.TestCase):
         Returns:
             Dictionary mapping parameter_name -> per-sample-gradient for that parameter
         """
-        torch.set_deterministic(True)
+        torch.use_deterministic_algorithms(True)
         torch.manual_seed(0)
         np.random.seed(0)
 
@@ -171,7 +171,7 @@ class GradSampleHooks_test(unittest.TestCase):
         Returns:
             Dictionary mapping parameter_name -> per-sample-gradient for that parameter
         """
-        torch.set_deterministic(True)
+        torch.use_deterministic_algorithms(True)
         torch.manual_seed(0)
         np.random.seed(0)
 

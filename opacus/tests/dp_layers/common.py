@@ -121,7 +121,7 @@ class DPModules_test(unittest.TestCase):
                 - The values for any output ``nn_out`` in ``nn_outs`` differ by more
                     than `atol + rtol * abs(nn_out)`
         """
-        torch.set_deterministic(True)
+        torch.use_deterministic_algorithms(True)
         torch.manual_seed(0)
         np.random.seed(0)
 
