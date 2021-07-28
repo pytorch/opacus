@@ -36,7 +36,7 @@ class DPModelInspector:
             ModelInspector(
                 name="validity",
                 predicate=_is_valid_check,
-                message="Some modules are not valid.",
+                message="No grad sampler method found",
             ),
             # Inspector to check for BatchNorms as they could be replaced with groupnorm
             ModelInspector(
@@ -49,7 +49,7 @@ class DPModelInspector:
             ModelInspector(
                 name="running_stats",
                 predicate=_no_running_stats_instancenorm_check,
-                message="InstanceNorm layer initialised with track_running_stats=True."
+                message="InstanceNorm layer initialised with track_running_stats=True"
                 "This is currently not supported",
             ),
             # Inspector to check the number of groups in Conv2d layers
