@@ -36,7 +36,7 @@ class DPModelInspector:
             ModelInspector(
                 name="validity",
                 predicate=_is_valid_check,
-                message="Some modules are not valid.",
+                message="grad_sampler method is not yet supported for this module.",
             ),
             # Inspector to check for BatchNorms as they could be replaced with groupnorm
             ModelInspector(
@@ -49,21 +49,21 @@ class DPModelInspector:
             ModelInspector(
                 name="running_stats",
                 predicate=_no_running_stats_instancenorm_check,
-                message="InstanceNorm layer initialised with track_running_stats=True."
-                "This is currently not supported",
+                message="InstanceNorm layer initialised with track_running_stats=True"
+                "This is currently not supported.",
             ),
             # Inspector to check the number of groups in Conv2d layers
             ModelInspector(
                 name="conv_group_number",
                 predicate=_conv_group_number_check,
-                message="Number of groups in Conv2d layer must be either 1 or equal to number of channels",
+                message="Number of groups in Conv2d layer must be either 1 or equal to number of channels.",
             ),
             # Inspector to check for LSTM as it can be replaced with DPLSTM
             ModelInspector(
                 name="lstm",
                 predicate=_no_lstm,
                 message="Model contains LSTM layers. It is recommended that they are"
-                "replaced with DPLSTM",
+                "replaced with DPLSTM.",
             ),
             # Inspector to check that the module is in training mode
             ModelInspector(

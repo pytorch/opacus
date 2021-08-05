@@ -69,10 +69,10 @@ class ModelInspector:
             Flag indicate if predicate is satisfied.
         """
         valid = True
-        for name, module in model.named_modules(prefix="Main"):
+        for name, module in model.named_modules():
             if not self.predicate(module):
                 valid = False
-                self.violators.append(name)
+                self.violators.append(f"{name} ({get_layer_type(module)})")
         return valid
 
 
