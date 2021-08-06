@@ -63,7 +63,7 @@
             <span class="n">ModelInspector</span><span class="p">(</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">"validity"</span><span class="p">,</span>
                 <span class="n">predicate</span><span class="o">=</span><span class="n">_is_valid_check</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">"Some modules are not valid."</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"grad_sampler method is not yet supported for this module."</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="c1"># Inspector to check for BatchNorms as they could be replaced with groupnorm</span>
             <span class="n">ModelInspector</span><span class="p">(</span>
@@ -76,21 +76,21 @@
             <span class="n">ModelInspector</span><span class="p">(</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">"running_stats"</span><span class="p">,</span>
                 <span class="n">predicate</span><span class="o">=</span><span class="n">_no_running_stats_instancenorm_check</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">"InstanceNorm layer initialised with track_running_stats=True."</span>
-                <span class="s2">"This is currently not supported"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"InstanceNorm layer initialised with track_running_stats=True"</span>
+                <span class="s2">"This is currently not supported."</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="c1"># Inspector to check the number of groups in Conv2d layers</span>
             <span class="n">ModelInspector</span><span class="p">(</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">"conv_group_number"</span><span class="p">,</span>
                 <span class="n">predicate</span><span class="o">=</span><span class="n">_conv_group_number_check</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">"Number of groups in Conv2d layer must be either 1 or equal to number of channels"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Number of groups in Conv2d layer must be either 1 or equal to number of channels."</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="c1"># Inspector to check for LSTM as it can be replaced with DPLSTM</span>
             <span class="n">ModelInspector</span><span class="p">(</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">"lstm"</span><span class="p">,</span>
                 <span class="n">predicate</span><span class="o">=</span><span class="n">_no_lstm</span><span class="p">,</span>
                 <span class="n">message</span><span class="o">=</span><span class="s2">"Model contains LSTM layers. It is recommended that they are"</span>
-                <span class="s2">"replaced with DPLSTM"</span><span class="p">,</span>
+                <span class="s2">"replaced with DPLSTM."</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="c1"># Inspector to check that the module is in training mode</span>
             <span class="n">ModelInspector</span><span class="p">(</span>
