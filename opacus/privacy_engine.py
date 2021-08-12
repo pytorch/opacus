@@ -257,7 +257,7 @@ class PrivacyEngine:
         """
         # 1. Fix optimizer
         optim = self.optimizer
-        optim.step = types.MethodType(optim.original_step, optim)
+        optim.step = optim.original_step
         delattr(optim, "privacy_engine")
         delattr(optim, "original_step")
         delattr(optim, "original_zero_grad")

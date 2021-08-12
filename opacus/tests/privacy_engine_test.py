@@ -170,6 +170,7 @@ class PrivacyEngine_test(unittest.TestCase):
         model, optimizer = self.setUp_init_model(private=True)
         self.setUp_model_step(model, optimizer)
         optimizer.privacy_engine.detach()
+        optimizer.step()
         model, optimizer = self.setUp_init_model(private=True, model=model)
         self.setUp_model_step(model, optimizer)
 
