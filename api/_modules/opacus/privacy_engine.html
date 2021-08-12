@@ -284,7 +284,7 @@
 <span class="sd">        """</span>
         <span class="c1"># 1. Fix optimizer</span>
         <span class="n">optim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span>
-        <span class="n">optim</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">optim</span><span class="o">.</span><span class="n">original_step</span><span class="p">,</span> <span class="n">optim</span><span class="p">)</span>
+        <span class="n">optim</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">original_step</span>
         <span class="nb">delattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">"privacy_engine"</span><span class="p">)</span>
         <span class="nb">delattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">"original_step"</span><span class="p">)</span>
         <span class="nb">delattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">"original_zero_grad"</span><span class="p">)</span>
