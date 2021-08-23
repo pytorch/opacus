@@ -6,8 +6,7 @@ import torch
 from torch import nn
 
 
-
-def _generate_noise(std: float, reference: nn.parameter.Parameter) -> torch.Tensor:
+def _generate_noise(std: float, reference: torch.Tensor) -> torch.Tensor:
     if std > 0:
         return torch.normal(
             mean=0,
@@ -65,7 +64,7 @@ class DPOptimizer(Optimizer):
 
     def clip_and_accumulate(self):
         per_param_norms = [x.view(len(x), -1).norm(2, dim=-1) for x in self.grad_samples]
-        per_sample_norms = torch.stack(per_param_norms, dim=0).norm(2, dim=0)
+        per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
         per_sample_clip_factor = (self.max_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0)
 
         for p in self.params:
@@ -115,3 +114,5 @@ class DPOptimizer(Optimizer):
     def virtual_step(self):
         self.accumulated_iterations += 1
         self.clip_and_accumulate()
+
+    #TODO: wrap the rest of optim.Optimizer interface
