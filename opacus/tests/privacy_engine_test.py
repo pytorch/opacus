@@ -394,7 +394,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
         optimizer.privacy_engine._set_seed(20)
         noise_generated_before = [
-            optimizer.privacy_engine._generate_noise(max_norm, p).detach().numpy()
+            optimizer.privacy_engine._generate_noise(max_norm, p.grad).detach().numpy()
             for p in model_params
         ]
 
@@ -403,7 +403,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
         optimizer.privacy_engine._set_seed(20)
         noise_generated_after = [
-            optimizer.privacy_engine._generate_noise(max_norm, p).detach().numpy()
+            optimizer.privacy_engine._generate_noise(max_norm, p.grad).detach().numpy()
             for p in model_params
         ]
 

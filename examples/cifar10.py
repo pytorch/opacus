@@ -6,12 +6,10 @@ Runs CIFAR10 training with differential privacy.
 """
 
 import argparse
+import logging
 import os
 import shutil
 import sys
-import logging
-from pathlib import Path
-import yaml
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -26,8 +24,8 @@ from opacus import PrivacyEngine
 from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.utils import stats
 from opacus.utils.uniform_sampler import (
-    UniformWithReplacementSampler,
     DistributedPoissonBatchSampler,
+    UniformWithReplacementSampler,
 )
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
@@ -88,9 +86,8 @@ def setup(args):
         return (rank, local_rank, world_size)
 
     else:
-        raise NotImplementedError(
-            "Please specify the local rank or run this on a Slurm cluster."
-        )
+        logger.debug(f"Running on a single GPU.")
+        return (0, 0, 1)
 
 
 def cleanup():
@@ -220,11 +217,17 @@ def main():
     if args.debug >= 1:
         logger.setLevel(level=logging.DEBUG)
 
+    # Sets `world_size = 1` if you run on a single GPU with `args.local_rank = -1`
     rank, local_rank, world_size = setup(args)
     device = local_rank
 
     if args.disable_dp and args.n_accumulation_steps > 1:
         raise ValueError("Virtual steps only works with enabled DP")
+
+    if args.dist_algo == "ddp_hook" and not args.clip_per_layer:
+        raise ValueError(
+            "Please enable `--clip_per_layer` if you want to use Opacus DDP"
+        )
 
     # The following few lines, enable stats gathering about the run
     # 1. where the stats should be logged
@@ -245,10 +248,8 @@ def main():
 
     # The following lines enable stat gathering for the clipping process
     # and set a default of per layer clipping for the Privacy Engine
-    # (ddp_hook clips per layer)
     clipping = {
-        "experimental": True,
-        "clip_per_layer": True,
+        "clip_per_layer": args.clip_per_layer,
         "enable_stat": (rank == 0),
     }
 
@@ -319,17 +320,19 @@ def main():
     model = convnet(num_classes=10)
     model = model.to(device)
 
-    if not args.disable_dp:
-        if args.dist_algo == "naive":
-            model = DPDDP(model)
-        elif args.dist_algo == "ddp_hook":
-            model = DDP(model, device_ids=[device])
+    # Use the right distributed module wrapper if distributed training is enabled
+    if world_size > 1:
+        if not args.disable_dp:
+            if args.dist_algo == "naive":
+                model = DPDDP(model)
+            elif args.dist_algo == "ddp_hook":
+                model = DDP(model, device_ids=[device])
+            else:
+                raise NotImplementedError(
+                    f"Unrecognized argument for the distributed algorithm: {args.dist_algo}"
+                )
         else:
-            raise NotImplementedError(
-                f"Unrecognized argument for the distributed algorithm: {args.dist_algo}"
-            )
-    else:
-        model = DDP(model, device_ids=[device])
+            model = DDP(model, device_ids=[device])
 
     if args.optim == "SGD":
         optimizer = optim.SGD(
@@ -346,13 +349,23 @@ def main():
         raise NotImplementedError("Optimizer not recognized. Please check spelling")
 
     if not args.disable_dp:
+        if args.clip_per_layer:
+            # Each layer has the same clipping threshold. The total grad norm is still bounded by `args.max_per_sample_grad_norm`.
+            n_layers = len(
+                [(n, p) for n, p in model.named_parameters() if p.requires_grad]
+            )
+            max_grad_norm = [
+                args.max_per_sample_grad_norm / np.sqrt(n_layers)
+            ] * n_layers
+        else:
+            max_grad_norm = args.max_per_sample_grad_norm
 
         privacy_engine = PrivacyEngine(
             model,
             sample_rate=args.sample_rate * args.n_accumulation_steps,
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
             noise_multiplier=args.sigma,
-            max_grad_norm=args.max_per_sample_grad_norm,
+            max_grad_norm=max_grad_norm,
             secure_rng=args.secure_rng,
             **clipping,
         )
@@ -406,7 +419,8 @@ def main():
         )
         logger.info(metrics)
 
-    cleanup()
+    if world_size > 1:
+        cleanup()
 
 
 def parse_args():
@@ -571,7 +585,7 @@ def parse_args():
         "--local_rank",
         type=int,
         default=-1,
-        help="Local rank if multi-GPU training, -1 for Slurm configuration",
+        help="Local rank if multi-GPU training, -1 for single GPU training. Will be overriden by the environment variables if running on a Slurm cluster.",
     )
 
     parser.add_argument(
@@ -587,7 +601,12 @@ def parse_args():
         default="naive",
         help="Choose the algorithm for distributed DPSGD: `naive` for a simple aggregation with allreduce, or `ddp_hook` to use DDP with Opacus",
     )
-
+    parser.add_argument(
+        "--clip_per_layer",
+        action="store_true",
+        default=False,
+        help="Use static per-layer clipping with the same clipping threshold for each layer. Necessary for DDP. If `False` (default), uses flat clipping.",
+    )
     parser.add_argument(
         "--debug",
         type=int,

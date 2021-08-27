@@ -502,7 +502,7 @@ class PrivacyEngine:
                 # This is easy to reason about for loss_reduction=sum
                 # For loss_reduction=mean, noise will get further divided by
                 # world_size as gradients are averaged.
-                noise = self._generate_noise(clip_value, p)
+                noise = self._generate_noise(clip_value, p.grad)
                 if self.loss_reduction == "mean":
                     noise /= batch_size
                 p.grad += noise
@@ -624,7 +624,7 @@ class PrivacyEngine:
 
         # Only one GPU adds noise
         if self.rank == 0:
-            noise = self._generate_noise_grad(clip_value, new_grad)
+            noise = self._generate_noise(clip_value, new_grad)
             if self.loss_reduction == "mean":
                 noise /= batch_size
             new_grad += noise
@@ -657,39 +657,10 @@ class PrivacyEngine:
             )
 
     def _generate_noise(
-        self, max_grad_norm: float, reference: nn.parameter.Parameter
-    ) -> torch.Tensor:
-        r"""
-        Generates a tensor of Gaussian noise of the same shape as ``reference``.
-
-        The generated tensor has zero mean and standard deviation
-        sigma = ``noise_multiplier x max_grad_norm ``
-
-        Args:
-            max_grad_norm : The maximum norm of the per-sample gradients.
-            reference : The reference, based on which the dimension of the
-                noise tensor will be determined
-
-        Returns:
-            the generated noise with noise zero and standard
-            deviation of ``noise_multiplier x max_grad_norm ``
-        """
-        if self.noise_multiplier > 0 and max_grad_norm > 0:
-            return torch.normal(
-                0,
-                self.noise_multiplier * max_grad_norm,
-                reference.grad.shape,
-                device=self.device,
-                generator=self.random_number_generator,
-            )
-        return torch.zeros(reference.grad.shape, device=self.device)
-
-    def _generate_noise_grad(
         engine, max_grad_norm: float, grad: torch.Tensor
     ) -> torch.Tensor:
         r"""
         Generates a tensor of Gaussian noise of the same shape as ``grad``.
-        Exactly like `_generate_noise` with `grad = reference.grad`.
 
         The generated tensor has zero mean and standard deviation
         sigma = ``noise_multiplier x max_grad_norm ``
