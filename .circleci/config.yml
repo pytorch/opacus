@@ -386,7 +386,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - unittest_py39_torch_nightly:
           filters: *exclude_ghpages
@@ -401,4 +401,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main

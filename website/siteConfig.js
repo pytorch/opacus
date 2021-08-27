@@ -91,7 +91,7 @@ const siteConfig = {
   docsSideNavCollapsible: true,
 
   // URL for editing docs
-  editUrl: 'https://github.com/pytorch/opacus/tree/master/docs/',
+  editUrl: 'https://github.com/pytorch/opacus/tree/main/docs/',
 
   // Disable logo text so we can just show the logo
   disableHeaderTitle: true,

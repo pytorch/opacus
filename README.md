@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/pytorch/opacus/blob/master/website/static/img/opacus_logo.svg" alt="Opacus" width="500"/></p>
+<p align="center"><img src="https://github.com/pytorch/opacus/blob/main/website/static/img/opacus_logo.svg" alt="Opacus" width="500"/></p>
 
 <hr/>
 
@@ -52,13 +52,13 @@ privacy_engine.attach(optimizer)
 # Now it's business as usual
 ```
 
-The [MNIST example](https://github.com/pytorch/opacus/tree/master/examples/mnist.py) shows an end-to-end run using opacus. The [examples](https://github.com/pytorch/opacus/tree/master/examples/) folder contains more such examples.
+The [MNIST example](https://github.com/pytorch/opacus/tree/main/examples/mnist.py) shows an end-to-end run using opacus. The [examples](https://github.com/pytorch/opacus/tree/main/examples/) folder contains more such examples.
 
 ## FAQ
 Checkout the [FAQ](https://opacus.ai/docs/faq) page for answers to some of the most frequently asked questions about Differential Privacy and Opacus.
 
 ## Contributing
-See the [CONTRIBUTING](https://github.com/pytorch/opacus/tree/master/CONTRIBUTING.md) file for how to help out.
+See the [CONTRIBUTING](https://github.com/pytorch/opacus/tree/main/CONTRIBUTING.md) file for how to help out.
 
 Do also check out our README files inside the repo to learn how the code is organized.
 
@@ -70,4 +70,4 @@ Do also check out our README files inside the repo to learn how the code is orga
 * [McMahan, H. Brendan, and Galen Andrew. "A general approach to adding differential privacy to iterative training procedures." arXiv preprint arXiv:1812.06210 (2018).](https://arxiv.org/abs/1812.06210)
 
 ## License
-This code is released under Apache 2.0, as found in the [LICENSE](https://github.com/pytorch/opacus/tree/master/LICENSE) file.
+This code is released under Apache 2.0, as found in the [LICENSE](https://github.com/pytorch/opacus/tree/main/LICENSE) file.
