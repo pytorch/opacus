@@ -17,7 +17,7 @@ class PrivacyEngine:
         self.accountant = RDPAccountant()
         self.secure_mode = secure_mode # TODO: actually support it
 
-    def prepare(
+    def make_private(
             self,
             module: nn.Module,
             optimizer: optim.Optimizer,
@@ -54,7 +54,7 @@ class PrivacyEngine:
 
         return module, optimizer, data_loader
 
-    def prepare_with_epsilon(
+    def make_private_with_epsilon(
             self,
             module: nn.Module,
             optimizer: optim.Optimizer,
