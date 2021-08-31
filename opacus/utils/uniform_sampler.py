@@ -44,8 +44,6 @@ class UniformWithReplacementSampler(Sampler):
                 < self.sample_rate
             )
             indices = mask.nonzero(as_tuple=False).reshape(-1).tolist()
-            if len(indices) != 0:
-                # We only output non-empty list of indices, otherwise the dataloader is unhappy
-                # This is compensated by the privacy engine
-                yield indices
+            yield indices
+
             num_batches -= 1
