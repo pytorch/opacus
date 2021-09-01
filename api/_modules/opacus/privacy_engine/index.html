@@ -32,12 +32,15 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">types</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">planck</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
+
+<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.tensor_utils</span> <span class="kn">import</span> <span class="n">calc_sample_norms_one_layer</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">privacy_analysis</span>
 <span class="kn">from</span> <span class="nn">.dp_model_inspector</span> <span class="kn">import</span> <span class="n">DPModelInspector</span>
@@ -47,7 +50,6 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.per_sample_gradient_clip</span> <span class="kn">import</span> <span class="n">PerSampleGradientClipper</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">clipping</span>
-
 
 <span class="n">DEFAULT_ALPHAS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
 
@@ -172,7 +174,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_sample_rate</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">module</span><span class="p">,</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">parallel</span><span class="o">.</span><span class="n">DistributedDataParallel</span><span class="p">):</span>
             <span class="n">rank</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_rank</span><span class="p">()</span>
             <span class="n">n_replicas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">*=</span> <span class="n">n_replicas</span>
@@ -349,16 +353,35 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span><span class="p">,</span>
         <span class="p">)</span>
 
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">parallel</span><span class="o">.</span><span class="n">DistributedDataParallel</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">norm_clipper</span><span class="p">,</span> <span class="n">clipping</span><span class="o">.</span><span class="n">ConstantPerLayerClipper</span><span class="p">):</span>
+                <span class="c1"># The DDP hooks are stored in `self.privacy_engine.module.ddp_hooks`</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_register_ddp_hooks</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sd">"""The Opacus DDP hook only supports constant per-layer clipping.</span>
+<span class="sd">                     If you need a different clipper for simple (not optimized) distributed training,</span>
+<span class="sd">                     you can use `opacus.layers.dp_ddp.DifferentiallyPrivateDistributedDataParallel`"""</span>
+                <span class="p">)</span>
+
         <span class="k">def</span> <span class="nf">dp_zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">original_zero_grad</span><span class="p">()</span>
 
         <span class="k">def</span> <span class="nf">dp_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_empty</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">is_empty</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span>
-            <span class="p">):</span>
-                <span class="n">average_gradients</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
+            <span class="c1"># When the DDP hooks are activated, there is no need for ``PrivacyEngine.step()``</span>
+            <span class="c1"># because the clipping and noising are performed by the hooks at the end of the backward pass</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="s2">"ddp_hooks"</span><span class="p">):</span>
+                <span class="c1"># We just update the accountant</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">is_empty</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span>
+                    <span class="n">DifferentiallyPrivateDistributedDataParallel</span><span class="p">,</span>
+                <span class="p">):</span>
+                    <span class="n">average_gradients</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">original_step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">poisson_dp_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -375,6 +398,7 @@
 
         <span class="n">optimizer</span><span class="o">.</span><span class="n">dp_step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">original_step</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span>
+
         <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span>
             <span class="n">poisson_dp_step</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span> <span class="k">else</span> <span class="n">dp_step</span><span class="p">,</span> <span class="n">optimizer</span>
         <span class="p">)</span>
@@ -383,6 +407,8 @@
         <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">dp_zero_grad</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">virtual_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="s2">"ddp_hooks"</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"DDP hook does not support virtual steps."</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span>
 
         <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="n">virtual_step</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
@@ -498,15 +524,14 @@
 
         <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">clip_value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">clip_values</span><span class="p">):</span>
-            <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_noise</span><span class="p">(</span><span class="n">clip_value</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
-                <span class="n">noise</span> <span class="o">/=</span> <span class="n">batch_size</span>
-
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="c1"># Noise only gets added on first worker</span>
                 <span class="c1"># This is easy to reason about for loss_reduction=sum</span>
                 <span class="c1"># For loss_reduction=mean, noise will get further divided by</span>
                 <span class="c1"># world_size as gradients are averaged.</span>
+                <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_noise</span><span class="p">(</span><span class="n">clip_value</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+                    <span class="n">noise</span> <span class="o">/=</span> <span class="n">batch_size</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">+=</span> <span class="n">noise</span>
 
             <span class="c1"># For poisson, we are not supposed to know the batch size</span>
@@ -582,33 +607,109 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">clip_and_accumulate</span><span class="p">()</span></div>
 
+    <span class="k">def</span> <span class="nf">_local_layer_ddp_hook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">grad</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Backward hook attached to parameter `p`.</span>
+<span class="sd">        It replaces `grad` by `new_grad` using the per-sample gradients stored in p.grad_sample</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            # engine: the privacy engine (to get the DP options and clipping values)</span>
+<span class="sd">            p: the layer to clip and noise</span>
+<span class="sd">            threshold: the flat clipping value for that layer</span>
+<span class="sd">            grad: the gradient (unused, but this argument required to be a valid hook)</span>
+
+<span class="sd">        The hook operates like ``PrivacyEngine.step()``, but on a single layer:</span>
+<span class="sd">            1. clip_and_accumulate</span>
+<span class="sd">            2. get the clip_values to scale the noise</span>
+<span class="sd">            3. add the noise</span>
+<span class="sd">        """</span>
+
+        <span class="c1"># Similar to `ConstantPerLayerClipper.pre_step()`</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">clip_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">norm_clipper</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Similar to `ConstantPerLayerClipper.calc_clipping_factors`)</span>
+        <span class="n">norms</span> <span class="o">=</span> <span class="n">calc_sample_norms_one_layer</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>
+        <span class="n">per_sample_clip_factor</span> <span class="o">=</span> <span class="p">(</span><span class="n">threshold</span> <span class="o">/</span> <span class="p">(</span><span class="n">norms</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">))</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Do the clipping</span>
+        <span class="n">summed_grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">_weighted_sum</span><span class="p">(</span><span class="n">per_sample_clip_factor</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>
+
+        <span class="c1"># Accumulate the summed gradient for this mini-batch</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"summed_grad"</span><span class="p">):</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">+=</span> <span class="n">summed_grad</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">=</span> <span class="n">summed_grad</span>
+
+        <span class="k">del</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span>
+
+        <span class="c1"># Average (or sum) across the batch</span>
+        <span class="n">new_grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">_scale_summed_grad</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span>
+
+        <span class="c1"># Only one GPU adds noise</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_noise</span><span class="p">(</span><span class="n">clip_value</span><span class="p">,</span> <span class="n">new_grad</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+                <span class="n">noise</span> <span class="o">/=</span> <span class="n">batch_size</span>
+            <span class="n">new_grad</span> <span class="o">+=</span> <span class="n">noise</span>
+
+        <span class="c1"># Poisson uses avg_batch_size instead of batch_size</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poisson</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+            <span class="n">new_grad</span> <span class="o">*=</span> <span class="n">batch_size</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg_batch_size</span>
+
+        <span class="k">return</span> <span class="n">new_grad</span>
+
+    <span class="k">def</span> <span class="nf">_register_ddp_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Adds hooks for DP training over DistributedDataParallel.</span>
+
+<span class="sd">        Each layer has a hook that clips and noises the gradients as soon as they are ready.</span>
+<span class="sd">        """</span>
+
+        <span class="c1"># `thresholds` is a tensor with `len(params)` thresholds (i.e. max layer norm)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
+        <span class="n">thresholds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">norm_clipper</span><span class="o">.</span><span class="n">thresholds</span>
+
+        <span class="c1"># Register and store the DDP hooks (one per layer). GradSampleModule knows how to remove them.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">ddp_hooks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">thresholds</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">ddp_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">register_hook</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_local_layer_ddp_hook</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">threshold</span><span class="p">))</span>
+            <span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_generate_noise</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span>
+        <span class="n">engine</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">grad</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Generates a tensor of Gaussian noise of the same shape as ``reference``.</span>
+<span class="sd">        Generates a tensor of Gaussian noise of the same shape as ``grad``.</span>
 
 <span class="sd">        The generated tensor has zero mean and standard deviation</span>
 <span class="sd">        sigma = ``noise_multiplier x max_grad_norm ``</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            max_grad_norm : The maximum norm of the per-sample gradients.</span>
-<span class="sd">            reference : The reference, based on which the dimention of the</span>
+<span class="sd">            grad : The gradient of the reference, based on which the dimension of the</span>
 <span class="sd">                noise tensor will be determined</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            the generated noise with noise zero and standard</span>
 <span class="sd">            deviation of ``noise_multiplier x max_grad_norm ``</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">max_grad_norm</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">engine</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">max_grad_norm</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
                 <span class="mi">0</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">*</span> <span class="n">max_grad_norm</span><span class="p">,</span>
-                <span class="n">reference</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-                <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-                <span class="n">generator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_number_generator</span><span class="p">,</span>
+                <span class="n">engine</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">*</span> <span class="n">max_grad_norm</span><span class="p">,</span>
+                <span class="n">grad</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">engine</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                <span class="n">generator</span><span class="o">=</span><span class="n">engine</span><span class="o">.</span><span class="n">random_number_generator</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">reference</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">engine</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_set_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>

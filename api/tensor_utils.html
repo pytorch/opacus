@@ -61,6 +61,39 @@ layers norms</p></li>
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="opacus.utils.tensor_utils.calc_sample_norms_one_layer">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.tensor_utils.</span></span><span class="sig-name descname"><span class="pre">calc_sample_norms_one_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/tensor_utils.html#calc_sample_norms_one_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.tensor_utils.calc_sample_norms_one_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the norm of the given tensor (a single parameter) for each sample.</p>
+<p>This function calculates the overall norm of the given tensor for each sample,
+assuming the each batch’s dim is zero.</p>
+<p>It is equivalent to:
+<a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a></p>
+<blockquote>
+<div><p>calc_sample_norms(named_params=((None, param),))[0]</p>
+</div></blockquote>
+<p><a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>param</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – A tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">...]</span></code> where <code class="docutils literal notranslate"><span class="pre">B</span></code>
+is the size of the batch and is the 0th dimension.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">calc_sample_norms_one_layer</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
+<span class="go">    tensor([1.4757, 0.8128])</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.0a0+gitd69c22d)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tensor of norms</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.tensor_utils.sum_over_all_but_batch_and_last_n">
 <span class="sig-prename descclassname"><span class="pre">opacus.utils.tensor_utils.</span></span><span class="sig-name descname"><span class="pre">sum_over_all_but_batch_and_last_n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_dims</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/tensor_utils.html#sum_over_all_but_batch_and_last_n"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.tensor_utils.sum_over_all_but_batch_and_last_n" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the sum over all dimensions, except the first

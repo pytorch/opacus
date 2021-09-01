@@ -69,6 +69,34 @@
     <span class="k">return</span> <span class="n">norms</span></div>
 
 
+<div class="viewcode-block" id="calc_sample_norms_one_layer"><a class="viewcode-back" href="../../../tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms_one_layer">[docs]</a><span class="k">def</span> <span class="nf">calc_sample_norms_one_layer</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Calculates the norm of the given tensor (a single parameter) for each sample.</span>
+
+<span class="sd">    This function calculates the overall norm of the given tensor for each sample,</span>
+<span class="sd">    assuming the each batch's dim is zero.</span>
+
+<span class="sd">    It is equivalent to:</span>
+<span class="sd">    ```</span>
+<span class="sd">        calc_sample_norms(named_params=((None, param),))[0]</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param: A tensor of shape ``[B, ...]`` where ``B``</span>
+<span class="sd">            is the size of the batch and is the 0th dimension.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; t1 = torch.rand((2, 5))</span>
+<span class="sd">        &gt;&gt;&gt; calc_sample_norms_one_layer(t1)</span>
+<span class="sd">            tensor([1.4757, 0.8128])</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of norms</span>
+<span class="sd">    """</span>
+    <span class="n">norms</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">param</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">norms</span></div>
+
+
 <div class="viewcode-block" id="sum_over_all_but_batch_and_last_n"><a class="viewcode-back" href="../../../tensor_utils.html#opacus.utils.tensor_utils.sum_over_all_but_batch_and_last_n">[docs]</a><span class="k">def</span> <span class="nf">sum_over_all_but_batch_and_last_n</span><span class="p">(</span>
     <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>

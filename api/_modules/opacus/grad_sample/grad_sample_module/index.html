@@ -34,6 +34,7 @@
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
 <span class="kn">from</span> <span class="nn">opacus.layers.dp_lstm</span> <span class="kn">import</span> <span class="n">DPLSTM</span><span class="p">,</span> <span class="n">LSTMLinear</span>
 <span class="kn">from</span> <span class="nn">opacus.utils.module_inspection</span> <span class="kn">import</span> <span class="n">requires_grad</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.tensor_utils</span> <span class="kn">import</span> <span class="n">calc_sample_norms</span>
 
 
 <div class="viewcode-block" id="UnsupportedModuleError"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.UnsupportedModuleError">[docs]</a><span class="k">class</span> <span class="nc">UnsupportedModuleError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
@@ -135,6 +136,13 @@
 <span class="sd">        Removes hooks added by ``add_hooks()``</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">disable_hooks</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"ddp_hooks"</span><span class="p">):</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">ddp_hooks</span><span class="p">:</span>
+                <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ddp_hooks</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+            <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"ddp_hooks"</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Asked to remove hooks, but no hooks found"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
