@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
 from opacus.utils.module_inspection import requires_grad
+from opacus.utils.tensor_utils import calc_sample_norms
 
 
 class UnsupportedModuleError(ValueError):
@@ -108,6 +109,13 @@ class GradSampleModule(nn.Module):
         Removes hooks added by ``add_hooks()``
         """
         self.disable_hooks()
+
+        if hasattr(self, "ddp_hooks"):
+            while self.ddp_hooks:
+                handle = self.ddp_hooks.pop()
+                handle.remove()
+            delattr(self, "ddp_hooks")
+
         if not hasattr(self, "autograd_grad_sample_hooks"):
             raise ValueError("Asked to remove hooks, but no hooks found")
         else:
