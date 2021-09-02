@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
 from opacus.utils.module_inspection import requires_grad
-from opacus.utils.tensor_utils import calc_sample_norms
 
 
 class UnsupportedModuleError(ValueError):
