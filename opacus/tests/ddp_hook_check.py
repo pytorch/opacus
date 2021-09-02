@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import os
-import random
 import sys
-import time
 import unittest
-from unittest.main import main
 
 import torch
 import torch.distributed as dist
@@ -15,7 +12,6 @@ import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torchvision.models import mobilenet_v3_small
 
 PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
@@ -302,7 +298,7 @@ class GradientComputationTest(unittest.TestCase):
             max_grad_norm=1.0,
         )
 
-        assert remaining_hooks["attached"], f"There are no hooks."
+        assert remaining_hooks["attached"], "There are no hooks."
 
         assert not remaining_hooks[
             "detached"

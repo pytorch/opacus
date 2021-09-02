@@ -218,8 +218,13 @@ def main():
         logger.setLevel(level=logging.DEBUG)
 
     # Sets `world_size = 1` if you run on a single GPU with `args.local_rank = -1`
-    rank, local_rank, world_size = setup(args)
-    device = local_rank
+    if args.device != 'cpu':
+        rank, local_rank, world_size = setup(args)
+        device = local_rank
+    else:
+        device = 'cpu'
+        rank = 0
+        world_size = 1
 
     if args.disable_dp and args.n_accumulation_steps > 1:
         raise ValueError("Virtual steps only works with enabled DP")
@@ -286,14 +291,23 @@ def main():
         root=args.data_root, train=True, download=True, transform=train_transform
     )
 
-    train_sampler = DistributedPoissonBatchSampler(
-        total_size=len(train_dataset),
-        sample_rate=args.sample_rate,
-        num_replicas=world_size,
-        rank=rank,
-        generator=generator,
-    )
+    if world_size > 1:
+        train_sampler = DistributedPoissonBatchSampler(
+            total_size=len(train_dataset),
+            sample_rate=args.sample_rate,
+            num_replicas=world_size,
+            rank=rank,
+            generator=generator,
+        )
 
+    else:
+        train_sampler = UniformWithReplacementSampler(
+            num_samples=len(train_dataset),
+            sample_rate=args.sample_rate,
+            generator=generator,
+        )
+
+        
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_sampler=train_sampler,
@@ -313,9 +327,6 @@ def main():
     )
 
     best_acc1 = 0
-    # if distributed and args.device == "cuda":
-    #     args.device = "cuda:" + str(args.local_rank)
-    # device = torch.device(args.device)
 
     model = convnet(num_classes=10)
     model = model.to(device)
@@ -580,6 +591,13 @@ def parse_args():
     )
     parser.add_argument(
         "--lr-schedule", type=str, choices=["constant", "cos"], default="cos"
+    )
+
+    parser.add_argument(
+        "--device",
+        type=str,
+        default='cpu',
+        help="Device on which to run the code."
     )
     parser.add_argument(
         "--local_rank",
