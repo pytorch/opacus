@@ -222,7 +222,7 @@ def main():
     args = parser.parse_args()
     device = torch.device(args.device)
 
-    raw_dataset = load_dataset("imdb", cache_dir="imdb")
+    raw_dataset = load_dataset("imdb", cache_dir=args.data_root)
     tokenizer = BertTokenizerFast.from_pretrained("bert-base-cased")
     dataset = raw_dataset.map(
         lambda x: tokenizer(

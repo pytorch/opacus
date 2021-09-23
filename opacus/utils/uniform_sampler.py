@@ -53,8 +53,6 @@ class UniformWithReplacementSampler(Sampler):
             num_batches -= 1
 
 
-
-
 class DistributedPoissonBatchSampler(Sampler):
     """
     Distributed batch sampler.

@@ -12,6 +12,14 @@ import shutil
 import sys
 from datetime import datetime, timedelta
 
+from opacus import PrivacyEngine
+from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
+from opacus.utils import stats
+from opacus.utils.uniform_sampler import (
+    DistributedPoissonBatchSampler,
+    UniformWithReplacementSampler,
+)
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -20,16 +28,10 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
 import torchvision.transforms as transforms
-from opacus import PrivacyEngine
-from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.utils import stats
-from opacus.utils.uniform_sampler import (
-    DistributedPoissonBatchSampler,
-    UniformWithReplacementSampler,
-)
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
+
 
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s",
@@ -218,11 +220,11 @@ def main():
         logger.setLevel(level=logging.DEBUG)
 
     # Sets `world_size = 1` if you run on a single GPU with `args.local_rank = -1`
-    if args.device != 'cpu':
+    if args.device != "cpu":
         rank, local_rank, world_size = setup(args)
         device = local_rank
     else:
-        device = 'cpu'
+        device = "cpu"
         rank = 0
         world_size = 1
 
@@ -307,7 +309,6 @@ def main():
             generator=generator,
         )
 
-        
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_sampler=train_sampler,
@@ -594,10 +595,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--device",
-        type=str,
-        default='cpu',
-        help="Device on which to run the code."
+        "--device", type=str, default="cpu", help="Device on which to run the code."
     )
     parser.add_argument(
         "--local_rank",

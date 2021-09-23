@@ -130,17 +130,16 @@ commands:
       - run:
           name: MNIST example
           command: |
-            mkdir mnist
-            mkdir mnist/data
-            mkdir mnist/test-reports
+            mkdir -p runs/mnist/data
+            mkdir -p runs/mnist/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
-            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.004 --epochs 1 --data-root mnist/data --n-runs 1 --device <<parameters.device>>
+            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.004 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device <<parameters.device>>
           when: always
       - store_test_results:
-          path: mnist/test-reports
+          path: runs/mnist/test-reports
       - store_artifacts:
-          path: mnist/test-reports
+          path: runs/mnist/test-reports
 
   cifar10_integration_test:
     description: "Runs CIFAR10 example end to end"
@@ -152,19 +151,18 @@ commands:
       - run:
           name: CIFAR10 example
           command: |
-            mkdir cifar10
-            mkdir cifar10/data
-            mkdir cifar10/logs
-            mkdir cifar10/test-reports
+            mkdir -p runs/cifar10/data
+            mkdir -p runs/cifar10/logs
+            mkdir -p runs/cifar10/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install tensorboard
-            python examples/cifar10.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.001 --epochs 1 --data-root cifar10/data --log-dir cifar10/logs --device <<parameters.device>>
+            python examples/cifar10.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.001 --epochs 1 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device <<parameters.device>>
           when: always
       - store_test_results:
-          path: cifar10/test-reports
+          path: runs/cifar10/test-reports
       - store_artifacts:
-          path: cifar10/test-reports
+          path: runs/cifar10/test-reports
 
   dcgan_integration_test:
     description: "Runs dcgan example end to end"
@@ -176,17 +174,16 @@ commands:
       - run:
           name: dcgan example
           command: |
-            mkdir dcgan
-            mkdir dcgan/data
-            mkdir dcgan/test-reports
+            mkdir -p runs/dcgan/data
+            mkdir -p runs/dcgan/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
-            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --sample-rate 0.01 --epochs 1 --data-root dcgan/data --device <<parameters.device>>
+            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --sample-rate 0.01 --epochs 1 --data-root runs/dcgan/data --device <<parameters.device>>
           when: always
       - store_test_results:
-          path: dcgan/test-reports
+          path: runs/dcgan/test-reports
       - store_artifacts:
-          path: dcgan/test-reports
+          path: runs/dcgan/test-reports
 
   imdb_integration_test:
     description: "Runs imdb example end to end"
@@ -198,18 +195,17 @@ commands:
       - run:
           name: imdb example
           command: |
-            mkdir imdb
-            mkdir imdb/data
-            mkdir imdb/test-reports
+            mkdir -p runs/imdb/data
+            mkdir -p runs/imdb/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install --user datasets transformers
-            python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --sample-rate 0.00256 --max-sequence-length 256 --epochs 1 --data-root imdb/data --device <<parameters.device>>
+            python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --sample-rate 0.00256 --max-sequence-length 256 --epochs 1 --data-root runs/imdb/data --device <<parameters.device>>
           when: always
       - store_test_results:
-          path: imdb/test-reports
+          path: runs/imdb/test-reports
       - store_artifacts:
-          path: imdb/test-reports
+          path: runs/imdb/test-reports
 
   charlstm_integration_test:
     description: "Runs charlstm example end to end"
@@ -221,21 +217,20 @@ commands:
       - run:
           name: charlstm example
           command: |
-            mkdir charlstm
-            mkdir charlstm/data
-            wget https://download.pytorch.org/tutorial/data.zip -O charlstm/data/data.zip
-            unzip charlstm/data/data.zip -d charlstm/data
-            rm charlstm/data/data.zip
-            mkdir charlstm/test-reports
+            mkdir -p runs/charlstm/data
+            wget https://download.pytorch.org/tutorial/data.zip -O runs/charlstm/data/data.zip
+            unzip runs/charlstm/data/data.zip -d runs/charlstm/data
+            rm runs/charlstm/data/data.zip
+            mkdir -p runs/charlstm/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install scikit-learn
-            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --sample-rate=0.05 --n-lstm-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
+            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --sample-rate=0.05 --n-lstm-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="runs/charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
           when: always
       - store_test_results:
-          path: charlstm/test-reports
+          path: runs/charlstm/test-reports
       - store_artifacts:
-          path: charlstm/test-reports
+          path: runs/charlstm/test-reports
 
 # -------------------------------------------------------------------------------------
 # Jobs
