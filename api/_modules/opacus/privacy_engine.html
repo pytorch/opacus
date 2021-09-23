@@ -35,12 +35,12 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.tensor_utils</span> <span class="kn">import</span> <span class="n">calc_sample_norms_one_layer</span>
+
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">planck</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
-
-<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
-<span class="kn">from</span> <span class="nn">opacus.utils.tensor_utils</span> <span class="kn">import</span> <span class="n">calc_sample_norms_one_layer</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">privacy_analysis</span>
 <span class="kn">from</span> <span class="nn">.dp_model_inspector</span> <span class="kn">import</span> <span class="n">DPModelInspector</span>
@@ -50,6 +50,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.per_sample_gradient_clip</span> <span class="kn">import</span> <span class="n">PerSampleGradientClipper</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">clipping</span>
+
 
 <span class="n">DEFAULT_ALPHAS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
 
