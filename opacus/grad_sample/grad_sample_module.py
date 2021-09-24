@@ -108,6 +108,13 @@ class GradSampleModule(nn.Module):
         Removes hooks added by ``add_hooks()``
         """
         self.disable_hooks()
+
+        if hasattr(self, "ddp_hooks"):
+            while self.ddp_hooks:
+                handle = self.ddp_hooks.pop()
+                handle.remove()
+            delattr(self, "ddp_hooks")
+
         if not hasattr(self, "autograd_grad_sample_hooks"):
             raise ValueError("Asked to remove hooks, but no hooks found")
         else:

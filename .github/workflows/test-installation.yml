@@ -4,7 +4,7 @@ name: Test Installation
 on:
   pull_request:
     branches:
-      - master
+      - main
     paths:
       - "**.py"
       - ".github/workflows/**.yml"

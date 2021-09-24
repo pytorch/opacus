@@ -58,7 +58,7 @@ class Tutorial extends React.Component {
             <a
               className="tutorialButton button"
               download
-              href={`https://github.com/pytorch/opacus/blob/master/tutorials/${tutorialID}.ipynb`}
+              href={`https://github.com/pytorch/opacus/blob/main/tutorials/${tutorialID}.ipynb`}
               target="_blank">
               {renderDownloadIcon()}
               {'Download Tutorial Jupyter Notebook'}

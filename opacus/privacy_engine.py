@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from typing import Optional, List
 from torch import nn, optim
 from torch.utils.data import DataLoader
@@ -27,7 +29,6 @@ class PrivacyEngine:
             batch_first: bool = True,
             loss_reduction: str = "mean",
     ):
-
         # TODO: DP-Specific validation
         # TODO: either validate consistent dataset or do per-dataset accounting
 

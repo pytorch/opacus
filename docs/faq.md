@@ -9,7 +9,7 @@ Opacus is a library that enables training PyTorch models with differential priva
 
 ## Is Opacus open-source? What is the license?
 
-Yes! Opacus is open-source for public use, and it is licensed under the [Apache-2.0](https://github.com/pytorch/opacus/blob/master/LICENSE).
+Yes! Opacus is open-source for public use, and it is licensed under the [Apache-2.0](https://github.com/pytorch/opacus/blob/main/LICENSE).
 
 ## How can I report a bug or ask a question?
 
@@ -17,7 +17,7 @@ You can ask your questions or report bugs by submitting GitHub issues. To submit
 
 ## I'd like to contribute to Opacus. How can I do that?
 
-Thank you for your interest in contributing to Opacus! Submit your contributions using Github pull requests [here](https://github.com/pytorch/opacus/pulls). Please take a look at [Opacus contribution guide](https://github.com/pytorch/opacus/blob/master/CONTRIBUTING.md).
+Thank you for your interest in contributing to Opacus! Submit your contributions using Github pull requests [here](https://github.com/pytorch/opacus/pulls). Please take a look at [Opacus contribution guide](https://github.com/pytorch/opacus/blob/main/CONTRIBUTING.md).
 
 ## What is DP-SGD?
 
@@ -66,7 +66,7 @@ Dealing with per-sample gradients will inevitably put more pressure on your memo
 The (epsilon, delta) pair quantifies the privacy properties of the DP-SGD algorithm (see the [blog post](https://bit.ly/dp-sgd-algorithm-explained)). A model trained with (epsilon, delta)-differential privacy (DP) protects privacy of any one training example, no matter how strange, ill-fitting, or perfect this example is.
 
 Formally, (epsilon, delta)-DP statement implies that the probabilities of outputting a model *W* trained on two datasets *D* and *D*′ that differ in a single example are close:
-![epsilon-delta-dp](https://raw.githubusercontent.com/pytorch/opacus/master/docs/img/epsilon-delta-dp.png)
+![epsilon-delta-dp](https://raw.githubusercontent.com/pytorch/opacus/main/docs/img/epsilon-delta-dp.png)
 This statement extends to all downstream uses of this model: its inferences, fine-tuning, distillation, etc. In other words, if the (epsilon, delta)-DP property meets your privacy objectives, releasing the entire model—its architecture, weights, activation functions—is OK privacy-wise.
 
 From the expression above it is obvious that epsilon and delta play different roles: epsilon controls the multiplicative increase in the baseline probability while delta lifts all probabilities by the same amount. For instance, if your baseline scenario (the model trained on *D*′, without your data) assigns 0 probability to some event, the bound on observing this event on *D* (that includes your data) is delta. Because of that, we’d like to target epsilon to be a small constant and select delta to be tiny. A rule of thumb is to set delta to be less than the inverse of the size of the training dataset.

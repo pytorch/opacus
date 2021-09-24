@@ -42,6 +42,34 @@ def calc_sample_norms(
     return norms
 
 
+def calc_sample_norms_one_layer(param: torch.Tensor) -> torch.Tensor:
+    r"""
+    Calculates the norm of the given tensor (a single parameter) for each sample.
+
+    This function calculates the overall norm of the given tensor for each sample,
+    assuming the each batch's dim is zero.
+
+    It is equivalent to:
+    ```
+        calc_sample_norms(named_params=((None, param),))[0]
+    ```
+
+    Args:
+        param: A tensor of shape ``[B, ...]`` where ``B``
+            is the size of the batch and is the 0th dimension.
+
+    Example:
+        >>> t1 = torch.rand((2, 5))
+        >>> calc_sample_norms_one_layer(t1)
+            tensor([1.4757, 0.8128])
+
+    Returns:
+        A tensor of norms
+    """
+    norms = param.view(len(param), -1).norm(2, dim=-1)
+    return norms
+
+
 def sum_over_all_but_batch_and_last_n(
     tensor: torch.Tensor, n_dims: int
 ) -> torch.Tensor:
