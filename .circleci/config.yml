@@ -135,7 +135,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.004 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device <<parameters.device>>
-            python -c "import torch; model = torch.load('run_results_SampleConvNet_0.25_0.7_1.5_0.004_1.pt'); exit(0) if (model[0]>0.78 and model[0]<0.95) else exit(1)"
+            python -c "import torch; accuracy = torch.load('run_results_SampleConvNet_0.25_0.7_1.5_0.004_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
           when: always
       - store_test_results:
           path: runs/mnist/test-reports
@@ -203,7 +203,7 @@ commands:
             echo "Using $(pip -V) ($(which pip))"
             pip install --user datasets transformers
             python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --sample-rate 0.00256 --max-sequence-length 256 --epochs 1 --data-root runs/imdb/data --device <<parameters.device>>
-            python -c "import torch; model = torch.load('run_results_imdb_classification.pt'); exit(0) if (model>0.54 and model<0.66) else exit(1)"
+            python -c "import torch; accuracy = torch.load('run_results_imdb_classification.pt'); exit(0) if (accuracy>0.54 and accuracy<0.66) else exit(1)"
           when: always
       - store_test_results:
           path: runs/imdb/test-reports
@@ -229,7 +229,7 @@ commands:
             echo "Using $(pip -V) ($(which pip))"
             pip install scikit-learn
             python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --sample-rate=0.05 --n-lstm-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="runs/charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
-            python -c "import torch; model = torch.load('run_results_chr_lstm_classification.pt'); exit(0) if (model>0.60 and model<0.74) else exit(1)"
+            python -c "import torch; accuracy = torch.load('run_results_chr_lstm_classification.pt'); exit(0) if (accuracy>0.60 and accuracy<0.74) else exit(1)"
           when: always
       - store_test_results:
           path: runs/charlstm/test-reports

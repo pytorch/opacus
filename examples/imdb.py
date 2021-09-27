@@ -288,10 +288,12 @@ def main():
         )
         privacy_engine.attach(optimizer)
 
+    mean_accuracy = 0
     for epoch in range(1, args.epochs + 1):
         train(args, model, train_loader, optimizer, epoch)
         mean_accuracy = evaluate(args, model, test_loader)
-        torch.save(mean_accuracy, "run_results_imdb_classification.pt")
+
+    torch.save(mean_accuracy, "run_results_imdb_classification.pt")
 
 
 if __name__ == "__main__":
