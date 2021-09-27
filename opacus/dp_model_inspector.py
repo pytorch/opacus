@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+from torch import nn
+
 from opacus.grad_sample import GradSampleModule
 from opacus.utils.module_inspection import ModelInspector, get_layer_type
-from torch import nn
 
 
 class IncompatibleModuleException(Exception):

@@ -5,12 +5,13 @@ import unittest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus import PerSampleGradientClipper
-from opacus.grad_sample import GradSampleModule
-from opacus.utils.clipping import ConstantFlatClipper, ConstantPerLayerClipper
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import FakeData
+
+from opacus import PerSampleGradientClipper
+from opacus.grad_sample import GradSampleModule
+from opacus.utils.clipping import ConstantFlatClipper, ConstantPerLayerClipper
 
 
 class SampleConvNet(nn.Module):

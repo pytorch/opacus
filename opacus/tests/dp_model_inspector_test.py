@@ -6,9 +6,10 @@ import unittest
 
 import torch
 import torch.nn as nn
+from torchvision import models
+
 from opacus import dp_model_inspector as dp_inspector
 from opacus.utils.module_modification import convert_batchnorm_modules
-from torchvision import models
 
 
 class dp_model_inspector_test(unittest.TestCase):

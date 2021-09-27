@@ -8,13 +8,13 @@ from statistics import mean
 
 import torch
 import torch.nn as nn
-from opacus import PrivacyEngine
-from opacus.layers import DPLSTM
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+from opacus import PrivacyEngine
+from opacus.layers import DPLSTM
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 
 parser = argparse.ArgumentParser(
     description="PyTorch Name language classification DP Training"

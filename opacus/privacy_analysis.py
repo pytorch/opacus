@@ -32,7 +32,6 @@ from typing import List, Tuple, Union
 import numpy as np
 from scipy import special
 
-
 ########################
 # LOG-SPACE ARITHMETIC #
 ########################

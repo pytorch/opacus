@@ -33,10 +33,10 @@ Notes:
 
 from typing import Callable, Iterator, Optional, Tuple
 
-from opacus.grad_sample import GradSampleModule
-
 import torch
 from torch import nn
+
+from opacus.grad_sample import GradSampleModule
 
 from .utils.clipping import NormClipper
 from .utils.tensor_utils import calc_sample_norms

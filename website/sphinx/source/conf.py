@@ -12,7 +12,6 @@
 import os
 import sys
 
-
 base_path = os.path.abspath(os.path.join(__file__, "..", "..", "..", "..", "opacus"))
 
 sys.path.append(base_path)

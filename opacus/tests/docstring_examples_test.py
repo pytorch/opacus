@@ -6,20 +6,18 @@ from collections import defaultdict
 import numpy as np
 import torch
 import torch.nn as nn
+
 from opacus import PrivacyEngine, privacy_analysis
-from opacus.dp_model_inspector import DPModelInspector, IncompatibleModuleException
+from opacus.dp_model_inspector import (DPModelInspector,
+                                       IncompatibleModuleException)
 from opacus.layers.dp_multihead_attention import SequenceBias
 from opacus.utils import stats
 from opacus.utils.module_inspection import ModelInspector
-from opacus.utils.module_modification import (
-    convert_batchnorm_modules,
-    replace_all_modules,
-)
-from opacus.utils.tensor_utils import (
-    calc_sample_norms,
-    calc_sample_norms_one_layer,
-    sum_over_all_but_batch_and_last_n,
-)
+from opacus.utils.module_modification import (convert_batchnorm_modules,
+                                              replace_all_modules)
+from opacus.utils.tensor_utils import (calc_sample_norms,
+                                       calc_sample_norms_one_layer,
+                                       sum_over_all_but_batch_and_last_n)
 
 
 class DocstringExamplesTest(unittest.TestCase):

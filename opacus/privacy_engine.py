@@ -8,22 +8,19 @@ import warnings
 from functools import partial
 from typing import List, Optional, Tuple, Union
 
-from opacus.grad_sample import GradSampleModule
-from opacus.utils.tensor_utils import calc_sample_norms_one_layer
-
 import torch
 from scipy.stats import planck
 from torch import Tensor, nn
 
+from opacus.grad_sample import GradSampleModule
+from opacus.utils.tensor_utils import calc_sample_norms_one_layer
+
 from . import privacy_analysis
 from .dp_model_inspector import DPModelInspector
-from .layers.dp_ddp import (
-    DifferentiallyPrivateDistributedDataParallel,
-    average_gradients,
-)
+from .layers.dp_ddp import (DifferentiallyPrivateDistributedDataParallel,
+                            average_gradients)
 from .per_sample_gradient_clip import PerSampleGradientClipper
 from .utils import clipping
-
 
 DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 

@@ -5,12 +5,13 @@ import unittest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus.grad_sample import GradSampleModule
 from torch.testing import assert_allclose
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import FakeData
 from torchvision.models import mobilenet_v3_small
+
+from opacus.grad_sample import GradSampleModule
 
 
 class GradSampleModule_test(unittest.TestCase):

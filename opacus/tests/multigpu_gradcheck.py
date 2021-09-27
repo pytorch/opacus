@@ -9,10 +9,10 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn as nn
 import torch.optim as optim
-from opacus import PrivacyEngine
-from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+from opacus import PrivacyEngine
+from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
 
 PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 

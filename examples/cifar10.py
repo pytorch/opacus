@@ -12,14 +12,6 @@ import shutil
 import sys
 from datetime import datetime, timedelta
 
-from opacus import PrivacyEngine
-from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.utils import stats
-from opacus.utils.uniform_sampler import (
-    DistributedPoissonBatchSampler,
-    UniformWithReplacementSampler,
-)
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -32,6 +24,11 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 
+from opacus import PrivacyEngine
+from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
+from opacus.utils import stats
+from opacus.utils.uniform_sampler import (DistributedPoissonBatchSampler,
+                                          UniformWithReplacementSampler)
 
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s",

@@ -6,7 +6,6 @@ import sys
 
 from setuptools import find_packages, setup
 
-
 # 3.6.8 is the final Windows binary release for 3.6.x
 REQUIRED_MAJOR = 3
 REQUIRED_MINOR = 6

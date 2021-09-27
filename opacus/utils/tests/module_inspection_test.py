@@ -5,8 +5,9 @@
 import unittest
 
 import torch.nn as nn
-from opacus.utils import module_inspection as mi
 from torchvision import models
+
+from opacus.utils import module_inspection as mi
 
 
 class utils_ModelInspector_test(unittest.TestCase):
