@@ -6,6 +6,7 @@ from copy import deepcopy
 from enum import IntEnum
 from typing import Any, Dict, Optional
 
+
 try:
     from torch.utils.tensorboard import SummaryWriter
 except ImportError:

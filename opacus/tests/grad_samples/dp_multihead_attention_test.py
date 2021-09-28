@@ -5,7 +5,6 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-
 from opacus.layers import DPMultiheadAttention
 
 from .common import GradSampleHooks_test

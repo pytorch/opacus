@@ -5,7 +5,6 @@ from typing import Iterable, List, Tuple
 
 import torch
 import torch.nn as nn
-
 from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
 from opacus.utils.module_inspection import requires_grad
 

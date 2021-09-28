@@ -5,7 +5,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from opacus.utils.tensor_utils import sum_over_all_but_batch_and_last_n
 
 from .utils import create_or_extend_grad_sample, register_grad_sampler

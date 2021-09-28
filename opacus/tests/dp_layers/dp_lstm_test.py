@@ -7,10 +7,9 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-from torch.nn.utils.rnn import PackedSequence
-
 from opacus.layers import DPLSTM
 from opacus.utils.packed_sequences import _gen_packed_data
+from torch.nn.utils.rnn import PackedSequence
 
 from .common import DPModules_test
 

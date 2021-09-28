@@ -12,14 +12,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from datasets import load_dataset
+from opacus import PrivacyEngine
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torch.functional import F
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import BertTokenizerFast
-
-from opacus import PrivacyEngine
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 
 
 class SampleNet(nn.Module):

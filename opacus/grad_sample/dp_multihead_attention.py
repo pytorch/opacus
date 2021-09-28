@@ -3,7 +3,6 @@
 
 
 import torch
-
 from opacus.layers.dp_multihead_attention import SequenceBias
 
 from .utils import create_or_extend_grad_sample, register_grad_sampler

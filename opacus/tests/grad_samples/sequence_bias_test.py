@@ -4,7 +4,6 @@
 import hypothesis.strategies as st
 import torch
 from hypothesis import given, settings
-
 from opacus.layers import SequenceBias
 
 from .common import GradSampleHooks_test

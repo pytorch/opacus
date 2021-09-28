@@ -6,8 +6,7 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import (PackedSequence, pack_padded_sequence,
-                                pad_sequence)
+from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_sequence
 
 from .param_rename import ParamRenamedModule
 

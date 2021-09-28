@@ -4,8 +4,7 @@
 from typing import Optional
 
 import torch
-from torch.nn.utils.rnn import (PackedSequence, pack_padded_sequence,
-                                pad_sequence)
+from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_sequence
 
 
 def _gen_packed_data(

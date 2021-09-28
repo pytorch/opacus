@@ -20,11 +20,11 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
-from tqdm import tqdm
-
 from opacus import PrivacyEngine
 from opacus.utils.module_modification import convert_batchnorm_modules
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
+from tqdm import tqdm
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data-root", required=False, help="path to dataset")

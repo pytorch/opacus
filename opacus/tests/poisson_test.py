@@ -3,10 +3,9 @@
 import unittest
 
 import torch
-from torch import nn, optim
-
 from opacus import PrivacyEngine
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
+from torch import nn, optim
 
 
 class PoissonSamplingTest(unittest.TestCase):

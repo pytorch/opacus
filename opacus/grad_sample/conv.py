@@ -6,7 +6,6 @@ from typing import Union
 import numpy as np
 import torch
 import torch.nn as nn
-
 from opacus.utils.tensor_utils import unfold3d
 
 from .utils import create_or_extend_grad_sample, register_grad_sampler

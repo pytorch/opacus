@@ -20,15 +20,17 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
 import torchvision.transforms as transforms
+from opacus import PrivacyEngine
+from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
+from opacus.utils import stats
+from opacus.utils.uniform_sampler import (
+    DistributedPoissonBatchSampler,
+    UniformWithReplacementSampler,
+)
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 
-from opacus import PrivacyEngine
-from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.utils import stats
-from opacus.utils.uniform_sampler import (DistributedPoissonBatchSampler,
-                                          UniformWithReplacementSampler)
 
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s",

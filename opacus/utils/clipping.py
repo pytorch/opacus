@@ -9,6 +9,7 @@ from typing import Iterator, List, Union
 
 import torch
 
+
 try:
     from skimage.filters import threshold_otsu as otsu
 except ImportError:

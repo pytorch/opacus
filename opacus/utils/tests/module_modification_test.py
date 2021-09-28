@@ -7,13 +7,12 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from torchvision import models, transforms
-from torchvision.datasets import FakeData
-
 from opacus import PrivacyEngine
 from opacus.dp_model_inspector import IncompatibleModuleException
 from opacus.utils import module_modification as mm
+from torch.utils.data import DataLoader
+from torchvision import models, transforms
+from torchvision.datasets import FakeData
 
 
 class replace_all_modules_test(unittest.TestCase):

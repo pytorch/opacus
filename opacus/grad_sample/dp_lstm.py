@@ -3,7 +3,6 @@
 
 
 import torch
-
 from opacus.layers.dp_lstm import LSTMLinear
 
 from .utils import create_or_accumulate_grad_sample, register_grad_sampler
