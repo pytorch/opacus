@@ -158,8 +158,8 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install tensorboard
-            python examples/cifar10.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.001 --epochs 1 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device <<parameters.device>>
-            python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.095 and model['best_acc1']<0.12) else exit(1)"
+            python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --sample-rate 0.04 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device <<parameters.device>>
+            python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
           when: always
       - store_test_results:
           path: runs/cifar10/test-reports
