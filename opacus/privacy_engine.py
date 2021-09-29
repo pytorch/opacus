@@ -72,7 +72,7 @@ class PrivacyEngine:
     ):
         sample_rate = 1 / len(data_loader)
 
-        return self.prepare(
+        return self.make_private(
             module=module,
             optimizer=optimizer,
             data_loader=data_loader,
