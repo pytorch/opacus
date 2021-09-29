@@ -146,6 +146,14 @@ class PrivacyEngine_test(unittest.TestCase):
             if max_steps and steps >= max_steps:
                 break
 
+    def test_basic(self):
+        model, optimizer, dl, _ = self._init_private_training(
+            noise_multiplier=1.,
+            max_grad_norm=1.,
+            ignore_poisson_sampling=False,
+        )
+        self._train_steps(model, optimizer, dl)
+
     def _compare_to_vanilla(self, do_noise, do_clip, expected_match):
         torch.manual_seed(0)
         v_model, v_optimizer, v_dl = self._init_vanilla_training()
