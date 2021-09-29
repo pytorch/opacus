@@ -1,33 +1,33 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from typing import Optional, List
-from torch import nn, optim
-from torch.utils.data import DataLoader
+from typing import List, Optional
+
 from opacus.accountant import RDPAccountant
+from opacus.data_loader import DPDataLoader
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizer import DPOptimizer
-from opacus.data_loader import DPDataLoader
 from opacus.privacy_analysis import get_noise_multiplier
+from torch import nn, optim
+from torch.utils.data import DataLoader
+
 
 DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
 
-
 class PrivacyEngine:
-
     def __init__(self, secure_mode=False):
         self.accountant = RDPAccountant()
-        self.secure_mode = secure_mode # TODO: actually support it
+        self.secure_mode = secure_mode  # TODO: actually support it
 
     def make_private(
-            self,
-            module: nn.Module,
-            optimizer: optim.Optimizer,
-            data_loader: DataLoader,
-            noise_multiplier: float,
-            max_grad_norm: float,
-            batch_first: bool = True,
-            loss_reduction: str = "mean",
+        self,
+        module: nn.Module,
+        optimizer: optim.Optimizer,
+        data_loader: DataLoader,
+        noise_multiplier: float,
+        max_grad_norm: float,
+        batch_first: bool = True,
+        loss_reduction: str = "mean",
     ):
         # TODO: DP-Specific validation
         # TODO: either validate consistent dataset or do per-dataset accounting
@@ -49,26 +49,27 @@ class PrivacyEngine:
         def accountant_hook(optim: DPOptimizer):
             self.accountant.step(
                 noise_multiplier=optim.noise_multiplier,
-                sample_rate=sample_rate*optim.accumulated_iterations
+                sample_rate=sample_rate * optim.accumulated_iterations,
             )
+
         optimizer.attach_step_hook(accountant_hook)
 
         return module, optimizer, data_loader
 
     def make_private_with_epsilon(
-            self,
-            module: nn.Module,
-            optimizer: optim.Optimizer,
-            data_loader: DataLoader,
-            target_epsilon: float,
-            target_delta: float,
-            epochs: int,
-            max_grad_norm: float,
-            batch_first: bool = True,
-            loss_reduction: str = "mean",
-            alphas: Optional[List[float]] = None,
-            sigma_min: Optional[float] = None,
-            sigma_max: Optional[float] = None,
+        self,
+        module: nn.Module,
+        optimizer: optim.Optimizer,
+        data_loader: DataLoader,
+        target_epsilon: float,
+        target_delta: float,
+        epochs: int,
+        max_grad_norm: float,
+        batch_first: bool = True,
+        loss_reduction: str = "mean",
+        alphas: Optional[List[float]] = None,
+        sigma_min: Optional[float] = None,
+        sigma_max: Optional[float] = None,
     ):
         sample_rate = 1 / len(data_loader)
 
@@ -90,20 +91,26 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
         )
 
-    def _prepare_model(self, module: nn.Module, batch_first: bool = True,
-                       loss_reduction: str = "mean", ) -> GradSampleModule:
+    def _prepare_model(
+        self,
+        module: nn.Module,
+        batch_first: bool = True,
+        loss_reduction: str = "mean",
+    ) -> GradSampleModule:
         if isinstance(module, GradSampleModule):
             return module
         else:
-            return GradSampleModule(module, batch_first=batch_first, loss_reduction=loss_reduction)
+            return GradSampleModule(
+                module, batch_first=batch_first, loss_reduction=loss_reduction
+            )
 
     def _prepare_optimizer(
-            self,
-            optimizer: optim.Optimizer,
-            noise_multiplier: float,
-            max_grad_norm: float,
-            expected_batch_size: int,
-            loss_reduction: str = "mean",
+        self,
+        optimizer: optim.Optimizer,
+        noise_multiplier: float,
+        max_grad_norm: float,
+        expected_batch_size: int,
+        loss_reduction: str = "mean",
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             # TODO: lol rename optimizer optimizer optimizer
@@ -114,7 +121,7 @@ class PrivacyEngine:
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
-            loss_reduction=loss_reduction
+            loss_reduction=loss_reduction,
         )
 
     def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
@@ -132,6 +139,5 @@ class PrivacyEngine:
 
 
 class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):
-
     def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
         return data_loader

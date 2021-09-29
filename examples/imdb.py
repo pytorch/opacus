@@ -58,7 +58,7 @@ def padded_collate(batch, padding_idx=0):
     return x, y
 
 
-def train(args, model, train_loader, optimizer, epoch):
+def train(args, model, train_loader, optimizer, privacy_engine, epoch):
     criterion = nn.CrossEntropyLoss()
     losses = []
     accuracies = []
@@ -81,7 +81,7 @@ def train(args, model, train_loader, optimizer, epoch):
         accuracies.append(acc.item())
 
     if not args.disable_dp:
-        epsilon, best_alpha = optimizer.privacy_engine.get_privacy_spent(args.delta)
+        epsilon, best_alpha = privacy_engine.get_privacy_spent(args.delta)
         print(
             f"Train Epoch: {epoch} \t"
             f"Train Loss: {np.mean(losses):.6f} "
@@ -122,22 +122,17 @@ def evaluate(args, model, test_loader):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="PyTorch IMDB Example")
+    parser = argparse.ArgumentParser(
+        description="Opacus IMDB Example",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "-b",
-        "--batch-size-test",
+        "--batch-size",
         type=int,
         default=64,
         metavar="B",
-        help="input batch size for test (default: 64)",
-    )
-    parser.add_argument(
-        "-sr",
-        "--sample-rate",
-        type=float,
-        default=0.00256,
-        metavar="SR",
-        help="sample rate used for batch construction (default: 0.00256)",
+        help="input batch size for test",
     )
     parser.add_argument(
         "-n",
@@ -145,21 +140,21 @@ def main():
         type=int,
         default=10,
         metavar="N",
-        help="number of epochs to train (default: 10)",
+        help="number of epochs to train",
     )
     parser.add_argument(
         "--lr",
         type=float,
         default=0.02,
         metavar="LR",
-        help="learning rate (default: .02)",
+        help="learning rate",
     )
     parser.add_argument(
         "--sigma",
         type=float,
         default=0.56,
         metavar="S",
-        help="Noise multiplier (default 0.56)",
+        help="Noise multiplier",
     )
     parser.add_argument(
         "-c",
@@ -167,7 +162,7 @@ def main():
         type=float,
         default=1.0,
         metavar="C",
-        help="Clip per-sample gradients to this norm (default 1.0)",
+        help="Clip per-sample gradients to this norm",
     )
     parser.add_argument(
         "--delta",
@@ -181,19 +176,19 @@ def main():
         type=int,
         default=256,
         metavar="SL",
-        help="Longer sequences will be cut to this length (default: 256)",
+        help="Longer sequences will be cut to this length",
     )
     parser.add_argument(
         "--device",
         type=str,
         default="cuda",
-        help="GPU ID for this process (default: 'cuda')",
+        help="GPU ID for this process",
     )
     parser.add_argument(
         "--save-model",
         action="store_true",
         default=False,
-        help="Save the trained model (default: false)",
+        help="Save the trained model",
     )
     parser.add_argument(
         "--disable-dp",
@@ -216,7 +211,7 @@ def main():
         default=2,
         type=int,
         metavar="N",
-        help="number of data loading workers (default: 2)",
+        help="number of data loading workers",
     )
 
     args = parser.parse_args()
@@ -235,37 +230,18 @@ def main():
     train_dataset = dataset["train"]
     test_dataset = dataset["test"]
 
-    if args.secure_rng:
-        try:
-            import torchcsprng as prng
-        except ImportError as e:
-            msg = (
-                "To use secure RNG, you must install the torchcsprng package! "
-                "Check out the instructions here: https://github.com/pytorch/csprng#installation"
-            )
-            raise ImportError(msg) from e
-
-        generator = prng.create_random_device_generator("/dev/urandom")
-
-    else:
-        generator = None
-
+    print(len(train_dataset))
     train_loader = DataLoader(
         train_dataset,
         num_workers=args.workers,
-        generator=generator,
-        batch_sampler=UniformWithReplacementSampler(
-            num_samples=len(train_dataset),
-            sample_rate=args.sample_rate,
-            generator=generator,
-        ),
+        batch_size=args.batch_size,
         collate_fn=padded_collate,
         pin_memory=True,
     )
 
     test_loader = torch.utils.data.DataLoader(
         test_dataset,
-        batch_size=args.batch_size_test,
+        batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.workers,
         collate_fn=padded_collate,
@@ -274,20 +250,20 @@ def main():
 
     model = SampleNet(vocab_size=len(tokenizer)).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
-
+    privacy_engine = None
     if not args.disable_dp:
-        privacy_engine = PrivacyEngine(
-            model,
-            sample_rate=args.sample_rate,
-            alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
+        privacy_engine = PrivacyEngine(secure_mode=args.secure_rng)
+
+        model, optimizer, train_loader = privacy_engine.make_private(
+            module=model,
+            optimizer=optimizer,
+            data_loader=train_loader,
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
-            secure_rng=args.secure_rng,
         )
-        privacy_engine.attach(optimizer)
 
     for epoch in range(1, args.epochs + 1):
-        train(args, model, train_loader, optimizer, epoch)
+        train(args, model, train_loader, optimizer, privacy_engine, epoch)
         evaluate(args, model, test_loader)
 
 

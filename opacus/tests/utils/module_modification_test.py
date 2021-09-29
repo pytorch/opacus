@@ -80,7 +80,6 @@ class BasicModel(nn.Module):
 
 
 class ConvertBatchnormModulesTest(unittest.TestCase):
-
     def setUp(self):
         self.criterion = nn.CrossEntropyLoss()
 
@@ -108,8 +107,8 @@ class ConvertBatchnormModulesTest(unittest.TestCase):
             module=model,
             optimizer=optimizer,
             data_loader=dl,
-            noise_multiplier=1.,
-            max_grad_norm=1.0
+            noise_multiplier=1.0,
+            max_grad_norm=1.0,
         )
 
         for x, y in dl:

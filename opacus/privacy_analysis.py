@@ -27,10 +27,11 @@ Example:
 """
 
 import math
-from typing import List, Tuple, Union, Optional
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from scipy import special
+
 
 DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
@@ -339,18 +340,14 @@ def get_noise_multiplier(
     eps = float("inf")
     while eps > target_epsilon:
         sigma_max = 2 * sigma_max
-        rdp = compute_rdp(
-            sample_rate, sigma_max, epochs / sample_rate, alphas
-        )
+        rdp = compute_rdp(sample_rate, sigma_max, epochs / sample_rate, alphas)
         eps = get_privacy_spent(alphas, rdp, target_delta)[0]
         if sigma_max > 2000:
             raise ValueError("The privacy budget is too low.")
 
     while sigma_max - sigma_min > 0.01:
         sigma = (sigma_min + sigma_max) / 2
-        rdp = compute_rdp(
-            sample_rate, sigma, epochs / sample_rate, alphas
-        )
+        rdp = compute_rdp(sample_rate, sigma, epochs / sample_rate, alphas)
         eps = get_privacy_spent(alphas, rdp, target_delta)[0]
 
         if eps < target_epsilon:

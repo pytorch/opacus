@@ -26,18 +26,12 @@ from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from tqdm import tqdm
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--data-root", required=False, help="path to dataset")
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("--data-root", required=True, help="path to dataset")
 parser.add_argument(
     "--workers", type=int, help="number of data loading workers", default=2
 )
 parser.add_argument("--batch-size", type=int, default=64, help="input batch size")
-parser.add_argument(
-    "--sample-rate",
-    type=float,
-    default=0.018,
-    help="sample rate used for batch construction",
-)
 parser.add_argument(
     "--imageSize",
     type=int,
@@ -133,8 +127,6 @@ torch.manual_seed(opt.manualSeed)
 
 cudnn.benchmark = True
 
-if opt.data_root is None:
-    raise ValueError("`data-root` parameter is required.")
 
 try:
     dataset = dset.MNIST(
@@ -155,30 +147,10 @@ try:
 except ValueError:
     print("Cannot load dataset")
 
-if opt.secure_rng:
-    try:
-        import torchcsprng as prng
-    except ImportError as e:
-        msg = (
-            "To use secure RNG, you must install the torchcsprng package! "
-            "Check out the instructions here: https://github.com/pytorch/csprng#installation"
-        )
-        raise ImportError(msg) from e
-
-    generator = prng.create_random_device_generator("/dev/urandom")
-
-else:
-    generator = None
-
 dataloader = torch.utils.data.DataLoader(
     dataset,
     num_workers=int(opt.workers),
-    generator=generator,
-    batch_sampler=UniformWithReplacementSampler(
-        num_samples=len(dataset),
-        sample_rate=opt.sample_rate,
-        generator=generator,
-    ),
+    batch_size=opt.batch_size,
 )
 
 device = torch.device(opt.device)
@@ -294,16 +266,17 @@ FAKE_LABEL = 0.0
 # setup optimizer
 optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
-privacy_engine = PrivacyEngine(
-    netD,
-    sample_rate=opt.sample_rate,
-    alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
-    noise_multiplier=opt.sigma,
-    max_grad_norm=opt.max_per_sample_grad_norm,
-    secure_rng=opt.secure_rng,
-)
 if not opt.disable_dp:
-    privacy_engine.attach(optimizerD)
+    privacy_engine = PrivacyEngine(secure_mode=opt.secure_rng)
+
+    netD, optimizerD, dataloader = privacy_engine.make_private(
+        module=netD,
+        optimizer=optimizerD,
+        data_loader=dataloader,
+        noise_multiplier=opt.sigma,
+        max_grad_norm=opt.max_per_sample_grad_norm,
+    )
+
 optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
 for epoch in range(opt.epochs):
@@ -355,7 +328,7 @@ for epoch in range(opt.epochs):
         )
 
         if not opt.disable_dp:
-            epsilon, best_alpha = optimizerD.privacy_engine.get_privacy_spent(opt.delta)
+            epsilon, best_alpha = privacy_engine.get_privacy_spent(opt.delta)
             print(
                 "(ε = %.2f, δ = %.2f) for α = %.2f" % (epsilon, opt.delta, best_alpha)
             )

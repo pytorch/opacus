@@ -17,32 +17,28 @@ from tqdm import tqdm
 
 
 parser = argparse.ArgumentParser(
-    description="PyTorch Name language classification DP Training"
+    description="PyTorch Name language classification DP Training",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument(
-    "--data-root", type=str, help="Path to training set of names (ie. ~/data/names/)"
+    "--data-root",
+    required=True,
+    type=str,
+    help="Path to training set of names (ie. ~/data/names/)",
 )
 parser.add_argument(
     "--device",
     type=str,
     default="cuda",
-    help="GPU ID for this process (default: 'cuda')",
+    help="GPU ID for this process",
 )
 parser.add_argument(
     "-b",
-    "--batch-size-test",
-    default=1600,
+    "--batch-size",
+    default=800,
     type=int,
     metavar="N",
-    help="mini-batch size for test dataset (default: 1600)",
-)
-parser.add_argument(
-    "-sr",
-    "--sample-rate",
-    default=0.05,
-    type=float,
-    metavar="SR",
-    help="sample rate used for batch construction (default: 0.05)",
+    help="mini-batch size",
 )
 parser.add_argument(
     "--embedding-size", default=64, type=int, help="Character embedding dimension"
@@ -84,7 +80,7 @@ parser.add_argument(
     type=float,
     default=1.0,
     metavar="S",
-    help="Noise multiplier (default 1.0)",
+    help="Noise multiplier",
 )
 parser.add_argument(
     "-c",
@@ -92,7 +88,7 @@ parser.add_argument(
     type=float,
     default=1.5,
     metavar="C",
-    help="Clip per-sample gradients to this norm (default 1.0)",
+    help="Clip per-sample gradients to this norm",
 )
 parser.add_argument(
     "--disable-dp",
@@ -111,7 +107,7 @@ parser.add_argument(
     type=float,
     default=8e-5,
     metavar="D",
-    help="Target delta (default: 1e-5)",
+    help="Target delta",
 )
 parser.add_argument(
     "--print-every",
@@ -284,7 +280,16 @@ def padded_collate(batch, padding_idx=0):
     return x, y
 
 
-def train(model, criterion, optimizer, train_loader, epoch, device="cuda:0"):
+def train(
+    model,
+    criterion,
+    optimizer,
+    train_loader,
+    epoch,
+    privacy_engine,
+    target_delta,
+    device="cuda:0",
+):
     model.train()
 
     accs = []
@@ -311,16 +316,15 @@ def train(model, criterion, optimizer, train_loader, epoch, device="cuda:0"):
         f"\t Epoch {epoch}. Accuracy: {mean(accs):.6f} | Loss: {mean(losses):.6f}"
     )
     try:
-        privacy_engine = optimizer.privacy_engine
-        epsilon, best_alpha = privacy_engine.get_privacy_spent()
-        printstr += f" | (ε = {epsilon:.2f}, δ = {privacy_engine.target_delta}) for α = {best_alpha}"
+        epsilon, best_alpha = privacy_engine.get_privacy_spent(delta=target_delta)
+        printstr += f" | (ε = {epsilon:.2f}, δ = {target_delta}) for α = {best_alpha}"
     except AttributeError:
         pass
     print(printstr)
     return
 
 
-def test(model, test_loader, privacy_engine, device="cuda:0"):
+def test(model, test_loader, privacy_engine, target_delta, device="cuda:0"):
     model.eval()
 
     accs = []
@@ -336,8 +340,8 @@ def test(model, test_loader, privacy_engine, device="cuda:0"):
             accs.append(batch_accuracy)
     printstr = "\n----------------------------\n" f"Test Accuracy: {mean(accs):.6f}"
     if privacy_engine:
-        epsilon, best_alpha = privacy_engine.get_privacy_spent()
-        printstr += f" (ε = {epsilon:.2f}, δ = {privacy_engine.target_delta}) for α = {best_alpha}"
+        epsilon, best_alpha = privacy_engine.get_privacy_spent(delta=target_delta)
+        printstr += f" (ε = {epsilon:.2f}, δ = {target_delta}) for α = {best_alpha}"
     print(printstr + "\n----------------------------\n")
     return
 
@@ -366,10 +370,6 @@ def main():
     else:
         generator = None
 
-    train_ds, test_ds = torch.utils.data.random_split(
-        ds, [train_len, test_len], generator=generator
-    )
-
     model = CharNNClassifier(
         args.embedding_size,
         args.hidden_size,
@@ -385,18 +385,15 @@ def main():
 
     train_loader = DataLoader(
         train_ds,
+        batch_size=args.batch_size,
         num_workers=8,
         pin_memory=True,
-        generator=generator,
-        batch_sampler=UniformWithReplacementSampler(
-            num_samples=len(train_ds), sample_rate=args.sample_rate, generator=generator
-        ),
         collate_fn=padded_collate,
     )
 
     test_loader = DataLoader(
         test_ds,
-        batch_size=args.batch_size_test,
+        batch_size=2 * args.batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True,
@@ -407,27 +404,34 @@ def main():
     optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate)
 
     if not args.disable_dp:
-        privacy_engine = PrivacyEngine(
-            model,
-            sample_rate=args.sample_rate,
-            alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
+        privacy_engine = PrivacyEngine(secure_mode=args.secure_rng)
+        model, optimizer, train_loader = privacy_engine.make_private(
+            module=model,
+            optimizer=optimizer,
+            data_loader=train_loader,
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
-            target_delta=args.delta,
-            secure_rng=args.secure_rng,
         )
-        privacy_engine.attach(optimizer)
     else:
         privacy_engine = None
 
     print("Train stats: \n")
     for epoch in tqdm(range(args.epochs)):
-        train(model, criterion, optimizer, train_loader, epoch, device=device)
+        train(
+            model,
+            criterion,
+            optimizer,
+            train_loader,
+            epoch,
+            privacy_engine,
+            args.delta,
+            device=device,
+        )
         if args.test_every:
             if epoch % args.test_every == 0:
-                test(model, test_loader, privacy_engine, device=device)
+                test(model, test_loader, privacy_engine, args.delta, device=device)
 
-    test(model, test_loader, privacy_engine, device=device)
+    test(model, test_loader, privacy_engine, args.delta, device=device)
 
 
 if __name__ == "__main__":

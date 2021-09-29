@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
+from typing import Optional, OrderedDict
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus import PrivacyEngine
 from opacus.dp_model_inspector import IncompatibleModuleException
-from opacus.utils.module_inspection import get_layer_type, requires_grad
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
-from typing import OrderedDict, Optional
-from collections import defaultdict
 
 
 class SampleConvNet(nn.Module):
@@ -60,7 +57,6 @@ class SampleConvNet(nn.Module):
 
 
 class PrivacyEngine_test(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         cls.DATA_SIZE = 512
@@ -119,7 +115,7 @@ class PrivacyEngine_test(unittest.TestCase):
             optimizer=optimizer,
             data_loader=dl,
             noise_multiplier=noise_multiplier,
-            max_grad_norm=max_grad_norm
+            max_grad_norm=max_grad_norm,
         )
         if not ignore_poisson_sampling:
             dl = poisson_dl
@@ -148,8 +144,8 @@ class PrivacyEngine_test(unittest.TestCase):
 
     def test_basic(self):
         model, optimizer, dl, _ = self._init_private_training(
-            noise_multiplier=1.,
-            max_grad_norm=1.,
+            noise_multiplier=1.0,
+            max_grad_norm=1.0,
             ignore_poisson_sampling=False,
         )
         self._train_steps(model, optimizer, dl)
@@ -158,31 +154,31 @@ class PrivacyEngine_test(unittest.TestCase):
         torch.manual_seed(0)
         v_model, v_optimizer, v_dl = self._init_vanilla_training()
         self._train_steps(v_model, v_optimizer, v_dl, max_steps=1)
-        vanilla_params = [(name, p) for name, p in v_model.named_parameters() if
-                          p.requires_grad]
+        vanilla_params = [
+            (name, p) for name, p in v_model.named_parameters() if p.requires_grad
+        ]
 
         torch.manual_seed(0)
         p_model, p_optimizer, p_dl, _ = self._init_private_training(
             ignore_poisson_sampling=True,
-            noise_multiplier=1. if do_noise else 0.,
-            max_grad_norm=1. if do_clip else 9999.,
+            noise_multiplier=1.0 if do_noise else 0.0,
+            max_grad_norm=1.0 if do_clip else 9999.0,
         )
         self._train_steps(p_model, p_optimizer, p_dl, max_steps=1)
-        private_params = [p for p in p_model.parameters() if
-                          p.requires_grad]
+        private_params = [p for p in p_model.parameters() if p.requires_grad]
 
         for (name, vp), pp in zip(vanilla_params, private_params):
             self.assertEqual(
                 torch.allclose(vp, pp, atol=1e-8, rtol=1e-3),
                 expected_match,
                 f"Unexpected private/vanilla weight match ({name})"
-                f"Should be: {expected_match}"
+                f"Should be: {expected_match}",
             )
             self.assertEqual(
                 torch.allclose(vp.grad, pp.grad, atol=1e-8, rtol=1e-3),
                 expected_match,
                 f"Unexpected private/vanilla gradient match ({name})"
-                f"Should be: {expected_match}"
+                f"Should be: {expected_match}",
             )
 
     def test_compare_to_vanilla(self):
@@ -196,7 +192,7 @@ class PrivacyEngine_test(unittest.TestCase):
                     self._compare_to_vanilla(
                         do_noise=do_noise,
                         do_clip=do_clip,
-                        expected_match=not (do_noise or do_clip)
+                        expected_match=not (do_noise or do_clip),
                     )
 
     def test_sample_grad_aggregation(self):
@@ -204,8 +200,8 @@ class PrivacyEngine_test(unittest.TestCase):
         Check if final gradient is indeed an aggregation over per-sample gradients
         """
         model, optimizer, dl, _ = self._init_private_training(
-            noise_multiplier=0.,
-            max_grad_norm=99999.,
+            noise_multiplier=0.0,
+            max_grad_norm=99999.0,
         )
         self._train_steps(model, optimizer, dl, max_steps=1)
 
@@ -215,11 +211,9 @@ class PrivacyEngine_test(unittest.TestCase):
 
             summed_grad = p.grad_sample.sum(dim=0) / self.BATCH_SIZE
             self.assertTrue(
-                torch.allclose(
-                    p.grad, summed_grad, atol=1e-8, rtol=1e-4
-                ),
+                torch.allclose(p.grad, summed_grad, atol=1e-8, rtol=1e-4),
                 f"Per sample gradients don't sum up to the final grad value."
-                f"Param: {p_name}"
+                f"Param: {p_name}",
             )
 
     def test_noise_changes_every_time(self):
@@ -279,7 +273,7 @@ class PrivacyEngine_test(unittest.TestCase):
         for p1, p2 in zip(params1, params2):
             self.assertTrue(
                 torch.allclose(p1, p2),
-                f"Model parameters after deterministic run must match"
+                "Model parameters after deterministic run must match",
             )
 
     @unittest.skip("Not yet implemented")
