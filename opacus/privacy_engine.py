@@ -8,10 +8,9 @@ import warnings
 from functools import partial
 from typing import List, Optional, Tuple, Union
 
+import torch
 from opacus.grad_sample import GradSampleModule
 from opacus.utils.tensor_utils import calc_sample_norms_one_layer
-
-import torch
 from scipy.stats import planck
 from torch import Tensor, nn
 

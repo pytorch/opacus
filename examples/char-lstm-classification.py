@@ -334,12 +334,13 @@ def test(model, test_loader, privacy_engine, device="cuda:0"):
             batch_accuracy = n_correct / len(y)
 
             accs.append(batch_accuracy)
-    printstr = "\n----------------------------\n" f"Test Accuracy: {mean(accs):.6f}"
+    mean_acc = mean(accs)
+    printstr = "\n----------------------------\n" f"Test Accuracy: {mean_acc:.6f}"
     if privacy_engine:
         epsilon, best_alpha = privacy_engine.get_privacy_spent()
         printstr += f" (ε = {epsilon:.2f}, δ = {privacy_engine.target_delta}) for α = {best_alpha}"
     print(printstr + "\n----------------------------\n")
-    return
+    return mean_acc
 
 
 def main():
@@ -427,7 +428,8 @@ def main():
             if epoch % args.test_every == 0:
                 test(model, test_loader, privacy_engine, device=device)
 
-    test(model, test_loader, privacy_engine, device=device)
+    mean_acc = test(model, test_loader, privacy_engine, device=device)
+    torch.save(mean_acc, "run_results_chr_lstm_classification.pt")
 
 
 if __name__ == "__main__":
