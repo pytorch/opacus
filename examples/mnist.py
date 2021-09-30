@@ -108,7 +108,7 @@ def main():
     parser.add_argument(
         "-b",
         "--batch-size",
-        type=float,
+        type=int,
         default=64,
         metavar="B",
         help="Batch size",
