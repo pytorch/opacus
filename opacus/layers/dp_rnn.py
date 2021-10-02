@@ -100,7 +100,7 @@ def _concat_sequence_directions(
     return output
 
 
-class LSTMLinear(nn.Linear):
+class RNNLinear(nn.Linear):
     r"""
     This function is the same as a nn.Linear layer, except that in the backward pass
     the grad_samples get accumulated (instead of being concatenated as in the standard
@@ -128,8 +128,8 @@ class DPLSTMCell(nn.Module):
         self.hidden_size = hidden_size
         self.bias = bias
 
-        self.ih = LSTMLinear(input_size, 4 * hidden_size, bias=self.bias)
-        self.hh = LSTMLinear(hidden_size, 4 * hidden_size, bias=self.bias)
+        self.ih = RNNLinear(input_size, 4 * hidden_size, bias=self.bias)
+        self.hh = RNNLinear(hidden_size, 4 * hidden_size, bias=self.bias)
 
         self.reset_parameters()
 

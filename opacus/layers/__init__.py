@@ -2,7 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 from .dp_ddp import DifferentiallyPrivateDistributedDataParallel
-from .dp_lstm import DPLSTM
+from .dp_rnn import DPLSTM
 from .dp_multihead_attention import DPMultiheadAttention, SequenceBias
 from .param_rename import ParamRenamedModule
 
