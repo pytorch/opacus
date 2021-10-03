@@ -2,7 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Type, Literal
 
 import torch
 import torch.nn as nn
@@ -41,6 +41,19 @@ def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
 
 
 def _compute_last_states(
+        h_n: List[torch.Tensor], seq_lengths: List[int]
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    max_batch_size = len(seq_lengths)
+    hidden_size = h_n[0].shape[-1]
+    h_last = torch.zeros(max_batch_size, hidden_size)
+
+    for i, seq_len in enumerate(seq_lengths):
+        h_last[i, :] = h_n[seq_len - 1][i, :]
+
+    return h_last
+
+
+def _compute_last_states_lstm(
     h_n: List[torch.Tensor], c_n: List[torch.Tensor], seq_lengths: List[int]
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     r"""
@@ -140,7 +153,7 @@ class DPRNNCellBase(nn.Module):
         self.hh.max_batch_len = max_batch_length
 
 
-class DPRNNCell(nn.Module):
+class DPRNNCell(DPRNNCellBase):
     def __init__(self, input_size: int, hidden_size: int, bias: bool, nonlinearity: str = 'tanh'):
         super(DPRNNCell, self).__init__(input_size, hidden_size, bias, num_chunks=1)
         self.nonlinearity = nonlinearity
@@ -166,7 +179,7 @@ class DPRNNCell(nn.Module):
         return h_t
 
 
-class DPGRUCell(nn.Module):
+class DPGRUCell(DPRNNCellBase):
     def __init__(self, input_size: int, hidden_size: int, bias: bool):
         super(DPGRUCell, self).__init__(input_size, hidden_size, bias, num_chunks=3)
 
@@ -179,9 +192,9 @@ class DPGRUCell(nn.Module):
         if hx is None:
             hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
 
-        h_prev = hx
+        h_prev = hx if batch_size_t is None else hx[:batch_size_t, :]
         gates_x = self.ih(input)
-        gates_h = self.hh(h_prev if batch_size_t is None else h_prev[:batch_size_t, :])
+        gates_h = self.hh(h_prev)
         r_t_input_x, z_t_input_x, n_t_input_x = torch.split(gates_x, self.hidden_size, 1)
         r_t_input_h, z_t_input_h, n_t_input_h = torch.split(gates_h, self.hidden_size, 1)
         r_t = torch.sigmoid(r_t_input_x + r_t_input_h)
@@ -242,6 +255,370 @@ class DPLSTMCell(DPRNNCellBase):
         h_t = o_t * torch.tanh(c_t)
 
         return h_t, c_t
+
+
+class DPRNNLayer(nn.Module):
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        bias: bool,
+        dropout: float,
+        reverse: bool = False,
+        cell_type: Type[DPRNNCellBase] = DPRNNCell,
+        **kwargs,
+    ):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.bias = bias
+        self.dropout = dropout
+        self.reverse = reverse
+
+        self.cell = cell_type(
+            input_size=input_size, hidden_size=hidden_size, bias=bias, **kwargs
+        )
+        self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else None
+
+    def set_max_batch_length(self, max_batch_length: int) -> None:
+        """
+        Sets max batch length. Useful for PackedSequences
+        """
+        self.cell.set_max_batch_length(max_batch_length)
+
+    def forward(
+        self,
+        x: Union[torch.Tensor, Tuple],
+        state_init: torch.Tensor,
+        batch_sizes: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+
+        if batch_sizes is not None:
+            seq_length = batch_sizes.size(0)
+            if self.reverse:
+                x = tuple(reversed(x))
+                batch_sizes = batch_sizes.flip(0)
+        else:
+            seq_length, batch_sz, _ = x.shape
+            if self.reverse:
+                x = x.flip(0)
+            x = torch.unbind(x, dim=0)
+
+        h_0 = state_init
+
+        h_n = [h_0]
+        batch_size_prev = h_0.shape[0]
+
+        for t in range(seq_length):
+            if batch_sizes is not None:
+                batch_size_t = batch_sizes[t].item()
+                delta = batch_size_t - batch_size_prev
+                if delta > 0:
+                    h_cat = torch.cat((h_n[t], h_0[batch_size_prev:batch_size_t, :]), 0)
+                    h_next = self.cell(x[t], h_cat, batch_size_t)
+                else:
+                    h_next = self.cell(x[t], h_n[t], batch_size_t)
+            else:
+                h_next = self.cell(x[t], h_n[t])
+            if self.dropout:
+                h_next = self.dropout_layer(h_next)
+            h_n.append(h_next)
+            batch_size_prev = h_next.shape[0]
+
+        if batch_sizes is None:
+            h_n = torch.stack(h_n[1:], dim=0)  # [T, B, H], init step not part of output
+
+            return (
+                h_n.flip(0) if self.reverse else h_n,  # Flip the output...
+                h_n[-1],  # ... But not the states
+            )
+        else:
+            seq_lengths = _compute_seq_lengths(batch_sizes)
+            h_temp = h_n[1:]
+            h_last = _compute_last_states(h_temp, seq_lengths)
+            if self.reverse:
+                h_temp = tuple(reversed(h_temp))
+
+            return h_temp, h_last
+
+
+class BidirectionalDPRNNLayer(nn.Module):
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        bias: bool,
+        dropout: float,
+        cell_type: Type[DPRNNCellBase] = DPRNNCell,
+        **kwargs,
+    ):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.bias = bias
+        self.dropout = dropout
+
+        # nn.LSTM (as of November 2020) only implements a "type 2" multilayer bidirectional LSTM.
+        # See https://github.com/pytorch/pytorch/issues/4930 for the definition of type 1 and type 2
+        # and for discussion. When the PR to extend nn.LSTM to Type 1 lands, we will extend this
+        # accordingly.
+
+        self.forward_layer = DPRNNLayer(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            bias=bias,
+            dropout=dropout,
+            reverse=False,
+            cell_type=cell_type,
+            **kwargs,
+        )
+        self.reverse_layer = DPRNNLayer(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            bias=bias,
+            dropout=dropout,
+            reverse=True,
+            cell_type=cell_type,
+            **kwargs,
+        )
+
+    def set_max_batch_length(self, max_batch_length: int) -> None:
+        """
+        Sets max batch length
+        """
+        self.forward_layer.set_max_batch_length(max_batch_length)
+        self.reverse_layer.set_max_batch_length(max_batch_length)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        state_init: torch.Tensor,
+        batch_sizes: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        h0 = state_init
+
+        h0_f, h0_r = h0.unbind(0)  # each of shape [B, H] for their layer
+
+        out_f, h_f = self.forward_layer(x, h0_f, batch_sizes)
+        out_r, h_r = self.reverse_layer(x, h0_r, batch_sizes)
+
+        if batch_sizes is None:
+            out = torch.cat([out_f, out_r], dim=-1)  # [T, B, H * P]
+        else:
+            out = _concat_sequence_directions(out_f, out_r, -1)
+
+        h = torch.stack([h_f, h_r], dim=0)  # [P, B, H]
+        return out, h
+
+
+class DPRNNBase(ParamRenamedModule):
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        num_layers: int = 1,
+        bias: bool = True,
+        batch_first: bool = False,
+        dropout: float = 0,
+        bidirectional: bool = False,
+        cell_type: Type[DPRNNCellBase] = DPRNNCell,
+        **kwargs,
+    ):
+        rename_dict = self._make_rename_dict(num_layers, bias, bidirectional)
+        super().__init__(rename_dict)
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.bias = bias
+        self.batch_first = batch_first
+        self.dropout = dropout
+        self.bidirectional = bidirectional
+        self.num_directions = 2 if self.bidirectional else 1
+
+        LayerClass = BidirectionalDPRNNLayer if bidirectional else DPRNNLayer
+
+        self.layers = nn.ModuleList(
+            [
+                LayerClass(
+                    input_size=self.input_size
+                    if i == 0
+                    else self.hidden_size * self.num_directions,
+                    hidden_size=self.hidden_size,
+                    bias=self.bias,
+                    dropout=self.dropout if i < self.num_layers - 1 else 0,
+                    cell_type=cell_type,
+                    **kwargs
+                )
+                for i in range(num_layers)
+            ]
+        )
+
+    def forward(
+        self,
+        x: Union[torch.Tensor, PackedSequence],
+        state_init: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        if isinstance(x, PackedSequence):
+            x, batch_sizes, sorted_indices, unsorted_indices = x
+            B = batch_sizes[0].item()
+            _, D = x.shape
+            x = x.split(tuple(batch_sizes))
+            for layer in self.layers:
+                layer.set_max_batch_length(B)
+        else:
+            sorted_indices = None
+            unsorted_indices = None
+            batch_sizes = None
+            x = self._rearrange_batch_dim(x)
+            T, B, D = x.shape
+
+        L = self.num_layers
+        P = 2 if self.bidirectional else 1
+        H = self.hidden_size
+
+        h_0s = state_init
+
+        if h_0s is None:
+            h_0s = torch.zeros(
+                L,
+                P,
+                B,
+                self.hidden_size,
+                dtype=x[0].dtype,
+                device=x[0].device,
+            )
+        else:
+            h_0s = h_0s.reshape([L, P, B, H])
+            h_0s = self._permute_hidden(h_0s, sorted_indices, 2)
+
+        hs: List[torch.Tensor] = []
+
+        for layer, h0 in zip(self.layers, h_0s):
+            if not self.bidirectional:
+                h0 = h0.squeeze(0)
+            x, h = layer(x, h0, batch_sizes)
+            if not self.bidirectional:
+                h = h.unsqueeze(0)  # [1, B, H]
+
+            hs.append(h)
+
+        hs = torch.cat(hs, dim=0)  # [L * P, B, H]
+
+        if batch_sizes is not None:
+            seq_lengths = _compute_seq_lengths(batch_sizes)
+            packed_data = pack_padded_sequence(
+                pad_sequence(x, batch_first=False), seq_lengths, batch_first=True
+            )[0]
+            out = PackedSequence(
+                packed_data, batch_sizes, sorted_indices, unsorted_indices
+            )
+        else:
+            out = self._rearrange_batch_dim(x)
+
+        return out, self._permute_hidden(hs, unsorted_indices)
+
+    def _permute_hidden(
+        self, x: torch.Tensor, permutation: Optional[torch.Tensor] = None, dim: int = 1
+    ) -> torch.Tensor:
+        if permutation is None:
+            return x
+        if dim == 1:
+            return x[:, permutation, :]
+        elif dim == 2:
+            return x[:, :, permutation, :]
+
+    def _rearrange_batch_dim(self, x: torch.Tensor) -> torch.Tensor:
+        if self.batch_first:  # batch is by default in second dimension
+            x = x.transpose(0, 1)
+        return x
+
+    def __repr__(self):
+        s = f"DPRNN({self.input_size}, {self.hidden_size}, bias={self.bias}"
+
+        if self.batch_first:
+            s += f", batch_first={self.batch_first}"
+
+        if self.num_layers > 1:
+            s += f", num_layers={self.num_layers}"
+
+        if self.dropout:
+            s += f", dropout={self.dropout}"
+
+        if self.bidirectional:
+            s += f", bidirectional={self.bidirectional}"
+
+        return s
+
+    def _make_rename_dict(self, num_layers, bias, bidirectional):
+        d = {}
+        components = ["weight"] + ["bias" if bias else []]
+        matrices = ["ih", "hh"]
+        for i in range(num_layers):
+            for c in components:
+                for m in matrices:
+                    nn_name = f"{c}_{m}_l{i}"
+                    if bidirectional:
+                        d[f"layers.{i}.forward_layer.cell.{m}.{c}"] = nn_name
+                        d[f"layers.{i}.reverse_layer.cell.{m}.{c}"] = (
+                                nn_name + "_reverse"
+                        )
+                    else:
+                        d[f"layers.{i}.cell.{m}.{c}"] = nn_name
+
+        return d
+
+
+class DPRNN(DPRNNBase):
+
+    def __init__(
+            self,
+            input_size: int,
+            hidden_size: int,
+            num_layers: int = 1,
+            bias: bool = True,
+            batch_first: bool = False,
+            dropout: float = 0,
+            bidirectional: bool = False,
+            nonlinearity: Literal['tanh', 'relu'] = 'tanh',
+    ):
+        super().__init__(
+            input_size,
+            hidden_size,
+            num_layers=num_layers,
+            bias=bias,
+            batch_first=batch_first,
+            dropout=dropout,
+            bidirectional=bidirectional,
+            cell_type=DPRNNCell,
+            nonlinearity=nonlinearity,
+        )
+
+
+class DPGRU(DPRNNBase):
+
+    def __init__(
+            self,
+            input_size: int,
+            hidden_size: int,
+            num_layers: int = 1,
+            bias: bool = True,
+            batch_first: bool = False,
+            dropout: float = 0,
+            bidirectional: bool = False,
+    ):
+        super().__init__(
+            input_size,
+            hidden_size,
+            num_layers=num_layers,
+            bias=bias,
+            batch_first=batch_first,
+            dropout=dropout,
+            bidirectional=bidirectional,
+            cell_type=DPGRUCell,
+        )
 
 
 class DPLSTMLayer(nn.Module):
@@ -346,7 +723,7 @@ class DPLSTMLayer(nn.Module):
         else:
             seq_lengths = _compute_seq_lengths(batch_sizes)
             h_temp, c_temp = h_n[1:], c_n[1:]
-            h_last, c_last = _compute_last_states(h_temp, c_temp, seq_lengths)
+            h_last, c_last = _compute_last_states_lstm(h_temp, c_temp, seq_lengths)
             if self.reverse:
                 h_temp = tuple(reversed(h_temp))
 
