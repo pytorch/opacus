@@ -111,30 +111,21 @@ class RNNLinear(nn.Linear):
         super().__init__(in_features, out_features, bias)
 
 
-class DPLSTMCell(nn.Module):
-    r"""
-    Internal-only class. Implements *one* step of LSTM so that a LSTM layer can be seen as repeated
-    applications of this class.
-    """
+class DPRNNCellBase(nn.Module):
 
-    def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        bias: bool,
-    ):
-        super().__init__()
+    def __init__(self, input_size: int, hidden_size: int, bias: bool, num_chunks: int) -> None:
+        super(DPRNNCellBase, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.bias = bias
 
-        self.ih = RNNLinear(input_size, 4 * hidden_size, bias=self.bias)
-        self.hh = RNNLinear(hidden_size, 4 * hidden_size, bias=self.bias)
+        self.ih = RNNLinear(input_size, num_chunks * hidden_size, bias)
+        self.hh = RNNLinear(hidden_size, num_chunks * hidden_size, bias)
 
         self.reset_parameters()
 
     def reset_parameters(self):
-        r"""
+        """
         Resets parameters by initializing them from an uniform distribution.
         """
         stdv = 1.0 / math.sqrt(self.hidden_size)
@@ -148,17 +139,73 @@ class DPLSTMCell(nn.Module):
         self.ih.max_batch_len = max_batch_length
         self.hh.max_batch_len = max_batch_length
 
+
+class DPRNNCell(nn.Module):
+    def __init__(self, input_size: int, hidden_size: int, bias: bool, nonlinearity: str = 'tanh'):
+        super(DPRNNCell, self).__init__(input_size, hidden_size, bias, num_chunks=1)
+        self.nonlinearity = nonlinearity
+
+    def forward(self, input: torch.Tensor, hx: Optional[torch.Tensor] = None) -> torch.Tensor:
+        if hx is None:
+            hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
+
+        h_prev = hx
+        gates = self.ih(input) + self.hh(h_prev)
+        if self.nonlinearity == 'tanh':
+            h_t = torch.tanh(gates)
+        elif self.nonlinearity == 'relu':
+            h_t = torch.relu(gates)
+        else:
+            h_t = gates
+            raise RuntimeError("Unknown nonlinearity: {}".format(self.nonlinearity))
+        return h_t
+
+
+class DPGRUCell(nn.Module):
+    def __init__(self, input_size: int, hidden_size: int, bias: bool):
+        super(DPGRUCell, self).__init__(input_size, hidden_size, bias, num_chunks=3)
+
+    def forward(self, input: torch.Tensor, hx: Optional[torch.Tensor] = None) -> torch.Tensor:
+        if hx is None:
+            hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
+
+        h_prev = hx
+        gates_x = self.ih(input)
+        gates_h = self.hh(h_prev)
+        r_t_input_x, z_t_input_x, n_t_input_x = torch.split(gates_x, self.hidden_size, 1)
+        r_t_input_h, z_t_input_h, n_t_input_h = torch.split(gates_h, self.hidden_size, 1)
+        r_t = torch.sigmoid(r_t_input_x + r_t_input_h)
+        z_t = torch.sigmoid(z_t_input_x + z_t_input_h)
+        n_t = torch.tanh(n_t_input_x + r_t * n_t_input_h)
+        h_t = (1 - z_t) * n_t + z_t * h_prev
+        return h_t
+
+
+class DPLSTMCell(DPRNNCellBase):
+    """
+    Internal-only class. Implements *one* step of LSTM so that a LSTM layer can be seen as repeated
+    applications of this class.
+    """
+
+    def __init__(self, input_size: int, hidden_size: int, bias: bool):
+        super(DPLSTMCell, self).__init__(input_size, hidden_size, bias, num_chunks=4)
+
     def forward(
         self,
-        x: torch.Tensor,
-        h_prev: torch.Tensor,
-        c_prev: torch.Tensor,
+        input: torch.Tensor,
+        hx: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
         batch_size_t: Optional[int] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+        if hx is None:
+            zeros = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
+            hx = (zeros, zeros)
+
+        h_prev, c_prev = hx
+
         if batch_size_t is None:
-            gates = self.ih(x) + self.hh(h_prev)  # [B, 4*D]
+            gates = self.ih(input) + self.hh(h_prev)  # [B, 4*D]
         else:
-            gates = self.ih(x) + self.hh(
+            gates = self.ih(input) + self.hh(
                 h_prev[:batch_size_t, :]
             )  # [batch_size_t, 4*D]
 
@@ -269,11 +316,11 @@ class DPLSTMLayer(nn.Module):
                 if delta > 0:
                     h_cat = torch.cat((h_n[t], h_0[batch_size_prev:batch_size_t, :]), 0)
                     c_cat = torch.cat((c_n[t], c_0[batch_size_prev:batch_size_t, :]), 0)
-                    h_next, c_next = self.cell(x[t], h_cat, c_cat, batch_size_t)
+                    h_next, c_next = self.cell(x[t], (h_cat, c_cat), batch_size_t)
                 else:
-                    h_next, c_next = self.cell(x[t], h_n[t], c_n[t], batch_size_t)
+                    h_next, c_next = self.cell(x[t], (h_n[t], c_n[t]), batch_size_t)
             else:
-                h_next, c_next = self.cell(x[t], h_n[t], c_n[t])
+                h_next, c_next = self.cell(x[t], (h_n[t], c_n[t]))
             if self.dropout:
                 h_next = self.dropout_layer(h_next)
             h_n.append(h_next)
@@ -401,6 +448,8 @@ class DPLSTM(ParamRenamedModule):
     and loaded by an nn.LSTM for inference.
 
     Refer to nn.LSTM's documentation for all parameters and inputs.
+
+    Not supported: proj_size.
     """
 
     def __init__(
