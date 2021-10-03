@@ -145,12 +145,17 @@ class DPRNNCell(nn.Module):
         super(DPRNNCell, self).__init__(input_size, hidden_size, bias, num_chunks=1)
         self.nonlinearity = nonlinearity
 
-    def forward(self, input: torch.Tensor, hx: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self,
+        input: torch.Tensor,
+        hx: Optional[torch.Tensor] = None,
+        batch_size_t: Optional[int] = None,
+    ) -> torch.Tensor:
         if hx is None:
             hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
 
         h_prev = hx
-        gates = self.ih(input) + self.hh(h_prev)
+        gates = self.ih(input) + self.hh(h_prev if batch_size_t is None else h_prev[:batch_size_t, :])
         if self.nonlinearity == 'tanh':
             h_t = torch.tanh(gates)
         elif self.nonlinearity == 'relu':
@@ -165,13 +170,18 @@ class DPGRUCell(nn.Module):
     def __init__(self, input_size: int, hidden_size: int, bias: bool):
         super(DPGRUCell, self).__init__(input_size, hidden_size, bias, num_chunks=3)
 
-    def forward(self, input: torch.Tensor, hx: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self,
+        input: torch.Tensor,
+        hx: Optional[torch.Tensor] = None,
+        batch_size_t: Optional[int] = None,
+    ) -> torch.Tensor:
         if hx is None:
             hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
 
         h_prev = hx
         gates_x = self.ih(input)
-        gates_h = self.hh(h_prev)
+        gates_h = self.hh(h_prev if batch_size_t is None else h_prev[:batch_size_t, :])
         r_t_input_x, z_t_input_x, n_t_input_x = torch.split(gates_x, self.hidden_size, 1)
         r_t_input_h, z_t_input_h, n_t_input_h = torch.split(gates_h, self.hidden_size, 1)
         r_t = torch.sigmoid(r_t_input_x + r_t_input_h)
@@ -258,7 +268,6 @@ class DPLSTMLayer(nn.Module):
         self.cell = DPLSTMCell(
             input_size=input_size, hidden_size=hidden_size, bias=bias
         )
-
         self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else None
 
     def set_max_batch_length(self, max_batch_length: int) -> None:
