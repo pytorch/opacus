@@ -14,7 +14,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from opacus import PrivacyEngine
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torchvision import datasets, transforms
 from tqdm import tqdm
 

@@ -22,7 +22,6 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from opacus import PrivacyEngine
 from opacus.utils.module_modification import convert_batchnorm_modules
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from tqdm import tqdm
 
 
