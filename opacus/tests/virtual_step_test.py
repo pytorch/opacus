@@ -100,6 +100,7 @@ class GradientAccumulation_test(unittest.TestCase):
             if num_steps == 0:
                 break
 
+    @unittest.skip("Not yet implemented")
     def test_grad_sample_accumulation(self):
         """
         Calling loss.backward() multiple times should sum up the gradients in .grad
@@ -137,6 +138,7 @@ class GradientAccumulation_test(unittest.TestCase):
         )
         self.assertTrue(torch.allclose(grad, orig_grad, atol=10e-5, rtol=10e-3))
 
+    @unittest.skip("Not yet implemented")
     def test_clipper_accumulation(self):
         """
         Calling optimizer.virtual_step() should accumulate clipped gradients to form
@@ -167,6 +169,7 @@ class GradientAccumulation_test(unittest.TestCase):
             f"MAD is {(orig_grad - accumulated_grad).abs().mean()}",
         )
 
+    @unittest.skip("Not yet implemented")
     def test_mixed_accumulation(self):
         """
         Calling loss.backward() multiple times aggregates all per-sample gradients in
@@ -197,6 +200,7 @@ class GradientAccumulation_test(unittest.TestCase):
             torch.allclose(accumulated_grad, orig_grad, atol=10e-5, rtol=10e-3)
         )
 
+    @unittest.skip("Not yet implemented")
     def test_grad_sample_erased(self):
         """
         Calling optimizer.step() should erase any accumulated per-sample gradients.
@@ -221,6 +225,7 @@ class GradientAccumulation_test(unittest.TestCase):
                         f"for {param_name}",
                     )
 
+    @unittest.skip("Not yet implemented")
     def test_summed_grad_erased(self):
         """
         Calling optimizer.step() should erase any accumulated clipped gradients.

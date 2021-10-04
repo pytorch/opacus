@@ -1,13 +1,16 @@
-import torch
 from typing import Optional, Sequence
-from torch.utils.data import DataLoader, Dataset
-from torch.utils.data.dataloader import _worker_init_fn_t, _collate_fn_t
+
+import torch
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
+from torch.utils.data import DataLoader, Dataset
 from torch.utils.data._utils.collate import default_collate
+from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
 
-def wrap_collate_with_empty(collate_fn: Optional[_collate_fn_t], sample_empty_shapes: Sequence):
-    #TODO: does it work with padding and packed sequences?
+def wrap_collate_with_empty(
+    collate_fn: Optional[_collate_fn_t], sample_empty_shapes: Sequence
+):
+    # TODO: does it work with packed sequences?
     def collate(batch):
         if len(batch) > 0:
             return collate_fn(batch)
@@ -25,18 +28,26 @@ def shape_safe(x):
 
 
 class DPDataLoader(DataLoader):
-
-    def __init__(self, dataset: Dataset, sample_rate: float,
-                 num_workers: int = 0, collate_fn: Optional[_collate_fn_t] = None,
-                 pin_memory: bool = False, drop_last: bool = False,
-                 timeout: float = 0, worker_init_fn: Optional[_worker_init_fn_t] = None,
-                 multiprocessing_context=None, generator=None,
-                 *, prefetch_factor: int = 2,
-                 persistent_workers: bool = False):
+    def __init__(
+        self,
+        dataset: Dataset,
+        sample_rate: float,
+        num_workers: int = 0,
+        collate_fn: Optional[_collate_fn_t] = None,
+        pin_memory: bool = False,
+        drop_last: bool = False,
+        timeout: float = 0,
+        worker_init_fn: Optional[_worker_init_fn_t] = None,
+        multiprocessing_context=None,
+        generator=None,
+        *,
+        prefetch_factor: int = 2,
+        persistent_workers: bool = False
+    ):
 
         self.sample_rate = sample_rate
         batch_sampler = UniformWithReplacementSampler(
-            num_samples=len(dataset), # type: ignore[assignment, arg-type]
+            num_samples=len(dataset),  # type: ignore[assignment, arg-type]
             sample_rate=sample_rate,
             generator=generator,
         )
@@ -66,8 +77,9 @@ class DPDataLoader(DataLoader):
 
         return cls(
             dataset=data_loader.dataset,
-            sample_rate=1/len(data_loader),
+            sample_rate=1 / len(data_loader),
             num_workers=data_loader.num_workers,
+            collate_fn=data_loader.collate_fn,
             pin_memory=data_loader.pin_memory,
             drop_last=data_loader.drop_last,
             timeout=data_loader.timeout,
@@ -75,5 +87,5 @@ class DPDataLoader(DataLoader):
             multiprocessing_context=data_loader.multiprocessing_context,
             generator=data_loader.generator,
             prefetch_factor=data_loader.prefetch_factor,
-            persistent_workers=data_loader.persistent_workers
+            persistent_workers=data_loader.persistent_workers,
         )

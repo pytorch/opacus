@@ -21,11 +21,15 @@ class GradSampleModule(nn.Module):
 
     def __init__(self, m: nn.Module, *, batch_first=True, loss_reduction="mean"):
         super().__init__()
-        self._module = m
+        self._module = m  # TODO: it's not 100% certain that this should stay private
         self.hooks_enabled = False
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
         self.add_hooks(loss_reduction=loss_reduction, batch_first=batch_first)
+
+    # TODO: few other common methods needs to be forwarded (e.g. name())
+    # I think there's a way to intercept calls to all unknown attributes and
+    # forward it to the self._module - is it a good idea?
 
     def forward(self, x):
         return self._module(x)
@@ -163,7 +167,7 @@ class GradSampleModule(nn.Module):
         )
 
     def __repr__(self):
-        return f"GradSample({self._module.__repr__()})"
+        return f"GradSampleModule({self._module.__repr__()})"
 
     def _close(self):
         self.del_grad_sample()
