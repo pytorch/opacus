@@ -2,13 +2,15 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
+import numbers
+import warnings
 from typing import List, Optional, Tuple, Union, Type, Literal
 
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_sequence
 
-from .param_rename import ParamRenamedModule
+from .param_rename import ParamRenamedMixin
 
 
 def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
@@ -257,6 +259,128 @@ class DPLSTMCell(DPRNNCellBase):
         return h_t, c_t
 
 
+class DPRNNBaseNew(ParamRenamedMixin, nn.Module):
+    def __init__(
+            self,
+            mode: str,
+            input_size: int,
+            hidden_size: int,
+            num_layers: int = 1,
+            bias: bool = True,
+            batch_first: bool = False,
+            dropout: float = 0.,
+            bidirectional: bool = False,
+            proj_size: int = 0
+    ):
+        super(DPRNNBaseNew, self).__init__()
+
+        self.mode = mode
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.bias = bias
+        self.batch_first = batch_first
+        self.dropout = float(dropout)
+        self.bidirectional = bidirectional
+        self.proj_size = proj_size
+        num_directions = 2 if bidirectional else 1
+
+        if not isinstance(dropout, numbers.Number) or not 0 <= dropout <= 1 or \
+                isinstance(dropout, bool):
+            raise ValueError("dropout should be a number in range [0, 1] "
+                             "representing the probability of an element being "
+                             "zeroed")
+        if dropout > 0 and num_layers == 1:
+            warnings.warn("dropout option adds dropout after all but last "
+                          "recurrent layer, so non-zero dropout expects "
+                          "num_layers greater than 1, but got dropout={} and "
+                          "num_layers={}".format(dropout, num_layers))
+
+        if proj_size > 0:
+            raise NotImplementedError("proj_size > 0 is not supported")
+        if proj_size < 0:
+            raise ValueError("proj_size should be a positive integer or zero to disable projections")
+        if proj_size >= hidden_size:
+            raise ValueError("proj_size has to be smaller than hidden_size")
+
+        self._flat_weights_names = []
+        self._all_weights = []
+        for layer in range(num_layers):
+            for direction in range(num_directions):
+                layer_input_size = input_size if layer == 0 else hidden_size * num_directions
+
+                if mode == 'RNN_TANH':
+                    cell = DPRNNCell(layer_input_size, hidden_size, bias, nonlinearity='tanh')
+                elif mode == 'RNN_RELU':
+                    cell = DPRNNCell(layer_input_size, hidden_size, bias, nonlinearity='relu')
+                elif mode == 'GRU':
+                    cell = DPGRUCell(layer_input_size, hidden_size, bias)
+                elif mode == 'LSTM':
+                    cell = DPLSTMCell(layer_input_size, hidden_size, bias)
+                else:
+                    raise ValueError("Unrecognized RNN mode: " + mode)
+
+                setattr(self, f'layer{layer}_direction{direction}_cell', cell)
+
+    def forward(
+            self,
+            input: Union[torch.Tensor, PackedSequence],
+            hx: Optional[torch.Tensor] = None) -> Tuple[Union[torch.Tensor, PackedSequence], torch.Tensor]:
+        is_packed = isinstance(input, PackedSequence)
+        if is_packed:
+            input, batch_sizes, sorted_indices, unsorted_indices = input
+            max_batch_size = int(batch_sizes[0])
+        else:
+            assert isinstance(input, torch.Tensor)
+            batch_sizes = None
+            max_batch_size = input.size(0) if self.batch_first else input.size(1)
+            sorted_indices = None
+            unsorted_indices = None
+
+        assert isinstance(input, torch.Tensor)
+        if hx is None:
+            num_directions = 2 if self.bidirectional else 1
+            hx = torch.zeros(self.num_layers * num_directions,
+                             max_batch_size, self.hidden_size,
+                             dtype=input.dtype, device=input.device)
+        else:
+            # Each batch of the hidden state should match the input sequence that
+            # the user believes he/she is passing in.
+            hx = self.permute_hidden(hx, sorted_indices)
+
+        assert hx is not None
+        self.check_forward_args(input, hx, batch_sizes)
+
+        # TODO: implement forward pass here
+        raise NotImplementedError
+
+        output: Union[torch.Tensor, PackedSequence]
+        hidden: torch.Tensor
+
+        if is_packed:
+            output = PackedSequence(output, batch_sizes, sorted_indices, unsorted_indices)
+        return output, self.permute_hidden(hidden, unsorted_indices)
+
+    def _make_rename_dict(self, num_layers, bias, bidirectional):
+        d = {}
+        components = ["weight"] + ["bias" if bias else []]
+        matrices = ["ih", "hh"]
+        for i in range(num_layers):
+            for c in components:
+                for m in matrices:
+                    nn_name = f"{c}_{m}_l{i}"
+                    if bidirectional:
+                        d[f"layers.{i}.forward_layer.cell.{m}.{c}"] = nn_name
+                        d[f"layers.{i}.reverse_layer.cell.{m}.{c}"] = (
+                                nn_name + "_reverse"
+                        )
+                    else:
+                        d[f"layers.{i}.cell.{m}.{c}"] = nn_name
+
+        return d
+
+
+
 class DPRNNLayer(nn.Module):
 
     def __init__(
@@ -413,7 +537,7 @@ class BidirectionalDPRNNLayer(nn.Module):
         return out, h
 
 
-class DPRNNBase(ParamRenamedModule):
+class DPRNNBase(ParamRenamedMixin, nn.Module):
 
     def __init__(
         self,
@@ -427,8 +551,9 @@ class DPRNNBase(ParamRenamedModule):
         cell_type: Type[DPRNNCellBase] = DPRNNCell,
         **kwargs,
     ):
+        super(DPRNNBase, self).__init__()
         rename_dict = self._make_rename_dict(num_layers, bias, bidirectional)
-        super().__init__(rename_dict)
+        self.set_rename_map(rename_dict)
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -826,7 +951,7 @@ class BidirectionalDPLSTMLayer(nn.Module):
         return out, (h, c)
 
 
-class DPLSTM(ParamRenamedModule):
+class DPLSTM(ParamRenamedMixin, nn.Module):
     r"""
     DP-friendly drop-in replacement of the ``torch.nn.LSTM`` module.
 
@@ -848,8 +973,9 @@ class DPLSTM(ParamRenamedModule):
         dropout: float = 0,
         bidirectional: bool = False,
     ):
+        super(DPLSTM, self).__init__()
         rename_dict = self._make_rename_dict(num_layers, bias, bidirectional)
-        super().__init__(rename_dict)
+        self.set_rename_map(rename_dict)
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers

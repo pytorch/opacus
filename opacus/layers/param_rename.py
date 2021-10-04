@@ -18,7 +18,7 @@ def filter_out_old_keys(self, state_dict, prefix, local_metadata):
     return new_state_dict
 
 
-class ParamRenamedModule(nn.Module):
+class ParamRenamedMixin:
     """
     This class defines a nn.Module whose parameters are renamed. This is useful when you want to
     reimplement a layer but make sure its state_dict and list of parameters are exactly the same
@@ -27,7 +27,7 @@ class ParamRenamedModule(nn.Module):
     implementation leverages submodules and requires alignment to the state_dict of nn.LSTM.
     """
 
-    def __init__(self, rename_map: Dict[str, str]):
+    def set_rename_map(self, rename_map: Dict[str, str]):
         """
         Initializes internal state. Subclass this instead of ``torch.nn.Module`` whenever you need
         to rename your model's state.
@@ -36,7 +36,6 @@ class ParamRenamedModule(nn.Module):
             rename_map: mapping from old name -> new name for each parameter you want renamed.
                 Note that this must be a 1:1 mapping!
         """
-        super().__init__()
         self.old_to_new = rename_map
         self.new_to_old = {v: k for k, v in rename_map.items()}
 
