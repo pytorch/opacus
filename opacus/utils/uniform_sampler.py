@@ -85,7 +85,7 @@ class DistributedPoissonBatchSampler(Sampler):
         self.rank = rank
         self.epoch = 0
         self.shuffle = shuffle
-        self.seed = seed
+        self.shuffle_seed = shuffle_seed
         if self.generator is None:
             generator = torch.Generator()
             generator.manual_seed(
@@ -114,7 +114,7 @@ class DistributedPoissonBatchSampler(Sampler):
         if self.shuffle:
             # deterministically shuffle based on epoch and seed
             g = torch.Generator()
-            g.manual_seed(self.seed + self.epoch)
+            g.manual_seed(self.shuffle_seed + self.epoch)
             indices = torch.randperm(self.total_size, generator=g)  # type: ignore
         else:
             indices = torch.arange(self.total_size)  # type: ignore

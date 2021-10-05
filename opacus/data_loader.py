@@ -71,7 +71,7 @@ class DPDataLoader(DataLoader):
         )
 
     @classmethod
-    def from_data_loader(cls, data_loader: DataLoader):
+    def from_data_loader(cls, data_loader: DataLoader, generator=None):
         if isinstance(data_loader, cls):
             return data_loader
 
@@ -85,7 +85,7 @@ class DPDataLoader(DataLoader):
             timeout=data_loader.timeout,
             worker_init_fn=data_loader.worker_init_fn,
             multiprocessing_context=data_loader.multiprocessing_context,
-            generator=data_loader.generator,
+            generator=generator,
             prefetch_factor=data_loader.prefetch_factor,
             persistent_workers=data_loader.persistent_workers,
         )

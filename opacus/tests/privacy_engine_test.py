@@ -276,16 +276,17 @@ class PrivacyEngine_test(unittest.TestCase):
                 "Model parameters after deterministic run must match",
             )
 
-    @unittest.skip("Not yet implemented")
+
     def test_raises_seed_set_on_secure_rng(self):
         """
         Tests that when a seed is set on a secure PrivacyEngine, we raise a ValueError
         """
-        model, optimizer, dl = self.setUp_init_model(
-            private=True, secure_mode=True, noise_multiplier=1.3, max_grad_norm=1.0
-        )
+
+
+        model, optimizer, dl, privacy_engine = self._init_private_training(secure_mode=True, noise_multiplier=1.3, max_grad_norm=1.0)
+
         with self.assertRaises(ValueError):
-            optimizer.privacy_engine._set_seed(20)
+            privacy_engine.set_seed(20)
 
     @unittest.skip("Not yet implemented")
     def test_noise_changes_every_time_secure_rng(self):
