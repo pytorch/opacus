@@ -41,7 +41,7 @@ class _NoiseScheduler(object):
 
 
 class ExponentialNoise(_NoiseScheduler):
-    def __init__(self, optimizer: DPOptimizer, gamma: int, last_epoch: int = -1):
+    def __init__(self, optimizer: DPOptimizer, gamma: float, last_epoch: int = -1):
         self.gamma = gamma
         super().__init__(optimizer, last_epoch)
 
@@ -77,7 +77,7 @@ class StepNoise(_NoiseScheduler):
 
     def get_noise_multiplier(self):
         # Only change noise_multiplier when at a 'step'
-        if self.last_epoch == 0 or self.last_epoch % self.step_size == 0:
+        if self.last_epoch == 0 or self.last_epoch % self.step_size != 0:
             return self.optimizer.noise_multiplier
         else:
             return self.gamma * self.optimizer.noise_multiplier

@@ -26,27 +26,29 @@ class SchedulerTest(unittest.TestCase):
         gamma = 0.99
         scheduler = ExponentialNoise(self.optimizer, gamma=gamma)
 
-        self.assertTrue(self.optimizer.noise_multiplier == 1.0)
+        self.assertEqual(self.optimizer.noise_multiplier, 1.0)
         scheduler.step()
-        self.assertTrue(self.optimizer.noise_multiplier == gamma)
+        self.assertEqual(self.optimizer.noise_multiplier, gamma)
 
     def test_step_scheduler(self):
         gamma = 0.1
         step_size = 2
         scheduler = StepNoise(self.optimizer, step_size=step_size, gamma=gamma)
 
-        self.assertTrue(self.optimizer.noise_multiplier == 1.0)
+        self.assertEqual(self.optimizer.noise_multiplier, 1.0)
         scheduler.step()
+        self.assertEqual(self.optimizer.noise_multiplier, 1.0)
         scheduler.step()
-        self.assertTrue(self.optimizer.noise_multiplier == gamma)
+        self.assertEqual(self.optimizer.noise_multiplier, gamma)
         scheduler.step()
+        self.assertEqual(self.optimizer.noise_multiplier, gamma)
         scheduler.step()
-        self.assertTrue(self.optimizer.noise_multiplier == gamma ** 2)
+        self.assertEqual(self.optimizer.noise_multiplier, gamma ** 2)
 
     def test_lambda_scheduler(self):
         noise_lambda = lambda epoch: (1 - epoch / 10)
         scheduler = LambdaNoise(self.optimizer, noise_lambda=noise_lambda)
 
-        self.assertTrue(self.optimizer.noise_multiplier == 1.0)
+        self.assertEqual(self.optimizer.noise_multiplier, 1.0)
         scheduler.step()
-        self.assertTrue(self.optimizer.noise_multiplier == noise_lambda(1))
+        self.assertEqual(self.optimizer.noise_multiplier, noise_lambda(1))
