@@ -127,7 +127,8 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
-        <span class="o">*</span><span class="p">,</span>  <span class="c1"># As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="c1"># As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally</span>
         <span class="n">sample_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">sample_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -184,7 +185,9 @@
             <span class="n">rank</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">n_replicas</span> <span class="o">=</span> <span class="mi">1</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">GradSampleModule</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">GradSampleModule</span><span class="p">(</span>
+            <span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">poisson</span><span class="p">:</span>
             <span class="c1"># TODO: Check directly if sampler is UniformSampler when sampler gets passed to the Engine (in the future)</span>
