@@ -5,9 +5,6 @@ from .optimizer import DPOptimizer
 
 class _NoiseScheduler(object):
     def __init__(self, optimizer: DPOptimizer, last_epoch=-1):
-        # Attach optimizer
-        if not isinstance(optimizer, DPOptimizer):
-            raise TypeError("{} is not a DPOptimizer".format(type(optimizer).__name__))
         self.optimizer = optimizer
         self.last_epoch = last_epoch
 
