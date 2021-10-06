@@ -297,7 +297,7 @@ jobs:
 
   integrationtest_py37_torch_release_cuda:
     machine:
-      resource_class: gpu.nvidia.small
+      resource_class: gpu.nvidia.small.multi
       image: ubuntu-1604-cuda-11.1:202012-01
     steps:
       - update_gpg_key
@@ -318,7 +318,7 @@ jobs:
 
   unittest_multi_gpu:
     machine:
-      resource_class: gpu.medium
+      resource_class: gpu.nvidia.medium.multi
       image: ubuntu-1604-cuda-11.1:202012-01
     steps:
       - update_gpg_key
