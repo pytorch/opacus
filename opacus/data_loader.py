@@ -13,21 +13,18 @@ from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 def wrap_collate_with_empty(
     collate_fn: Optional[_collate_fn_t], sample_empty_shapes: Sequence
 ):
-    # TODO: does it work with packed sequences?
     def collate(batch):
         if len(batch) > 0:
             return collate_fn(batch)
         else:
-            return [torch.zeros(x) for x in sample_empty_shapes]
+            if type(sample_empty_shapes) is collections.abc.Sequence:
+                return [torch.zeros(x) for x in sample_empty_shapes]
+            else:
+                return torch.zerso(sample_empty_shapes)
 
     return collate
 
 
-def shape_safe(x):
-    if hasattr(x, "shape"):
-        return x.shape
-    else:
-        return ()
 
 
 class DPDataLoader(DataLoader):
@@ -67,6 +64,13 @@ class DPDataLoader(DataLoader):
         sample_empty_shapes = [[0, *shape_safe(x)] for x in dataset[0]]
         if collate_fn is None:
             collate_fn = default_collate
+        collated_data = collate_fn([dataset[0]])
+
+        # Opacus empty batches work for Tensors and sequences of Tensors
+        if type(collated_data) is torch.Tensor:
+            sample_empty_shapes = [0, collated_data.shape[1:]]
+        elif type(collated_data) is collections.abc.Sequence and all([type(x) is torch.Tensor for x in collated_data]):
+            sample_empty_shapes = [[0, x.shape[1:]] for x in collated_data]
 
         super().__init__(
             dataset=dataset,
