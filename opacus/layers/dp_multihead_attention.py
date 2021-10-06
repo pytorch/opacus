@@ -41,7 +41,7 @@ class SequenceBias(nn.Module):
 
     def _reset_parameters(self):
         r"""
-        assing's Normally distributed random values to bias.
+        assigns Normally distributed random values to bias.
         """
         nn.init.normal_(self.bias)
 
