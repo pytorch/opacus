@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+import abc
 import unittest
+from abc import ABC
+from typing import Optional
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus import PrivacyEngine
-from opacus.dp_model_inspector import IncompatibleModuleException
-from opacus.utils.module_inspection import get_layer_type, requires_grad
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
+
+from opacus import PrivacyEngine
+from opacus.dp_model_inspector import IncompatibleModuleException
+from opacus.layers.dp_multihead_attention import DPMultiheadAttention
+from opacus.utils.module_inspection import get_layer_type, requires_grad
 
 
 def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
@@ -32,50 +37,7 @@ def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
     return grad_sample_aggregated
 
 
-class SampleConvNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(1, 16, 8, 3)
-        self.gnorm1 = nn.GroupNorm(4, 16)
-        self.conv2 = nn.Conv1d(16, 32, 3, 1)
-        self.lnorm1 = nn.LayerNorm((32, 23))
-        self.conv3 = nn.Conv1d(32, 32, 3, 1)
-        self.instnorm1 = nn.InstanceNorm1d(32, affine=True)
-        self.convf = nn.Conv1d(32, 32, 1, 1)
-        for p in self.convf.parameters():
-            p.requires_grad = False
-        self.fc1 = nn.Linear(21, 17)
-        self.lnorm2 = nn.LayerNorm(17)
-        self.fc2 = nn.Linear(32 * 17, 10)
-
-        for layer in (self.gnorm1, self.lnorm1, self.lnorm2, self.instnorm1):
-            nn.init.uniform_(layer.weight)
-            nn.init.uniform_(layer.bias)
-
-    def forward(self, x):
-        # x of shape [B, 1, 28, 28]
-        x = self.conv1(x)  # -> [B, 16, 10, 10]
-        x = self.gnorm1(x)  # -> [B, 16, 10, 10]
-        x = F.relu(x)  # -> [B, 16, 10, 10]
-        x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 5, 5]
-        x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
-        x = self.conv2(x)  # -> [B, 32, 23]
-        x = self.lnorm1(x)  # -> [B, 32, 23]
-        x = F.relu(x)  # -> [B, 32, 23]
-        x = self.conv3(x)  # -> [B, 32, 21]
-        x = self.instnorm1(x)  # -> [B, 32, 21]
-        x = self.convf(x)  # -> [B, 32, 21]
-        x = self.fc1(x)  # -> [B, 32, 17]
-        x = self.lnorm2(x)  # -> [B, 32, 17]
-        x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 17]
-        x = self.fc2(x)  # -> [B, 10]
-        return x
-
-    def name(self):
-        return "SampleConvNet"
-
-
-class PrivacyEngine_test(unittest.TestCase):
+class BasePrivacyEngineTest(ABC):
     def setUp(self):
         self.DATA_SIZE = 64
         self.BATCH_SIZE = 64
@@ -105,46 +67,29 @@ class PrivacyEngine_test(unittest.TestCase):
             "secure_rng": False,
         }
 
+    @abc.abstractmethod
     def setUp_data(self):
-        self.ds = FakeData(
-            size=self.DATA_SIZE,
-            image_size=(1, 35, 35),
-            num_classes=10,
-            transform=transforms.Compose(
-                [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-            ),
-        )
-        self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
+        pass
 
+    @abc.abstractmethod
     def setUp_init_model(
         self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
     ):
-        model = model or SampleConvNet()
-        optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
-        if state_dict:
-            model.load_state_dict(state_dict)
+        pass
 
-        if private:
-            if len(privacy_engine_kwargs) == 0:
-                privacy_engine_kwargs = self.privacy_default_params
-            privacy_engine = PrivacyEngine(
-                model,
-                sample_rate=self.SAMPLE_RATE,
-                alphas=self.ALPHAS,
-                **privacy_engine_kwargs,
-            )
-            privacy_engine.attach(optimizer)
-
-        return model, optimizer
-
-    def setUp_model_step(self, model: nn.Module, optimizer: torch.optim.Optimizer):
-
+    def setUp_model_step(
+        self, model: nn.Module, optimizer: Optional[torch.optim.Optimizer]
+    ):
         for x, y in self.dl:
-            optimizer.zero_grad()
+            if optimizer:
+                optimizer.zero_grad()
+
             logits = model(x)
             loss = self.criterion(logits, y)
             loss.backward()
-            optimizer.step()
+
+            if optimizer:
+                optimizer.step()
 
         return torch.stack(
             [p.grad.norm() for p in model.parameters() if p.requires_grad], dim=-1
@@ -187,6 +132,23 @@ class PrivacyEngine_test(unittest.TestCase):
             target_delta
         )
         self.assertTrue(eps > 0)
+
+    def test_grad_sample_shape(self):
+        """
+        Test grad_samples are of correct shape
+        """
+        model, _ = self.setUp_init_model(
+            private=True,
+            noise_multiplier=1.3,
+            max_grad_norm=1.0,
+        )
+        self.setUp_model_step(model, None)
+
+        for n, p in model.named_parameters():
+            if not p.requires_grad:
+                continue
+
+            self.assertEqual(p.grad_sample.shape, (self.BATCH_SIZE, *p.shape))
 
     def test_gradients_change(self):
         """
@@ -283,11 +245,13 @@ class PrivacyEngine_test(unittest.TestCase):
 
     def test_grad_matches_original_per_layer_clipping(self):
         original_model, orignial_optimizer = self.setUp_init_model()
+
+        num_layers = len([p for p in original_model.parameters() if p.requires_grad])
         private_model, private_optimizer = self.setUp_init_model(
             private=True,
             state_dict=original_model.state_dict(),
             noise_multiplier=0,
-            max_grad_norm=[999] * 18,
+            max_grad_norm=[999] * num_layers,
             clip_per_layer=True,
         )
 
@@ -454,10 +418,133 @@ class PrivacyEngine_test(unittest.TestCase):
         """
         self.SAMPLE_RATE = 1.5
         with self.assertRaises(ValueError):
-            PrivacyEngine(
-                SampleConvNet(),
+            _, _ = self.setUp_init_model(
+                private=True,
+                noise_multiplier=1.3,
+                max_grad_norm=999,
+            )
+
+
+class SampleConvNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 16, 8, 3)
+        self.gnorm1 = nn.GroupNorm(4, 16)
+        self.conv2 = nn.Conv1d(16, 32, 3, 1)
+        self.lnorm1 = nn.LayerNorm((32, 23))
+        self.conv3 = nn.Conv1d(32, 32, 3, 1)
+        self.instnorm1 = nn.InstanceNorm1d(32, affine=True)
+        self.convf = nn.Conv1d(32, 32, 1, 1)
+        for p in self.convf.parameters():
+            p.requires_grad = False
+        self.fc1 = nn.Linear(21, 17)
+        self.lnorm2 = nn.LayerNorm(17)
+        self.fc2 = nn.Linear(32 * 17, 10)
+
+        for layer in (self.gnorm1, self.lnorm1, self.lnorm2, self.instnorm1):
+            nn.init.uniform_(layer.weight)
+            nn.init.uniform_(layer.bias)
+
+    def forward(self, x):
+        # x of shape [B, 1, 28, 28]
+        x = self.conv1(x)  # -> [B, 16, 10, 10]
+        x = self.gnorm1(x)  # -> [B, 16, 10, 10]
+        x = F.relu(x)  # -> [B, 16, 10, 10]
+        x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 5, 5]
+        x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
+        x = self.conv2(x)  # -> [B, 32, 23]
+        x = self.lnorm1(x)  # -> [B, 32, 23]
+        x = F.relu(x)  # -> [B, 32, 23]
+        x = self.conv3(x)  # -> [B, 32, 21]
+        x = self.instnorm1(x)  # -> [B, 32, 21]
+        x = self.convf(x)  # -> [B, 32, 21]
+        x = self.fc1(x)  # -> [B, 32, 17]
+        x = self.lnorm2(x)  # -> [B, 32, 17]
+        x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 17]
+        x = self.fc2(x)  # -> [B, 10]
+        return x
+
+    def name(self):
+        return "SampleConvNet"
+
+
+class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
+    def setUp_data(self):
+        self.ds = FakeData(
+            size=self.DATA_SIZE,
+            image_size=(1, 35, 35),
+            num_classes=10,
+            transform=transforms.Compose(
+                [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+            ),
+        )
+        self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
+
+    def setUp_init_model(
+        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
+    ):
+        model = model or SampleConvNet()
+        optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
+        if state_dict:
+            model.load_state_dict(state_dict)
+
+        if private:
+            if len(privacy_engine_kwargs) == 0:
+                privacy_engine_kwargs = self.privacy_default_params
+            privacy_engine = PrivacyEngine(
+                model,
                 sample_rate=self.SAMPLE_RATE,
                 alphas=self.ALPHAS,
-                noise_multiplier=1.0,
-                max_grad_norm=1.0,
+                **privacy_engine_kwargs,
             )
+            privacy_engine.attach(optimizer)
+
+        return model, optimizer
+
+
+class SampleAttnNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.emb = nn.Embedding(100, 8)
+        self.attn = DPMultiheadAttention(8, 1)
+        self.fc = nn.Linear(8, 1)
+
+    def forward(self, x):
+        x = self.emb(x)
+        x, _ = self.attn(x, x, x)
+        x = self.fc(x)
+        x = x.permute(1, 0, 2)
+        x = x.reshape(x.shape[0], -1)
+        return x
+
+    def name(self):
+        return "SampleAttnNet"
+
+
+class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
+    def setUp_data(self):
+        x = torch.randint(0, 100, (12, self.BATCH_SIZE))
+        y = torch.randint(0, 12, (self.BATCH_SIZE,))
+        self.dl = [(x, y)]
+
+    def setUp_init_model(
+        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
+    ):
+        model = model or SampleAttnNet()
+        optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
+        if state_dict:
+            model.load_state_dict(state_dict)
+
+        if private:
+            if len(privacy_engine_kwargs) == 0:
+                privacy_engine_kwargs = self.privacy_default_params
+            privacy_engine = PrivacyEngine(
+                model,
+                batch_first=False,
+                sample_rate=self.SAMPLE_RATE,
+                alphas=self.ALPHAS,
+                **privacy_engine_kwargs,
+            )
+            privacy_engine.attach(optimizer)
+
+        return model, optimizer

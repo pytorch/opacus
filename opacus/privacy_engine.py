@@ -9,10 +9,11 @@ from functools import partial
 from typing import List, Optional, Tuple, Union
 
 import torch
-from opacus.grad_sample import GradSampleModule
-from opacus.utils.tensor_utils import calc_sample_norms_one_layer
 from scipy.stats import planck
 from torch import Tensor, nn
+
+from opacus.grad_sample import GradSampleModule
+from opacus.utils.tensor_utils import calc_sample_norms_one_layer
 
 from . import privacy_analysis
 from .dp_model_inspector import DPModelInspector
@@ -100,7 +101,8 @@ class PrivacyEngine:
     def __init__(
         self,
         module: nn.Module,
-        *,  # As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally
+        *,
+        # As per PEP 3102, this forces clients to specify kwargs explicitly, not positionally
         sample_rate: Optional[float] = None,
         batch_size: Optional[int] = None,
         sample_size: Optional[int] = None,
@@ -157,7 +159,9 @@ class PrivacyEngine:
             rank = 0
             n_replicas = 1
 
-        self.module = GradSampleModule(module)
+        self.module = GradSampleModule(
+            module, batch_first=batch_first, loss_reduction=loss_reduction
+        )
 
         if poisson:
             # TODO: Check directly if sampler is UniformSampler when sampler gets passed to the Engine (in the future)
