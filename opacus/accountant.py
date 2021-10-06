@@ -1,4 +1,11 @@
-class RDPAccountant:
+
+class IAccountant:
+
+    def step(self, noise_multiplier, sample_rate):
+        pass
+
+
+class RDPAccountant(IAccountant):
     def __init__(self):
         self.steps = []
 

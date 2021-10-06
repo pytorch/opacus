@@ -5,6 +5,7 @@ from typing import Callable, List, Optional
 import torch
 from torch import nn
 from torch.optim import Optimizer
+from opacus.accountant import IAccountant
 
 
 def _generate_noise(std: float, reference: torch.Tensor) -> torch.Tensor:
@@ -25,6 +26,7 @@ class DPOptimizer(Optimizer):
         *,
         noise_multiplier: float,
         max_grad_norm: float,
+        sample_rate: float,
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
     ):
@@ -39,9 +41,10 @@ class DPOptimizer(Optimizer):
         self.optimizer = optimizer
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
+        self.sample_rate = sample_rate
         self.loss_reduction = loss_reduction
         self.expected_batch_size = expected_batch_size
-        self.step_hook = None
+        self.accountants = []
 
         self.accumulated_iterations = 0
 
@@ -64,8 +67,8 @@ class DPOptimizer(Optimizer):
             ret.append(p.grad_sample)
         return ret
 
-    def attach_step_hook(self, fn: Callable[[DPOptimizer], None]):
-        self.step_hook = fn
+    def register_accountant(self, accountant: IAccountant):
+        self.accountants.append(accountant)
 
     def clip_and_accumulate(self):
         per_param_norms = [
@@ -114,8 +117,11 @@ class DPOptimizer(Optimizer):
         self.add_noise()
         self.scale_grad()
 
-        if self.step_hook:
-            self.step_hook(self)
+        for accountant in self.accountants:
+            accountant.step(
+                noise_multiplier=self.noise_multiplier,
+                sample_rate=self.sample_rate * self.accumulated_iterations,
+            )
 
         self.accumulated_iterations = 0
         return self.optimizer.step(closure)

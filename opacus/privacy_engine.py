@@ -35,24 +35,15 @@ class PrivacyEngine:
         module = self._prepare_model(module, batch_first, loss_reduction)
         data_loader = self._prepare_data_loader(data_loader)
 
-        sample_rate = 1 / len(data_loader)
-        expected_batch_size = int(len(data_loader.dataset) * sample_rate)
-
         optimizer = self._prepare_optimizer(
             optimizer=optimizer,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
-            expected_batch_size=expected_batch_size,
+            sample_rate=data_loader.sample_rate,
+            expected_batch_size=data_loader.expected_batch_size,
             loss_reduction=loss_reduction,
         )
-
-        def accountant_hook(optim: DPOptimizer):
-            self.accountant.step(
-                noise_multiplier=optim.noise_multiplier,
-                sample_rate=sample_rate * optim.accumulated_iterations,
-            )
-
-        optimizer.attach_step_hook(accountant_hook)
+        optimizer.register_accountant(self.accountant)
 
         return module, optimizer, data_loader
 
@@ -109,6 +100,7 @@ class PrivacyEngine:
         optimizer: optim.Optimizer,
         noise_multiplier: float,
         max_grad_norm: float,
+        sample_rate: float,
         expected_batch_size: int,
         loss_reduction: str = "mean",
     ) -> DPOptimizer:
@@ -120,11 +112,12 @@ class PrivacyEngine:
             optimizer=optimizer,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
+            sample_rate=sample_rate,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
         )
 
-    def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
+    def _prepare_data_loader(self, data_loader: DataLoader) -> DPDataLoader:
         if isinstance(data_loader, DPDataLoader):
             return data_loader
 
@@ -138,6 +131,6 @@ class PrivacyEngine:
         return self.accountant.get_privacy_spent(delta, alphas)
 
 
-class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):
-    def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
-        return data_loader
+# class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):
+#     def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
+#         return data_loader

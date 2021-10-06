@@ -89,3 +89,7 @@ class DPDataLoader(DataLoader):
             prefetch_factor=data_loader.prefetch_factor,
             persistent_workers=data_loader.persistent_workers,
         )
+
+    @property
+    def expected_batch_size(self):
+        return int(len(self.dataset) * self.sample_rate)
