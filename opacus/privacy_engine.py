@@ -9,11 +9,10 @@ from functools import partial
 from typing import List, Optional, Tuple, Union
 
 import torch
-from scipy.stats import planck
-from torch import Tensor, nn
-
 from opacus.grad_sample import GradSampleModule
 from opacus.utils.tensor_utils import calc_sample_norms_one_layer
+from scipy.stats import planck
+from torch import Tensor, nn
 
 from . import privacy_analysis
 from .dp_model_inspector import DPModelInspector

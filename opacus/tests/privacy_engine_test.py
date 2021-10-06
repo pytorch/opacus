@@ -9,14 +9,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from torchvision import models, transforms
-from torchvision.datasets import FakeData
-
 from opacus import PrivacyEngine
 from opacus.dp_model_inspector import IncompatibleModuleException
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.utils.module_inspection import get_layer_type, requires_grad
+from torch.utils.data import DataLoader
+from torchvision import models, transforms
+from torchvision.datasets import FakeData
 
 
 def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
