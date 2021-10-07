@@ -1,8 +1,9 @@
 from typing import List, Optional, Tuple, Union
 from .analysis import gdp as privacy_analysis
+from .accountant import Accountant
 
 
-class GaussianAccountant:
+class GaussianAccountant(Accountant):
     def __init__(self, noise_multiplier, sample_rate, poisson):
         self.noise_multiplier = noise_multiplier
         self.sample_rate = sample_rate
