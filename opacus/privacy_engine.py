@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from typing import List, Optional
+from typing import Optional, List
 
-from opacus.accountant import RDPAccountant
-from opacus.data_loader import DPDataLoader
+from torch.utils.data import DataLoader
+from opacus.accountants import RDPAccountant
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizer import DPOptimizer
-from opacus.privacy_analysis import get_noise_multiplier
+from opacus.accountants.rdp import get_noise_multiplier
 from torch import nn, optim
 from torch.utils.data import DataLoader
-
-
-DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
 
 class PrivacyEngine:
@@ -131,11 +128,9 @@ class PrivacyEngine:
         return DPDataLoader.from_data_loader(data_loader)
 
     # TODO: default delta value?
-    def get_privacy_spent(self, delta, alphas=None):
-        if not alphas:
-            alphas = DEFAULT_ALPHAS
+    def get_epsilon(self, delta, alphas=None):
+        return self.accountant.get_privacy_spent(delta)[0]
 
-        return self.accountant.get_privacy_spent(delta, alphas)
 
 
 class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):
