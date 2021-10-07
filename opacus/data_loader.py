@@ -1,7 +1,7 @@
 from typing import Optional, Sequence
 
 import torch
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler, DistributedUniformWithReplacementSampler
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
@@ -42,15 +42,23 @@ class DPDataLoader(DataLoader):
         generator=None,
         *,
         prefetch_factor: int = 2,
-        persistent_workers: bool = False
+        persistent_workers: bool = False,
+        distributed: bool = False,
     ):
 
         self.sample_rate = sample_rate
-        batch_sampler = UniformWithReplacementSampler(
-            num_samples=len(dataset),  # type: ignore[assignment, arg-type]
-            sample_rate=sample_rate,
-            generator=generator,
-        )
+        if distributed:
+            batch_sampler = DistributedUniformWithReplacementSampler(
+                total_size=len(dataset),  # type: ignore[assignment, arg-type]
+                sample_rate=sample_rate,
+                generator=generator,
+            )
+        else:
+            batch_sampler = UniformWithReplacementSampler(
+                num_samples=len(dataset),  # type: ignore[assignment, arg-type]
+                sample_rate=sample_rate,
+                generator=generator,
+            )
         sample_empty_shapes = [[0, *shape_safe(x)] for x in dataset[0]]
         if collate_fn is None:
             collate_fn = default_collate
@@ -71,8 +79,9 @@ class DPDataLoader(DataLoader):
         )
 
     @classmethod
-    def from_data_loader(cls, data_loader: DataLoader):
+    def from_data_loader(cls, data_loader: DataLoader, distributed: bool):
         if isinstance(data_loader, cls):
+            assert data_loader.distributed == distributed
             return data_loader
 
         return cls(
@@ -88,4 +97,5 @@ class DPDataLoader(DataLoader):
             generator=data_loader.generator,
             prefetch_factor=data_loader.prefetch_factor,
             persistent_workers=data_loader.persistent_workers,
+            distributed=distributed
         )

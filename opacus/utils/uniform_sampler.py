@@ -51,7 +51,7 @@ class UniformWithReplacementSampler(Sampler[List[int]]):
             num_batches -= 1
 
 
-class DistributedPoissonBatchSampler(Sampler):
+class DistributedUniformWithReplacementSampler(Sampler):
     """
     Distributed batch sampler.
 
@@ -72,8 +72,6 @@ class DistributedPoissonBatchSampler(Sampler):
         self,
         total_size: int,
         sample_rate: float,
-        num_replicas: Optional[int] = None,
-        rank: Optional[int] = None,
         shuffle: bool = True,
         seed: int = 0,
         generator=None,
@@ -81,8 +79,8 @@ class DistributedPoissonBatchSampler(Sampler):
         self.total_size = total_size
         self.sample_rate = sample_rate
         self.generator = generator
-        self.num_replicas = num_replicas
-        self.rank = rank
+        self.num_replicas = torch.distributed.get_world_size()
+        self.rank = torch.distributed.get_rank()
         self.epoch = 0
         self.shuffle = shuffle
         self.seed = seed
