@@ -66,8 +66,6 @@ class GradSampleModule(nn.Module):
         self.loss_reduction = loss_reduction
         self.add_hooks(loss_reduction=loss_reduction, batch_first=batch_first)
 
-        self.bhooks = []
-
         # TODO: Do we want to initialize empty grad_sample attribures here?
         # e.g. p.grad_sample = torch.zeros([0, p.shape[1:]])
 
@@ -83,9 +81,6 @@ class GradSampleModule(nn.Module):
     def zero_grad(self):
         self.del_grad_sample()
         super().zero_grad()
-
-    def register_post_backward_hook(self, hook_fn: Callable[[], None]):
-        self.bhooks.append(hook_fn)
 
     def del_grad_sample(self):
         """
@@ -151,7 +146,6 @@ class GradSampleModule(nn.Module):
                             self.capture_backprops_hook,
                             loss_reduction=loss_reduction,
                             batch_first=batch_first,
-                            gsmodule=self,
                         )
                     )
                 )
@@ -250,7 +244,6 @@ class GradSampleModule(nn.Module):
         forward_output: torch.Tensor,
         loss_reduction: str,
         batch_first: bool,
-        gsmodule: GradSampleModule,
     ):
         """Captures backprops in backward pass and store per-sample gradients."""
         if not self.hooks_enabled:
@@ -271,19 +264,6 @@ class GradSampleModule(nn.Module):
 
             for p in module.parameters():
                 swap_tmp_grad_sample(p)
-
-            if not self.bhooks:
-                return
-
-            finished = True
-            for p in gsmodule.parameters():
-                if p.requires_grad and hasattr(p, "_tmp_grad_sample"):
-                    finished = False
-                    break
-
-            if finished:
-                for hook_fn in self.bhooks:
-                    hook_fn()
 
     def rearrange_grad_samples(
         self,
