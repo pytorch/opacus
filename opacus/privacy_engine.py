@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+from functools import partial
 from typing import List, Optional
 
 from opacus.accountant import RDPAccountant
@@ -53,6 +54,33 @@ class PrivacyEngine:
             )
 
         optimizer.attach_step_hook(accountant_hook)
+
+        def virtual_step_hook(module: nn.Module, _, optimizer: DPOptimizer):
+            has_grad_sample = False
+            for p in module.parameters():
+                if not p.requires_grad:
+                    continue
+
+                if hasattr(p, "grad") and hasattr(p.grad, "has_noise"):
+                    # TODO: btw, it's only a problem if we don't zero out grad_sample
+                    # accumulating p.grad 's is fine -> is there a way we can
+                    # allow the latter, while forbidding the former?
+                    raise ValueError("Not calling zero_grad breaks accounting")
+
+                if hasattr(p, "grad_sample"):
+                    has_grad_sample = True
+                    break
+
+            if has_grad_sample:
+                optimizer.virtual_step()
+                module.zero_grad()
+
+        module.register_forward_pre_hook(
+            partial(
+                virtual_step_hook,
+                optimizer=optimizer,
+            )
+        )
 
         return module, optimizer, data_loader
 

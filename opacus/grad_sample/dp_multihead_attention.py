@@ -2,16 +2,19 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 
+from typing import Dict
+
 import torch
+import torch.nn as nn
 from opacus.layers.dp_multihead_attention import SequenceBias
 
-from .utils import create_or_extend_grad_sample, register_grad_sampler
+from .utils import register_grad_sampler
 
 
 @register_grad_sampler(SequenceBias)
 def compute_sequence_bias_grad_sample(
-    layer: SequenceBias, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
-) -> None:
+    layer: SequenceBias, A: torch.Tensor, B: torch.Tensor
+) -> Dict[torch.Tensor, torch.Tensor]:
     """
     Computes per sample gradients for ``SequenceBias`` layer
 
@@ -19,6 +22,5 @@ def compute_sequence_bias_grad_sample(
         layer: Layer
         A: Activations
         B: Backpropagations
-        batch_dim: Batch dimension position
     """
-    create_or_extend_grad_sample(layer.bias, B[:, -1], batch_dim)
+    return {layer.bias: B[:, -1]}

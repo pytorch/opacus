@@ -90,6 +90,7 @@ class DPOptimizer(Optimizer):
                 self.noise_multiplier * self.max_grad_norm, p.summed_grad
             )
             p.grad = p.summed_grad + noise
+            p.grad.has_noise = True
 
     def scale_grad(self):
         if self.loss_reduction == "mean":
@@ -117,7 +118,7 @@ class DPOptimizer(Optimizer):
         if self.step_hook:
             self.step_hook(self)
 
-        self.accumulated_iterations = 0
+        self.accumulated_iterations = 0  # TODO: this belongs to zero_grad?
         return self.optimizer.step(closure)
 
     # TODO: potentially refactor to decouple memory wins from accounting/averaging

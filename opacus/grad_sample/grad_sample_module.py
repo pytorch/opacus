@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+from __future__ import annotations
+
 from functools import partial
-from typing import Iterable, List, Tuple
+from typing import Callable, Iterable, List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -11,6 +13,43 @@ from opacus.utils.module_inspection import requires_grad
 
 class UnsupportedModuleError(ValueError):
     pass
+
+
+def create_or_accumulate_grad_sample(
+    param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
+) -> None:
+    """
+    Creates a ``grad_sample`` attribute in the given parameter, or adds to it
+    if the ``grad_sample`` attribute already exists.
+
+    Args:
+        param: Parameter to which ``grad_sample`` will be added
+        grad_sample: Per-sample gradients tensor. Must be of the same
+            shape as ``param`` with extra batch dimension
+    """
+
+    if hasattr(param, "_tmp_grad_sample"):
+        param._tmp_grad_sample[: grad_sample.shape[0]] += grad_sample
+    else:
+        # TODO: maybe set max_batch_len on a parameter level, so
+        # you don't need to pass layer here?
+        max_batch_len = layer.max_batch_len
+        param._tmp_grad_sample = torch.zeros(
+            torch.Size([max_batch_len]) + grad_sample.shape[1:],
+            device=grad_sample.device,
+            dtype=grad_sample.dtype,
+        )
+        param._tmp_grad_sample[: grad_sample.shape[0]] = grad_sample
+
+
+def swap_tmp_grad_sample(p: nn.Parameter) -> None:
+    if p.requires_grad:
+        if hasattr(p, "grad_sample"):
+            p.grad_sample = torch.cat((p.grad_sample, p._tmp_grad_sample))
+        else:
+            p.grad_sample = p._tmp_grad_sample
+
+        del p._tmp_grad_sample
 
 
 class GradSampleModule(nn.Module):
@@ -27,16 +66,26 @@ class GradSampleModule(nn.Module):
         self.loss_reduction = loss_reduction
         self.add_hooks(loss_reduction=loss_reduction, batch_first=batch_first)
 
+        self.bhooks = []
+
+        # TODO: Do we want to initialize empty grad_sample attribures here?
+        # e.g. p.grad_sample = torch.zeros([0, p.shape[1:]])
+
     # TODO: few other common methods needs to be forwarded (e.g. name())
     # I think there's a way to intercept calls to all unknown attributes and
     # forward it to the self._module - is it a good idea?
 
     def forward(self, x):
+        # TODO: check to forbid double forward
         return self._module(x)
 
+    # TODO: match nn.Module signature
     def zero_grad(self):
         self.del_grad_sample()
         super().zero_grad()
+
+    def register_post_backward_hook(self, hook_fn: Callable[[], None]):
+        self.bhooks.append(hook_fn)
 
     def del_grad_sample(self):
         """
@@ -102,6 +151,7 @@ class GradSampleModule(nn.Module):
                             self.capture_backprops_hook,
                             loss_reduction=loss_reduction,
                             batch_first=batch_first,
+                            gsmodule=self,
                         )
                     )
                 )
@@ -200,6 +250,7 @@ class GradSampleModule(nn.Module):
         forward_output: torch.Tensor,
         loss_reduction: str,
         batch_first: bool,
+        gsmodule: GradSampleModule,
     ):
         """Captures backprops in backward pass and store per-sample gradients."""
         if not self.hooks_enabled:
@@ -210,12 +261,29 @@ class GradSampleModule(nn.Module):
             module, backprops, loss_reduction, batch_first
         )
         grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
-        grad_sampler_fn(module, activations, backprops)
+        grad_samples = grad_sampler_fn(module, activations, backprops)
+        for param, gs in grad_samples.items():
+            create_or_accumulate_grad_sample(param, gs, module)
 
-        if (
-            not isinstance(module.activations, list) or len(module.activations) == 0
-        ) and hasattr(module, "max_batch_len"):
-            del module.max_batch_len
+        if len(module.activations) == 0:
+            if hasattr(module, "max_batch_len"):
+                del module.max_batch_len
+
+            for p in module.parameters():
+                swap_tmp_grad_sample(p)
+
+            if not self.bhooks:
+                return
+
+            finished = True
+            for p in gsmodule.parameters():
+                if p.requires_grad and hasattr(p, "_tmp_grad_sample"):
+                    finished = False
+                    break
+
+            if finished:
+                for hook_fn in self.bhooks:
+                    hook_fn()
 
     def rearrange_grad_samples(
         self,
@@ -240,12 +308,10 @@ class GradSampleModule(nn.Module):
                 " run forward after add_hooks(model)"
             )
 
+        # TODO: that's not right; DPLSTM isn't always batch_first=False
         batch_dim = 0 if batch_first or type(module) is LSTMLinear else 1
 
-        if isinstance(module.activations, list):
-            A = module.activations.pop()
-        else:
-            A = module.activations
+        A = module.activations.pop()
 
         if not hasattr(module, "max_batch_len"):
             # For packed sequences, max_batch_len is set in the forward of the model (e.g. the LSTM)
@@ -285,10 +351,9 @@ def _get_batch_size(
     """
 
     max_batch_len = 0
-    if isinstance(module.activations, list):
-        for out in module.activations:
-            if out.shape[batch_dim] > max_batch_len:
-                max_batch_len = out.shape[batch_dim]
+    for out in module.activations:
+        if out.shape[batch_dim] > max_batch_len:
+            max_batch_len = out.shape[batch_dim]
 
     max_batch_len = max(max_batch_len, grad_sample.shape[batch_dim])
     return max_batch_len

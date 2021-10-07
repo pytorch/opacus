@@ -2,16 +2,20 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 
+from typing import Dict
+
 import torch
 from opacus.layers.dp_lstm import LSTMLinear
 
-from .utils import create_or_accumulate_grad_sample, register_grad_sampler
+from .utils import register_grad_sampler
 
 
 @register_grad_sampler(LSTMLinear)
 def compute_lstm_linear_grad_sample(
-    layer: LSTMLinear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
-) -> None:
+    layer: LSTMLinear,
+    A: torch.Tensor,
+    B: torch.Tensor,
+) -> Dict[torch.Tensor, torch.Tensor]:
     """
     Computes per sample gradients for ``LSTMLinear`` layer. The DPLSTM class is written using
     this layer as its building block.
@@ -26,11 +30,9 @@ def compute_lstm_linear_grad_sample(
     """
 
     gs = torch.einsum("n...i,n...j->nij", B, A)
-    create_or_accumulate_grad_sample(layer.weight, gs, layer)
 
+    ret = {layer.weight: gs}
     if layer.bias is not None:
-        create_or_accumulate_grad_sample(
-            layer.bias,
-            torch.einsum("n...k->nk", B),
-            layer,
-        )
+        ret[layer.bias] = torch.einsum("n...k->nk", B)
+
+    return ret

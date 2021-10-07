@@ -6,11 +6,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus import PrivacyEngine
+from opacus.grad_sample import GradSampleModule
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import FakeData
 
 
+# TODO: add recurrent model here too
 class SampleConvNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -81,34 +83,23 @@ class GradientAccumulation_test(unittest.TestCase):
 
         self.optimizer.zero_grad()
 
-    def setUp_privacy_engine(self, batch_size):
-        self.privacy_engine = PrivacyEngine(
-            self.model,
-            sample_rate=batch_size / self.DATA_SIZE,
-            alphas=self.ALPHAS,
-            noise_multiplier=0,
-            max_grad_norm=999,
-        )
-        self.privacy_engine.attach(self.optimizer)
-
-    def calc_per_sample_grads(self, data_iter, num_steps=1):
+    def model_forward_backward(self, model, data_iter, num_steps=1):
         for x, y in data_iter:
             num_steps -= 1
-            logits = self.model(x)
+            logits = model(x)
             loss = self.criterion(logits, y)
             loss.backward()
             if num_steps == 0:
                 break
 
-    @unittest.skip("Not yet implemented")
     def test_grad_sample_accumulation(self):
         """
         Calling loss.backward() multiple times should sum up the gradients in .grad
         and accumulate all the individual gradients in .grad-sample
         """
-        self.setUp_privacy_engine(self.DATA_SIZE)
+        grad_sample_module = GradSampleModule(self.model)
         data_iter = iter(self.dl)  # 4 batches of size 4 each
-        self.calc_per_sample_grads(data_iter, num_steps=4)
+        self.model_forward_backward(grad_sample_module, data_iter, num_steps=4)
         # should accumulate grads in .grad and .grad_sample
 
         # the accumulated per-sample gradients
@@ -138,22 +129,28 @@ class GradientAccumulation_test(unittest.TestCase):
         )
         self.assertTrue(torch.allclose(grad, orig_grad, atol=10e-5, rtol=10e-3))
 
-    @unittest.skip("Not yet implemented")
-    def test_clipper_accumulation(self):
+    def test_optimizer_accumulation(self):
         """
-        Calling optimizer.virtual_step() should accumulate clipped gradients to form
-        one large batch.
+        Calling `privacy_engine.make_private` should call optimizer.virtual_step()
+        under the hood.
         """
-        self.setUp_privacy_engine(self.DATA_SIZE)
+        privacy_engine = PrivacyEngine()
+        model, optimizer, _ = privacy_engine.make_private(
+            module=self.model,
+            optimizer=self.optimizer,
+            data_loader=self.dl,
+            noise_multiplier=0.0,
+            max_grad_norm=999,
+        )
         data = iter(self.dl)  # 4 batches of size 4 each
 
         for _ in range(3):  # take 3 virtual steps
-            self.calc_per_sample_grads(data, num_steps=1)
-            self.optimizer.virtual_step()
+            self.model_forward_backward(model, data, num_steps=1)
 
         # accumulate on the last step
-        self.calc_per_sample_grads(data, num_steps=1)
-        self.optimizer.step()
+        self.model_forward_backward(model, data, num_steps=1)
+        self.assertEqual(optimizer.accumulated_iterations, 3)
+        optimizer.step()
 
         # .grad should contain the average gradient over the entire dataset
         accumulated_grad = torch.cat(
@@ -168,102 +165,3 @@ class GradientAccumulation_test(unittest.TestCase):
             f"Values are {accumulated_grad} vs {orig_grad}."
             f"MAD is {(orig_grad - accumulated_grad).abs().mean()}",
         )
-
-    @unittest.skip("Not yet implemented")
-    def test_mixed_accumulation(self):
-        """
-        Calling loss.backward() multiple times aggregates all per-sample gradients in
-        .grad-sample. Then, calling optimizer.virtual_step() should clip all gradients
-        and aggregate them into one large batch.
-        """
-        self.setUp_privacy_engine(self.DATA_SIZE)
-        data = iter(self.dl)  # 4 batches of size 4 each
-
-        # accumulate per-sample grads for two mini batches
-        self.calc_per_sample_grads(data, num_steps=2)
-        # take a virtual step
-        self.optimizer.virtual_step()
-        # accumulate another two mini batches
-        self.calc_per_sample_grads(data, num_steps=2)
-        # take a step
-        self.optimizer.step()
-
-        # .grad should contain the average gradient over the entire dataset
-        accumulated_grad = torch.cat(
-            [p.grad.reshape(-1) for p in self.model.parameters() if p.requires_grad]
-        )
-
-        # the accumulated gradients in .grad without any hooks
-        orig_grad = self.effective_batch_grad
-
-        self.assertTrue(
-            torch.allclose(accumulated_grad, orig_grad, atol=10e-5, rtol=10e-3)
-        )
-
-    @unittest.skip("Not yet implemented")
-    def test_grad_sample_erased(self):
-        """
-        Calling optimizer.step() should erase any accumulated per-sample gradients.
-        """
-        self.setUp_privacy_engine(2 * self.BATCH_SIZE)
-        data = iter(self.dl)  # 4 batches of size 4 each
-
-        for _ in range(2):
-            # accumulate per-sample gradients for two mini-batches to form an
-            # effective batch of size `2*BATCH_SIZE`. Once an effective batch
-            # has been accumulated, we call `optimizer.step()` to clip and
-            # average the per-sample gradients. This should erase the
-            # `grad_sample` fields for each parameter
-            self.calc_per_sample_grads(data, num_steps=2)
-            self.optimizer.step()
-
-            for param_name, param in self.model.named_parameters():
-                if param.requires_grad:
-                    self.assertFalse(
-                        hasattr(param, "grad_sample"),
-                        f"Per-sample gradients haven't been erased "
-                        f"for {param_name}",
-                    )
-
-    @unittest.skip("Not yet implemented")
-    def test_summed_grad_erased(self):
-        """
-        Calling optimizer.step() should erase any accumulated clipped gradients.
-        """
-
-        self.setUp_privacy_engine(2 * self.BATCH_SIZE)
-        data = iter(self.dl)  # 4 batches of size 4 each
-
-        for idx in range(4):
-            self.calc_per_sample_grads(data, num_steps=1)
-
-            if idx % 2 == 0:
-                # perform a virtual step for each mini-batch
-                # this will accumulate clipped gradients in each parameter's
-                # `summed_grads` field.
-                self.optimizer.virtual_step()
-                for param_name, param in self.model.named_parameters():
-                    if param.requires_grad:
-                        self.assertTrue(
-                            hasattr(param, "summed_grad"),
-                            f"Clipped gradients aren't accumulated "
-                            f"for {param_name}",
-                        )
-            else:
-                # accumulate gradients for two mini-batches to form an
-                # effective batch of size `2*BATCH_SIZE`. Once an effective batch
-                # has been accumulated, we call `optimizer.step()` to compute the
-                # average gradient for the entire batch. This should erase the
-                # `summed_grads` fields for each parameter.
-                # take a step. The clipper will compute the mean gradient
-                # for the entire effective batch and populate each parameter's
-                # `.grad` field.
-                self.optimizer.step()
-
-                for param_name, param in self.model.named_parameters():
-                    if param.requires_grad:
-                        self.assertFalse(
-                            hasattr(param, "summed_grad"),
-                            f"Accumulated clipped gradients haven't been erased "
-                            f"¨for {param_name}",
-                        )

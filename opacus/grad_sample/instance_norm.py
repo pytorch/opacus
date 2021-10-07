@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Union
+from typing import Dict, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .utils import create_or_extend_grad_sample, register_grad_sampler
+from .utils import register_grad_sampler
 
 
 @register_grad_sampler(
@@ -25,8 +25,7 @@ def compute_instance_norm_grad_sample(
     ],
     A: torch.Tensor,
     B: torch.Tensor,
-    batch_dim: int = 0,
-) -> None:
+) -> Dict[torch.Tensor, torch.Tensor]:
     """
     Computes per sample gradients for InstanceNorm layers
 
@@ -34,11 +33,11 @@ def compute_instance_norm_grad_sample(
         layer: Layer
         A: Activations
         B: Backpropagations
-        batch_dim: Batch dimension position
     """
     gs = F.instance_norm(A, eps=layer.eps) * B
-    create_or_extend_grad_sample(layer.weight, torch.einsum("ni...->ni", gs), batch_dim)
+    ret = {layer.weight: torch.einsum("ni...->ni", gs)}
+
     if layer.bias is not None:
-        create_or_extend_grad_sample(
-            layer.bias, torch.einsum("ni...->ni", B), batch_dim
-        )
+        ret[layer.bias] = torch.einsum("ni...->ni", B)
+
+    return ret
