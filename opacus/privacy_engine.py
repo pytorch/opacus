@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-<<<<<<< HEAD
-from typing import List, Optional
-
-from opacus.accountant import RDPAccountant
-from opacus.data_loader import DPDataLoader
-=======
 from typing import Optional, List
-from torch import nn, optim
+
 from torch.utils.data import DataLoader
 from opacus.accountants import RDPAccountant
->>>>>>> b488950 (Basic implementation of RDP accountant.)
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizer import DPOptimizer
-from opacus.privacy_analysis import get_noise_multiplier
+from opacus.accountants.rdp import get_noise_multiplier
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
@@ -135,8 +128,9 @@ class PrivacyEngine:
         return DPDataLoader.from_data_loader(data_loader)
 
     # TODO: default delta value?
-    def get_privacy_spent(self, delta, alphas=None):
+    def get_epsilon(self, delta, alphas=None):
         return self.accountant.get_privacy_spent(delta)[0]
+
 
 
 class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):

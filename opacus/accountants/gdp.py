@@ -1,9 +1,9 @@
 from typing import List, Optional, Tuple, Union
 from .analysis import gdp as privacy_analysis
-from .accountant import Accountant
+from .accountant import IAccountant
 
 
-class GaussianAccountant(Accountant):
+class GaussianAccountant(IAccountant):
     def __init__(self, noise_multiplier, sample_rate, poisson):
         self.noise_multiplier = noise_multiplier
         self.sample_rate = sample_rate
@@ -17,7 +17,7 @@ class GaussianAccountant(Accountant):
             )
         self.steps += 1
 
-    def get_privacy_spent(self, delta: float):
+    def get_privacy_spent(self, delta: float) -> float:
         if self.poisson:
             epsilon = privacy_analysis.compute_eps_poisson(
                 self.steps, self.noise_multiplier, self.sample_rate, delta
