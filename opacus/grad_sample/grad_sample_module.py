@@ -91,9 +91,6 @@ class GradSampleModule(nn.Module):
         self.del_grad_sample()
         super().zero_grad()
 
-    def register_post_backward_hook(self, hook_fn: Callable[[], None]):
-        self.bhooks.append(hook_fn)
-
     def del_grad_sample(self):
         """
         Deletes ``.grad_sample`` from this module's parameters.
