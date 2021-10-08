@@ -5,30 +5,38 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-from opacus.layers import DPLSTM
+from opacus.layers import DPRNN, DPGRU, DPLSTM
 from opacus.utils.packed_sequences import _gen_packed_data
 
 from .common import GradSampleHooks_test
 
 
-class DPSLTMAdapter(nn.Module):
+MODELS = [
+    DPRNN,
+    DPGRU,
+    DPLSTM,
+]
+
+
+class DPRNNAdapter(nn.Module):
     """
-    Adapter for DPLSTM.
-    LSTM returns a tuple, but our testing tools need the model to return a single tensor in output.
+    Adapter for DPRNN family.
+    RNN returns a tuple, but our testing tools need the model to return a single tensor in output.
     We do this adaption here.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, dp_rnn):
         super().__init__()
-        self.dplstm = DPLSTM(*args, **kwargs)
+        self.dp_rnn = dp_rnn
 
     def forward(self, x):
-        out, _rest = self.dplstm(x)
+        out, _rest = self.dp_rnn(x)
         return out
 
 
-class LSTM_test(GradSampleHooks_test):
+class RNN_test(GradSampleHooks_test):
     @given(
+        model=st.one_of([st.just(model) for model in MODELS]),
         N=st.integers(1, 3),
         T=st.integers(1, 3),
         D=st.integers(4, 5),
@@ -41,8 +49,9 @@ class LSTM_test(GradSampleHooks_test):
         packed_sequences_sorted=st.booleans(),
     )
     @settings(deadline=30000)
-    def test_lstm(
+    def test_rnn(
         self,
+        model,
         N: int,
         T: int,
         D: int,
@@ -54,7 +63,7 @@ class LSTM_test(GradSampleHooks_test):
         using_packed_sequences: bool,
         packed_sequences_sorted: bool,
     ):
-        lstm = DPSLTMAdapter(
+        rnn = model(
             D,
             H,
             num_layers=num_layers,
@@ -62,6 +71,8 @@ class LSTM_test(GradSampleHooks_test):
             bias=bias,
             bidirectional=bidirectional,
         )
+        rnn = DPRNNAdapter(rnn)
+
         if using_packed_sequences:
             x = _gen_packed_data(N, T, D, batch_first, packed_sequences_sorted)
         else:
@@ -69,4 +80,4 @@ class LSTM_test(GradSampleHooks_test):
                 x = torch.randn([N, T, D])
             else:
                 x = torch.randn([T, N, D])
-        self.run_test(x, lstm, batch_first=batch_first)
+        self.run_test(x, rnn, batch_first=batch_first)
