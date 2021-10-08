@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Callable, Iterable, List, Sequence, Tuple, Union
+from typing import Callable, Iterable, List, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
+from opacus.clipper import IGradientClipper
 from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
 from opacus.utils.module_inspection import requires_grad
 
@@ -58,12 +59,20 @@ class GradSampleModule(nn.Module):
     """
     GRAD_SAMPLERS = {}
 
-    def __init__(self, m: nn.Module, *, batch_first=True, loss_reduction="mean"):
+    def __init__(
+        self,
+        m: nn.Module,
+        *,
+        batch_first: bool = True,
+        loss_reduction: str = "mean",
+        clipper: Optional[IGradientClipper] = None,
+    ):
         super().__init__()
         self._module = m  # TODO: it's not 100% certain that this should stay private
         self.hooks_enabled = False
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
+        self.clipper = clipper
         self.add_hooks(loss_reduction=loss_reduction, batch_first=batch_first)
 
         # TODO: Do we want to initialize empty grad_sample attribures here?
@@ -81,6 +90,9 @@ class GradSampleModule(nn.Module):
     def zero_grad(self):
         self.del_grad_sample()
         super().zero_grad()
+
+    def register_post_backward_hook(self, hook_fn: Callable[[], None]):
+        self.bhooks.append(hook_fn)
 
     def del_grad_sample(self):
         """
@@ -264,6 +276,20 @@ class GradSampleModule(nn.Module):
 
             for p in module.parameters():
                 swap_tmp_grad_sample(p)
+
+            if self.clipper is not None and self.is_finished_backward():
+                self.clipper.clip(list(self.parameters()))
+
+    def is_finished_backward(self):
+        # for p in self.parameters():
+        #     if p.requires_grad and hasattr(p, "_tmp_grad_sample"):
+        #         return False
+
+        for m in self.trainable_modules():
+            if len(m.activations) > 0:
+                return False
+
+        return True
 
     def rearrange_grad_samples(
         self,

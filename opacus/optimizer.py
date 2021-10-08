@@ -43,8 +43,6 @@ class DPOptimizer(Optimizer):
         self.expected_batch_size = expected_batch_size
         self.step_hook = None
 
-        self.accumulated_iterations = 0
-
     @property
     def params(self) -> List[nn.Parameter]:
         ret = []
@@ -64,25 +62,16 @@ class DPOptimizer(Optimizer):
             ret.append(p.grad_sample)
         return ret
 
+    @property
+    def accumulated_iterations(self):
+        return len(self.params[0].clipped_grads)
+
     def attach_step_hook(self, fn: Callable[[DPOptimizer], None]):
         self.step_hook = fn
 
-    def clip_and_accumulate(self):
-        per_param_norms = [
-            x.view(len(x), -1).norm(2, dim=-1) for x in self.grad_samples
-        ]
-        per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
-        per_sample_clip_factor = (self.max_grad_norm / (per_sample_norms + 1e-6)).clamp(
-            max=1.0
-        )
-
+    def accumulate(self):
         for p in self.params:
-            grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
-
-            if hasattr(p, "summed_grad"):
-                p.summed_grad += grad
-            else:
-                p.summed_grad = grad
+            p.summed_grad = sum(p.clipped_grads)
 
     def add_noise(self):
         for p in self.params:
@@ -109,22 +98,13 @@ class DPOptimizer(Optimizer):
         self.optimizer.zero_grad(set_to_none)
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        self.accumulated_iterations += 1
-
-        self.clip_and_accumulate()
+        self.accumulate()
         self.add_noise()
         self.scale_grad()
 
         if self.step_hook:
             self.step_hook(self)
 
-        self.accumulated_iterations = 0  # TODO: this belongs to zero_grad?
         return self.optimizer.step(closure)
-
-    # TODO: potentially refactor to decouple memory wins from accounting/averaging
-    # TODO: We can potentially track virtual steps automatically (through GSM.forward() or empty activatons lists)
-    def virtual_step(self):
-        self.accumulated_iterations += 1
-        self.clip_and_accumulate()
 
     # TODO: wrap the rest of optim.Optimizer interface

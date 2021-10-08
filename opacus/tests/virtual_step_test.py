@@ -149,7 +149,6 @@ class GradientAccumulation_test(unittest.TestCase):
 
         # accumulate on the last step
         self.model_forward_backward(model, data, num_steps=1)
-        self.assertEqual(optimizer.accumulated_iterations, 3)
         optimizer.step()
 
         # .grad should contain the average gradient over the entire dataset

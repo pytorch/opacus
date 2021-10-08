@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from opacus.accountants import RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
+from opacus.clipper import FlatGradientClipper
 from opacus.data_loader import DPDataLoader
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizer import DPOptimizer
@@ -26,11 +27,14 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        retain_grad_sample: bool = False,
     ):
         # TODO: DP-Specific validation
         # TODO: either validate consistent dataset or do per-dataset accounting
 
-        module = self._prepare_model(module, batch_first, loss_reduction)
+        module = self._prepare_model(
+            module, max_grad_norm, batch_first, loss_reduction, retain_grad_sample
+        )
         data_loader = self._prepare_data_loader(data_loader)
 
         sample_rate = 1 / len(data_loader)
@@ -52,36 +56,9 @@ class PrivacyEngine:
 
         optimizer.attach_step_hook(accountant_hook)
 
-        def virtual_step_hook(module: nn.Module, _, optimizer: DPOptimizer):
-            has_grad_sample = False
-            for p in module.parameters():
-                if not p.requires_grad:
-                    continue
-
-                if hasattr(p, "grad") and hasattr(p.grad, "has_noise"):
-                    # TODO: btw, it's only a problem if we don't zero out grad_sample
-                    # accumulating p.grad 's is fine -> is there a way we can
-                    # allow the latter, while forbidding the former?
-                    raise ValueError("Not calling zero_grad breaks accounting")
-
-                if hasattr(p, "grad_sample"):
-                    has_grad_sample = True
-                    break
-
-            if has_grad_sample:
-                optimizer.virtual_step()
-                module.zero_grad()
-
-        module.register_forward_pre_hook(
-            partial(
-                virtual_step_hook,
-                optimizer=optimizer,
-            )
-        )
-
         return module, optimizer, data_loader
 
-    #TODO: we need a test for that
+    # TODO: we need a test for that
     def make_private_with_epsilon(
         self,
         module: nn.Module,
@@ -120,14 +97,21 @@ class PrivacyEngine:
     def _prepare_model(
         self,
         module: nn.Module,
+        max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        retain_grad_sample: bool = False,
     ) -> GradSampleModule:
         if isinstance(module, GradSampleModule):
             return module
         else:
             return GradSampleModule(
-                module, batch_first=batch_first, loss_reduction=loss_reduction
+                module,
+                batch_first=batch_first,
+                loss_reduction=loss_reduction,
+                clipper=FlatGradientClipper(
+                    max_grad_norm=max_grad_norm, retain_grad_sample=retain_grad_sample
+                ),
             )
 
     def _prepare_optimizer(

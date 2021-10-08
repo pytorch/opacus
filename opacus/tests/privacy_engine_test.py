@@ -116,6 +116,7 @@ class PrivacyEngine_test(unittest.TestCase):
             data_loader=dl,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
+            retain_grad_sample=True,
         )
         if not ignore_poisson_sampling:
             dl = poisson_dl
