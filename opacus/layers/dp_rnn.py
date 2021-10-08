@@ -13,6 +13,14 @@ from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_sequenc
 from .param_rename import ParamRenamedMixin
 
 
+# TODO: explain max_batch_len in grad_sample.dp_rnn
+
+def apply_permutation(tensor: torch.Tensor, dim: int, permutation: Optional[torch.Tensor]):
+    if permutation is None:
+        return tensor
+    return tensor.index_select(dim, permutation)
+
+
 def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
     r"""
     Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).
@@ -303,8 +311,12 @@ class DPRNNBaseNew(ParamRenamedMixin, nn.Module):
         if proj_size >= hidden_size:
             raise ValueError("proj_size has to be smaller than hidden_size")
 
-        self._flat_weights_names = []
-        self._all_weights = []
+        self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else None
+        self.cells = []
+        self.cell_layer = []
+        self.cell_direction = []
+
+        rename_map = {}
         for layer in range(num_layers):
             for direction in range(num_directions):
                 layer_input_size = input_size if layer == 0 else hidden_size * num_directions
@@ -320,65 +332,259 @@ class DPRNNBaseNew(ParamRenamedMixin, nn.Module):
                 else:
                     raise ValueError("Unrecognized RNN mode: " + mode)
 
-                setattr(self, f'layer{layer}_direction{direction}_cell', cell)
+                self.cells.append(cell)
+                self.cell_layer.append(layer)
+                self.cell_direction.append(direction)
+
+                suffix = "_reverse" if direction == 1 else ""
+                cell_name = f'l{layer}{suffix}'
+                setattr(self, cell_name, cell)
+
+                components = ["weight"] + ["bias" if self.bias else []]
+                matrices = ["ih", "hh"]
+                for c in components:
+                    for m in matrices:
+                        rename_map[f"{cell_name}.{m}.{c}"] = f"{c}_{m}_{cell_name}"
+        self.set_rename_map(rename_map)
 
     def forward(
             self,
             input: Union[torch.Tensor, PackedSequence],
-            hx: Optional[torch.Tensor] = None) -> Tuple[Union[torch.Tensor, PackedSequence], torch.Tensor]:
+            hx: Optional[torch.Tensor] = None
+    ) -> Tuple[Union[torch.Tensor, PackedSequence], torch.Tensor]:
+        num_directions = 2 if self.bidirectional else 1
+
         is_packed = isinstance(input, PackedSequence)
         if is_packed:
-            input, batch_sizes, sorted_indices, unsorted_indices = input
+            input_data, batch_sizes, sorted_indices, unsorted_indices = input
+            x = input_data.split(tuple(batch_sizes))
+
+            seq_length = len(batch_sizes)
             max_batch_size = int(batch_sizes[0])
+
+            for cell in self.cells:
+                cell.set_max_batch_length(max_batch_size)
         else:
-            assert isinstance(input, torch.Tensor)
             batch_sizes = None
-            max_batch_size = input.size(0) if self.batch_first else input.size(1)
             sorted_indices = None
             unsorted_indices = None
 
-        assert isinstance(input, torch.Tensor)
+            assert isinstance(input, torch.Tensor)
+            x = self._rearrange_batch_dim(input)
+
+            seq_length = x.shape[0]
+            max_batch_size = x.shape[1]
+
         if hx is None:
-            num_directions = 2 if self.bidirectional else 1
-            hx = torch.zeros(self.num_layers * num_directions,
-                             max_batch_size, self.hidden_size,
-                             dtype=input.dtype, device=input.device)
+            zeros = torch.zeros(
+                self.num_layers * num_directions,
+                max_batch_size,
+                self.hidden_size,
+                dtype=input.dtype if not is_packed else input_data.dtype,
+                device=input.device if not is_packed else input_data.device,
+            )
+            hx = zeros
         else:
             # Each batch of the hidden state should match the input sequence that
             # the user believes he/she is passing in.
-            hx = self.permute_hidden(hx, sorted_indices)
-
+            hx = apply_permutation(hx, 1, sorted_indices)
         assert hx is not None
-        self.check_forward_args(input, hx, batch_sizes)
 
-        # TODO: implement forward pass here
-        raise NotImplementedError
+        # TODO: fix checks
+        #self.check_forward_args(input, hx, batch_sizes)
 
-        output: Union[torch.Tensor, PackedSequence]
-        hidden: torch.Tensor
+        #####################################################################################
+        # https://github.com/pytorch/pytorch/issues/4930
+
+        # T = seq_length
+        # B = max_batch_size
+        # L = num_layers
+        # P = num_directions
+
+        # D = input_size
+        # H = hidden_size
+
+        # h_0s = state_init = hx
+        #    size [L, P, B, H]
+
+
+        ####### APPLY LAYERS
+        hs = []
+
+        # x = input
+        # unpack: [T, B, D]
+        # packed: tuple T x [B, D]
+
+        # hx
+        # unpack: [L*P, B, H]
+        # packed: [L*P, B, H]
+
+        # output
+        # out: [T, B, P*H] / tuple T x [B, P*H]
+        # h_0: [L*P, B, H]
+
+        layer_outs = []
+        #out_by_direction = {}  # last layer output {0: forward, 1: backward}
+        layer_hs = []
+
+        for cell, layer, direction, h0 in zip(self.cells, self.cell_layer, self.cell_direction, hx):
+
+            # apply single direction layer (with dropout)
+            out_layer, h_layer = self.forward_layer(
+                x if layer == 0 else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
+                h0, # [B, H]
+                batch_sizes,
+                cell=cell,
+                max_batch_size=max_batch_size,
+                seq_length=seq_length,
+                is_packed=is_packed,
+                reverse_layer=(direction == 1),
+            )
+
+            # out_layer: [T, B, H] / tuple T x [B, H]
+            # h_layer: [B, H]
+
+            layer_hs.append(h_layer)
+            layer_outs.append(out_layer)
+
+            if direction == num_directions - 1:
+                # aggregate all outputs to y
+
+                if is_packed:
+                    output = [ # tuple T x [B, H*P]
+                        torch.cat([
+                            layer_out[i]
+                            for layer_out in layer_outs
+                        ], dim=1)
+                        for i in range(seq_length)
+                    ]
+
+                    # TODO: check if this can be simplified
+                    # seq_lengths = _compute_seq_lengths(batch_sizes)
+                    # packed_data, _, _, _ = pack_padded_sequence(
+                    #     pad_sequence(x, batch_first=False), seq_lengths, batch_first=True
+                    # )
+
+                else:
+                    # [T, B, P*H]
+                    output = torch.cat(layer_outs, dim=2)
+
+                layer_outs = []
 
         if is_packed:
-            output = PackedSequence(output, batch_sizes, sorted_indices, unsorted_indices)
-        return output, self.permute_hidden(hidden, unsorted_indices)
+            # [TB, P*H]
+            packed_data = torch.cat(output, dim=0) # [TB, P*H]
+            output = PackedSequence(packed_data, batch_sizes, sorted_indices, unsorted_indices)
+        else:
+            output = self._rearrange_batch_dim(output)
 
-    def _make_rename_dict(self, num_layers, bias, bidirectional):
-        d = {}
-        components = ["weight"] + ["bias" if bias else []]
-        matrices = ["ih", "hh"]
-        for i in range(num_layers):
-            for c in components:
-                for m in matrices:
-                    nn_name = f"{c}_{m}_l{i}"
-                    if bidirectional:
-                        d[f"layers.{i}.forward_layer.cell.{m}.{c}"] = nn_name
-                        d[f"layers.{i}.reverse_layer.cell.{m}.{c}"] = (
-                                nn_name + "_reverse"
-                        )
-                    else:
-                        d[f"layers.{i}.cell.{m}.{c}"] = nn_name
+        hidden = torch.stack(layer_hs, dim=0)  # [L * P, B, H]
+        hidden = apply_permutation(hidden, 1, unsorted_indices)
 
-        return d
+        return output, hidden
 
+    def forward_layer(
+            self,
+            x: Union[torch.Tensor, PackedSequence],
+            h_0: torch.Tensor,
+            batch_sizes: torch.Tensor,
+            cell: DPRNNCellBase,
+            max_batch_size: int,
+            seq_length: int,
+            is_packed: bool,
+            reverse_layer: bool,
+    ) -> Tuple[Union[torch.Tensor, List[torch.Tensor]], torch.Tensor]:
+        if is_packed:
+            if reverse_layer:
+                x = tuple(reversed(x))
+                batch_sizes = batch_sizes.flip(0)
+        else:
+            if reverse_layer:
+                x = x.flip(0)
+            x = torch.unbind(x, dim=0)
+
+        h_n = [h_0]
+        batch_size_prev = h_0.shape[0]
+
+        for t in range(seq_length):
+            if is_packed:
+                batch_size_t = batch_sizes[t].item()
+                delta = batch_size_t - batch_size_prev
+                if delta > 0:
+                    h_cat = torch.cat((h_n[t], h_0[batch_size_prev:batch_size_t, :]), 0)
+                    h_next = cell(x[t], h_cat, batch_size_t)
+                else:
+                    h_next = cell(x[t], h_n[t], batch_size_t)
+            else:
+                h_next = cell(x[t], h_n[t])
+
+            if self.dropout:
+                h_next = self.dropout_layer(h_next)
+
+            h_n.append(h_next)
+            batch_size_prev = h_next.shape[0]
+
+        if is_packed:
+            seq_lengths = _compute_seq_lengths(batch_sizes)
+            h_temp = h_n[1:] # list T x [B, H]
+
+            # h_last = _compute_last_states(h_temp, seq_lengths)
+            h_last = torch.zeros(max_batch_size, self.hidden_size) # [B, H]
+            for i, seq_len in enumerate(seq_lengths):
+                h_last[i, :] = h_temp[seq_len - 1][i, :]
+            if reverse_layer:
+                h_temp = tuple(reversed(h_temp))
+
+        else:
+            h_n = torch.stack(h_n[1:], dim=0)  # [T, B, H], init step not part of output
+
+            h_temp, h_last = (
+                h_n.flip(0) if reverse_layer else h_n,  # Flip the output...
+                h_n[-1],  # ... But not the states
+            )
+
+        return h_temp, h_last
+
+    def _rearrange_batch_dim(self, x: torch.Tensor) -> torch.Tensor:
+        if self.batch_first:  # batch is by default in second dimension
+            x = x.transpose(0, 1)
+        return x
+
+    def check_input(self, input: torch.Tensor, batch_sizes: Optional[torch.Tensor]) -> None:
+        expected_input_dim = 2 if batch_sizes is not None else 3
+        if input.dim() != expected_input_dim:
+            raise RuntimeError(
+                'input must have {} dimensions, got {}'.format(
+                    expected_input_dim, input.dim()))
+        if self.input_size != input.shape[-1]:
+            raise RuntimeError(
+                'input.size(-1) must be equal to input_size. Expected {}, got {}'.format(
+                    self.input_size, input.shape[-1]))
+
+    def get_expected_hidden_size(self, input: torch.Tensor, batch_sizes: Optional[torch.Tensor]) -> Tuple[int, int, int]:
+        if batch_sizes is not None:
+            mini_batch = int(batch_sizes[0])
+        else:
+            mini_batch = input.shape[0] if self.batch_first else input.shape[1]
+        num_directions = 2 if self.bidirectional else 1
+        if self.proj_size > 0:
+            expected_hidden_size = (self.num_layers * num_directions,
+                                    mini_batch, self.proj_size)
+        else:
+            expected_hidden_size = (self.num_layers * num_directions,
+                                    mini_batch, self.hidden_size)
+        return expected_hidden_size
+
+    def check_hidden_size(self, hx: torch.Tensor, expected_hidden_size: Tuple[int, int, int],
+                          msg: str = 'Expected hidden size {}, got {}') -> None:
+        if hx.size() != expected_hidden_size:
+            raise RuntimeError(msg.format(expected_hidden_size, list(hx.size())))
+
+    def check_forward_args(self, input: torch.Tensor, hidden: torch.Tensor, batch_sizes: Optional[torch.Tensor]):
+        self.check_input(input, batch_sizes)
+        expected_hidden_size = self.get_expected_hidden_size(input, batch_sizes)
+
+        self.check_hidden_size(hidden, expected_hidden_size)
 
 
 class DPRNNLayer(nn.Module):
@@ -696,7 +902,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         return d
 
 
-class DPRNN(DPRNNBase):
+class DPRNN(DPRNNBaseNew):
 
     def __init__(
             self,
@@ -710,6 +916,7 @@ class DPRNN(DPRNNBase):
             nonlinearity: Literal['tanh', 'relu'] = 'tanh',
     ):
         super().__init__(
+            "RNN_TANH" if nonlinearity == "tanh" else "RNN_RELU",
             input_size,
             hidden_size,
             num_layers=num_layers,
@@ -717,8 +924,6 @@ class DPRNN(DPRNNBase):
             batch_first=batch_first,
             dropout=dropout,
             bidirectional=bidirectional,
-            cell_type=DPRNNCell,
-            nonlinearity=nonlinearity,
         )
 
 
