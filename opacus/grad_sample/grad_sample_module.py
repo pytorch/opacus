@@ -281,10 +281,6 @@ class GradSampleModule(nn.Module):
                 self.clipper.clip(list(self.parameters()))
 
     def is_finished_backward(self):
-        # for p in self.parameters():
-        #     if p.requires_grad and hasattr(p, "_tmp_grad_sample"):
-        #         return False
-
         for m in self.trainable_modules():
             if len(m.activations) > 0:
                 return False
