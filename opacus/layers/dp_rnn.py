@@ -16,13 +16,13 @@ from .param_rename import ParamRenamedMixin
 
 # TODO: explain max_batch_len in grad_sample.dp_rnn
 
-def apply_permutation(tensor: torch.Tensor, dim: int, permutation: Optional[torch.Tensor]):
+def apply_permutation(tensor: Tensor, dim: int, permutation: Optional[Tensor]):
     if permutation is None:
         return tensor
     return tensor.index_select(dim, permutation)
 
 
-def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
+def _compute_seq_lengths(batch_sizes: Tensor) -> List[int]:
     r"""
     Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).
 
@@ -99,10 +99,10 @@ class DPRNNCell(DPRNNCellBase):
 
     def forward(
         self,
-        input: torch.Tensor,
-        hx: Optional[torch.Tensor] = None,
+        input: Tensor,
+        hx: Optional[Tensor] = None,
         batch_size_t: Optional[int] = None,
-    ) -> torch.Tensor:
+    ) -> Tensor:
         if hx is None:
             hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
 
@@ -123,10 +123,10 @@ class DPGRUCell(DPRNNCellBase):
 
     def forward(
         self,
-        input: torch.Tensor,
-        hx: Optional[torch.Tensor] = None,
+        input: Tensor,
+        hx: Optional[Tensor] = None,
         batch_size_t: Optional[int] = None,
-    ) -> torch.Tensor:
+    ) -> Tensor:
         if hx is None:
             hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
 
@@ -150,10 +150,10 @@ class DPLSTMCell(DPRNNCellBase):
 
     def forward(
         self,
-        input: torch.Tensor,
-        hx: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        input: Tensor,
+        hx: Optional[Tuple[Tensor, Tensor]] = None,
         batch_size_t: Optional[int] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[Tensor, Tensor]:
         if hx is None:
             zeros = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
             hx = (zeros, zeros)
@@ -277,9 +277,9 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
 
     def forward(
             self,
-            input: Union[torch.Tensor, PackedSequence],
-            state_init: Optional[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]] = None
-    ) -> Tuple[Union[torch.Tensor, PackedSequence], Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]]:
+            input: Union[Tensor, PackedSequence],
+            state_init: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None
+    ) -> Tuple[Union[Tensor, PackedSequence], Union[Tensor, Tuple[Tensor, Tensor]]]:
         num_directions = 2 if self.bidirectional else 1
 
         is_packed = isinstance(input, PackedSequence)
@@ -297,7 +297,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             sorted_indices = None
             unsorted_indices = None
 
-            assert isinstance(input, torch.Tensor)
+            assert isinstance(input, Tensor)
             x = self._rearrange_batch_dim(input)
 
             seq_length = x.shape[0]
@@ -422,16 +422,16 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
 
     def forward_layer(
             self,
-            x: Union[torch.Tensor, PackedSequence],
-            h_0: torch.Tensor,
-            c_0: Optional[torch.Tensor],
-            batch_sizes: torch.Tensor,
+            x: Union[Tensor, PackedSequence],
+            h_0: Tensor,
+            c_0: Optional[Tensor],
+            batch_sizes: Tensor,
             cell: DPRNNCellBase,
             max_batch_size: int,
             seq_length: int,
             is_packed: bool,
             reverse_layer: bool,
-    ) -> Tuple[Union[torch.Tensor, List[torch.Tensor]], torch.Tensor, torch.Tensor]:
+    ) -> Tuple[Union[Tensor, List[Tensor]], Tensor, Tensor]:
         r"""
         TODO: Rewrite this
         Implements the forward pass of the DPLSTMLayer when a sequence is given in input.
@@ -517,12 +517,12 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
 
         return h_temp, h_last, c_last
 
-    def _rearrange_batch_dim(self, x: torch.Tensor) -> torch.Tensor:
+    def _rearrange_batch_dim(self, x: Tensor) -> Tensor:
         if self.batch_first:  # batch is by default in second dimension
             x = x.transpose(0, 1)
         return x
 
-    def check_input(self, input: torch.Tensor, batch_sizes: Optional[torch.Tensor]) -> None:
+    def check_input(self, input: Tensor, batch_sizes: Optional[Tensor]) -> None:
         expected_input_dim = 2 if batch_sizes is not None else 3
         if input.dim() != expected_input_dim:
             raise RuntimeError(
@@ -533,7 +533,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
                 'input.size(-1) must be equal to input_size. Expected {}, got {}'.format(
                     self.input_size, input.shape[-1]))
 
-    def get_expected_hidden_size(self, input: torch.Tensor, batch_sizes: Optional[torch.Tensor]) -> Tuple[int, int, int]:
+    def get_expected_hidden_size(self, input: Tensor, batch_sizes: Optional[Tensor]) -> Tuple[int, int, int]:
         if batch_sizes is not None:
             mini_batch = int(batch_sizes[0])
         else:
@@ -547,12 +547,12 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
                                     mini_batch, self.hidden_size)
         return expected_hidden_size
 
-    def check_hidden_size(self, hx: torch.Tensor, expected_hidden_size: Tuple[int, int, int],
+    def check_hidden_size(self, hx: Tensor, expected_hidden_size: Tuple[int, int, int],
                           msg: str = 'Expected hidden size {}, got {}') -> None:
         if hx.size() != expected_hidden_size:
             raise RuntimeError(msg.format(expected_hidden_size, list(hx.size())))
 
-    def check_forward_args(self, input: torch.Tensor, hidden: torch.Tensor, batch_sizes: Optional[torch.Tensor]):
+    def check_forward_args(self, input: Tensor, hidden: Tensor, batch_sizes: Optional[Tensor]):
         self.check_input(input, batch_sizes)
         expected_hidden_size = self.get_expected_hidden_size(input, batch_sizes)
 
