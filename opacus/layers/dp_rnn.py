@@ -228,7 +228,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         self.dropout = float(dropout)
         self.bidirectional = bidirectional
         self.proj_size = proj_size
-        num_directions = 2 if bidirectional else 1
+        self.num_directions = 2 if bidirectional else 1
 
         if not isinstance(dropout, numbers.Number) or not 0 <= dropout <= 1 or \
                 isinstance(dropout, bool):
@@ -249,31 +249,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             raise ValueError("proj_size has to be smaller than hidden_size")
 
         self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else None
-        self.cells = []
-        self.cell_layer = []
-        self.cell_direction = []
-
-        rename_map = {}
-        for layer in range(num_layers):
-            for direction in range(num_directions):
-                layer_input_size = input_size if layer == 0 else hidden_size * num_directions
-
-                cell = self.cell_type(layer_input_size, hidden_size, bias=bias, **self.cell_params)
-
-                self.cells.append(cell)
-                self.cell_layer.append(layer)
-                self.cell_direction.append(direction)
-
-                suffix = "_reverse" if direction == 1 else ""
-                cell_name = f'l{layer}{suffix}'
-                setattr(self, cell_name, cell)
-
-                components = ["weight"] + ["bias" if self.bias else []]
-                matrices = ["ih", "hh"]
-                for c in components:
-                    for m in matrices:
-                        rename_map[f"{cell_name}.{m}.{c}"] = f"{c}_{m}_{cell_name}"
-        self.set_rename_map(rename_map)
+        self.cells = self.initialize_cells()
 
     def forward(
             self,
@@ -361,48 +337,45 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         # out: [T, B, P*H] / tuple T x [B, P*H]
         # h_0: [L*P, B, H]
 
-        layer_outs = []
         hs = []
         cs = [] # list of None if no cell state
 
-        for cell, layer, direction, h0, c0 in zip(self.cells, self.cell_layer, self.cell_direction, h_0s, c_0s):
+        import itertools
+        for layer, directions in self.iterate_layers(self.cells, h_0s, c_0s):
 
-            # apply single direction layer (with dropout)
-            out_layer, h, c = self.forward_layer(
-                x if layer == 0 else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
-                h0, # [B, H]
-                c0,
-                batch_sizes,
-                cell=cell,
-                max_batch_size=max_batch_size,
-                seq_length=seq_length,
-                is_packed=is_packed,
-                reverse_layer=(direction == 1),
-            )
+            layer_outs = []
 
-            # out_layer: [T, B, H] / tuple T x [B, H]
-            # h_layer: [B, H]
+            for direction, (cell, h0, c0) in directions:
+                # apply single direction layer (with dropout)
+                out_layer, h, c = self.forward_layer(
+                    x if layer == 0 else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
+                    h0, # [B, H]
+                    c0,
+                    batch_sizes,
+                    cell=cell,
+                    max_batch_size=max_batch_size,
+                    seq_length=seq_length,
+                    is_packed=is_packed,
+                    reverse_layer=(direction == 1),
+                )
 
-            cs.append(c)
-            hs.append(h)
+                # out_layer: [T, B, H] / tuple T x [B, H]
+                # h_layer: [B, H]
 
-            layer_outs.append(out_layer)
+                cs.append(c)
+                hs.append(h)
+                layer_outs.append(out_layer)
 
-            if direction == num_directions - 1:
-                # aggregate all outputs to y
-
-                if is_packed:
-                    output = [ # tuple T x [B, H*P]
-                        torch.cat([
-                            layer_out[i]
-                            for layer_out in layer_outs
-                        ], dim=1)
-                        for i in range(seq_length)
-                    ]
-                else:
-                    output = torch.cat(layer_outs, dim=2) # [T, B, P*H]
-
-                layer_outs = []
+            if is_packed:
+                output = [ # tuple T x [B, H*P]
+                    torch.cat([
+                        layer_out[i]
+                        for layer_out in layer_outs
+                    ], dim=1)
+                    for i in range(seq_length)
+                ]
+            else:
+                output = torch.cat(layer_outs, dim=2) # [T, B, P*H]
 
         if is_packed:
             packed_data = torch.cat(output, dim=0) # [TB, P*H]
@@ -495,7 +468,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             batch_size_prev = h_next.shape[0]
 
         if is_packed:
-            seq_lengths = _compute_seq_lengths(batch_sizes)
+            seq_lengths = _compute_seq_lengths(batch_sizes) # TODO: consider simplifying
             h_temp = h_n[1:] # list T x [B, H]
             c_temp = c_n[1:]
 
@@ -516,6 +489,36 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             c_last = c_n[-1]
 
         return h_temp, h_last, c_last
+
+    def iterate_layers(self, *args):
+        for layer in range(self.num_layers):
+            yield layer, (
+                (direction, tuple(arg[self.num_directions*layer + direction] for arg in args))
+                for direction in range(self.num_directions)
+            )
+
+    def initialize_cells(self):
+        cells = []
+        rename_map = {}
+        for layer, directions in self.iterate_layers():
+            for direction, _ in directions:
+                layer_input_size = self.input_size if layer == 0 else self.hidden_size * self.num_directions
+
+                cell = self.cell_type(layer_input_size, self.hidden_size, bias=self.bias, **self.cell_params)
+                cells.append(cell)
+
+                suffix = "_reverse" if direction == 1 else ""
+                cell_name = f"l{layer}{suffix}"
+                setattr(self, cell_name, cell)
+
+                components = ["weight"] + ["bias" if self.bias else []]
+                matrices = ["ih", "hh"]
+                for c in components:
+                    for m in matrices:
+                        rename_map[f"{cell_name}.{m}.{c}"] = f"{c}_{m}_{cell_name}"
+
+        self.set_rename_map(rename_map)
+        return cells
 
     def _rearrange_batch_dim(self, x: Tensor) -> Tensor:
         if self.batch_first:  # batch is by default in second dimension
