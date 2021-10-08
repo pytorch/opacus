@@ -21,8 +21,8 @@ Example:
     >>> orders = range(2, max_order + 1)
     >>> rdp = np.zeros_like(orders, dtype=float)
     >>> for q, sigma, steps in parameters:
-    >>>     rdp += privacy_analysis.compute_rdp(q, sigma, steps, orders)
-    >>> epsilon, opt_order = privacy_analysis.get_privacy_spent(orders, rdp, delta)
+    >>>     rdp += compute_rdp(q, sigma, steps, orders)
+    >>> epsilon, opt_order = get_privacy_spent(orders, rdp, delta)
 
 """
 
@@ -311,48 +311,3 @@ def get_privacy_spent(
 
     idx_opt = np.nanargmin(eps)  # Ignore NaNs
     return eps[idx_opt], orders_vec[idx_opt]
-
-
-def get_noise_multiplier(
-    target_epsilon: float,
-    target_delta: float,
-    sample_rate: float,
-    epochs: int,
-    alphas: Optional[List[float]] = None,
-    sigma_min: Optional[float] = 0.01,
-    sigma_max: Optional[float] = 10.0,
-) -> float:
-    r"""
-    Computes the noise level sigma to reach a total budget of (target_epsilon, target_delta)
-    at the end of epochs, with a given sample_rate
-    Args:
-        target_epsilon: the privacy budget's epsilon
-        target_delta: the privacy budget's delta
-        sample_rate: the sampling rate (usually batch_size / n_data)
-        epochs: the number of epochs to run
-        alphas: the list of orders at which to compute RDP
-    Returns:
-        The noise level sigma to ensure privacy budget of (target_epsilon, target_delta)
-    """
-    if alphas is None:
-        alphas = DEFAULT_ALPHAS
-
-    eps = float("inf")
-    while eps > target_epsilon:
-        sigma_max = 2 * sigma_max
-        rdp = compute_rdp(sample_rate, sigma_max, epochs / sample_rate, alphas)
-        eps = get_privacy_spent(alphas, rdp, target_delta)[0]
-        if sigma_max > 2000:
-            raise ValueError("The privacy budget is too low.")
-
-    while sigma_max - sigma_min > 0.01:
-        sigma = (sigma_min + sigma_max) / 2
-        rdp = compute_rdp(sample_rate, sigma, epochs / sample_rate, alphas)
-        eps = get_privacy_spent(alphas, rdp, target_delta)[0]
-
-        if eps < target_epsilon:
-            sigma_max = sigma
-        else:
-            sigma_min = sigma
-
-    return sigma

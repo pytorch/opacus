@@ -3,16 +3,13 @@
 from functools import partial
 from typing import List, Optional
 
-from opacus.accountant import RDPAccountant
+from opacus.accountants import RDPAccountant
+from opacus.accountants.rdp import get_noise_multiplier
 from opacus.data_loader import DPDataLoader
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizer import DPOptimizer
-from opacus.privacy_analysis import get_noise_multiplier
 from torch import nn, optim
 from torch.utils.data import DataLoader
-
-
-DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
 
 class PrivacyEngine:
@@ -84,6 +81,7 @@ class PrivacyEngine:
 
         return module, optimizer, data_loader
 
+    #TODO: we need a test for that
     def make_private_with_epsilon(
         self,
         module: nn.Module,
@@ -159,11 +157,8 @@ class PrivacyEngine:
         return DPDataLoader.from_data_loader(data_loader)
 
     # TODO: default delta value?
-    def get_privacy_spent(self, delta, alphas=None):
-        if not alphas:
-            alphas = DEFAULT_ALPHAS
-
-        return self.accountant.get_privacy_spent(delta, alphas)
+    def get_epsilon(self, delta, alphas=None):
+        return self.accountant.get_privacy_spent(delta)[0]
 
 
 class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):
