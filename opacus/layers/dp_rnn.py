@@ -166,28 +166,20 @@ class DPLSTMCell(DPRNNCellBase):
                 h_prev[:batch_size_t, :]
             )  # [batch_size_t, 4*D]
 
-        i_t_input, f_t_input, g_t_input, o_t_input = torch.split(
-            gates, self.hidden_size, 1
-        )
-        i_t = torch.sigmoid(
-            i_t_input
-        )  # [B, D] or [batch_size_t, D] if batch_size_t is not None
-        f_t = torch.sigmoid(
-            f_t_input
-        )  # [B, D] or [batch_size_t, D] if batch_size_t is not None
-        g_t = torch.tanh(
-            g_t_input
-        )  # [B, D] or [batch_size_t, D] if batch_size_t is not None
-        o_t = torch.sigmoid(
-            o_t_input
-        )  # [B, D] or [batch_size_t, D] if batch_size_t is not None
+        i_t_input, f_t_input, g_t_input, o_t_input = torch.split(gates, self.hidden_size, 1)
+
+        # [B, D] or [batch_size_t, D] if batch_size_t is not None
+        i_t = torch.sigmoid(i_t_input)
+        f_t = torch.sigmoid(f_t_input)
+        g_t = torch.tanh(g_t_input)
+        o_t = torch.sigmoid(o_t_input)
+
         if batch_size_t is None:
             c_t = f_t * c_prev + i_t * g_t
         else:
             c_t = f_t * c_prev[:batch_size_t, :] + i_t * g_t
 
         h_t = o_t * torch.tanh(c_t)
-
         return h_t, c_t
 
 
@@ -334,7 +326,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
                     self.hidden_size,
                     dtype=input.dtype if not is_packed else input_data.dtype,
                     device=input.device if not is_packed else input_data.device,
-                    )
+                )
             else:
                 c_0s = apply_permutation(c_0s, 1, sorted_indices)
         else:
