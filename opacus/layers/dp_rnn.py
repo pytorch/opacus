@@ -8,7 +8,7 @@ from typing import List, Optional, Tuple, Union, Type, Literal
 
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_sequence
+from torch.nn.utils.rnn import PackedSequence
 
 from .param_rename import ParamRenamedMixin
 
@@ -48,79 +48,6 @@ def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
     running_seq_lengths += batch_sizes[-1].item() * [running_seq]
     running_seq_lengths.reverse()
     return running_seq_lengths
-
-
-def _compute_last_states(
-        h_n: List[torch.Tensor], seq_lengths: List[int]
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    max_batch_size = len(seq_lengths)
-    hidden_size = h_n[0].shape[-1]
-    h_last = torch.zeros(max_batch_size, hidden_size)
-
-    for i, seq_len in enumerate(seq_lengths):
-        h_last[i, :] = h_n[seq_len - 1][i, :]
-
-    return h_last
-
-
-def _compute_last_states_lstm(
-    h_n: List[torch.Tensor], c_n: List[torch.Tensor], seq_lengths: List[int]
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    r"""
-    Given h and c values of all time steps, this function computes the h and c values for each sequence at their last timestep (this can vary across sequences with different sequence lengths).
-
-    Args:
-        h_n: A list of hidden state values across all timesteps.
-        c_n: A list of cell state values across all timesteps.
-        seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence. This can be computed using the _compute_seq_lengths function.
-
-    Returns:
-        h_last: Contains the last hidden state values for each of the sequences.
-                If the i'th sequence has a length of l_i, then h_last[i,:] contains the hidden state corresponding to the i'th sequence at timestep l_i.
-        c_last: The structure is the same as h_last, except that it contains the last cell state values for each of the sequences.
-    """
-
-    max_batch_size = len(seq_lengths)
-    hidden_size = h_n[0].shape[-1]
-    h_last = torch.zeros(max_batch_size, hidden_size)
-    c_last = torch.zeros(max_batch_size, hidden_size)
-
-    for i, seq_len in enumerate(seq_lengths):
-        h_last[i, :] = h_n[seq_len - 1][i, :]
-        c_last[i, :] = c_n[seq_len - 1][i, :]
-
-    return h_last, c_last
-
-
-def _concat_sequence_directions(
-    forward: Union[List[torch.Tensor], Tuple[torch.Tensor]],
-    reverse: Union[List[torch.Tensor], Tuple[torch.Tensor]],
-    dim: int,
-) -> Tuple[torch.Tensor]:
-    r"""
-    Given two list/tuple of same length containing tensors, this function returns a concatenation along dimension d. So, output[i] : concatenation of forward[i] and reverse[i] along dimension dim.
-    forward[i] and reverse[i] should have the same shape. This function is used for concatenating the outputs of the forward and reverse layer of a bidirectional LSTM.
-
-    Args:
-        forward: list/tuple containing n tensors, representing the output of the forward layer.
-        reverse: list/tuple containing n tensors, representing the output of the backward layer.
-        dim: the dimension along which the sequence of tensors within forward and reverse will be concatenated.
-    Returns:
-        output: list/tuple containing n concatenated tensors.
-    """
-
-    if len(forward) != len(reverse):
-        raise ValueError(
-            "The forward and reverse layer output sequences should have the same length"
-        )
-
-    seq_length = len(forward)
-    output = [0] * seq_length
-
-    for i in range(seq_length):
-        output[i] = torch.cat((forward[i], reverse[i]), dim=dim)
-
-    return output
 
 
 class RNNLinear(nn.Linear):
@@ -185,8 +112,7 @@ class DPRNNCell(DPRNNCellBase):
         elif self.nonlinearity == 'relu':
             h_t = torch.relu(gates)
         else:
-            h_t = gates
-            raise RuntimeError("Unknown nonlinearity: {}".format(self.nonlinearity))
+            raise RuntimeError(f"Unknown nonlinearity: {self.nonlinearity}")
         return h_t
 
 
