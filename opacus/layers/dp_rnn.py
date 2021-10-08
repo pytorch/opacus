@@ -7,6 +7,7 @@ import warnings
 from typing import List, Optional, Tuple, Union, Type, Literal
 
 import torch
+from torch import Tensor
 import torch.nn as nn
 from torch.nn.utils.rnn import PackedSequence
 
@@ -326,7 +327,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
                     self.hidden_size,
                     dtype=input.dtype if not is_packed else input_data.dtype,
                     device=input.device if not is_packed else input_data.device,
-                )
+                    )
             else:
                 c_0s = apply_permutation(c_0s, 1, sorted_indices)
         else:
@@ -362,12 +363,12 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
 
         layer_outs = []
         hs = []
-        cs = []
+        cs = [] # list of None if no cell state
 
         for cell, layer, direction, h0, c0 in zip(self.cells, self.cell_layer, self.cell_direction, h_0s, c_0s):
 
             # apply single direction layer (with dropout)
-            out_layer, state_layer = self.forward_layer(
+            out_layer, h, c = self.forward_layer(
                 x if layer == 0 else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
                 h0, # [B, H]
                 c0,
@@ -382,11 +383,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             # out_layer: [T, B, H] / tuple T x [B, H]
             # h_layer: [B, H]
 
-            if self.has_cell_state:
-                h, c = state_layer
-                cs.append(c)
-            else:
-                h = state_layer
+            cs.append(c)
             hs.append(h)
 
             layer_outs.append(out_layer)
@@ -434,7 +431,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             seq_length: int,
             is_packed: bool,
             reverse_layer: bool,
-    ) -> Tuple[Union[torch.Tensor, List[torch.Tensor]], torch.Tensor]:
+    ) -> Tuple[Union[torch.Tensor, List[torch.Tensor]], torch.Tensor, torch.Tensor]:
         r"""
         TODO: Rewrite this
         Implements the forward pass of the DPLSTMLayer when a sequence is given in input.
@@ -464,8 +461,8 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             x = torch.unbind(x, dim=0)
 
         h_n = [h_0]
-        if self.has_cell_state:
-            c_n = [c_0]
+        c_n = [c_0]
+        c_next = c_0
         batch_size_prev = h_0.shape[0]
 
         for t in range(seq_length):
@@ -494,20 +491,17 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
                 h_next = self.dropout_layer(h_next)
 
             h_n.append(h_next)
-            if self.has_cell_state:
-                c_n.append(c_next)
+            c_n.append(c_next)
             batch_size_prev = h_next.shape[0]
 
         if is_packed:
             seq_lengths = _compute_seq_lengths(batch_sizes)
             h_temp = h_n[1:] # list T x [B, H]
-            if self.has_cell_state:
-                c_temp = c_n[1:]
+            c_temp = c_n[1:]
 
             # h_last = _compute_last_states(h_temp, seq_lengths)
             h_last = torch.zeros(max_batch_size, self.hidden_size) # [B, H]
-            if self.has_cell_state:
-                c_last = torch.zeros(max_batch_size, self.hidden_size) # [B, H]
+            c_last = torch.zeros(max_batch_size, self.hidden_size) if self.has_cell_state else None
             for i, seq_len in enumerate(seq_lengths):
                 h_last[i, :] = h_temp[seq_len - 1][i, :]
                 if self.has_cell_state:
@@ -519,13 +513,9 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             h_n = torch.stack(h_n[1:], dim=0)  # [T, B, H], init step not part of output
             h_temp = h_n.flip(0) if reverse_layer else h_n  # Flip the output...
             h_last = h_n[-1]  # ... But not the states
-            if self.has_cell_state:
-                c_last = c_n[-1]
+            c_last = c_n[-1]
 
-        if self.has_cell_state:
-            return h_temp, (h_last, c_last)
-        else:
-            return h_temp, h_last
+        return h_temp, h_last, c_last
 
     def _rearrange_batch_dim(self, x: torch.Tensor) -> torch.Tensor:
         if self.batch_first:  # batch is by default in second dimension
