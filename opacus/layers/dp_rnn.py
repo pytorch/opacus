@@ -135,6 +135,7 @@ class RNNLinear(nn.Linear):
 
 
 class DPRNNCellBase(nn.Module):
+    has_cell_state: bool = False
 
     def __init__(self, input_size: int, hidden_size: int, bias: bool, num_chunks: int) -> None:
         super(DPRNNCellBase, self).__init__()
@@ -215,10 +216,7 @@ class DPGRUCell(DPRNNCellBase):
 
 
 class DPLSTMCell(DPRNNCellBase):
-    """
-    Internal-only class. Implements *one* step of LSTM so that a LSTM layer can be seen as repeated
-    applications of this class.
-    """
+    has_cell_state = True
 
     def __init__(self, input_size: int, hidden_size: int, bias: bool):
         super(DPLSTMCell, self).__init__(input_size, hidden_size, bias, num_chunks=4)
@@ -274,6 +272,7 @@ RNN_CELL_TYPES = {
     "LSTM": (DPLSTMCell, {}),
 }
 
+
 class DPRNNBase(ParamRenamedMixin, nn.Module):
     def __init__(
             self,
@@ -300,6 +299,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             self.cell_type = mode
         if cell_params is not None:
             self.cell_params.update(cell_params)
+        self.has_cell_state = self.cell_type.has_cell_state
 
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -359,8 +359,8 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
     def forward(
             self,
             input: Union[torch.Tensor, PackedSequence],
-            hx: Optional[torch.Tensor] = None
-    ) -> Tuple[Union[torch.Tensor, PackedSequence], torch.Tensor]:
+            state_init: Optional[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]] = None
+    ) -> Tuple[Union[torch.Tensor, PackedSequence], Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]]:
         num_directions = 2 if self.bidirectional else 1
 
         is_packed = isinstance(input, PackedSequence)
@@ -384,20 +384,36 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             seq_length = x.shape[0]
             max_batch_size = x.shape[1]
 
-        if hx is None:
-            zeros = torch.zeros(
+        if self.has_cell_state:
+            h_0s, c_0s = state_init or (None, None)
+        else:
+            h_0s = state_init
+
+        if h_0s is None:
+            h_0s = torch.zeros(
                 self.num_layers * num_directions,
                 max_batch_size,
                 self.hidden_size,
                 dtype=input.dtype if not is_packed else input_data.dtype,
                 device=input.device if not is_packed else input_data.device,
             )
-            hx = zeros
         else:
-            # Each batch of the hidden state should match the input sequence that
-            # the user believes he/she is passing in.
-            hx = apply_permutation(hx, 1, sorted_indices)
-        assert hx is not None
+            h_0s = apply_permutation(h_0s, 1, sorted_indices)
+
+        if self.has_cell_state:
+            if c_0s is None:
+                c_0s = torch.zeros(
+                    self.num_layers * num_directions,
+                    max_batch_size,
+                    self.hidden_size,
+                    dtype=input.dtype if not is_packed else input_data.dtype,
+                    device=input.device if not is_packed else input_data.device,
+                    )
+            else:
+                c_0s = apply_permutation(c_0s, 1, sorted_indices)
+        else:
+            c_0s = [None] * len(h_0s)
+
 
         # TODO: fix checks
         #self.check_forward_args(input, hx, batch_sizes)
@@ -427,14 +443,16 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         # h_0: [L*P, B, H]
 
         layer_outs = []
-        layer_hs = []
+        hs = []
+        cs = []
 
-        for cell, layer, direction, h0 in zip(self.cells, self.cell_layer, self.cell_direction, hx):
+        for cell, layer, direction, h0, c0 in zip(self.cells, self.cell_layer, self.cell_direction, h_0s, c_0s):
 
             # apply single direction layer (with dropout)
-            out_layer, h_layer = self.forward_layer(
+            out_layer, state_layer = self.forward_layer(
                 x if layer == 0 else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
                 h0, # [B, H]
+                c0,
                 batch_sizes,
                 cell=cell,
                 max_batch_size=max_batch_size,
@@ -446,7 +464,13 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             # out_layer: [T, B, H] / tuple T x [B, H]
             # h_layer: [B, H]
 
-            layer_hs.append(h_layer)
+            if self.has_cell_state:
+                h, c = state_layer
+                cs.append(c)
+            else:
+                h = state_layer
+            hs.append(h)
+
             layer_outs.append(out_layer)
 
             if direction == num_directions - 1:
@@ -471,8 +495,13 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         else:
             output = self._rearrange_batch_dim(output)
 
-        hidden = torch.stack(layer_hs, dim=0)  # [L * P, B, H]
-        hidden = apply_permutation(hidden, 1, unsorted_indices)
+        hs = torch.stack(hs, dim=0)  # [L * P, B, H]
+        hs = apply_permutation(hs, 1, unsorted_indices)
+        if self.has_cell_state:
+            cs = torch.stack(cs, dim=0)  # [L * P, B, H]
+            cs = apply_permutation(cs, 1, unsorted_indices)
+
+        hidden = (hs, cs) if self.has_cell_state else hs
 
         return output, hidden
 
@@ -480,6 +509,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             self,
             x: Union[torch.Tensor, PackedSequence],
             h_0: torch.Tensor,
+            c_0: Optional[torch.Tensor],
             batch_sizes: torch.Tensor,
             cell: DPRNNCellBase,
             max_batch_size: int,
@@ -516,6 +546,8 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             x = torch.unbind(x, dim=0)
 
         h_n = [h_0]
+        if self.has_cell_state:
+            c_n = [c_0]
         batch_size_prev = h_0.shape[0]
 
         for t in range(seq_length):
@@ -524,38 +556,58 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
                 delta = batch_size_t - batch_size_prev
                 if delta > 0:
                     h_cat = torch.cat((h_n[t], h_0[batch_size_prev:batch_size_t, :]), 0)
-                    h_next = cell(x[t], h_cat, batch_size_t)
+                    if self.has_cell_state:
+                        c_cat = torch.cat((c_n[t], c_0[batch_size_prev:batch_size_t, :]), 0)
+                        h_next, c_next = cell(x[t], (h_cat, c_cat), batch_size_t)
+                    else:
+                        h_next = cell(x[t], h_cat, batch_size_t)
                 else:
-                    h_next = cell(x[t], h_n[t], batch_size_t)
+                    if self.has_cell_state:
+                        h_next, c_next = cell(x[t], (h_n[t], c_n[t]), batch_size_t)
+                    else:
+                        h_next = cell(x[t], h_n[t], batch_size_t)
             else:
-                h_next = cell(x[t], h_n[t])
+                if self.has_cell_state:
+                    h_next, c_next = cell(x[t], (h_n[t], c_n[t]))
+                else:
+                    h_next = cell(x[t], h_n[t])
 
             if self.dropout:
                 h_next = self.dropout_layer(h_next)
 
             h_n.append(h_next)
+            if self.has_cell_state:
+                c_n.append(c_next)
             batch_size_prev = h_next.shape[0]
 
         if is_packed:
             seq_lengths = _compute_seq_lengths(batch_sizes)
             h_temp = h_n[1:] # list T x [B, H]
+            if self.has_cell_state:
+                c_temp = c_n[1:]
 
             # h_last = _compute_last_states(h_temp, seq_lengths)
             h_last = torch.zeros(max_batch_size, self.hidden_size) # [B, H]
+            if self.has_cell_state:
+                c_last = torch.zeros(max_batch_size, self.hidden_size) # [B, H]
             for i, seq_len in enumerate(seq_lengths):
                 h_last[i, :] = h_temp[seq_len - 1][i, :]
+                if self.has_cell_state:
+                    c_last[i, :] = c_temp[seq_len - 1][i, :]
             if reverse_layer:
                 h_temp = tuple(reversed(h_temp))
 
         else:
             h_n = torch.stack(h_n[1:], dim=0)  # [T, B, H], init step not part of output
+            h_temp = h_n.flip(0) if reverse_layer else h_n  # Flip the output...
+            h_last = h_n[-1]  # ... But not the states
+            if self.has_cell_state:
+                c_last = c_n[-1]
 
-            h_temp, h_last = (
-                h_n.flip(0) if reverse_layer else h_n,  # Flip the output...
-                h_n[-1],  # ... But not the states
-            )
-
-        return h_temp, h_last
+        if self.has_cell_state:
+            return h_temp, (h_last, c_last)
+        else:
+            return h_temp, h_last
 
     def _rearrange_batch_dim(self, x: torch.Tensor) -> torch.Tensor:
         if self.batch_first:  # batch is by default in second dimension
@@ -651,212 +703,7 @@ class DPGRU(DPRNNBase):
         )
 
 
-class DPLSTMLayer(nn.Module):
-    r"""
-    Implements *one* layer of LSTM in a way amenable to differential privacy.
-    We don't expect you to use this directly: use DPLSTM instead :)
-    """
-
-    def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        bias: bool,
-        dropout: float,
-        reverse: bool = False,
-    ):
-        super().__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.bias = bias
-        self.dropout = dropout
-        self.reverse = reverse
-
-        self.cell = DPLSTMCell(
-            input_size=input_size, hidden_size=hidden_size, bias=bias
-        )
-        self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else None
-
-    def set_max_batch_length(self, max_batch_length: int) -> None:
-        """
-        Sets max batch length. Useful for PackedSequences
-        """
-        self.cell.set_max_batch_length(max_batch_length)
-
-    def forward(
-        self,
-        x: Union[torch.Tensor, Tuple],
-        state_init: Tuple[torch.Tensor, torch.Tensor],
-        batch_sizes: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        r"""
-        Implements the forward pass of the DPLSTMLayer when a sequence is given in input.
-
-        Args:
-            x: Input sequence to the DPLSTMCell of shape ``[T, B, D]``.
-            state_init: Initial state of the LSTMCell as a tuple ``(h_0, c_0)``
-                where ``h_0`` is the initial hidden state and ``c_0`` is the
-                initial cell state of the DPLSTMCell
-            batch_sizes: Contains the batch sizes as stored in PackedSequence
-
-
-        Returns:
-            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H]`` and is a
-            tensor containing the output features (``h_t``) from the last layer of the
-            DPLSTMCell for each timestep ``t``. ``h_n`` is of shape ``[B, H]`` and is a
-            tensor containing the hidden state for ``t = T``. ``c_n`` is of shape ``[B, H]``
-            tensor containing the cell state for ``t = T``.
-        """
-
-        if batch_sizes is not None:
-            seq_length = batch_sizes.size(0)
-            if self.reverse:
-                x = tuple(reversed(x))
-                batch_sizes = batch_sizes.flip(0)
-        else:
-            seq_length, batch_sz, _ = x.shape
-            if self.reverse:
-                x = x.flip(0)
-            x = torch.unbind(x, dim=0)
-
-        h_0, c_0 = state_init
-
-        h_n = [h_0]
-        c_n = [c_0]
-        batch_size_prev = h_0.shape[0]
-
-        for t in range(seq_length):
-            if batch_sizes is not None:
-                batch_size_t = batch_sizes[t].item()
-                delta = batch_size_t - batch_size_prev
-                if delta > 0:
-                    h_cat = torch.cat((h_n[t], h_0[batch_size_prev:batch_size_t, :]), 0)
-                    c_cat = torch.cat((c_n[t], c_0[batch_size_prev:batch_size_t, :]), 0)
-                    h_next, c_next = self.cell(x[t], (h_cat, c_cat), batch_size_t)
-                else:
-                    h_next, c_next = self.cell(x[t], (h_n[t], c_n[t]), batch_size_t)
-            else:
-                h_next, c_next = self.cell(x[t], (h_n[t], c_n[t]))
-            if self.dropout:
-                h_next = self.dropout_layer(h_next)
-            h_n.append(h_next)
-            c_n.append(c_next)
-            batch_size_prev = h_next.shape[0]
-
-        if batch_sizes is None:
-            h_n = torch.stack(h_n[1:], dim=0)  # [T, B, H], init step not part of output
-
-            return (
-                h_n.flip(0) if self.reverse else h_n,  # Flip the output...
-                (h_n[-1], c_n[-1]),  # ... But not the states
-            )
-        else:
-            seq_lengths = _compute_seq_lengths(batch_sizes)
-            h_temp, c_temp = h_n[1:], c_n[1:]
-            h_last, c_last = _compute_last_states_lstm(h_temp, c_temp, seq_lengths)
-            if self.reverse:
-                h_temp = tuple(reversed(h_temp))
-
-            return h_temp, (h_last, c_last)
-
-
-class BidirectionalDPLSTMLayer(nn.Module):
-    r"""
-    Implements *one* layer of Bidirectional LSTM in a way amenable to differential privacy.
-    We don't expect you to use this directly: use DPLSTM instead :)
-    """
-
-    def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        bias: bool,
-        dropout: float,
-    ):
-        super().__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.bias = bias
-        self.dropout = dropout
-
-        # nn.LSTM (as of November 2020) only implements a "type 2" multilayer bidirectional LSTM.
-        # See https://github.com/pytorch/pytorch/issues/4930 for the definition of type 1 and type 2
-        # and for discussion. When the PR to extend nn.LSTM to Type 1 lands, we will extend this
-        # accordingly.
-
-        self.forward_layer = DPLSTMLayer(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            bias=bias,
-            dropout=dropout,
-            reverse=False,
-        )
-        self.reverse_layer = DPLSTMLayer(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            bias=bias,
-            dropout=dropout,
-            reverse=True,
-        )
-
-    def set_max_batch_length(self, max_batch_length: int) -> None:
-        """
-        Sets max batch length
-        """
-        self.forward_layer.set_max_batch_length(max_batch_length)
-        self.reverse_layer.set_max_batch_length(max_batch_length)
-
-    def forward(
-        self,
-        x: torch.Tensor,
-        state_init: Tuple[torch.Tensor, torch.Tensor],
-        batch_sizes: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        r"""
-        Implements the forward pass of the DPLSTM when a sequence is input.
-
-        Dimensions as follows:
-            - B: Batch size
-            - T: Sequence length
-            - D: LSTM input hidden size (eg from a word embedding)
-            - H: LSTM output hidden size
-            - P: number of directions (2 if bidirectional, else 1)
-
-        Args:
-            x: Input sequence to the DPLSTM of shape ``[T, B, D]``
-            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where
-                ``h_0`` of shape ``[P, B, H]`` contains the initial hidden state, and
-                ``c_0`` of shape ``[P, B, H]``  contains the initial cell state. This
-                argument can be (and defaults to) None, in which case zero tensors
-                will be used.
-
-         Returns:
-            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H * P]`` and is a
-            tensor containing the output features (``h_t``) from the last layer of the
-            DPLSTM for each timestep ``t``. ``h_n`` is of shape ``[P, B, H]`` and contains
-            the hidden state for ``t = T``. ``c_n`` is of shape ``[P, B, H]`` and contains
-            the cell state for ``t = T``.
-        """
-
-        h0, c0 = state_init
-
-        h0_f, h0_r = h0.unbind(0)  # each of shape [B, H] for their layer
-        c0_f, c0_r = c0.unbind(0)  # each of shape [B, H] for their layer
-
-        out_f, (h_f, c_f) = self.forward_layer(x, (h0_f, c0_f), batch_sizes)
-        out_r, (h_r, c_r) = self.reverse_layer(x, (h0_r, c0_r), batch_sizes)
-
-        if batch_sizes is None:
-            out = torch.cat([out_f, out_r], dim=-1)  # [T, B, H * P]
-        else:
-            out = _concat_sequence_directions(out_f, out_r, -1)
-
-        h = torch.stack([h_f, h_r], dim=0)  # [P, B, H]
-        c = torch.stack([c_f, c_r], dim=0)  # [P, B, H]
-        return out, (h, c)
-
-
-class DPLSTM(ParamRenamedMixin, nn.Module):
+class DPLSTM(DPRNNBase):
     r"""
     DP-friendly drop-in replacement of the ``torch.nn.LSTM`` module.
 
@@ -869,205 +716,23 @@ class DPLSTM(ParamRenamedMixin, nn.Module):
     """
 
     def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        num_layers: int = 1,
-        bias: bool = True,
-        batch_first: bool = False,
-        dropout: float = 0,
-        bidirectional: bool = False,
+            self,
+            input_size: int,
+            hidden_size: int,
+            num_layers: int = 1,
+            bias: bool = True,
+            batch_first: bool = False,
+            dropout: float = 0,
+            bidirectional: bool = False,
     ):
-        super(DPLSTM, self).__init__()
-        rename_dict = self._make_rename_dict(num_layers, bias, bidirectional)
-        self.set_rename_map(rename_dict)
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.bias = bias
-        self.batch_first = batch_first
-        self.dropout = dropout
-        self.bidirectional = bidirectional
-        self.num_directions = 2 if self.bidirectional else 1
-
-        LayerClass = BidirectionalDPLSTMLayer if bidirectional else DPLSTMLayer
-
-        self.layers = nn.ModuleList(
-            [
-                LayerClass(
-                    input_size=self.input_size
-                    if i == 0
-                    else self.hidden_size * self.num_directions,
-                    hidden_size=self.hidden_size,
-                    bias=self.bias,
-                    dropout=self.dropout if i < self.num_layers - 1 else 0,
-                )
-                for i in range(num_layers)
-            ]
+        super().__init__(
+            DPLSTMCell,
+            input_size,
+            hidden_size,
+            num_layers=num_layers,
+            bias=bias,
+            batch_first=batch_first,
+            dropout=dropout,
+            bidirectional=bidirectional,
         )
 
-    def forward(
-        self,
-        x: Union[torch.Tensor, PackedSequence],
-        state_init: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        r"""
-        Implements the forward pass of the DPLSTM when a sequence is input.
-
-        Dimensions as follows:
-            - B: Batch size
-            - T: Sequence length
-            - D: LSTM input hidden size (eg from a word embedding)
-            - H: LSTM output hidden size
-            - L: number of layers in the LSTM
-            - P: number of directions (2 if bidirectional, else 1)
-
-        Args:
-            x: Input sequence to the DPLSTM of shape ``[T, B, D]``. Or it can be a PackedSequence.
-            state_init: Initial state of the LSTM as a tuple ``(h_0, c_0)``, where:
-                - ``h_0`` of shape ``[L*P, B, H]`` contains the initial hidden state
-                - ``c_0`` of shape ``[L*P, B, H]`` contains the initial cell state
-
-                This argument can be (and defaults to) None, in which case zero tensors will be used.
-
-         Returns:
-            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H * P]`` and is a
-            tensor containing the output features (``h_t``) from the last layer of the DPLSTM
-            for each timestep ``t``. ``h_n`` is of shape ``[L * P, B, H]`` and contains the
-            hidden state for ``t = T``. ``c_n`` is of shape ``[L * P, B, H]`` and contains
-            the cell state for ``t = T``.
-        """
-
-        if isinstance(x, PackedSequence):
-            x, batch_sizes, sorted_indices, unsorted_indices = x
-            B = batch_sizes[0].item()
-            _, D = x.shape
-            x = x.split(tuple(batch_sizes))
-            for layer in self.layers:
-                layer.set_max_batch_length(B)
-        else:
-            sorted_indices = None
-            unsorted_indices = None
-            batch_sizes = None
-            x = self._rearrange_batch_dim(x)
-            T, B, D = x.shape
-
-        L = self.num_layers
-        P = 2 if self.bidirectional else 1
-        H = self.hidden_size
-
-        h_0s, c_0s = state_init or (None, None)
-
-        if h_0s is None:
-            h_0s = torch.zeros(
-                L,
-                P,
-                B,
-                self.hidden_size,
-                dtype=x[0].dtype,
-                device=x[0].device,
-            )
-        else:
-            h_0s = h_0s.reshape([L, P, B, H])
-            h_0s = self._permute_hidden(h_0s, sorted_indices, 2)
-
-        if c_0s is None:
-            c_0s = torch.zeros(
-                L,
-                P,
-                B,
-                self.hidden_size,
-                dtype=x[0].dtype,
-                device=x[0].device,
-            )
-        else:
-            c_0s = c_0s.reshape([L, P, B, H])
-            c_0s = self._permute_hidden(c_0s, sorted_indices, 2)
-
-        hs: List[torch.Tensor] = []
-        cs: List[torch.Tensor] = []
-
-        for layer, h0, c0 in zip(self.layers, h_0s, c_0s):
-            if not self.bidirectional:
-                h0 = h0.squeeze(0)
-                c0 = c0.squeeze(0)
-            x, (h, c) = layer(x, (h0, c0), batch_sizes)
-            if not self.bidirectional:
-                h = h.unsqueeze(0)  # [1, B, H]
-                c = c.unsqueeze(0)  # [1, B, H]
-
-            hs.append(h)
-            cs.append(c)
-
-        hs = torch.cat(hs, dim=0)  # [L * P, B, H]
-        cs = torch.cat(cs, dim=0)  # [L * P, B, H]
-
-        if batch_sizes is not None:
-            seq_lengths = _compute_seq_lengths(batch_sizes)
-            packed_data = pack_padded_sequence(
-                pad_sequence(x, batch_first=False), seq_lengths, batch_first=True
-            )[0]
-            out = PackedSequence(
-                packed_data, batch_sizes, sorted_indices, unsorted_indices
-            )
-        else:
-            out = self._rearrange_batch_dim(x)
-
-        return out, (
-            self._permute_hidden(hs, unsorted_indices),
-            self._permute_hidden(cs, unsorted_indices),
-        )
-
-    def _permute_hidden(
-        self, x: torch.Tensor, permutation: Optional[torch.Tensor] = None, dim: int = 1
-    ) -> torch.Tensor:
-        if permutation is None:
-            return x
-        if dim == 1:
-            return x[:, permutation, :]
-        elif dim == 2:
-            return x[:, :, permutation, :]
-
-    def _rearrange_batch_dim(self, x: torch.Tensor) -> torch.Tensor:
-        if self.batch_first:  # batch is by default in second dimension
-            x = x.transpose(0, 1)
-        return x
-
-    def __repr__(self):
-        s = f"DPLSTM({self.input_size}, {self.hidden_size}, bias={self.bias}"
-
-        if self.batch_first:
-            s += f", batch_first={self.batch_first}"
-
-        if self.num_layers > 1:
-            s += f", num_layers={self.num_layers}"
-
-        if self.dropout:
-            s += f", dropout={self.dropout}"
-
-        if self.bidirectional:
-            s += f", bidirectional={self.bidirectional}"
-
-        return s
-
-    def _make_rename_dict(self, num_layers, bias, bidirectional):
-        """
-        Programmatically constructs a dictionary old_name -> new_name to align with the param
-        names used in ``torch.nn.LSTM``.
-        """
-        d = {}
-        components = ["weight"] + ["bias" if bias else []]
-        matrices = ["ih", "hh"]
-        for i in range(num_layers):
-            for c in components:
-                for m in matrices:
-                    nn_name = f"{c}_{m}_l{i}"
-                    if bidirectional:
-                        d[f"layers.{i}.forward_layer.cell.{m}.{c}"] = nn_name
-                        d[f"layers.{i}.reverse_layer.cell.{m}.{c}"] = (
-                            nn_name + "_reverse"
-                        )
-                    else:
-                        d[f"layers.{i}.cell.{m}.{c}"] = nn_name
-
-        return d
