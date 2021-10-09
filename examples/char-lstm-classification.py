@@ -9,7 +9,7 @@ from statistics import mean
 import torch
 import torch.nn as nn
 from opacus import PrivacyEngine
-from opacus.layers import DPLSTM
+from opacus.layers import DPRNN, DPGRU, DPLSTM
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
@@ -45,13 +45,19 @@ parser.add_argument(
     help="sample rate used for batch construction (default: 0.05)",
 )
 parser.add_argument(
+    "--mode",
+    default="lstm",
+    choices=["lstm", "gru", "rnn"],
+    help="recursive network type",
+)
+parser.add_argument(
     "--embedding-size", default=64, type=int, help="Character embedding dimension"
 )
 parser.add_argument(
-    "--hidden-size", default=128, type=int, help="LSTM hidden state dimensions"
+    "--hidden-size", default=128, type=int, help="hidden state dimensions"
 )
 parser.add_argument(
-    "--n-lstm-layers", default=1, type=int, help="How many LSTM layers to use"
+    "--n-layers", default=1, type=int, help="How many layers to use"
 )
 parser.add_argument(
     "--test-every",
@@ -60,10 +66,10 @@ parser.add_argument(
     help="Run evaluation on the test every these many epochs",
 )
 parser.add_argument(
-    "--bidirectional-lstm",
+    "--bidirectional",
     action="store_true",
     default=False,
-    help="If turned on, makes the LSTM bidirectional",
+    help="If turned on, makes the RNN bidirectional",
 )
 parser.add_argument(
     "--learning-rate",
@@ -243,10 +249,11 @@ VOCAB_SIZE = 256 + 3  # 256 alternatives in one byte, plus 3 special characters.
 class CharNNClassifier(nn.Module):
     def __init__(
         self,
+        rnn_type,
         embedding_size,
         hidden_size,
         output_size,
-        num_lstm_layers=1,
+        num_layers=1,
         bidirectional=False,
         vocab_size=VOCAB_SIZE,
     ):
@@ -258,10 +265,10 @@ class CharNNClassifier(nn.Module):
         self.vocab_size = vocab_size
 
         self.embedding = nn.Embedding(vocab_size, embedding_size)
-        self.lstm = DPLSTM(
+        self.rnn = rnn_type(
             embedding_size,
             hidden_size,
-            num_layers=num_lstm_layers,
+            num_layers=num_layers,
             bidirectional=bidirectional,
             batch_first=True,
         )
@@ -269,7 +276,7 @@ class CharNNClassifier(nn.Module):
 
     def forward(self, x, hidden=None):
         x = self.embedding(x)  # -> [B, T, D]
-        x, _ = self.lstm(x, hidden)  # -> [B, T, H]
+        x, _ = self.rnn(x, hidden)  # -> [B, T, H]
         x = x[:, -1, :]  # -> [B, H]
         x = self.out_layer(x)  # -> [B, C]
         return x
@@ -371,12 +378,21 @@ def main():
         ds, [train_len, test_len], generator=generator
     )
 
+    if args.mode == "rnn":
+        rnn_type = DPRNN
+    elif args.mode == "gru":
+        rnn_type = DPGRU
+    elif args.mode == "lstm":
+        rnn_type = DPLSTM
+    else:
+        raise ValueError(f"Invalid network type: {args.mode}")
     model = CharNNClassifier(
+        rnn_type,
         args.embedding_size,
         args.hidden_size,
         len(ds.labels),
-        args.n_lstm_layers,
-        args.bidirectional_lstm,
+        args.n_layers,
+        args.bidirectional,
     )
     model = model.to(device)
 
@@ -421,7 +437,7 @@ def main():
     else:
         privacy_engine = None
 
-    print("Train stats: \n")
+    print(f"Train stats ({args.mode}): \n")
     for epoch in tqdm(range(args.epochs)):
         train(model, criterion, optimizer, train_loader, epoch, device=device)
         if args.test_every:
@@ -429,7 +445,7 @@ def main():
                 test(model, test_loader, privacy_engine, device=device)
 
     mean_acc = test(model, test_loader, privacy_engine, device=device)
-    torch.save(mean_acc, "run_results_chr_lstm_classification.pt")
+    torch.save(mean_acc, f"run_results_chr_{args.mode}_classification.pt")
 
 
 if __name__ == "__main__":
