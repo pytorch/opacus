@@ -292,7 +292,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             input_data, batch_sizes, sorted_indices, unsorted_indices = input
             dtype, device = input_data.dtype, input_data.device
 
-            x = input_data.split(tuple(batch_sizes))
+            x = input_data.split(tuple(batch_sizes))  # tuple T x [B, D]
 
             seq_length = len(batch_sizes)
             max_batch_size = int(batch_sizes[0])
@@ -309,7 +309,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             if self.batch_first:
                 input = input.transpose(0, 1)
 
-            x = input
+            x = input  # [T, B, D]
 
             seq_length = x.shape[0]
             max_batch_size = x.shape[1]
@@ -317,10 +317,10 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         if self.has_cell_state:
             h_0s, c_0s = state_init or (None, None)
         else:
-            h_0s = state_init
+            h_0s, c_0s = state_init, None
 
         if h_0s is None:
-            h_0s = torch.zeros(
+            h_0s = torch.zeros(  # [L*P, B, H]
                 self.num_layers * num_directions,
                 max_batch_size,
                 self.hidden_size,
@@ -332,7 +332,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
 
         if self.has_cell_state:
             if c_0s is None:
-                c_0s = torch.zeros(
+                c_0s = torch.zeros(  # [L*P, B, H]
                     self.num_layers * num_directions,
                     max_batch_size,
                     self.hidden_size,
@@ -348,32 +348,18 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         # TODO: fix checks
         #self.check_forward_args(input, hx, batch_sizes)
 
-
-        # x = input
-        # unpack: [T, B, D]
-        # packed: tuple T x [B, D]
-
-        # hx
-        # unpack: [L*P, B, H]
-        # packed: [L*P, B, H]
-
-        # output
-        # out: [T, B, P*H] / tuple T x [B, P*H]
-        # h_0: [L*P, B, H]
-
         hs = []
-        cs = [] # list of None if no cell state
+        cs = []  # list of None if no cell state
+        output = None
 
-        import itertools
         for layer, directions in self.iterate_layers(self.cells, h_0s, c_0s):
-
             layer_outs = []
 
             for direction, (cell, h0, c0) in directions:
                 # apply single direction layer (with dropout)
                 out_layer, h, c = self.forward_layer(
                     x if layer == 0 else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
-                    h0, # [B, H]
+                    h0,  # [B, H]
                     c0,
                     batch_sizes,
                     cell=cell,
@@ -383,15 +369,12 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
                     reverse_layer=(direction == 1),
                 )
 
-                # out_layer: [T, B, H] / tuple T x [B, H]
-                # h_layer: [B, H]
-
+                hs.append(h)  # h: [B, H]
                 cs.append(c)
-                hs.append(h)
-                layer_outs.append(out_layer)
+                layer_outs.append(out_layer)  # out_layer: [T, B, H] / tuple T x [B, H]
 
             if is_packed:
-                output = [ # tuple T x [B, H*P]
+                output = [  # tuple T x [B, P*H]
                     torch.cat([
                         layer_out[i]
                         for layer_out in layer_outs
@@ -399,20 +382,20 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
                     for i in range(seq_length)
                 ]
             else:
-                output = torch.cat(layer_outs, dim=2) # [T, B, P*H]
+                output = torch.cat(layer_outs, dim=2)  # [T, B, P*H]
 
         if is_packed:
-            packed_data = torch.cat(output, dim=0) # [TB, P*H]
+            packed_data = torch.cat(output, dim=0)  # [TB, P*H]
             output = PackedSequence(packed_data, batch_sizes, sorted_indices, unsorted_indices)
         else:
             # Rearrange batch dim back
             if self.batch_first:
                 output = output.transpose(0, 1)
 
-        hs = torch.stack(hs, dim=0)  # [L * P, B, H]
+        hs = torch.stack(hs, dim=0)  # [L*P, B, H]
         hs = apply_permutation(hs, 1, unsorted_indices)
         if self.has_cell_state:
-            cs = torch.stack(cs, dim=0)  # [L * P, B, H]
+            cs = torch.stack(cs, dim=0)  # [L*P, B, H]
             cs = apply_permutation(cs, 1, unsorted_indices)
 
         hidden = (hs, cs) if self.has_cell_state else hs
@@ -504,12 +487,12 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             batch_size_prev = h_next.shape[0]
 
         if is_packed:
-            h_temp = h_n[1:] # list T x [B, H]
+            h_temp = h_n[1:]  # list T x [B, H]
             c_temp = c_n[1:]
 
             # Collect last states for all sequences
             seq_lengths = compute_seq_lengths(batch_sizes)
-            h_last = torch.zeros(max_batch_size, self.hidden_size) # [B, H]
+            h_last = torch.zeros(max_batch_size, self.hidden_size)  # [B, H]
             c_last = torch.zeros(max_batch_size, self.hidden_size) if self.has_cell_state else None
             for i, seq_len in enumerate(seq_lengths):
                 h_last[i, :] = h_temp[seq_len - 1][i, :]
@@ -528,12 +511,26 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
 
     def iterate_layers(self, *args):
         """
-        TODO
+        Iterate through all the layers and through all directions within each layer.
 
-        Args:
-            *args:
+        Arguments should be list-like of length ``num_layers * num_directions`` where
+        each element corresponds to (layer, direction) pair. The corresponding elements
+        of each of these lists will be iterated over.
 
-        Returns:
+        Example:
+            num_layers = 3
+            bidirectional = True
+
+            for layer, directions in self.iterate_layers(self.cell, h):
+                for dir, (cell, hi) in directions:
+                    print(layer, dir, hi)
+
+            # 0 0 h[0]
+            # 0 1 h[1]
+            # 1 0 h[2]
+            # 1 1 h[3]
+            # 2 0 h[4]
+            # 2 1 h[5]
 
         """
         for layer in range(self.num_layers):
