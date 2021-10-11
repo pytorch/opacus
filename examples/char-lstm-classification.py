@@ -402,7 +402,7 @@ def main():
 
     train_loader = DataLoader(
         train_ds,
-        num_workers=8,
+        num_workers=1,
         pin_memory=True,
         generator=generator,
         batch_sampler=UniformWithReplacementSampler(
@@ -415,7 +415,7 @@ def main():
         test_ds,
         batch_size=args.batch_size_test,
         shuffle=False,
-        num_workers=8,
+        num_workers=1,
         pin_memory=True,
         collate_fn=padded_collate,
     )

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Optional
+from typing import Optional, List
 
 import torch
 from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_sequence
@@ -74,3 +74,32 @@ def _gen_packed_data(
             )
 
     return packed_data
+
+
+def compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
+    """
+    Computes the sequence lengths of a PackedSequence represented with batch_sizes.
+
+    Args:
+        batch_sizes: Contains the batch sizes as stored in a PackedSequence
+
+    Returns:
+        running_seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function
+        to create a PackedSequence. It's a list of the same length as batch_sizes.
+    """
+
+    max_batch_size = batch_sizes[0]
+    if len(batch_sizes) == 1:
+        return [1] * max_batch_size
+
+    running_seq = 0
+    running_seq_lengths = []
+    for i in range(1, len(batch_sizes)):
+        delta = batch_sizes[i - 1].item() - batch_sizes[i].item()
+        running_seq += 1
+        running_seq_lengths += delta * [running_seq]
+
+    running_seq += 1
+    running_seq_lengths += batch_sizes[-1].item() * [running_seq]
+    running_seq_lengths.reverse()
+    return running_seq_lengths

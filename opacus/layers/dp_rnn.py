@@ -11,6 +11,7 @@ from torch import Tensor
 import torch.nn as nn
 from torch.nn.utils.rnn import PackedSequence
 
+from ..utils.packed_sequences import compute_seq_lengths
 from .param_rename import ParamRenamedMixin
 
 
@@ -21,35 +22,6 @@ def apply_permutation(tensor: Tensor, dim: int, permutation: Optional[Tensor]):
     if permutation is None:
         return tensor
     return tensor.index_select(dim, permutation)
-
-
-def compute_seq_lengths(batch_sizes: Tensor) -> List[int]:
-    """
-    Computes the sequence lengths of a PackedSequence represented with batch_sizes.
-
-    Args:
-        batch_sizes: Contains the batch sizes as stored in a PackedSequence
-
-    Returns:
-        running_seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function
-        to create a PackedSequence. It's a list of the same length as batch_sizes.
-    """
-
-    max_batch_size = batch_sizes[0]
-    if len(batch_sizes) == 1:
-        return [1] * max_batch_size
-
-    running_seq = 0
-    running_seq_lengths = []
-    for i in range(1, len(batch_sizes)):
-        delta = batch_sizes[i - 1].item() - batch_sizes[i].item()
-        running_seq += 1
-        running_seq_lengths += delta * [running_seq]
-
-    running_seq += 1
-    running_seq_lengths += batch_sizes[-1].item() * [running_seq]
-    running_seq_lengths.reverse()
-    return running_seq_lengths
 
 
 class RNNLinear(nn.Linear):
@@ -95,7 +67,8 @@ class DPRNNCellBase(nn.Module):
 class DPRNNCell(DPRNNCellBase):
     """An Elman RNN cell with tanh or ReLU non-linearity.
 
-    TODO
+    DP-friendly drop-in replacement of the ``torch.nn.RNNCell`` module to use in ``DPRNN``.
+    Refer to ``torch.nn.RNNCell`` documentation for the model description, parameters and inputs/outputs.
     """
 
     def __init__(self, input_size: int, hidden_size: int, bias: bool, nonlinearity: str = 'tanh') -> None:
@@ -125,7 +98,8 @@ class DPRNNCell(DPRNNCellBase):
 class DPGRUCell(DPRNNCellBase):
     """A gated recurrent unit (GRU) cell
 
-    TODO
+    DP-friendly drop-in replacement of the ``torch.nn.GRUCell`` module to use in ``DPGRU``.
+    Refer to ``torch.nn.GRUCell`` documentation for the model description, parameters and inputs/outputs.
     """
 
     def __init__(self, input_size: int, hidden_size: int, bias: bool) -> None:
@@ -155,7 +129,8 @@ class DPGRUCell(DPRNNCellBase):
 class DPLSTMCell(DPRNNCellBase):
     """A long short-term memory (LSTM) cell.
 
-    TODO
+    DP-friendly drop-in replacement of the ``torch.nn.LSTMCell`` module to use in ``DPLSTM``.
+    Refer to ``torch.nn.LSTMCell`` documentation for the model description, parameters and inputs/outputs.
     """
     has_cell_state = True
 
@@ -207,6 +182,19 @@ RNN_CELL_TYPES = {
 
 
 class DPRNNBase(ParamRenamedMixin, nn.Module):
+    """Base class for all RNN-like sequence models.
+
+    DP-friendly drop-in replacement of the ``torch.nn.RNNBase`` module.
+    After training this module can be exported and loaded by the original ``torch.nn`` implementation for inference.
+
+    This module implements multi-layer (Type-2, see [this issue](https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298))
+    bi-directional sequential model based on abstract cell. Cell should be a subclass of ``DPRNNCellBase``.
+
+    Limitations:
+    - proj_size > 0 is not implemented
+    - this implementation doesn't use cuDNN
+    """
+
     def __init__(
         self,
         mode: Union[str, Type[DPRNNCellBase]],
@@ -600,10 +588,13 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
 
 
 class DPRNN(DPRNNBase):
-    r"""Applies a multi-layer Elman RNN with :math:`\tanh` or :math:`\text{ReLU}` non-linearity to an
+    """Applies a multi-layer Elman RNN with :math:`\tanh` or :math:`\text{ReLU}` non-linearity to an
     input sequence.
 
-    TODO
+    DP-friendly drop-in replacement of the ``torch.nn.RNN`` module.
+    Refer to ``torch.nn.RNN`` documentation for the model description, parameters and inputs/outputs.
+
+    After training this module can be exported and loaded by the original ``torch.nn`` implementation for inference.
     """
 
     def __init__(
@@ -635,9 +626,12 @@ class DPRNN(DPRNNBase):
 
 
 class DPGRU(DPRNNBase):
-    r"""Applies a multi-layer gated recurrent unit (GRU) RNN to an input sequence.
+    """Applies a multi-layer gated recurrent unit (GRU) RNN to an input sequence.
 
-    TODO
+    DP-friendly drop-in replacement of the ``torch.nn.GRU`` module.
+    Refer to ``torch.nn.GRU`` documentation for the model description, parameters and inputs/outputs.
+
+    After training this module can be exported and loaded by the original ``torch.nn`` implementation for inference.
     """
 
     def __init__(
@@ -665,17 +659,13 @@ class DPGRU(DPRNNBase):
 
 
 class DPLSTM(DPRNNBase):
-    r"""Applies a multi-layer long short-term memory (LSTM) RNN to an input
+    """Applies a multi-layer long short-term memory (LSTM) RNN to an input
     sequence.
 
-    TODO
-
     DP-friendly drop-in replacement of the ``torch.nn.LSTM`` module.
+    Refer to ``torch.nn.LSTM`` documentation for the model description, parameters and inputs/outputs.
 
-    Its state_dict matches that of nn.LSTM exactly, so that after training it can be exported
-    and loaded by an nn.LSTM for inference.
-
-    Refer to nn.LSTM's documentation for all parameters and inputs.
+    After training this module can be exported and loaded by the original ``torch.nn`` implementation for inference.
     """
 
     def __init__(
