@@ -344,10 +344,6 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         else:
             c_0s = [None] * len(h_0s)
 
-
-        # TODO: fix checks
-        #self.check_forward_args(input, hx, batch_sizes)
-
         hs = []
         cs = []  # list of None if no cell state
         output = None
@@ -561,46 +557,6 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
 
         self.set_rename_map(rename_map)
         return cells
-
-    # TODO: rewrite
-    def check_input(self, input: Tensor, batch_sizes: Optional[Tensor]) -> None:
-        expected_input_dim = 2 if batch_sizes is not None else 3
-        if input.dim() != expected_input_dim:
-            raise RuntimeError(
-                'input must have {} dimensions, got {}'.format(
-                    expected_input_dim, input.dim()))
-        if self.input_size != input.shape[-1]:
-            raise RuntimeError(
-                'input.size(-1) must be equal to input_size. Expected {}, got {}'.format(
-                    self.input_size, input.shape[-1]))
-
-    # TODO: rewrite
-    def get_expected_hidden_size(self, input: Tensor, batch_sizes: Optional[Tensor]) -> Tuple[int, int, int]:
-        if batch_sizes is not None:
-            mini_batch = int(batch_sizes[0])
-        else:
-            mini_batch = input.shape[0] if self.batch_first else input.shape[1]
-        num_directions = 2 if self.bidirectional else 1
-        if self.proj_size > 0:
-            expected_hidden_size = (self.num_layers * num_directions,
-                                    mini_batch, self.proj_size)
-        else:
-            expected_hidden_size = (self.num_layers * num_directions,
-                                    mini_batch, self.hidden_size)
-        return expected_hidden_size
-
-    # TODO: rewrite
-    def check_hidden_size(self, hx: Tensor, expected_hidden_size: Tuple[int, int, int],
-                          msg: str = 'Expected hidden size {}, got {}') -> None:
-        if hx.size() != expected_hidden_size:
-            raise RuntimeError(msg.format(expected_hidden_size, list(hx.size())))
-
-    # TODO: rewrite
-    def check_forward_args(self, input: Tensor, hidden: Tensor, batch_sizes: Optional[Tensor]):
-        self.check_input(input, batch_sizes)
-        expected_hidden_size = self.get_expected_hidden_size(input, batch_sizes)
-
-        self.check_hidden_size(hidden, expected_hidden_size)
 
 
 class DPRNN(DPRNNBase):
