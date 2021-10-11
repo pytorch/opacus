@@ -17,11 +17,15 @@ from .param_rename import ParamRenamedMixin
 # TODO: explain max_batch_len in grad_sample.dp_rnn
 
 def apply_permutation(tensor: Tensor, dim: int, permutation: Optional[Tensor]):
+    """
+    Permute elements of a tensor along a dimension `dim`. If permutation is None do nothing.
+    """
     if permutation is None:
         return tensor
     return tensor.index_select(dim, permutation)
 
 
+# TODO: consider removing this
 def _compute_seq_lengths(batch_sizes: Tensor) -> List[int]:
     r"""
     Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).
@@ -52,10 +56,11 @@ def _compute_seq_lengths(batch_sizes: Tensor) -> List[int]:
 
 
 class RNNLinear(nn.Linear):
-    r"""
-    This function is the same as a nn.Linear layer, except that in the backward pass
+    """Applies a linear transformation to the incoming data: :math:`y = xA^T + b`
+
+    This module is the same as a nn.Linear layer, except that in the backward pass
     the grad_samples get accumulated (instead of being concatenated as in the standard
-    nn.Linear)
+    nn.Linear).
     """
 
     def __init__(self, in_features: int, out_features: int, bias: bool = True):
@@ -66,7 +71,7 @@ class DPRNNCellBase(nn.Module):
     has_cell_state: bool = False
 
     def __init__(self, input_size: int, hidden_size: int, bias: bool, num_chunks: int) -> None:
-        super(DPRNNCellBase, self).__init__()
+        super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.bias = bias
@@ -76,25 +81,27 @@ class DPRNNCellBase(nn.Module):
 
         self.reset_parameters()
 
-    def reset_parameters(self):
-        """
-        Resets parameters by initializing them from an uniform distribution.
-        """
+    def reset_parameters(self) -> None:
         stdv = 1.0 / math.sqrt(self.hidden_size)
         for weight in self.parameters():
             nn.init.uniform_(weight, -stdv, stdv)
 
     def set_max_batch_length(self, max_batch_length: int) -> None:
         """
-        Sets max batch length
+        Sets max batch length. This is used by grad_sampler TODO
         """
         self.ih.max_batch_len = max_batch_length
         self.hh.max_batch_len = max_batch_length
 
 
 class DPRNNCell(DPRNNCellBase):
-    def __init__(self, input_size: int, hidden_size: int, bias: bool, nonlinearity: str = 'tanh'):
-        super(DPRNNCell, self).__init__(input_size, hidden_size, bias, num_chunks=1)
+    """An Elman RNN cell with tanh or ReLU non-linearity.
+
+    TODO
+    """
+
+    def __init__(self, input_size: int, hidden_size: int, bias: bool, nonlinearity: str = 'tanh') -> None:
+        super().__init__(input_size, hidden_size, bias, num_chunks=1)
         self.nonlinearity = nonlinearity
 
     def forward(
@@ -104,7 +111,7 @@ class DPRNNCell(DPRNNCellBase):
         batch_size_t: Optional[int] = None,
     ) -> Tensor:
         if hx is None:
-            hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
+            hx = torch.zeros(input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device)
 
         h_prev = hx
         gates = self.ih(input) + self.hh(h_prev if batch_size_t is None else h_prev[:batch_size_t, :])
@@ -118,8 +125,13 @@ class DPRNNCell(DPRNNCellBase):
 
 
 class DPGRUCell(DPRNNCellBase):
-    def __init__(self, input_size: int, hidden_size: int, bias: bool):
-        super(DPGRUCell, self).__init__(input_size, hidden_size, bias, num_chunks=3)
+    """A gated recurrent unit (GRU) cell
+
+    TODO
+    """
+
+    def __init__(self, input_size: int, hidden_size: int, bias: bool) -> None:
+        super().__init__(input_size, hidden_size, bias, num_chunks=3)
 
     def forward(
         self,
@@ -128,7 +140,7 @@ class DPGRUCell(DPRNNCellBase):
         batch_size_t: Optional[int] = None,
     ) -> Tensor:
         if hx is None:
-            hx = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
+            hx = torch.zeros(input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device)
 
         h_prev = hx if batch_size_t is None else hx[:batch_size_t, :]
         gates_x = self.ih(input)
@@ -143,10 +155,14 @@ class DPGRUCell(DPRNNCellBase):
 
 
 class DPLSTMCell(DPRNNCellBase):
+    """A long short-term memory (LSTM) cell.
+
+    TODO
+    """
     has_cell_state = True
 
-    def __init__(self, input_size: int, hidden_size: int, bias: bool):
-        super(DPLSTMCell, self).__init__(input_size, hidden_size, bias, num_chunks=4)
+    def __init__(self, input_size: int, hidden_size: int, bias: bool) -> None:
+        super().__init__(input_size, hidden_size, bias, num_chunks=4)
 
     def forward(
         self,
@@ -155,7 +171,7 @@ class DPLSTMCell(DPRNNCellBase):
         batch_size_t: Optional[int] = None,
     ) -> Tuple[Tensor, Tensor]:
         if hx is None:
-            zeros = torch.zeros(input.size(0), self.hidden_size, dtype=input.dtype, device=input.device)
+            zeros = torch.zeros(input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device)
             hx = (zeros, zeros)
 
         h_prev, c_prev = hx
@@ -194,24 +210,24 @@ RNN_CELL_TYPES = {
 
 class DPRNNBase(ParamRenamedMixin, nn.Module):
     def __init__(
-            self,
-            mode: Union[str, Type[DPRNNCellBase]],
-            input_size: int,
-            hidden_size: int,
-            num_layers: int = 1,
-            bias: bool = True,
-            batch_first: bool = False,
-            dropout: float = 0.,
-            bidirectional: bool = False,
-            proj_size: int = 0,
-            cell_params: Optional[dict] = None,
-    ):
-        super(DPRNNBase, self).__init__()
+        self,
+        mode: Union[str, Type[DPRNNCellBase]],
+        input_size: int,
+        hidden_size: int,
+        num_layers: int = 1,
+        bias: bool = True,
+        batch_first: bool = False,
+        dropout: float = 0.,
+        bidirectional: bool = False,
+        proj_size: int = 0,
+        cell_params: Optional[dict] = None,
+    ) -> None:
+        super().__init__()
 
         self.cell_params = {}
         if isinstance(mode, str):
             if mode not in RNN_CELL_TYPES:
-                raise ValueError(f"Invalid RNN mode='{mode}', available options: {list(RNN_CELL_TYPES.keys())}")
+                raise ValueError(f"Invalid RNN mode '{mode}', available options: {list(RNN_CELL_TYPES.keys())}")
             self.cell_type, default_params = RNN_CELL_TYPES[mode]
             self.cell_params.update(default_params)
         else:
@@ -252,10 +268,20 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         self.cells = self.initialize_cells()
 
     def forward(
-            self,
-            input: Union[Tensor, PackedSequence],
-            state_init: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None
+        self,
+        input: Union[Tensor, PackedSequence],
+        state_init: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None
     ) -> Tuple[Union[Tensor, PackedSequence], Union[Tensor, Tuple[Tensor, Tensor]]]:
+        """
+        TODO
+
+        Args:
+            input:
+            state_init:
+
+        Returns:
+
+        """
         num_directions = 2 if self.bidirectional else 1
 
         is_packed = isinstance(input, PackedSequence)
@@ -273,8 +299,11 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             sorted_indices = None
             unsorted_indices = None
 
-            assert isinstance(input, Tensor)
-            x = self._rearrange_batch_dim(input)
+            x = input
+
+            # Rearrange batch dim. Batch is by default in second dimension.
+            if self.batch_first:
+                x = x.transpose(0, 1)
 
             seq_length = x.shape[0]
             max_batch_size = x.shape[1]
@@ -381,7 +410,9 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             packed_data = torch.cat(output, dim=0) # [TB, P*H]
             output = PackedSequence(packed_data, batch_sizes, sorted_indices, unsorted_indices)
         else:
-            output = self._rearrange_batch_dim(output)
+            # Rearrange batch dim back
+            if self.batch_first:
+                output = output.transpose(0, 1)
 
         hs = torch.stack(hs, dim=0)  # [L * P, B, H]
         hs = apply_permutation(hs, 1, unsorted_indices)
@@ -394,16 +425,16 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         return output, hidden
 
     def forward_layer(
-            self,
-            x: Union[Tensor, PackedSequence],
-            h_0: Tensor,
-            c_0: Optional[Tensor],
-            batch_sizes: Tensor,
-            cell: DPRNNCellBase,
-            max_batch_size: int,
-            seq_length: int,
-            is_packed: bool,
-            reverse_layer: bool,
+        self,
+        x: Union[Tensor, PackedSequence],
+        h_0: Tensor,
+        c_0: Optional[Tensor],
+        batch_sizes: Tensor,
+        cell: DPRNNCellBase,
+        max_batch_size: int,
+        seq_length: int,
+        is_packed: bool,
+        reverse_layer: bool,
     ) -> Tuple[Union[Tensor, List[Tensor]], Tensor, Tensor]:
         r"""
         TODO: Rewrite this
@@ -491,6 +522,15 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         return h_temp, h_last, c_last
 
     def iterate_layers(self, *args):
+        """
+        TODO
+
+        Args:
+            *args:
+
+        Returns:
+
+        """
         for layer in range(self.num_layers):
             yield layer, (
                 (direction, tuple(arg[self.num_directions*layer + direction] for arg in args))
@@ -520,11 +560,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
         self.set_rename_map(rename_map)
         return cells
 
-    def _rearrange_batch_dim(self, x: Tensor) -> Tensor:
-        if self.batch_first:  # batch is by default in second dimension
-            x = x.transpose(0, 1)
-        return x
-
+    # TODO: rewrite
     def check_input(self, input: Tensor, batch_sizes: Optional[Tensor]) -> None:
         expected_input_dim = 2 if batch_sizes is not None else 3
         if input.dim() != expected_input_dim:
@@ -536,6 +572,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
                 'input.size(-1) must be equal to input_size. Expected {}, got {}'.format(
                     self.input_size, input.shape[-1]))
 
+    # TODO: rewrite
     def get_expected_hidden_size(self, input: Tensor, batch_sizes: Optional[Tensor]) -> Tuple[int, int, int]:
         if batch_sizes is not None:
             mini_batch = int(batch_sizes[0])
@@ -550,11 +587,13 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
                                     mini_batch, self.hidden_size)
         return expected_hidden_size
 
+    # TODO: rewrite
     def check_hidden_size(self, hx: Tensor, expected_hidden_size: Tuple[int, int, int],
                           msg: str = 'Expected hidden size {}, got {}') -> None:
         if hx.size() != expected_hidden_size:
             raise RuntimeError(msg.format(expected_hidden_size, list(hx.size())))
 
+    # TODO: rewrite
     def check_forward_args(self, input: Tensor, hidden: Tensor, batch_sizes: Optional[Tensor]):
         self.check_input(input, batch_sizes)
         expected_hidden_size = self.get_expected_hidden_size(input, batch_sizes)
@@ -563,18 +602,23 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
 
 
 class DPRNN(DPRNNBase):
+    r"""Applies a multi-layer Elman RNN with :math:`\tanh` or :math:`\text{ReLU}` non-linearity to an
+    input sequence.
+
+    TODO
+    """
 
     def __init__(
-            self,
-            input_size: int,
-            hidden_size: int,
-            num_layers: int = 1,
-            bias: bool = True,
-            batch_first: bool = False,
-            dropout: float = 0,
-            bidirectional: bool = False,
-            nonlinearity: Literal['tanh', 'relu'] = 'tanh',
-    ):
+        self,
+        input_size: int,
+        hidden_size: int,
+        num_layers: int = 1,
+        bias: bool = True,
+        batch_first: bool = False,
+        dropout: float = 0,
+        bidirectional: bool = False,
+        nonlinearity: Literal['tanh', 'relu'] = 'tanh',
+    ) -> None:
         super().__init__(
             DPRNNCell,
             input_size,
@@ -591,17 +635,21 @@ class DPRNN(DPRNNBase):
 
 
 class DPGRU(DPRNNBase):
+    r"""Applies a multi-layer gated recurrent unit (GRU) RNN to an input sequence.
+
+    TODO
+    """
 
     def __init__(
-            self,
-            input_size: int,
-            hidden_size: int,
-            num_layers: int = 1,
-            bias: bool = True,
-            batch_first: bool = False,
-            dropout: float = 0,
-            bidirectional: bool = False,
-    ):
+        self,
+        input_size: int,
+        hidden_size: int,
+        num_layers: int = 1,
+        bias: bool = True,
+        batch_first: bool = False,
+        dropout: float = 0,
+        bidirectional: bool = False,
+    ) -> None:
         super().__init__(
             DPGRUCell,
             input_size,
@@ -615,7 +663,11 @@ class DPGRU(DPRNNBase):
 
 
 class DPLSTM(DPRNNBase):
-    r"""
+    r"""Applies a multi-layer long short-term memory (LSTM) RNN to an input
+    sequence.
+
+    TODO
+
     DP-friendly drop-in replacement of the ``torch.nn.LSTM`` module.
 
     Its state_dict matches that of nn.LSTM exactly, so that after training it can be exported
@@ -627,15 +679,15 @@ class DPLSTM(DPRNNBase):
     """
 
     def __init__(
-            self,
-            input_size: int,
-            hidden_size: int,
-            num_layers: int = 1,
-            bias: bool = True,
-            batch_first: bool = False,
-            dropout: float = 0,
-            bidirectional: bool = False,
-    ):
+        self,
+        input_size: int,
+        hidden_size: int,
+        num_layers: int = 1,
+        bias: bool = True,
+        batch_first: bool = False,
+        dropout: float = 0,
+        bidirectional: bool = False,
+    ) -> None:
         super().__init__(
             DPLSTMCell,
             input_size,
