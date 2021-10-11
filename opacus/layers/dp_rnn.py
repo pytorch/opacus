@@ -259,20 +259,39 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         state_init: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None
     ) -> Tuple[Union[Tensor, PackedSequence], Union[Tensor, Tuple[Tensor, Tensor]]]:
         """
-        TODO
+        Forward pass of a full RNN, containing one or many single- or bi-directional layers. Implemented for
+        an abstract cell type.
 
-        Args:
-            input:
-            state_init:
+        Note: ``proj_size > 0`` is not supported here. Cell state size is always equal to hidden state size.
 
-        Returns:
+        Inputs: input, h_0/(h_0, c_0)
+            input: Input sequence. Tensor of shape ``[T, B, D]`` (``[B, T, D]`` if ``batch_first=True``)
+                   or PackedSequence.
+            h_0: Initial hidden state for each element in the batch. Tensor of shape ``[L*P, B, H]``. Default to zeros.
+            c_0: Initial cell state for each element in the batch. Only for cell types with an additional state.
+                 Tensor of shape ``[L*P, B, H]``. Default to zeros.
 
+        Outputs: output, h_n/(h_n, c_n)
+            output: Output features (``h_t``) from the last layer of the model for each ``t``. Tensor of
+                    shape ``[T, B, P*H]`` (``[B, T, P*H]`` if ``batch_first=True``), or PackedSequence.
+            h_n: Final hidden state for each element in the batch. Tensor of shape ``[L*P, B, H]``.
+            c_n: Final cell state for each element in the batch. Tensor of shape ``[L*P, B, H]``.
+
+        where
+            T = sequence length
+            B = batch size
+            D = input_size
+            H = hidden_size
+            L = num_layers
+            P = num_directions (2 if `bidirectional=True` else 1)
         """
         num_directions = 2 if self.bidirectional else 1
 
         is_packed = isinstance(input, PackedSequence)
         if is_packed:
             input_data, batch_sizes, sorted_indices, unsorted_indices = input
+            dtype, device = input_data.dtype, input_data.device
+
             x = input_data.split(tuple(batch_sizes))
 
             seq_length = len(batch_sizes)
@@ -281,15 +300,16 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             for cell in self.cells:
                 cell.set_max_batch_length(max_batch_size)
         else:
+            dtype, device = input.dtype, input.device
             batch_sizes = None
             sorted_indices = None
             unsorted_indices = None
 
-            x = input
-
             # Rearrange batch dim. Batch is by default in second dimension.
             if self.batch_first:
-                x = x.transpose(0, 1)
+                input = input.transpose(0, 1)
+
+            x = input
 
             seq_length = x.shape[0]
             max_batch_size = x.shape[1]
@@ -304,8 +324,8 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
                 self.num_layers * num_directions,
                 max_batch_size,
                 self.hidden_size,
-                dtype=input.dtype if not is_packed else input_data.dtype,
-                device=input.device if not is_packed else input_data.device,
+                dtype=dtype,
+                device=device,
             )
         else:
             h_0s = apply_permutation(h_0s, 1, sorted_indices)
@@ -316,9 +336,9 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
                     self.num_layers * num_directions,
                     max_batch_size,
                     self.hidden_size,
-                    dtype=input.dtype if not is_packed else input_data.dtype,
-                    device=input.device if not is_packed else input_data.device,
-                    )
+                    dtype=dtype,
+                    device=device,
+                )
             else:
                 c_0s = apply_permutation(c_0s, 1, sorted_indices)
         else:
@@ -328,17 +348,6 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         # TODO: fix checks
         #self.check_forward_args(input, hx, batch_sizes)
 
-        #####################################################################################
-        # RNN:
-        # https://github.com/pytorch/pytorch/issues/4930
-
-        # T = seq_length
-        # B = max_batch_size
-        # L = num_layers
-        # P = num_directions
-
-        # D = input_size
-        # H = hidden_size
 
         # x = input
         # unpack: [T, B, D]
@@ -422,24 +431,34 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         is_packed: bool,
         reverse_layer: bool,
     ) -> Tuple[Union[Tensor, List[Tensor]], Tensor, Tensor]:
-        r"""
-        TODO: Rewrite this
-        Implements the forward pass of the DPLSTMLayer when a sequence is given in input.
+        """
+        Forward pass of a single RNN layer (one direction). Implemented for an abstract cell type.
+
+        Inputs: x, h_0, c_0
+            x: Input sequence. Tensor of shape ``[T, B, D]`` or PackedSequence if `is_packed = True`.
+            h_0: Initial hidden state. Tensor of shape ``[B, H]``.
+            c_0: Initial cell state. Tensor of shape ``[B, H]``. Only for cells with additional
+                 state `c_t`, e.g. DPLSTMCell.
+
+        Outputs: h_t, h_last, c_last
+            h_t: Final hidden state, output features (``h_t``) for each timestep ``t``. Tensor of
+                shape ``[T, B, H]`` or list of length ``T`` with tensors ``[B, H]`` if PackedSequence is used.
+            h_last: The last hidden state. Tensor of shape ``[B, H]``.
+            c_last: The last cell state. Tensor of shape ``[B, H]``. None if cell has no additional state.
+
+        where
+            T = sequence length
+            B = batch size
+            D = input_size (for this specific layer)
+            H = hidden_size (output size, for this specific layer)
 
         Args:
-            x: Input sequence to the DPLSTMCell of shape ``[T, B, D]``.
-            state_init: Initial state of the LSTMCell as a tuple ``(h_0, c_0)``
-                where ``h_0`` is the initial hidden state and ``c_0`` is the
-                initial cell state of the DPLSTMCell
             batch_sizes: Contains the batch sizes as stored in PackedSequence
-
-
-        Returns:
-            ``output, (h_n, c_n)`` where, ``output`` is of shape ``[T, B, H]`` and is a
-            tensor containing the output features (``h_t``) from the last layer of the
-            DPLSTMCell for each timestep ``t``. ``h_n`` is of shape ``[B, H]`` and is a
-            tensor containing the hidden state for ``t = T``. ``c_n`` is of shape ``[B, H]``
-            tensor containing the cell state for ``t = T``.
+            cell: Module implementing a single cell of the network, must be an instance of DPRNNCell
+            max_batch_size: batch size
+            seq_length: sequence length
+            is_packed: whether PackedSequence is used as input
+            reverse_layer: if True, it will run forward pass for a reversed layer
         """
         if is_packed:
             if reverse_layer:
