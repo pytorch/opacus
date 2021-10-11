@@ -4,7 +4,7 @@
 from .dp_ddp import DifferentiallyPrivateDistributedDataParallel
 from .dp_rnn import DPRNN, DPGRU, DPLSTM
 from .dp_multihead_attention import DPMultiheadAttention, SequenceBias
-from .param_rename import ParamRenamedMixin
+from .param_rename import RenameParamsMixin
 
 
 __all__ = [
@@ -12,7 +12,7 @@ __all__ = [
     "DPGRU",
     "DPLSTM",
     "DPMultiheadAttention",
-    "ParamRenamedMixin",
+    "RenameParamsMixin",
     "SequenceBias",
     "DifferentiallyPrivateDistributedDataParallel",
 ]

@@ -12,7 +12,7 @@ import torch.nn as nn
 from torch.nn.utils.rnn import PackedSequence
 
 from ..utils.packed_sequences import compute_seq_lengths
-from .param_rename import ParamRenamedMixin
+from .param_rename import RenameParamsMixin
 
 
 def apply_permutation(tensor: Tensor, dim: int, permutation: Optional[Tensor]):
@@ -181,7 +181,7 @@ RNN_CELL_TYPES = {
 }
 
 
-class DPRNNBase(ParamRenamedMixin, nn.Module):
+class DPRNNBase(RenameParamsMixin, nn.Module):
     """Base class for all RNN-like sequence models.
 
     DP-friendly drop-in replacement of the ``torch.nn.RNNBase`` module.
