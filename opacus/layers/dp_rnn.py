@@ -14,8 +14,6 @@ from torch.nn.utils.rnn import PackedSequence
 from .param_rename import ParamRenamedMixin
 
 
-# TODO: explain max_batch_len in grad_sample.dp_rnn
-
 def apply_permutation(tensor: Tensor, dim: int, permutation: Optional[Tensor]):
     """
     Permute elements of a tensor along a dimension `dim`. If permutation is None do nothing.
@@ -25,17 +23,16 @@ def apply_permutation(tensor: Tensor, dim: int, permutation: Optional[Tensor]):
     return tensor.index_select(dim, permutation)
 
 
-# TODO: consider removing this
-def _compute_seq_lengths(batch_sizes: Tensor) -> List[int]:
-    r"""
-    Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).
+def compute_seq_lengths(batch_sizes: Tensor) -> List[int]:
+    """
+    Computes the sequence lengths of a PackedSequence represented with batch_sizes.
 
     Args:
         batch_sizes: Contains the batch sizes as stored in a PackedSequence
 
     Returns:
-        running_seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence.
-        It's a list of the same length as batch_sizes.
+        running_seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function
+        to create a PackedSequence. It's a list of the same length as batch_sizes.
     """
 
     max_batch_size = batch_sizes[0]
@@ -58,13 +55,19 @@ def _compute_seq_lengths(batch_sizes: Tensor) -> List[int]:
 class RNNLinear(nn.Linear):
     """Applies a linear transformation to the incoming data: :math:`y = xA^T + b`
 
-    This module is the same as a nn.Linear layer, except that in the backward pass
+    This module is the same as a ``torch.nn.Linear``` layer, except that in the backward pass
     the grad_samples get accumulated (instead of being concatenated as in the standard
     nn.Linear).
+
+    Attributes:
+        weight, bias: refer to ``nn.Linear`` documentation
+        max_batch_length:
+
     """
 
     def __init__(self, in_features: int, out_features: int, bias: bool = True):
         super().__init__(in_features, out_features, bias)
+        self.max_batch_length = 0
 
 
 class DPRNNCellBase(nn.Module):
@@ -87,9 +90,6 @@ class DPRNNCellBase(nn.Module):
             nn.init.uniform_(weight, -stdv, stdv)
 
     def set_max_batch_length(self, max_batch_length: int) -> None:
-        """
-        Sets max batch length. This is used by grad_sampler TODO
-        """
         self.ih.max_batch_len = max_batch_length
         self.hh.max_batch_len = max_batch_length
 
@@ -499,11 +499,11 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
             batch_size_prev = h_next.shape[0]
 
         if is_packed:
-            seq_lengths = _compute_seq_lengths(batch_sizes) # TODO: consider simplifying
             h_temp = h_n[1:] # list T x [B, H]
             c_temp = c_n[1:]
 
-            # h_last = _compute_last_states(h_temp, seq_lengths)
+            # Collect last states for all sequences
+            seq_lengths = compute_seq_lengths(batch_sizes)
             h_last = torch.zeros(max_batch_size, self.hidden_size) # [B, H]
             c_last = torch.zeros(max_batch_size, self.hidden_size) if self.has_cell_state else None
             for i, seq_len in enumerate(seq_lengths):
@@ -515,7 +515,7 @@ class DPRNNBase(ParamRenamedMixin, nn.Module):
 
         else:
             h_n = torch.stack(h_n[1:], dim=0)  # [T, B, H], init step not part of output
-            h_temp = h_n.flip(0) if reverse_layer else h_n  # Flip the output...
+            h_temp = h_n if not reverse_layer else h_n.flip(0)  # Flip the output...
             h_last = h_n[-1]  # ... But not the states
             c_last = c_n[-1]
 

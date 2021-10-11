@@ -69,6 +69,7 @@ def create_or_accumulate_grad_sample(
             shape as ``param`` with extra batch dimension
     """
 
+    print(param, grad_sample, layer, layer.max_batch_len)
     if hasattr(param, "grad_sample"):
         param.grad_sample[: grad_sample.shape[0]] += grad_sample
     else:

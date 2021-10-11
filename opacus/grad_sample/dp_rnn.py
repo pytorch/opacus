@@ -9,8 +9,8 @@ from .utils import create_or_accumulate_grad_sample, register_grad_sampler
 
 
 @register_grad_sampler(RNNLinear)
-def compute_lstm_linear_grad_sample(
-    layer: RNNLinear, A: torch.Tensor, B: torch.Tensor, batch_dim: int = 0
+def compute_rnn_linear_grad_sample(
+    layer: RNNLinear, A: torch.Tensor, B: torch.Tensor
 ) -> None:
     """
     Computes per sample gradients for ``RNNLinear`` layer. The RNN-like (DPLSTM, DPGRU) models
@@ -22,7 +22,6 @@ def compute_lstm_linear_grad_sample(
         layer: Layer
         A: Activations
         B: Backpropagations
-        batch_dim: Batch dimension position
     """
 
     gs = torch.einsum("n...i,n...j->nij", B, A)
