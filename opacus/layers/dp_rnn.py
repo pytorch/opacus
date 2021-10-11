@@ -59,15 +59,13 @@ class RNNLinear(nn.Linear):
     the grad_samples get accumulated (instead of being concatenated as in the standard
     nn.Linear).
 
-    Attributes:
-        weight, bias: refer to ``nn.Linear`` documentation
-        max_batch_length:
-
+    When used with `PackedSequence`s, additional attribute `max_batch_len` is defined to determine
+    the size of per-sample grad tensor.
     """
+    max_batch_len: int
 
     def __init__(self, in_features: int, out_features: int, bias: bool = True):
         super().__init__(in_features, out_features, bias)
-        self.max_batch_length = 0
 
 
 class DPRNNCellBase(nn.Module):
@@ -617,6 +615,7 @@ class DPRNN(DPRNNBase):
         batch_first: bool = False,
         dropout: float = 0,
         bidirectional: bool = False,
+        proj_size: int = 0,
         nonlinearity: Literal['tanh', 'relu'] = 'tanh',
     ) -> None:
         super().__init__(
@@ -628,6 +627,7 @@ class DPRNN(DPRNNBase):
             batch_first=batch_first,
             dropout=dropout,
             bidirectional=bidirectional,
+            proj_size=proj_size,
             cell_params=dict(
                 nonlinearity=nonlinearity
             ),
@@ -649,6 +649,7 @@ class DPGRU(DPRNNBase):
         batch_first: bool = False,
         dropout: float = 0,
         bidirectional: bool = False,
+        proj_size: int = 0,
     ) -> None:
         super().__init__(
             DPGRUCell,
@@ -659,6 +660,7 @@ class DPGRU(DPRNNBase):
             batch_first=batch_first,
             dropout=dropout,
             bidirectional=bidirectional,
+            proj_size=proj_size,
         )
 
 
@@ -674,8 +676,6 @@ class DPLSTM(DPRNNBase):
     and loaded by an nn.LSTM for inference.
 
     Refer to nn.LSTM's documentation for all parameters and inputs.
-
-    Not supported: proj_size.
     """
 
     def __init__(
@@ -687,6 +687,7 @@ class DPLSTM(DPRNNBase):
         batch_first: bool = False,
         dropout: float = 0,
         bidirectional: bool = False,
+        proj_size: int = 0,
     ) -> None:
         super().__init__(
             DPLSTMCell,
@@ -697,5 +698,5 @@ class DPLSTM(DPRNNBase):
             batch_first=batch_first,
             dropout=dropout,
             bidirectional=bidirectional,
+            proj_size=proj_size,
         )
-
