@@ -56,9 +56,7 @@ parser.add_argument(
 parser.add_argument(
     "--hidden-size", default=128, type=int, help="hidden state dimensions"
 )
-parser.add_argument(
-    "--n-layers", default=1, type=int, help="How many layers to use"
-)
+parser.add_argument("--n-layers", default=1, type=int, help="How many layers to use")
 parser.add_argument(
     "--test-every",
     default=0,

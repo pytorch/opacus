@@ -268,7 +268,9 @@ class GradSampleModule(nn.Module):
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
         """Check if this module is supported"""
-        return type(module) in cls.GRAD_SAMPLERS or isinstance(module, (DPRNNBase, DPRNNCellBase))
+        return type(module) in cls.GRAD_SAMPLERS or isinstance(
+            module, (DPRNNBase, DPRNNCellBase)
+        )
 
 
 def _get_batch_size(

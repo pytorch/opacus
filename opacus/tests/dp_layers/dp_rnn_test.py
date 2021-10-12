@@ -16,9 +16,9 @@ from .common import DPModules_test
 
 
 def rnn_train_fn(
-        model: nn.Module,
-        x: Union[torch.Tensor, PackedSequence],
-        state_init: Optional[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]] = None,
+    model: nn.Module,
+    x: Union[torch.Tensor, PackedSequence],
+    state_init: Optional[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]] = None,
 ):
     model.train()
     criterion = nn.MSELoss()
@@ -34,7 +34,7 @@ def rnn_train_fn(
 
 class DPLSTM_test(DPModules_test):
     @given(
-        mode=st.one_of(st.just('rnn'), st.just('gru'), st.just('lstm')),
+        mode=st.one_of(st.just("rnn"), st.just("gru"), st.just("lstm")),
         batch_size=st.integers(1, 5),
         seq_len=st.integers(1, 6),
         emb_size=st.integers(5, 10),
@@ -46,7 +46,7 @@ class DPLSTM_test(DPModules_test):
         zero_init=st.booleans(),
         packed_input_flag=st.integers(
             0,  # no packed sequence input
-            #1,  # packed sequence input in sorted order
+            # 1,  # packed sequence input in sorted order
             2,  # packed sequence input in unsorted order
         ),
     )
@@ -66,18 +66,18 @@ class DPLSTM_test(DPModules_test):
         packed_input_flag: int,
     ):
         use_cn = False
-        if mode == 'rnn':
+        if mode == "rnn":
             original_rnn_class = nn.RNN
             dp_rnn_class = DPRNN
-        elif mode == 'gru':
+        elif mode == "gru":
             original_rnn_class = nn.GRU
             dp_rnn_class = DPGRU
-        elif mode == 'lstm':
+        elif mode == "lstm":
             original_rnn_class = nn.LSTM
             dp_rnn_class = DPLSTM
             use_cn = True
         else:
-            raise ValueError('Invalid RNN mode')
+            raise ValueError("Invalid RNN mode")
 
         rnn = original_rnn_class(
             emb_size,
@@ -113,7 +113,7 @@ class DPLSTM_test(DPModules_test):
                 batch_size, seq_len, emb_size, batch_first, sorted_=False
             )
         else:
-            raise ValueError('Invalid packed input flag')
+            raise ValueError("Invalid packed input flag")
 
         if zero_init:
             self.compare_forward_outputs(

@@ -34,6 +34,7 @@ class RNNLinear(nn.Linear):
     When used with `PackedSequence`s, additional attribute `max_batch_len` is defined to determine
     the size of per-sample grad tensor.
     """
+
     max_batch_len: int
 
     def __init__(self, in_features: int, out_features: int, bias: bool = True):
@@ -43,7 +44,9 @@ class RNNLinear(nn.Linear):
 class DPRNNCellBase(nn.Module):
     has_cell_state: bool = False
 
-    def __init__(self, input_size: int, hidden_size: int, bias: bool, num_chunks: int) -> None:
+    def __init__(
+        self, input_size: int, hidden_size: int, bias: bool, num_chunks: int
+    ) -> None:
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -71,7 +74,9 @@ class DPRNNCell(DPRNNCellBase):
     Refer to ``torch.nn.RNNCell`` documentation for the model description, parameters and inputs/outputs.
     """
 
-    def __init__(self, input_size: int, hidden_size: int, bias: bool, nonlinearity: str = 'tanh') -> None:
+    def __init__(
+        self, input_size: int, hidden_size: int, bias: bool, nonlinearity: str = "tanh"
+    ) -> None:
         super().__init__(input_size, hidden_size, bias, num_chunks=1)
         self.nonlinearity = nonlinearity
 
@@ -82,13 +87,17 @@ class DPRNNCell(DPRNNCellBase):
         batch_size_t: Optional[int] = None,
     ) -> Tensor:
         if hx is None:
-            hx = torch.zeros(input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device)
+            hx = torch.zeros(
+                input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device
+            )
 
         h_prev = hx
-        gates = self.ih(input) + self.hh(h_prev if batch_size_t is None else h_prev[:batch_size_t, :])
-        if self.nonlinearity == 'tanh':
+        gates = self.ih(input) + self.hh(
+            h_prev if batch_size_t is None else h_prev[:batch_size_t, :]
+        )
+        if self.nonlinearity == "tanh":
             h_t = torch.tanh(gates)
-        elif self.nonlinearity == 'relu':
+        elif self.nonlinearity == "relu":
             h_t = torch.relu(gates)
         else:
             raise RuntimeError(f"Unknown nonlinearity: {self.nonlinearity}")
@@ -112,13 +121,19 @@ class DPGRUCell(DPRNNCellBase):
         batch_size_t: Optional[int] = None,
     ) -> Tensor:
         if hx is None:
-            hx = torch.zeros(input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device)
+            hx = torch.zeros(
+                input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device
+            )
 
         h_prev = hx if batch_size_t is None else hx[:batch_size_t, :]
         gates_x = self.ih(input)
         gates_h = self.hh(h_prev)
-        r_t_input_x, z_t_input_x, n_t_input_x = torch.split(gates_x, self.hidden_size, 1)
-        r_t_input_h, z_t_input_h, n_t_input_h = torch.split(gates_h, self.hidden_size, 1)
+        r_t_input_x, z_t_input_x, n_t_input_x = torch.split(
+            gates_x, self.hidden_size, 1
+        )
+        r_t_input_h, z_t_input_h, n_t_input_h = torch.split(
+            gates_h, self.hidden_size, 1
+        )
         r_t = torch.sigmoid(r_t_input_x + r_t_input_h)
         z_t = torch.sigmoid(z_t_input_x + z_t_input_h)
         n_t = torch.tanh(n_t_input_x + r_t * n_t_input_h)
@@ -132,6 +147,7 @@ class DPLSTMCell(DPRNNCellBase):
     DP-friendly drop-in replacement of the ``torch.nn.LSTMCell`` module to use in ``DPLSTM``.
     Refer to ``torch.nn.LSTMCell`` documentation for the model description, parameters and inputs/outputs.
     """
+
     has_cell_state = True
 
     def __init__(self, input_size: int, hidden_size: int, bias: bool) -> None:
@@ -144,7 +160,9 @@ class DPLSTMCell(DPRNNCellBase):
         batch_size_t: Optional[int] = None,
     ) -> Tuple[Tensor, Tensor]:
         if hx is None:
-            zeros = torch.zeros(input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device)
+            zeros = torch.zeros(
+                input.shape[0], self.hidden_size, dtype=input.dtype, device=input.device
+            )
             hx = (zeros, zeros)
 
         h_prev, c_prev = hx
@@ -156,7 +174,9 @@ class DPLSTMCell(DPRNNCellBase):
                 h_prev[:batch_size_t, :]
             )  # [batch_size_t, 4*D]
 
-        i_t_input, f_t_input, g_t_input, o_t_input = torch.split(gates, self.hidden_size, 1)
+        i_t_input, f_t_input, g_t_input, o_t_input = torch.split(
+            gates, self.hidden_size, 1
+        )
 
         # [B, D] or [batch_size_t, D] if batch_size_t is not None
         i_t = torch.sigmoid(i_t_input)
@@ -203,7 +223,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         num_layers: int = 1,
         bias: bool = True,
         batch_first: bool = False,
-        dropout: float = 0.,
+        dropout: float = 0.0,
         bidirectional: bool = False,
         proj_size: int = 0,
         cell_params: Optional[dict] = None,
@@ -213,7 +233,9 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         self.cell_params = {}
         if isinstance(mode, str):
             if mode not in RNN_CELL_TYPES:
-                raise ValueError(f"Invalid RNN mode '{mode}', available options: {list(RNN_CELL_TYPES.keys())}")
+                raise ValueError(
+                    f"Invalid RNN mode '{mode}', available options: {list(RNN_CELL_TYPES.keys())}"
+                )
             self.cell_type, default_params = RNN_CELL_TYPES[mode]
             self.cell_params.update(default_params)
         else:
@@ -232,21 +254,30 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         self.proj_size = proj_size
         self.num_directions = 2 if bidirectional else 1
 
-        if not isinstance(dropout, numbers.Number) or not 0 <= dropout <= 1 or \
-                isinstance(dropout, bool):
-            raise ValueError("dropout should be a number in range [0, 1] "
-                             "representing the probability of an element being "
-                             "zeroed")
+        if (
+            not isinstance(dropout, numbers.Number)
+            or not 0 <= dropout <= 1
+            or isinstance(dropout, bool)
+        ):
+            raise ValueError(
+                "dropout should be a number in range [0, 1] "
+                "representing the probability of an element being "
+                "zeroed"
+            )
         if dropout > 0 and num_layers == 1:
-            warnings.warn("dropout option adds dropout after all but last "
-                          "recurrent layer, so non-zero dropout expects "
-                          "num_layers greater than 1, but got dropout={} and "
-                          "num_layers={}".format(dropout, num_layers))
+            warnings.warn(
+                "dropout option adds dropout after all but last "
+                "recurrent layer, so non-zero dropout expects "
+                "num_layers greater than 1, but got dropout={} and "
+                "num_layers={}".format(dropout, num_layers)
+            )
 
         if proj_size > 0:
             raise NotImplementedError("proj_size > 0 is not supported")
         if proj_size < 0:
-            raise ValueError("proj_size should be a positive integer or zero to disable projections")
+            raise ValueError(
+                "proj_size should be a positive integer or zero to disable projections"
+            )
         if proj_size >= hidden_size:
             raise ValueError("proj_size has to be smaller than hidden_size")
 
@@ -256,7 +287,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
     def forward(
         self,
         input: Union[Tensor, PackedSequence],
-        state_init: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None
+        state_init: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None,
     ) -> Tuple[Union[Tensor, PackedSequence], Union[Tensor, Tuple[Tensor, Tensor]]]:
         """
         Forward pass of a full RNN, containing one or many single- or bi-directional layers. Implemented for
@@ -354,7 +385,9 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             for direction, (cell, h0, c0) in directions:
                 # apply single direction layer (with dropout)
                 out_layer, h, c = self.forward_layer(
-                    x if layer == 0 else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
+                    x
+                    if layer == 0
+                    else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
                     h0,  # [B, H]
                     c0,
                     batch_sizes,
@@ -371,10 +404,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
 
             if is_packed:
                 output = [  # tuple T x [B, P*H]
-                    torch.cat([
-                        layer_out[i]
-                        for layer_out in layer_outs
-                    ], dim=1)
+                    torch.cat([layer_out[i] for layer_out in layer_outs], dim=1)
                     for i in range(seq_length)
                 ]
             else:
@@ -382,7 +412,9 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
 
         if is_packed:
             packed_data = torch.cat(output, dim=0)  # [TB, P*H]
-            output = PackedSequence(packed_data, batch_sizes, sorted_indices, unsorted_indices)
+            output = PackedSequence(
+                packed_data, batch_sizes, sorted_indices, unsorted_indices
+            )
         else:
             # Rearrange batch dim back
             if self.batch_first:
@@ -460,7 +492,9 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
                 if delta > 0:
                     h_cat = torch.cat((h_n[t], h_0[batch_size_prev:batch_size_t, :]), 0)
                     if self.has_cell_state:
-                        c_cat = torch.cat((c_n[t], c_0[batch_size_prev:batch_size_t, :]), 0)
+                        c_cat = torch.cat(
+                            (c_n[t], c_0[batch_size_prev:batch_size_t, :]), 0
+                        )
                         h_next, c_next = cell(x[t], (h_cat, c_cat), batch_size_t)
                     else:
                         h_next = cell(x[t], h_cat, batch_size_t)
@@ -489,7 +523,11 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             # Collect last states for all sequences
             seq_lengths = compute_seq_lengths(batch_sizes)
             h_last = torch.zeros(max_batch_size, self.hidden_size)  # [B, H]
-            c_last = torch.zeros(max_batch_size, self.hidden_size) if self.has_cell_state else None
+            c_last = (
+                torch.zeros(max_batch_size, self.hidden_size)
+                if self.has_cell_state
+                else None
+            )
             for i, seq_len in enumerate(seq_lengths):
                 h_last[i, :] = h_temp[seq_len - 1][i, :]
                 if self.has_cell_state:
@@ -531,7 +569,10 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         """
         for layer in range(self.num_layers):
             yield layer, (
-                (direction, tuple(arg[self.num_directions*layer + direction] for arg in args))
+                (
+                    direction,
+                    tuple(arg[self.num_directions * layer + direction] for arg in args),
+                )
                 for direction in range(self.num_directions)
             )
 
@@ -540,9 +581,18 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         rename_map = {}
         for layer, directions in self.iterate_layers():
             for direction, _ in directions:
-                layer_input_size = self.input_size if layer == 0 else self.hidden_size * self.num_directions
+                layer_input_size = (
+                    self.input_size
+                    if layer == 0
+                    else self.hidden_size * self.num_directions
+                )
 
-                cell = self.cell_type(layer_input_size, self.hidden_size, bias=self.bias, **self.cell_params)
+                cell = self.cell_type(
+                    layer_input_size,
+                    self.hidden_size,
+                    bias=self.bias,
+                    **self.cell_params,
+                )
                 cells.append(cell)
 
                 suffix = "_reverse" if direction == 1 else ""
@@ -579,7 +629,7 @@ class DPRNN(DPRNNBase):
         dropout: float = 0,
         bidirectional: bool = False,
         proj_size: int = 0,
-        nonlinearity: Literal['tanh', 'relu'] = 'tanh',
+        nonlinearity: Literal["tanh", "relu"] = "tanh",
     ) -> None:
         super().__init__(
             DPRNNCell,
@@ -591,9 +641,7 @@ class DPRNN(DPRNNBase):
             dropout=dropout,
             bidirectional=bidirectional,
             proj_size=proj_size,
-            cell_params=dict(
-                nonlinearity=nonlinearity
-            ),
+            cell_params=dict(nonlinearity=nonlinearity),
         )
 
 
