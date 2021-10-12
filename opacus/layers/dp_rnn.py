@@ -4,11 +4,11 @@
 import math
 import numbers
 import warnings
-from typing import List, Optional, Tuple, Union, Type, Literal
+from typing import List, Literal, Optional, Tuple, Type, Union
 
 import torch
-from torch import Tensor
 import torch.nn as nn
+from torch import Tensor
 from torch.nn.utils.rnn import PackedSequence
 
 from ..utils.packed_sequences import compute_seq_lengths

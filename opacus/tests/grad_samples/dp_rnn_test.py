@@ -5,7 +5,7 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-from opacus.layers import DPRNN, DPGRU, DPLSTM
+from opacus.layers import DPGRU, DPLSTM, DPRNN
 from opacus.utils.packed_sequences import _gen_packed_data
 
 from .common import GradSampleHooks_test

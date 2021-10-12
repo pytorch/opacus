@@ -3,14 +3,13 @@
 
 from typing import Optional, Tuple, Union
 
-from hypothesis import given, settings
 import hypothesis.strategies as st
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import PackedSequence
-
-from opacus.layers import DPLSTM, DPRNN, DPGRU
+from hypothesis import given, settings
+from opacus.layers import DPGRU, DPLSTM, DPRNN
 from opacus.utils.packed_sequences import _gen_packed_data
+from torch.nn.utils.rnn import PackedSequence
 
 from .common import DPModules_test
 

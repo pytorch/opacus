@@ -9,7 +9,7 @@ from statistics import mean
 import torch
 import torch.nn as nn
 from opacus import PrivacyEngine
-from opacus.layers import DPRNN, DPGRU, DPLSTM
+from opacus.layers import DPGRU, DPLSTM, DPRNN
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset

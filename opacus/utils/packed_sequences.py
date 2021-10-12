@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Optional, List
+from typing import List, Optional
 
 import torch
 from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_sequence

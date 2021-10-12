@@ -2,8 +2,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 from .dp_ddp import DifferentiallyPrivateDistributedDataParallel
-from .dp_rnn import DPRNN, DPGRU, DPLSTM
 from .dp_multihead_attention import DPMultiheadAttention, SequenceBias
+from .dp_rnn import DPGRU, DPLSTM, DPRNN
 from .param_rename import RenameParamsMixin
 
 

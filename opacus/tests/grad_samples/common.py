@@ -9,11 +9,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from opacus.grad_sample import GradSampleModule
+from opacus.utils.packed_sequences import compute_seq_lengths
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
 from torch.testing import assert_allclose
-
-from opacus.utils.packed_sequences import compute_seq_lengths
-from opacus.grad_sample import GradSampleModule
 
 
 def expander(x, factor: int = 2):
