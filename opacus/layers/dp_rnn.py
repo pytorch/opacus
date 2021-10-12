@@ -4,7 +4,7 @@
 import math
 import numbers
 import warnings
-from typing import List, Literal, Optional, Tuple, Type, Union
+from typing import List, Optional, Tuple, Type, Union
 
 import torch
 import torch.nn as nn
@@ -78,6 +78,8 @@ class DPRNNCell(DPRNNCellBase):
         self, input_size: int, hidden_size: int, bias: bool, nonlinearity: str = "tanh"
     ) -> None:
         super().__init__(input_size, hidden_size, bias, num_chunks=1)
+        if nonlinearity not in ("tanh", "relu"):
+            raise ValueError(f"Unsupported nonlinearity: {nonlinearity}")
         self.nonlinearity = nonlinearity
 
     def forward(
@@ -631,7 +633,7 @@ class DPRNN(DPRNNBase):
         dropout: float = 0,
         bidirectional: bool = False,
         proj_size: int = 0,
-        nonlinearity: Literal["tanh", "relu"] = "tanh",
+        nonlinearity: str = "tanh",
     ) -> None:
         super().__init__(
             DPRNNCell,
