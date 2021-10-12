@@ -194,8 +194,8 @@ class DPLSTMCell(DPRNNCellBase):
 
 
 RNN_CELL_TYPES = {
-    "RNN_TANH": (DPRNNCell, dict(nonlinearity="tanh")),
-    "RNN_RELU": (DPRNNCell, dict(nonlinearity="relu")),
+    "RNN_TANH": (DPRNNCell, {"nonlinearity": "tanh"}),
+    "RNN_RELU": (DPRNNCell, {"nonlinearity": "relu"}),
     "GRU": (DPGRUCell, {}),
     "LSTM": (DPLSTMCell, {}),
 }
@@ -284,6 +284,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else None
         self.cells = self.initialize_cells()
 
+    # flake8: noqa C901
     def forward(
         self,
         input: Union[Tensor, PackedSequence],
@@ -430,6 +431,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
 
         return output, hidden
 
+    # flake8: noqa C901
     def forward_layer(
         self,
         x: Union[Tensor, PackedSequence],
@@ -641,7 +643,7 @@ class DPRNN(DPRNNBase):
             dropout=dropout,
             bidirectional=bidirectional,
             proj_size=proj_size,
-            cell_params=dict(nonlinearity=nonlinearity),
+            cell_params={"nonlinearity": nonlinearity},
         )
 
 
