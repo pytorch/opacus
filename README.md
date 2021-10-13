@@ -62,6 +62,17 @@ See the [CONTRIBUTING](https://github.com/pytorch/opacus/tree/main/CONTRIBUTING.
 
 Do also check out our README files inside the repo to learn how the code is organized.
 
+## Citation
+If you want to cite Opacus in your papers (much appreciated!), you can cite it as follows:
+```
+@article{opacus,
+  title={Opacus: User-Friendly Differential Privacy Library in PyTorch},
+  author={A. Yousefpour and I. Shilov and A. Sablayrolles and D. Testuggine and K. Prasad and M. Malek and J. Nguyen and S. Ghosh and A. Bharadwaj and J. Zhao and G. Cormode and I. Mironov},
+  journal={arXiv preprint arXiv:2109.12298},
+  year={2021}
+}
+```
+
 ## References
 * [Mironov, Ilya. "Rényi differential privacy." 2017 IEEE 30th Computer Security Foundations Symposium (CSF). IEEE, 2017.](https://arxiv.org/abs/1702.07476)
 * [Abadi, Martin, et al. "Deep learning with differential privacy." Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security. ACM, 2016.](https://arxiv.org/abs/1607.00133)
