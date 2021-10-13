@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Optional
+from typing import List, Optional
 
 import torch
 from torch.utils.data import Sampler
 
 
-class UniformWithReplacementSampler(Sampler):
+class UniformWithReplacementSampler(Sampler[List[int]]):
     r"""
     This sampler samples elements according to the Sampled Gaussian Mechanism.
     Each sample is selected with a probability equal to ``sample_rate``.

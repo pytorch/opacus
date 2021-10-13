@@ -12,6 +12,16 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 
+def forbid_accumulation_hook(module: nn.Module, _):
+    for p in module.parameters():
+        if hasattr(p, "grad_sample"):
+            # TODO: this correspond to either not calling optimizer.step()
+            # or not calling zero_grad(). Customize message
+            raise ValueError(
+                "Poisson sampling is not compatible with grad accumulation"
+            )
+
+
 class PrivacyEngine:
     def __init__(self, secure_mode=False):
         self.accountant = RDPAccountant()
@@ -26,12 +36,14 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        poisson_sampling: bool = True,
     ):
         # TODO: DP-Specific validation
         # TODO: either validate consistent dataset or do per-dataset accounting
 
         module = self._prepare_model(module, batch_first, loss_reduction)
-        data_loader = self._prepare_data_loader(data_loader)
+        if poisson_sampling:
+            data_loader = self._prepare_data_loader(data_loader)
 
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
@@ -52,36 +64,12 @@ class PrivacyEngine:
 
         optimizer.attach_step_hook(accountant_hook)
 
-        def virtual_step_hook(module: nn.Module, _, optimizer: DPOptimizer):
-            has_grad_sample = False
-            for p in module.parameters():
-                if not p.requires_grad:
-                    continue
-
-                if hasattr(p, "grad") and hasattr(p.grad, "has_noise"):
-                    # TODO: btw, it's only a problem if we don't zero out grad_sample
-                    # accumulating p.grad 's is fine -> is there a way we can
-                    # allow the latter, while forbidding the former?
-                    raise ValueError("Not calling zero_grad breaks accounting")
-
-                if hasattr(p, "grad_sample"):
-                    has_grad_sample = True
-                    break
-
-            if has_grad_sample:
-                optimizer.virtual_step()
-                module.zero_grad()
-
-        module.register_forward_pre_hook(
-            partial(
-                virtual_step_hook,
-                optimizer=optimizer,
-            )
-        )
+        if poisson_sampling:
+            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         return module, optimizer, data_loader
 
-    #TODO: we need a test for that
+    # TODO: we need a test for that
     def make_private_with_epsilon(
         self,
         module: nn.Module,
@@ -159,8 +147,3 @@ class PrivacyEngine:
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):
         return self.accountant.get_privacy_spent(delta)[0]
-
-
-class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):
-    def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
-        return data_loader

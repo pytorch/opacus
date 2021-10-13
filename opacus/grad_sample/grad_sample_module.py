@@ -45,7 +45,10 @@ def create_or_accumulate_grad_sample(
 def swap_tmp_grad_sample(p: nn.Parameter) -> None:
     if p.requires_grad:
         if hasattr(p, "grad_sample"):
-            p.grad_sample = torch.cat((p.grad_sample, p._tmp_grad_sample))
+            if isinstance(p.grad_sample, list):
+                p.grad_sample.append(p._tmp_grad_sample)
+            else:
+                p.grad_sample = [p.grad_sample, p._tmp_grad_sample]
         else:
             p.grad_sample = p._tmp_grad_sample
 
@@ -75,6 +78,7 @@ class GradSampleModule(nn.Module):
 
     def forward(self, x):
         # TODO: check to forbid double forward
+        # TODO: also check to force zero_grad
         return self._module(x)
 
     # TODO: match nn.Module signature
@@ -96,10 +100,16 @@ class GradSampleModule(nn.Module):
         """
         for p in self.parameters():
             if hasattr(p, "grad_sample") and p.grad_sample is not None:
-                if p.grad_sample.grad_fn is not None:
-                    p.grad_sample.detach_()
+                if isinstance(p.grad_sample, list):
+                    grad_samples = p.grad_sample
                 else:
-                    p.grad_sample.requires_grad_(False)
+                    grad_samples = [p.grad_sample]
+
+                for grad_sample in grad_samples:
+                    if grad_sample.grad_fn is not None:
+                        grad_sample.detach_()
+                    else:
+                        grad_sample.requires_grad_(False)
 
                 del p.grad_sample
 

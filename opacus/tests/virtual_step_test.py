@@ -102,10 +102,20 @@ class GradientAccumulation_test(unittest.TestCase):
         self.model_forward_backward(grad_sample_module, data_iter, num_steps=4)
         # should accumulate grads in .grad and .grad_sample
 
+        for p in self.model.parameters():
+            if not p.requires_grad:
+                continue
+
+            self.assertTrue(isinstance(p.grad_sample, list))
+            self.assertEqual(len(p.grad_sample), 4)
+
+            for gs in p.grad_sample:
+                self.assertEqual(gs.shape[0], self.BATCH_SIZE)
+
         # the accumulated per-sample gradients
         per_sample_grads = torch.cat(
             [
-                p.grad_sample.reshape(self.DATA_SIZE, -1)
+                torch.cat(p.grad_sample).reshape(self.DATA_SIZE, -1)
                 for p in self.model.parameters()
                 if p.requires_grad
             ],
@@ -129,27 +139,44 @@ class GradientAccumulation_test(unittest.TestCase):
         )
         self.assertTrue(torch.allclose(grad, orig_grad, atol=10e-5, rtol=10e-3))
 
-    def test_optimizer_accumulation(self):
-        """
-        Calling `privacy_engine.make_private` should call optimizer.virtual_step()
-        under the hood.
-        """
+    def test_privacy_engine_poisson_accumulation(self):
         privacy_engine = PrivacyEngine()
-        model, optimizer, _ = privacy_engine.make_private(
+        model, optimizer, dl = privacy_engine.make_private(
             module=self.model,
             optimizer=self.optimizer,
             data_loader=self.dl,
             noise_multiplier=0.0,
             max_grad_norm=999,
+            poisson_sampling=True,
         )
-        data = iter(self.dl)  # 4 batches of size 4 each
+        data = iter(dl)
+        self.model_forward_backward(model, data, num_steps=1)
 
-        for _ in range(3):  # take 3 virtual steps
+        with self.assertRaises(ValueError):
             self.model_forward_backward(model, data, num_steps=1)
 
-        # accumulate on the last step
-        self.model_forward_backward(model, data, num_steps=1)
-        self.assertEqual(optimizer.accumulated_iterations, 3)
+    def test_privacy_engine_no_poisson_accumulation(self):
+        """
+        Calling `privacy_engine.make_private` should call optimizer.virtual_step()
+        under the hood.
+        """
+        privacy_engine = PrivacyEngine()
+        model, optimizer, dl = privacy_engine.make_private(
+            module=self.model,
+            optimizer=self.optimizer,
+            data_loader=self.dl,
+            noise_multiplier=0.0,
+            max_grad_norm=999,
+            poisson_sampling=False,
+        )
+        data = iter(dl)  # 4 batches of size 4 each
+
+        self.model_forward_backward(model, data, num_steps=4)
+        self.assertEqual(optimizer.accumulated_iterations, 4)
+
+        for grad_sample in optimizer.grad_samples:
+            self.assertEqual(grad_sample.shape[0], 4 * self.BATCH_SIZE)
+
         optimizer.step()
 
         # .grad should contain the average gradient over the entire dataset
