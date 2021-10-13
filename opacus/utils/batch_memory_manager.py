@@ -1,24 +1,9 @@
 import math
-from contextlib import contextmanager
 from typing import List
 
 import numpy as np
-import torch
-import torch.nn as nn
-from opacus import PrivacyEngine
-from opacus.data_loader import DPDataLoader
 from opacus.optimizer import DPOptimizer
-from torch.utils.data import BatchSampler, DataLoader, Sampler, TensorDataset
-
-
-class Model(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.fc = nn.Linear(5, 1)
-
-    def forward(self, x):
-        return self.fc(x)
-
+from torch.utils.data import DataLoader, Sampler
 
 class BatchSplittingSampler(Sampler[List[int]]):
     def __init__(
@@ -79,38 +64,3 @@ class BatchMemoryManager(object):
 
     def __exit__(self, type, value, traceback):
         pass
-
-
-inps = torch.arange(10 * 5, dtype=torch.float32).view(10, 5)
-tgts = torch.arange(10, dtype=torch.float32).view(
-    10,
-)
-
-if __name__ == "__main__":
-    dataset = TensorDataset(inps, tgts)
-    data_loader = DataLoader(dataset, batch_size=4, pin_memory=True)
-    model = Model()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
-
-    privacy_engine = PrivacyEngine()
-    model, optimizer, _ = privacy_engine.make_private(
-        module=model,
-        optimizer=optimizer,
-        data_loader=data_loader,
-        noise_multiplier=1.0,
-        max_grad_norm=1.0,
-    )
-
-    with BatchMemoryManager(
-        data_loader=data_loader, max_physical_batch_size=2, optimizer=optimizer
-    ) as data_loader2:
-        for x, y in data_loader2:
-            # print(x.shape)
-            out = model(x)
-            loss = (y - out).mean()
-
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
-
-    # data_loader.batch_sampler
