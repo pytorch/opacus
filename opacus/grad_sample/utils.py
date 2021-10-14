@@ -3,8 +3,6 @@
 
 from typing import Sequence, Union
 
-import torch.nn as nn
-
 from .grad_sample_module import GradSampleModule
 
 

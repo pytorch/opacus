@@ -5,7 +5,6 @@
 from typing import Dict
 
 import torch
-import torch.nn as nn
 from opacus.layers.dp_multihead_attention import SequenceBias
 
 from .utils import register_grad_sampler

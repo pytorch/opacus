@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from functools import partial
 from typing import List, Optional
 
 from opacus.accountants import RDPAccountant

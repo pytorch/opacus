@@ -5,6 +5,7 @@ import numpy as np
 from opacus.optimizer import DPOptimizer
 from torch.utils.data import DataLoader, Sampler
 
+
 class BatchSplittingSampler(Sampler[List[int]]):
     def __init__(
         self, sampler: Sampler[List[int]], max_batch_size: int, optimizer: DPOptimizer
