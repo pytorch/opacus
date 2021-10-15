@@ -2,15 +2,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 from .dp_ddp import DifferentiallyPrivateDistributedDataParallel
-from .dp_lstm import DPLSTM
 from .dp_multihead_attention import DPMultiheadAttention, SequenceBias
-from .param_rename import ParamRenamedModule
+from .dp_rnn import DPGRU, DPLSTM, DPRNN
+from .param_rename import RenameParamsMixin
 
 
 __all__ = [
+    "DPRNN",
+    "DPGRU",
     "DPLSTM",
     "DPMultiheadAttention",
-    "ParamRenamedModule",
+    "RenameParamsMixin",
     "SequenceBias",
     "DifferentiallyPrivateDistributedDataParallel",
 ]
