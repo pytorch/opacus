@@ -326,18 +326,18 @@ class GradSampleModule(nn.Module):
         # TODO: that's not right; DPLSTM isn't always batch_first=False
         batch_dim = 0 if batch_first or type(module) is LSTMLinear else 1
 
-        A = module.activations.pop()
+        activations = module.activations.pop()
 
         if not hasattr(module, "max_batch_len"):
             # For packed sequences, max_batch_len is set in the forward of the model (e.g. the LSTM)
             # Otherwise we infer it here
-            module.max_batch_len = _get_batch_size(module, A, batch_dim)
+            module.max_batch_len = _get_batch_size(module, activations, batch_dim)
 
         n = module.max_batch_len
         if loss_reduction == "mean":
-            B = backprops * n
+            backprops = backprops * n
         elif loss_reduction == "sum":
-            B = backprops
+            backprops = backprops
         else:
             raise ValueError(
                 f"loss_reduction = {loss_reduction}. Only 'sum' and 'mean' losses are supported"
@@ -345,10 +345,14 @@ class GradSampleModule(nn.Module):
 
         # No matter where the batch dimension was, .grad_samples will *always* put it in the first dim
         if batch_dim != 0:
-            A = A.permute([batch_dim] + [x for x in range(A.dim()) if x != batch_dim])
-            B = B.permute([batch_dim] + [x for x in range(B.dim()) if x != batch_dim])
+            activations = activations.permute(
+                [batch_dim] + [x for x in range(activations.dim()) if x != batch_dim]
+            )
+            backprops = backprops.permute(
+                [batch_dim] + [x for x in range(backprops.dim()) if x != batch_dim]
+            )
 
-        return A, B
+        return activations, backprops
 
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
