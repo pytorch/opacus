@@ -19,8 +19,10 @@ def create_or_accumulate_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
 ) -> None:
     """
-    Creates a ``grad_sample`` attribute in the given parameter, or adds to it
-    if the ``grad_sample`` attribute already exists.
+    Creates a ``_current_grad_sample`` attribute in the given parameter, or adds to it
+    if the ``_current_grad_sample`` attribute already exists.
+
+
 
     Args:
         param: Parameter to which ``grad_sample`` will be added
@@ -28,31 +30,31 @@ def create_or_accumulate_grad_sample(
             shape as ``param`` with extra batch dimension
     """
 
-    if hasattr(param, "_tmp_grad_sample"):
-        param._tmp_grad_sample[: grad_sample.shape[0]] += grad_sample
+    if hasattr(param, "_current_grad_sample"):
+        param._current_grad_sample[: grad_sample.shape[0]] += grad_sample
     else:
         # TODO: maybe set max_batch_len on a parameter level, so
         # you don't need to pass layer here?
         max_batch_len = layer.max_batch_len
-        param._tmp_grad_sample = torch.zeros(
+        param._current_grad_sample = torch.zeros(
             torch.Size([max_batch_len]) + grad_sample.shape[1:],
             device=grad_sample.device,
             dtype=grad_sample.dtype,
         )
-        param._tmp_grad_sample[: grad_sample.shape[0]] = grad_sample
+        param._current_grad_sample[: grad_sample.shape[0]] = grad_sample
 
 
-def swap_tmp_grad_sample(p: nn.Parameter) -> None:
+def promote_current_grad_sample(p: nn.Parameter) -> None:
     if p.requires_grad:
         if hasattr(p, "grad_sample"):
             if isinstance(p.grad_sample, list):
-                p.grad_sample.append(p._tmp_grad_sample)
+                p.grad_sample.append(p._current_grad_sample)
             else:
-                p.grad_sample = [p.grad_sample, p._tmp_grad_sample]
+                p.grad_sample = [p.grad_sample, p._current_grad_sample]
         else:
-            p.grad_sample = p._tmp_grad_sample
+            p.grad_sample = p._current_grad_sample
 
-        del p._tmp_grad_sample
+        del p._current_grad_sample
 
 
 class GradSampleModule(nn.Module):
@@ -255,7 +257,30 @@ class GradSampleModule(nn.Module):
         loss_reduction: str,
         batch_first: bool,
     ):
-        """Captures backprops in backward pass and store per-sample gradients."""
+        """
+        Computes per sample gradients given the current backprops and activations
+        stored by the associated forward hook. Computed per sample gradients are
+        stored in ``grad_sample`` field in each parameter.
+
+        For non-recurrent layers the process is straightforward: for each
+        ``loss.backward()`` call this hook will be called exactly one. For recurrent
+        layers, however, this is more complicated and the hook will be called multiple
+        times, while still processing the same batch of data.
+
+        For this reason we first accumulate the gradients from *the same batch* in
+        ``p._current_grad_sample`` and then, when we detect the end of a full backward
+        pass - we store accumulated result on ``p.grad_sample``.
+
+        From there, ``p.grad_sample`` could be either a Tensor or a list of Tensors,
+        if accumulated over multiple batches
+
+        Args:
+            module: nn.Module,
+            _forward_input: torch.Tensor,
+            forward_output: torch.Tensor,
+            loss_reduction: str,
+            batch_first: bool,
+        """
         if not self.hooks_enabled:
             return
 
@@ -273,7 +298,7 @@ class GradSampleModule(nn.Module):
                 del module.max_batch_len
 
             for p in module.parameters():
-                swap_tmp_grad_sample(p)
+                promote_current_grad_sample(p)
 
     def rearrange_grad_samples(
         self,

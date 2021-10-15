@@ -20,8 +20,9 @@ class BatchSplittingSampler(Sampler[List[int]]):
                 batch_idxs, math.ceil(len(batch_idxs) / self.max_batch_size)
             )
             for x in split_idxs[:-1]:
-                self.optimizer.skip_next_step()
+                self.optimizer.signal_skip_step(do_skip=True)
                 yield x
+            self.optimizer.signal_skip_step(do_skip=False)
             yield split_idxs[-1]
 
     def __len__(self):

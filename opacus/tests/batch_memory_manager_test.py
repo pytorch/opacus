@@ -1,7 +1,9 @@
 import unittest
 
+import hypothesis.strategies as st
 import torch
 import torch.nn as nn
+from hypothesis import given
 from opacus import PrivacyEngine
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader, TensorDataset
@@ -27,17 +29,28 @@ class BatchMemoryManagerTest(unittest.TestCase):
 
         self.dataset = TensorDataset(self.inps, self.tgts)
 
-    def _init_training(self):
+    def _init_training(self, **data_loader_kwargs):
         model = Model()
         optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
         data_loader = DataLoader(
-            self.dataset, batch_size=self.batch_size, pin_memory=True
+            self.dataset, batch_size=self.batch_size, **data_loader_kwargs
         )
 
         return model, optimizer, data_loader
 
-    def test_basic(self):
-        model, optimizer, data_loader = self._init_training()
+    @given(
+        num_workers=st.integers(0, 4),
+        pin_memory=st.booleans(),
+    )
+    def test_basic(
+        self,
+        num_workers: int,
+        pin_memory: bool,
+    ):
+        model, optimizer, data_loader = self._init_training(
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+        )
 
         privacy_engine = PrivacyEngine()
         model, optimizer, data_loader = privacy_engine.make_private(

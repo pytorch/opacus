@@ -5,6 +5,7 @@
 from typing import Dict
 
 import torch
+import torch.nn as nn
 from opacus.layers.dp_multihead_attention import SequenceBias
 
 from .utils import register_grad_sampler
@@ -12,14 +13,14 @@ from .utils import register_grad_sampler
 
 @register_grad_sampler(SequenceBias)
 def compute_sequence_bias_grad_sample(
-    layer: SequenceBias, A: torch.Tensor, B: torch.Tensor
-) -> Dict[torch.Tensor, torch.Tensor]:
+    layer: SequenceBias, activations: torch.Tensor, backprops: torch.Tensor
+) -> Dict[nn.Parameter, torch.Tensor]:
     """
     Computes per sample gradients for ``SequenceBias`` layer
 
     Args:
         layer: Layer
-        A: Activations
-        B: Backpropagations
+        activations: Activations
+        backprops: Backpropagations
     """
-    return {layer.bias: B[:, -1]}
+    return {layer.bias: backprops[:, -1]}

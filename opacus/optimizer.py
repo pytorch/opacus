@@ -56,11 +56,17 @@ class DPOptimizer(Optimizer):
         self.expected_batch_size = expected_batch_size
         self.step_hook = None
 
-        self._is_skip_next_step = False
+        self._step_skip_queue = []
         self._is_last_step_skipped = False
 
-    def skip_next_step(self):
-        self._is_skip_next_step = True
+    def signal_skip_step(self, do_skip=True):
+        self._step_skip_queue.append(do_skip)
+
+    def _check_skip_next_step(self):
+        if self._step_skip_queue:
+            return self._step_skip_queue.pop(0)
+        else:
+            return False
 
     @property
     def params(self) -> List[nn.Parameter]:
@@ -145,8 +151,7 @@ class DPOptimizer(Optimizer):
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         self.pre_step()
 
-        if self._is_skip_next_step:
-            self._is_skip_next_step = False
+        if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return None
 

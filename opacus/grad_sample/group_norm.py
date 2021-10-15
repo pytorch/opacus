@@ -14,19 +14,19 @@ from .utils import register_grad_sampler
 @register_grad_sampler(nn.GroupNorm)
 def compute_group_norm_grad_sample(
     layer: nn.GroupNorm,
-    A: torch.Tensor,
-    B: torch.Tensor,
-) -> Dict[torch.Tensor, torch.Tensor]:
+    activations: torch.Tensor,
+    backprops: torch.Tensor,
+) -> Dict[nn.Parameter, torch.Tensor]:
     """
     Computes per sample gradients for GroupNorm
 
     Args:
         layer: Layer
-        A: Activations
-        B: Backpropagations
+        activations: Activations
+        backprops: Backpropagations
     """
-    gs = F.group_norm(A, layer.num_groups, eps=layer.eps) * B
+    gs = F.group_norm(activations, layer.num_groups, eps=layer.eps) * backprops
     ret = {layer.weight: torch.einsum("ni...->ni", gs)}
     if layer.bias is not None:
-        ret[layer.bias] = torch.einsum("ni...->ni", B)
+        ret[layer.bias] = torch.einsum("ni...->ni", backprops)
     return ret

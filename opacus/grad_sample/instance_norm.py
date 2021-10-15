@@ -23,21 +23,21 @@ def compute_instance_norm_grad_sample(
         nn.InstanceNorm2d,
         nn.InstanceNorm3d,
     ],
-    A: torch.Tensor,
-    B: torch.Tensor,
-) -> Dict[torch.Tensor, torch.Tensor]:
+    activations: torch.Tensor,
+    backprops: torch.Tensor,
+) -> Dict[nn.Parameter, torch.Tensor]:
     """
     Computes per sample gradients for InstanceNorm layers
 
     Args:
         layer: Layer
-        A: Activations
-        B: Backpropagations
+        activations: Activations
+        backprops: Backpropagations
     """
-    gs = F.instance_norm(A, eps=layer.eps) * B
+    gs = F.instance_norm(activations, eps=layer.eps) * backprops
     ret = {layer.weight: torch.einsum("ni...->ni", gs)}
 
     if layer.bias is not None:
-        ret[layer.bias] = torch.einsum("ni...->ni", B)
+        ret[layer.bias] = torch.einsum("ni...->ni", backprops)
 
     return ret

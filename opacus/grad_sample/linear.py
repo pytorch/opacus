@@ -11,19 +11,19 @@ from .utils import register_grad_sampler
 
 @register_grad_sampler(nn.Linear)
 def compute_linear_grad_sample(
-    layer: nn.Linear, A: torch.Tensor, B: torch.Tensor
-) -> Dict[torch.Tensor, torch.Tensor]:
+    layer: nn.Linear, activations: torch.Tensor, backprops: torch.Tensor
+) -> Dict[nn.Parameter, torch.Tensor]:
     """
     Computes per sample gradients for ``nn.Linear`` layer
 
     Args:
         layer: Layer
-        A: Activations
-        B: Backpropagations
+        activations: Activations
+        backprops: Backpropagations
     """
-    gs = torch.einsum("n...i,n...j->nij", B, A)
+    gs = torch.einsum("n...i,n...j->nij", backprops, activations)
     ret = {layer.weight: gs}
     if layer.bias is not None:
-        ret[layer.bias] = torch.einsum("n...k->nk", B)
+        ret[layer.bias] = torch.einsum("n...k->nk", backprops)
 
     return ret

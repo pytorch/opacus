@@ -15,21 +15,22 @@ from .utils import register_grad_sampler
 @register_grad_sampler(nn.LayerNorm)
 def compute_layer_norm_grad_sample(
     layer: nn.LayerNorm,
-    A: torch.Tensor,
-    B: torch.Tensor,
-) -> Dict[torch.Tensor, torch.Tensor]:
+    activations: torch.Tensor,
+    backprops: torch.Tensor,
+) -> Dict[nn.Parameter, torch.Tensor]:
     """
     Computes per sample gradients for LayerNorm
 
     Args:
         layer: Layer
-        A: Activations
-        B: Backpropagations
+        activations: Activations
+        backprops: Backpropagations
     """
     return {
         layer.weight: sum_over_all_but_batch_and_last_n(
-            F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B,
+            F.layer_norm(activations, layer.normalized_shape, eps=layer.eps)
+            * backprops,
             layer.weight.dim(),
         ),
-        layer.bias: sum_over_all_but_batch_and_last_n(B, layer.bias.dim()),
+        layer.bias: sum_over_all_but_batch_and_last_n(backprops, layer.bias.dim()),
     }
