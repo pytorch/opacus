@@ -217,19 +217,18 @@ See <a class="reference external" href="https://pytorch.org/docs/stable/generate
 </dd>
 </dl>
 </dd></dl>
-<span class="target" id="module-opacus.grad_sample.dp_lstm"></span><dl class="py function">
-<dt class="sig sig-object py" id="opacus.grad_sample.dp_lstm.compute_lstm_linear_grad_sample">
-<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.dp_lstm.</span></span><span class="sig-name descname"><span class="pre">compute_lstm_linear_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/dp_lstm.html#compute_lstm_linear_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.dp_lstm.compute_lstm_linear_grad_sample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes per sample gradients for <code class="docutils literal notranslate"><span class="pre">LSTMLinear</span></code> layer. The DPLSTM class is written using
-this layer as its building block.</p>
+<span class="target" id="module-opacus.grad_sample.dp_rnn"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.grad_sample.dp_rnn.compute_rnn_linear_grad_sample">
+<span class="sig-prename descclassname"><span class="pre">opacus.grad_sample.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">compute_rnn_linear_grad_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/dp_rnn.html#compute_rnn_linear_grad_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.dp_rnn.compute_rnn_linear_grad_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes per sample gradients for <code class="docutils literal notranslate"><span class="pre">RNNLinear</span></code> layer. The RNN-like (DPLSTM, DPGRU) models
+are written using this layer as its building block.</p>
 <p>class</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>layer</strong> (<a class="reference internal" href="dp_lstm.html#opacus.layers.dp_lstm.LSTMLinear" title="opacus.layers.dp_lstm.LSTMLinear"><code class="xref py py-class docutils literal notranslate"><span class="pre">LSTMLinear</span></code></a>) – Layer</p></li>
+<li><p><strong>layer</strong> (<a class="reference internal" href="dp_rnn.html#opacus.layers.dp_rnn.RNNLinear" title="opacus.layers.dp_rnn.RNNLinear"><code class="xref py py-class docutils literal notranslate"><span class="pre">RNNLinear</span></code></a>) – Layer</p></li>
 <li><p><strong>A</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Activations</p></li>
 <li><p><strong>B</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.9.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Backpropagations</p></li>
-<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Batch dimension position</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
