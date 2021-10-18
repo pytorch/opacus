@@ -27,7 +27,7 @@ def validate(module: CONV) -> None:
 
 
 @register_module_fixer([nn.Conv2d, nn.Conv3d])
-def fix(module: CONV) -> nn.CONV:
+def fix(module: CONV) -> CONV:
     if len(self.validate(module)) == 0:
         return module
     # else

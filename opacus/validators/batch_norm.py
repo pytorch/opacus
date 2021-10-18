@@ -54,8 +54,7 @@ def _batchnorm_to_groupnorm(module: BATCHNORM) -> nn.GroupNorm:
 
     Notes:
         A default value of 32 is chosen for the number of groups based on the
-        paper *Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour*
-        https://arxiv.org/pdf/1706.02677.pdf
+        paper *Group Normalization* https://arxiv.org/abs/1803.08494
     """
     return nn.GroupNorm(
         min(32, module.num_features), module.num_features, affine=module.affine
