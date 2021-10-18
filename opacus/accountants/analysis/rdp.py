@@ -32,7 +32,6 @@ from typing import List, Tuple, Union, Optional
 import numpy as np
 from scipy import special
 
-DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
 ########################
 # LOG-SPACE ARITHMETIC #
@@ -309,6 +308,8 @@ def get_privacy_spent(
         return np.inf, np.nan
 
     idx_opt = np.nanargmin(eps)  # Ignore NaNs
+    if idx_opt == 0 or idx_opt == len(eps) - 1:
+        warnings.warn(
+            "Optimal order is the largest (or smallest) alpha. Please consider expanding the range of alphas to get a tighter privacy bound"
+        )
     return eps[idx_opt], orders_vec[idx_opt]
-
-
