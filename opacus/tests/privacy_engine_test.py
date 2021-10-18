@@ -276,6 +276,37 @@ class PrivacyEngine_test(unittest.TestCase):
                 "Model parameters after deterministic run must match",
             )
 
+
+    def test_noise_level(self):
+        """
+        Tests that the noise level is correctly set
+        """
+        model, optimizer, dl, _ = self._init_private_training(noise_multiplier=1.0)
+        for p in model.parameters():
+            p.data.zero_()
+
+        n_params = sum([p.numel() for p in model.parameters() if p.requires_grad])
+        max_steps = 10
+        steps = 0
+        for x, y in dl:
+            optimizer.zero_grad()
+            logits = model(x)
+            loss = logits.view(logits.size(0), -1).sum(dim=1)
+            # Gradient should be 0
+            loss.backward(torch.zeros(logits.size(0)))
+
+            optimizer.step()
+            steps += 1
+
+            if max_steps and steps >= max_steps:
+                break
+
+        expected_norm = steps * n_params * optimizer.noise_multiplier**2 * self.LR**2 / (optimizer.expected_batch_size**2)
+        real_norm = sum([torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]).item()
+
+        self.assertAlmostEqual(real_norm, expected_norm, places=1)
+
+
     @unittest.skip("Not yet implemented")
     def test_raises_seed_set_on_secure_rng(self):
         """
