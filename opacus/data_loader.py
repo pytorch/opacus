@@ -75,6 +75,11 @@ class DPDataLoader(DataLoader):
         if isinstance(data_loader, cls):
             return data_loader
 
+        if generator is None:
+            _generator = data_loader.generator
+        else:
+            _generator = generator
+
         return cls(
             dataset=data_loader.dataset,
             sample_rate=1 / len(data_loader),
@@ -85,7 +90,7 @@ class DPDataLoader(DataLoader):
             timeout=data_loader.timeout,
             worker_init_fn=data_loader.worker_init_fn,
             multiprocessing_context=data_loader.multiprocessing_context,
-            generator=generator,
+            generator=_generator,
             prefetch_factor=data_loader.prefetch_factor,
             persistent_workers=data_loader.persistent_workers,
         )

@@ -34,6 +34,7 @@ class DPOptimizer(Optimizer):
         self.expected_batch_size = expected_batch_size
         self.step_hook = None
         self.accumulated_iterations = 0
+        self.random_number_generator = generator
 
 
     @property
