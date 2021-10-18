@@ -2,32 +2,31 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 
+from typing import Dict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .utils import create_or_extend_grad_sample, register_grad_sampler
+from .utils import register_grad_sampler
 
 
 @register_grad_sampler(nn.GroupNorm)
 def compute_group_norm_grad_sample(
     layer: nn.GroupNorm,
-    A: torch.Tensor,
-    B: torch.Tensor,
-    batch_dim: int = 0,
-) -> None:
+    activations: torch.Tensor,
+    backprops: torch.Tensor,
+) -> Dict[nn.Parameter, torch.Tensor]:
     """
     Computes per sample gradients for GroupNorm
 
     Args:
         layer: Layer
-        A: Activations
-        B: Backpropagations
-        batch_dim: Batch dimension position
+        activations: Activations
+        backprops: Backpropagations
     """
-    gs = F.group_norm(A, layer.num_groups, eps=layer.eps) * B
-    create_or_extend_grad_sample(layer.weight, torch.einsum("ni...->ni", gs), batch_dim)
+    gs = F.group_norm(activations, layer.num_groups, eps=layer.eps) * backprops
+    ret = {layer.weight: torch.einsum("ni...->ni", gs)}
     if layer.bias is not None:
-        create_or_extend_grad_sample(
-            layer.bias, torch.einsum("ni...->ni", B), batch_dim
-        )
+        ret[layer.bias] = torch.einsum("ni...->ni", backprops)
+    return ret

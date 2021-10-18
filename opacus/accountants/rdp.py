@@ -1,6 +1,8 @@
 from typing import List, Optional, Tuple, Union
-from .analysis import rdp as privacy_analysis
+
 from .accountant import IAccountant
+from .analysis import rdp as privacy_analysis
+
 
 class RDPAccountant(IAccountant):
     DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))

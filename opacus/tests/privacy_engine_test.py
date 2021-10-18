@@ -99,7 +99,7 @@ class PrivacyEngine_test(unittest.TestCase):
         secure_mode: bool = False,
         noise_multiplier: float = 1.0,
         max_grad_norm: float = 1.0,
-        ignore_poisson_sampling: bool = False,
+        poisson_sampling: bool = True,
     ):
         model = SampleConvNet()
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
@@ -116,27 +116,28 @@ class PrivacyEngine_test(unittest.TestCase):
             data_loader=dl,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
+            poisson_sampling=poisson_sampling,
         )
-        if not ignore_poisson_sampling:
-            dl = poisson_dl
 
         return model, optimizer, dl, privacy_engine
 
     def _train_steps(
         self,
         model: nn.Module,
-        optimizer: torch.optim.Optimizer,
+        optimizer: Optional[torch.optim.Optimizer],
         dl: DataLoader,
         max_steps: Optional[int] = None,
     ):
 
         steps = 0
         for x, y in dl:
-            optimizer.zero_grad()
+            if optimizer:
+                optimizer.zero_grad()
             logits = model(x)
             loss = self.criterion(logits, y)
             loss.backward()
-            optimizer.step()
+            if optimizer:
+                optimizer.step()
 
             steps += 1
             if max_steps and steps >= max_steps:
@@ -146,7 +147,7 @@ class PrivacyEngine_test(unittest.TestCase):
         model, optimizer, dl, _ = self._init_private_training(
             noise_multiplier=1.0,
             max_grad_norm=1.0,
-            ignore_poisson_sampling=False,
+            poisson_sampling=True,
         )
         self._train_steps(model, optimizer, dl)
 
@@ -160,7 +161,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
         torch.manual_seed(0)
         p_model, p_optimizer, p_dl, _ = self._init_private_training(
-            ignore_poisson_sampling=True,
+            poisson_sampling=False,
             noise_multiplier=1.0 if do_noise else 0.0,
             max_grad_norm=1.0 if do_clip else 9999.0,
         )
@@ -181,7 +182,54 @@ class PrivacyEngine_test(unittest.TestCase):
                 f"Should be: {expected_match}",
             )
 
+    def _compare_to_vanilla_accumulated(self, do_noise, do_clip, expected_match):
+        torch.manual_seed(0)
+        v_model, v_optimizer, v_dl = self._init_vanilla_training()
+        self._train_steps(v_model, v_optimizer, v_dl, max_steps=4)
+        v_optimizer.step()
+        vanilla_params = [
+            (name, p) for name, p in v_model.named_parameters() if p.requires_grad
+        ]
+
+        torch.manual_seed(0)
+        p_model, p_optimizer, p_dl, _ = self._init_private_training(
+            poisson_sampling=False,
+            noise_multiplier=1.0 if do_noise else 0.0,
+            max_grad_norm=1.0 if do_clip else 9999.0,
+        )
+        self._train_steps(p_model, p_optimizer, p_dl, max_steps=4)
+        p_optimizer.step()
+        private_params = [p for p in p_model.parameters() if p.requires_grad]
+
+        for (name, vp), pp in zip(vanilla_params, private_params):
+            self.assertEqual(
+                torch.allclose(vp, pp, atol=1e-8, rtol=1e-3),
+                expected_match,
+                f"Unexpected private/vanilla weight match ({name})"
+                f"Should be: {expected_match}",
+            )
+            self.assertEqual(
+                torch.allclose(vp.grad, pp.grad, atol=1e-8, rtol=1e-3),
+                expected_match,
+                f"Unexpected private/vanilla gradient match ({name})"
+                f"Should be: {expected_match}",
+            )
+
     def test_compare_to_vanilla(self):
+        """
+        Compare gradients and updated weights with vanilla model initialized
+        with the same seed
+        """
+        for do_noise in (False, True):
+            for do_clip in (False, True):
+                with self.subTest(do_noise=do_noise, do_clip=do_clip):
+                    self._compare_to_vanilla(
+                        do_noise=do_noise,
+                        do_clip=do_clip,
+                        expected_match=not (do_noise or do_clip),
+                    )
+
+    def test_compare_to_vanilla_accumulated(self):
         """
         Compare gradients and updated weights with vanilla model initialized
         with the same seed
@@ -221,15 +269,11 @@ class PrivacyEngine_test(unittest.TestCase):
         Test that adding noise results in ever different model params.
         We disable clipping in this test by setting it to a very high threshold.
         """
-        model, optimizer, dl, _ = self._init_private_training(
-            ignore_poisson_sampling=True
-        )
+        model, optimizer, dl, _ = self._init_private_training(poisson_sampling=False)
         self._train_steps(model, optimizer, dl, max_steps=1)
         first_run_params = (p for p in model.parameters() if p.requires_grad)
 
-        model, optimizer, dl, _ = self._init_private_training(
-            ignore_poisson_sampling=True
-        )
+        model, optimizer, dl, _ = self._init_private_training(poisson_sampling=False)
         self._train_steps(model, optimizer, dl, max_steps=1)
         second_run_params = (p for p in model.parameters() if p.requires_grad)
 

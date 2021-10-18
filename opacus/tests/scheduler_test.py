@@ -3,10 +3,10 @@
 import unittest
 
 import torch
+from opacus import PrivacyEngine
+from opacus.scheduler import ExponentialNoise, LambdaNoise, StepNoise
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
-from opacus import PrivacyEngine
-from opacus.scheduler import ExponentialNoise, StepNoise, LambdaNoise
 
 
 class SchedulerTest(unittest.TestCase):

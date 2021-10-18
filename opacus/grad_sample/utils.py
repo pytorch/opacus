@@ -3,9 +3,6 @@
 
 from typing import Sequence, Union
 
-import torch
-import torch.nn as nn
-
 from .grad_sample_module import GradSampleModule
 
 
@@ -33,49 +30,3 @@ def register_grad_sampler(target_class_or_classes: Union[type, Sequence[type]]):
         return f
 
     return decorator
-
-
-def create_or_extend_grad_sample(
-    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
-) -> None:
-    """
-    Creates a ``grad_sample`` attribute in the given parameter, or appends to it
-    if the ``grad_sample`` attribute already exists.
-
-    Args:
-        param: Parameter to which ``grad_sample`` will be added
-        grad_sample: Per-sample gradients tensor. Must be of the same
-            shape as ``param`` with extra batch dimension
-        batch_dim: Position of the batch dimension in the shape of
-            ``grad_sample``
-    """
-
-    if hasattr(param, "grad_sample"):
-        param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
-    else:
-        param.grad_sample = grad_sample
-
-
-def create_or_accumulate_grad_sample(
-    param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
-) -> None:
-    """
-    Creates a ``grad_sample`` attribute in the given parameter, or adds to it
-    if the ``grad_sample`` attribute already exists.
-
-    Args:
-        param: Parameter to which ``grad_sample`` will be added
-        grad_sample: Per-sample gradients tensor. Must be of the same
-            shape as ``param`` with extra batch dimension
-    """
-
-    if hasattr(param, "grad_sample"):
-        param.grad_sample[: grad_sample.shape[0]] += grad_sample
-    else:
-        max_batch_len = layer.max_batch_len
-        param.grad_sample = torch.zeros(
-            torch.Size([max_batch_len]) + grad_sample.shape[1:],
-            device=grad_sample.device,
-            dtype=grad_sample.dtype,
-        )
-        param.grad_sample[: grad_sample.shape[0]] = grad_sample
