@@ -2,17 +2,18 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from typing import Optional, List
 
-from torch.utils.data import DataLoader
 from opacus.accountants import RDPAccountant
+from opacus.accountants.rdp import get_noise_multiplier
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizer import DPOptimizer
-from opacus.accountants.rdp import get_noise_multiplier
+from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
 
 class PrivacyEngine:
     def __init__(self, secure_mode=False):
+        self.module_validator = ModuleValidator()
         self.accountant = RDPAccountant()
         self.secure_mode = secure_mode  # TODO: actually support it
 
@@ -26,7 +27,6 @@ class PrivacyEngine:
         batch_first: bool = True,
         loss_reduction: str = "mean",
     ):
-        # TODO: DP-Specific validation
         # TODO: either validate consistent dataset or do per-dataset accounting
 
         module = self._prepare_model(module, batch_first, loss_reduction)
@@ -94,6 +94,7 @@ class PrivacyEngine:
         batch_first: bool = True,
         loss_reduction: str = "mean",
     ) -> GradSampleModule:
+        self.module_validator.fix_and_validate_(module)
         if isinstance(module, GradSampleModule):
             return module
         else:
@@ -130,7 +131,6 @@ class PrivacyEngine:
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):
         return self.accountant.get_privacy_spent(delta)[0]
-
 
 
 class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):
