@@ -6,7 +6,8 @@ from collections import defaultdict
 import numpy as np
 import torch
 import torch.nn as nn
-from opacus import PrivacyEngine, privacy_analysis
+from opacus import PrivacyEngine
+from opacus.accountants.analysis.rdp import compute_rdp, get_privacy_spent
 from opacus.dp_model_inspector import DPModelInspector, IncompatibleModuleException
 from opacus.layers.dp_multihead_attention import SequenceBias
 from opacus.utils import stats
@@ -57,9 +58,9 @@ class DocstringExamplesTest(unittest.TestCase):
         orders = range(2, max_order + 1)
         rdp = np.zeros_like(orders, dtype=float)
         for q, sigma, steps in parameters:
-            rdp += privacy_analysis.compute_rdp(q, sigma, steps, orders)
+            rdp += compute_rdp(q, sigma, steps, orders)
 
-        epsilon, opt_order = privacy_analysis.get_privacy_spent(orders, rdp, delta)
+        epsilon, opt_order = get_privacy_spent(orders, rdp, delta)
 
     @unittest.skip("Don't have docstrings for new PrivacyEngine yet")
     def test_privacy_engine_class_example(self):

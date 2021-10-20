@@ -2,40 +2,35 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 
+from typing import Dict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus.utils.tensor_utils import sum_over_all_but_batch_and_last_n
 
-from .utils import create_or_extend_grad_sample, register_grad_sampler
+from .utils import register_grad_sampler
 
 
 @register_grad_sampler(nn.LayerNorm)
 def compute_layer_norm_grad_sample(
     layer: nn.LayerNorm,
-    A: torch.Tensor,
-    B: torch.Tensor,
-    batch_dim: int = 0,
-) -> None:
+    activations: torch.Tensor,
+    backprops: torch.Tensor,
+) -> Dict[nn.Parameter, torch.Tensor]:
     """
     Computes per sample gradients for LayerNorm
 
     Args:
         layer: Layer
-        A: Activations
-        B: Backpropagations
-        batch_dim: Batch dimension position
+        activations: Activations
+        backprops: Backpropagations
     """
-    create_or_extend_grad_sample(
-        layer.weight,
-        sum_over_all_but_batch_and_last_n(
-            F.layer_norm(A, layer.normalized_shape, eps=layer.eps) * B,
+    return {
+        layer.weight: sum_over_all_but_batch_and_last_n(
+            F.layer_norm(activations, layer.normalized_shape, eps=layer.eps)
+            * backprops,
             layer.weight.dim(),
         ),
-        batch_dim,
-    )
-    create_or_extend_grad_sample(
-        layer.bias,
-        sum_over_all_but_batch_and_last_n(B, layer.bias.dim()),
-        batch_dim,
-    )
+        layer.bias: sum_over_all_but_batch_and_last_n(backprops, layer.bias.dim()),
+    }

@@ -1,6 +1,7 @@
 from typing import List, Optional, Tuple, Union
-from .analysis import gdp as privacy_analysis
+
 from .accountant import IAccountant
+from .analysis import gdp as privacy_analysis
 
 
 class GaussianAccountant(IAccountant):

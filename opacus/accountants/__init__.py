@@ -1,3 +1,3 @@
-from .rdp import RDPAccountant
-from .gdp import GaussianAccountant
 from .accountant import IAccountant
+from .gdp import GaussianAccountant
+from .rdp import RDPAccountant

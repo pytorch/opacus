@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from typing import Optional, List
+from typing import List, Optional
 
 from opacus.accountants import RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
+from opacus.data_loader import DPDataLoader
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizer import DPOptimizer
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.utils.data import DataLoader
+
+
+def forbid_accumulation_hook(module: nn.Module, _):
+    for p in module.parameters():
+        if hasattr(p, "grad_sample"):
+            # TODO: this correspond to either not calling optimizer.step()
+            # or not calling zero_grad(). Customize message
+            raise ValueError(
+                "Poisson sampling is not compatible with grad accumulation"
+            )
 
 
 class PrivacyEngine:
@@ -51,6 +62,7 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        poisson_sampling: bool = True,
         try_fix_incompatible_modules: bool = False,
     ):
         # TODO: either validate consistent dataset or do per-dataset accounting
@@ -58,8 +70,8 @@ class PrivacyEngine:
         module = self._prepare_model(
             module, batch_first, loss_reduction, try_fix_incompatible_modules
         )
-        data_loader = self._prepare_data_loader(data_loader)
-
+        if poisson_sampling:
+            data_loader = self._prepare_data_loader(data_loader)
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
@@ -79,8 +91,12 @@ class PrivacyEngine:
 
         optimizer.attach_step_hook(accountant_hook)
 
+        if poisson_sampling:
+            module.register_forward_pre_hook(forbid_accumulation_hook)
+
         return module, optimizer, data_loader
 
+    # TODO: we need a test for that
     def make_private_with_epsilon(
         self,
         module: nn.Module,
@@ -166,8 +182,3 @@ class PrivacyEngine:
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):
         return self.accountant.get_privacy_spent(delta)[0]
-
-
-class PrivacyEngineUnsafeKeepDataLoader(PrivacyEngine):
-    def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
-        return data_loader
