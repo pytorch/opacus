@@ -13,9 +13,34 @@ from torch.utils.data import DataLoader
 
 class PrivacyEngine:
     def __init__(self, secure_mode=False):
-        self.module_validator = ModuleValidator()
         self.accountant = RDPAccountant()
         self.secure_mode = secure_mode  # TODO: actually support it
+
+    def is_compatible(
+        self,
+        module: nn.Module,
+        optimizer: Optional[optim.Optimizer],
+        data_loader: Optional[DataLoader],
+    ) -> bool:
+        """
+        Check if task components are compatible with DP.
+        """
+        return ModuleValidator.is_valid(module)
+
+    def validate(
+        self,
+        module: nn.Module,
+        optimizer: Optional[optim.Optimizer],
+        data_loader: Optional[DataLoader],
+    ):
+        """
+        Validate that task components are compatible with DP.
+        Same as ``is_compatible()``, but throws exception instead of returning bool.
+        """
+        ModuleValidator.valiate(module)
+
+    def try_fix_incompatible_modules_(self, module: nn.Module) -> None:
+        ModuleValidator.fix_(module)
 
     def make_private(
         self,
@@ -26,10 +51,13 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        try_fix_incompatible_modules: bool = False,
     ):
         # TODO: either validate consistent dataset or do per-dataset accounting
 
-        module = self._prepare_model(module, batch_first, loss_reduction)
+        module = self._prepare_model(
+            module, batch_first, loss_reduction, try_fix_incompatible_modules
+        )
         data_loader = self._prepare_data_loader(data_loader)
 
         sample_rate = 1 / len(data_loader)
@@ -64,6 +92,7 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        try_fix_incompatible_modules: bool = False,
         alphas: Optional[List[float]] = None,
         sigma_min: Optional[float] = None,
         sigma_max: Optional[float] = None,
@@ -86,6 +115,7 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             batch_first=batch_first,
             loss_reduction=loss_reduction,
+            try_fix_incompatible_modules=try_fix_incompatible_modules,
         )
 
     def _prepare_model(
@@ -93,8 +123,14 @@ class PrivacyEngine:
         module: nn.Module,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        try_fix_incompatible_modules: bool = False,
     ) -> GradSampleModule:
-        self.module_validator.fix_and_validate_(module)
+        # (fix and) validate
+        if try_fix_incompatible_modules:
+            self.try_fix_incompatible_modules_(module)
+        self.valiate(module=module, optimizer=None, data_loader=None)
+
+        # wrap
         if isinstance(module, GradSampleModule):
             return module
         else:
@@ -125,7 +161,6 @@ class PrivacyEngine:
     def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
         if isinstance(data_loader, DPDataLoader):
             return data_loader
-
         return DPDataLoader.from_data_loader(data_loader)
 
     # TODO: default delta value?

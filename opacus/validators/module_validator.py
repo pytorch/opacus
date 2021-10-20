@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+import logging
 from functools import partial
-from opacus.utils.module_utils import trainable_modules
 from typing import Iterable, List, Tuple
 
 import torch.nn as nn
 from opacus.grad_sample.grad_sample_module import GradSampleModule
+from opacus.utils.module_utils import trainable_modules
 from opacus.validators.errors import (
     IllegalConfigurationError,
     NotYetSupported,
@@ -31,9 +32,11 @@ class ModuleValidator:
     VALIDATORS = {}
     FIXERS = {}
 
-    def validate(self, module: nn.Module) -> List[UnsupportedError]:
+    @classmethod
+    def _check_for_validation_errors(cls, module: nn.Module) -> List[UnsupportedError]:
         """
         Validate module and sub_modules by running registered custom validators.
+        Also perform additional validation to ensure DP compatible training.
 
         Args:
             module: The root module to validate.
@@ -43,6 +46,20 @@ class ModuleValidator:
             Empty list in case of successful of validation.
         """
         errors = []
+        # 1. validate that module is in trainig mode
+        if not module.training:
+            errors.append(
+                IllegalConfigurationError("Model needs to be in training mode")
+            )
+        # 2. validate that all trainable modules are supported by GradSampleModule.
+        errors.extend(
+            [
+                NotYetSupportedError(f"grad sampler is not yet implemented for {m}")
+                for m in trainable_modules(module)
+                if not GradSampleModule.is_supported(m)
+            ]
+        )
+        # 3. perform module specific validations.
         for _, sub_module in module.named_children():
             if type(sub_module) in ModuleValidator.VALIDATORS:
                 sub_module_validator = ModuleValidator.VALIDATORS[type(sub_module)]
@@ -50,7 +67,41 @@ class ModuleValidator:
         return errors
 
 
-    def fix_(self, module: nn.Module) -> None:
+    @classmethod
+    def is_valid(cls, module: nn.Module) -> bool:
+        """
+        Check if module and sub_modules are valid by running registered custom validators.
+
+        Args:
+            module: The root module to validate.
+
+        Returns:
+            bool
+        """
+        return len(cls._check_for_validation_errors(module) == 0)
+
+
+    @classmethod
+    def validate(cls, module: nn.Module) -> None:
+        """
+        Validate module and sub_modules by running registered custom validators.
+        This is same as ``is_valid()``, but throws the excpetions rather than returning
+        a boolean.
+
+        Args:
+            module: The root module to validate.
+
+        Raises:
+            List of UnsupportedError in case of validation failures.
+        """
+        errors = cls._check_for_validation_errors(module)
+        # raise Error if applicable
+        if len(errors) > 0:
+            raise UnsupportedError(errors)
+
+
+    @classmethod
+    def fix_(cls, module: nn.Module) -> None:
         """
         Make the module and sub_modules DP compatible by running registered custom fixers.
 
@@ -69,10 +120,10 @@ class ModuleValidator:
                     f"Replaced `{sub_module_name}` from {sub_module} to {new_sub_module}"
                 )
 
-    def fix_and_validate_(self, module: nn.Module) -> None:
+    @classmethod
+    def fix_and_validate_(cls, module: nn.Module) -> None:
         """
-        Fix and validate the module and sub_modules by executing regitered custom fixers
-        and validators. Also perform additional validation to ensure DP compatible training.
+        Fix the module and sub_modules first, and then run validation.
 
         Args:
             module: The root module to be fixed and validted
@@ -85,23 +136,7 @@ class ModuleValidator:
         """
 
         errors = []
-        # 1. check if module is in trainig mode
-        if not module.training:
-            errors.append(
-                IllegalConfigurationError("Model needs to be in training mode")
-            )
-        # 2. replace any fixable modules
-        self.fix_(module)
-        # 3. check if all trainable modules are supported by GradSampleModule.
-        errors.extend(
-            [
-                NotYetSupportedError(f"grad sampler is not yet implemented for {m}")
-                for m in trainable_modules(module)
-                if not GradSampleModule.is_supported(m)
-            ]
-        )
-        # 4. perform module specific validations.
-        errors.extend(self.validate(module))
-        # raise Error if applicable
-        if len(errors) > 0:
-            raise UnsupportedError(errors)
+        # 1. replace any fixable modules
+        cls.fix_(module)
+        # 2. perform module specific validations.
+        cls.validate(module)
