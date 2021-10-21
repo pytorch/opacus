@@ -13,11 +13,24 @@ Yes! Opacus is open-source for public use, and it is licensed under the [Apache-
 
 ## How can I report a bug or ask a question?
 
-You can ask your questions or report bugs by submitting GitHub issues. To submit a Github issue, please [click here](https://github.com/pytorch/opacus/issues).
+You can report bugs by submitting GitHub issues. To submit a Github issue, please [click here](https://github.com/pytorch/opacus/issues).
+You can ask questions in our dedicated PyTorch [Discussion Forum](https://discuss.pytorch.org/c/opacus/29). We actively monitor questions in the PyTorch forums with the category `Opacus`.
 
 ## I'd like to contribute to Opacus. How can I do that?
 
 Thank you for your interest in contributing to Opacus! Submit your contributions using Github pull requests [here](https://github.com/pytorch/opacus/pulls). Please take a look at [Opacus contribution guide](https://github.com/pytorch/opacus/blob/main/CONTRIBUTING.md).
+
+## If I use Opacus in my paper, how can I cite it?
+
+If you use Opacus in your papers, you can cite it as follows:
+```
+@article{opacus,
+  title={Opacus: User-Friendly Differential Privacy Library in PyTorch},
+  author={A. Yousefpour and I. Shilov and A. Sablayrolles and D. Testuggine and K. Prasad and M. Malek and J. Nguyen and S. Ghosh and A. Bharadwaj and J. Zhao and G. Cormode and I. Mironov},
+  journal={arXiv preprint arXiv:2109.12298},
+  year={2021}
+}
+```
 
 ## What is DP-SGD?
 

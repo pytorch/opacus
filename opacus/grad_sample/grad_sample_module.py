@@ -5,7 +5,7 @@ from typing import Iterable, List, Tuple
 
 import torch
 import torch.nn as nn
-from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
+from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
 from opacus.utils.module_inspection import requires_grad
 
 
@@ -236,7 +236,7 @@ class GradSampleModule(nn.Module):
                 " run forward after add_hooks(model)"
             )
 
-        batch_dim = 0 if batch_first or type(module) is LSTMLinear else 1
+        batch_dim = 0 if batch_first or type(module) is RNNLinear else 1
 
         if isinstance(module.activations, list):
             A = module.activations.pop()
@@ -268,7 +268,9 @@ class GradSampleModule(nn.Module):
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
         """Check if this module is supported"""
-        return type(module) in cls.GRAD_SAMPLERS or type(module) is DPLSTM
+        return type(module) in cls.GRAD_SAMPLERS or isinstance(
+            module, (DPRNNBase, DPRNNCellBase)
+        )
 
 
 def _get_batch_size(
