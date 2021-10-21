@@ -38,7 +38,7 @@ export TERM=xterm
 pip install --upgrade pip
 
 # install with dev dependencies
-pip install -e .[dev]
+pip install -e .[dev] --user
 
 # install pytorch nightly if asked for
 if [[ $PYTORCH_NIGHTLY == true ]]; then
