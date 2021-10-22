@@ -33,7 +33,7 @@ Opacus also uses [isort](https://github.com/timothycrosley/isort) to sort import
 alphabetically and separate into sections. isort is installed easily via
 pip using `pip install isort`, and run locally by calling
 ```bash
-isort
+isort -v -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma  .
 ```
 from the repository root. Configuration for isort is located in .isort.cfg.
 
