@@ -8,11 +8,7 @@ from typing import Iterable, List, Tuple
 import torch.nn as nn
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.utils.module_utils import trainable_modules
-from opacus.validators.errors import (
-    IllegalConfigurationError,
-    NotYetSupported,
-    UnsupportedError,
-)
+from opacus.validators.errors import IllegalConfigurationError, UnsupportedError
 
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s",
@@ -33,17 +29,20 @@ class ModuleValidator:
     FIXERS = {}
 
     @classmethod
-    def _check_for_validation_errors(cls, module: nn.Module) -> List[UnsupportedError]:
+    def validate(
+        cls, module: nn.Module, raise_if_error: bool = False
+    ) -> List[UnsupportedError]:
         """
         Validate module and sub_modules by running registered custom validators.
-        Also perform additional validation to ensure DP compatible training.
+        Returns or raises excpetions depending on ``raise_if_error`` flag.
 
         Args:
             module: The root module to validate.
+            raise_if_error: Boolean to indicate whether to raise errors or return
+            the list of errors.
 
-        Returns:
-            List of Errors encountered during validation.
-            Empty list in case of successful of validation.
+        Raises:
+            UnsupportedError in case of validation failures.
         """
         errors = []
         # 1. validate that module is in trainig mode
@@ -53,19 +52,18 @@ class ModuleValidator:
             )
         # 2. validate that all trainable modules are supported by GradSampleModule.
         errors.extend(
-            [
-                NotYetSupportedError(f"grad sampler is not yet implemented for {m}")
-                for m in trainable_modules(module)
-                if not GradSampleModule.is_supported(m)
-            ]
+            GradSampleModule.validate(module=module, raise_if_error=raise_if_error)
         )
         # 3. perform module specific validations.
         for _, sub_module in module.named_children():
             if type(sub_module) in ModuleValidator.VALIDATORS:
                 sub_module_validator = ModuleValidator.VALIDATORS[type(sub_module)]
                 errors.extend(sub_module_validator(sub_module))
-        return errors
-
+        # raise Error if applicable
+        if raise_if_error and len(errors) > 0:
+            raise UnsupportedError(errors)
+        else:
+            return errors
 
     @classmethod
     def is_valid(cls, module: nn.Module) -> bool:
@@ -78,27 +76,7 @@ class ModuleValidator:
         Returns:
             bool
         """
-        return len(cls._check_for_validation_errors(module) == 0)
-
-
-    @classmethod
-    def validate(cls, module: nn.Module) -> None:
-        """
-        Validate module and sub_modules by running registered custom validators.
-        This is same as ``is_valid()``, but throws the excpetions rather than returning
-        a boolean.
-
-        Args:
-            module: The root module to validate.
-
-        Raises:
-            List of UnsupportedError in case of validation failures.
-        """
-        errors = cls._check_for_validation_errors(module)
-        # raise Error if applicable
-        if len(errors) > 0:
-            raise UnsupportedError(errors)
-
+        return len(cls.validate(module, raise_if_error=False) == 0)
 
     @classmethod
     def fix_(cls, module: nn.Module) -> None:
@@ -132,11 +110,11 @@ class ModuleValidator:
             None. Fix happens in place.
 
         Raises:
-            List of UnsupportedError in case of validation failures.
+            UnsupportedError in case of validation failures.
         """
 
         errors = []
         # 1. replace any fixable modules
         cls.fix_(module)
         # 2. perform module specific validations.
-        cls.validate(module)
+        cls.validate(module, raise_if_error=True)

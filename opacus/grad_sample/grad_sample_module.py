@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
 from opacus.utils.module_utils import requires_grad, trainable_modules
+from opacus.validators.errors import NotYetSupportedModuleError
 
 
 def create_or_accumulate_grad_sample(
@@ -330,8 +331,27 @@ class GradSampleModule(nn.Module):
 
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
-        """Check if this module is supported"""
+        """Check if this individu module is supported"""
         return type(module) in cls.GRAD_SAMPLERS or type(module) is DPLSTM
+
+    @classmethod
+    def validate(
+        cls, module: nn.Module, raise_if_error: bool = False
+    ) -> List[NotYetSupportedModuleError]:
+        """Validate support for module being wrapped"""
+        errors = []
+        errors.extend(
+            [
+                NotYetSupportedModuleError(f"grad sampler is not yet implemented for {m}")
+                for m in trainable_modules(module)
+                if not GradSampleModule.is_supported(m)
+            ]
+        )
+        # raise or return errors as needed
+        if raise_if_error and len(errors) > 0:
+            raise NotYetSupportedModuleError(errors)
+        else:
+            return errors
 
 
 def _get_batch_size(
