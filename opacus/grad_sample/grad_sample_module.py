@@ -9,7 +9,6 @@ import torch
 import torch.nn as nn
 from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
 from opacus.utils.module_utils import requires_grad, trainable_modules
-from opacus.validators.errors import NotYetSupportedModuleError
 
 
 def create_or_accumulate_grad_sample(
@@ -337,19 +336,19 @@ class GradSampleModule(nn.Module):
     @classmethod
     def validate(
         cls, module: nn.Module, raise_if_error: bool = False
-    ) -> List[NotYetSupportedModuleError]:
+    ) -> List[NotImplementedError]:
         """Validate support for module being wrapped"""
         errors = []
         errors.extend(
             [
-                NotYetSupportedModuleError(f"grad sampler is not yet implemented for {m}")
+                NotImplementedError(f"grad sampler is not yet implemented for {m}")
                 for m in trainable_modules(module)
                 if not GradSampleModule.is_supported(m)
             ]
         )
         # raise or return errors as needed
         if raise_if_error and len(errors) > 0:
-            raise NotYetSupportedModuleError(errors)
+            raise NotImplementedError(errors)
         else:
             return errors
 

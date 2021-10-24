@@ -46,12 +46,9 @@ class PrivacyEngine:
     ):
         """
         Validate that task components are compatible with DP.
-        Same as ``is_compatible()``, but throws exception instead of returning bool.
+        Same as ``is_compatible()``, but raises error instead of returning bool.
         """
-        ModuleValidator.valiate(module)
-
-    def try_fix_incompatible_modules_(self, module: nn.Module) -> None:
-        ModuleValidator.fix_(module)
+        ModuleValidator.validate(module, raise_if_error=True)
 
     def make_private(
         self,
@@ -143,8 +140,8 @@ class PrivacyEngine:
     ) -> GradSampleModule:
         # (fix and) validate
         if try_fix_incompatible_modules:
-            self.try_fix_incompatible_modules_(module)
-        self.valiate(module=module, optimizer=None, data_loader=None)
+            module = ModuleValidator.fix(module)
+        self.validate(module=module, optimizer=None, data_loader=None)
 
         # wrap
         if isinstance(module, GradSampleModule):

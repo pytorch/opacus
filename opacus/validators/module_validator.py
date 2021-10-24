@@ -2,13 +2,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import logging
+import sys
 from functools import partial
-from typing import Iterable, List, Tuple
+from typing import List
 
 import torch.nn as nn
 from opacus.grad_sample.grad_sample_module import GradSampleModule
-from opacus.utils.module_utils import trainable_modules
-from opacus.validators.errors import IllegalConfigurationError, UnsupportedError
+from opacus.utils.module_utils import clone_module, trainable_modules
+from opacus.validators.errors import (
+    IllegalModuleConfigurationError,
+    UnsupportedModuleError,
+)
 
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s",
@@ -31,7 +35,7 @@ class ModuleValidator:
     @classmethod
     def validate(
         cls, module: nn.Module, raise_if_error: bool = False
-    ) -> List[UnsupportedError]:
+    ) -> List[UnsupportedModuleError]:
         """
         Validate module and sub_modules by running registered custom validators.
         Returns or raises excpetions depending on ``raise_if_error`` flag.
@@ -42,27 +46,26 @@ class ModuleValidator:
             the list of errors.
 
         Raises:
-            UnsupportedError in case of validation failures.
+            UnsupportedModuleError in case of validation failures.
         """
         errors = []
         # 1. validate that module is in trainig mode
         if not module.training:
             errors.append(
-                IllegalConfigurationError("Model needs to be in training mode")
+                IllegalModuleConfigurationError("Model needs to be in training mode")
             )
         # 2. validate that all trainable modules are supported by GradSampleModule.
-        errors.extend(
-            GradSampleModule.validate(module=module, raise_if_error=raise_if_error)
-        )
+        errors.extend(GradSampleModule.validate(module=module, raise_if_error=False))
         # 3. perform module specific validations.
         for _, sub_module in module.named_children():
             if type(sub_module) in ModuleValidator.VALIDATORS:
                 sub_module_validator = ModuleValidator.VALIDATORS[type(sub_module)]
                 errors.extend(sub_module_validator(sub_module))
-        # raise Error if applicable
+        # raise/return as needed
         if raise_if_error and len(errors) > 0:
-            raise UnsupportedError(errors)
+            raise UnsupportedModuleError(errors)
         else:
+            print(errors)
             return errors
 
     @classmethod
@@ -76,10 +79,10 @@ class ModuleValidator:
         Returns:
             bool
         """
-        return len(cls.validate(module, raise_if_error=False) == 0)
+        return len(cls.validate(module, raise_if_error=False)) == 0
 
     @classmethod
-    def fix_(cls, module: nn.Module) -> None:
+    def fix(cls, module: nn.Module) -> nn.Module:
         """
         Make the module and sub_modules DP compatible by running registered custom fixers.
 
@@ -87,19 +90,56 @@ class ModuleValidator:
             module: The root module to be made compatible.
 
         Returns:
-            None. Fix happens in place.
+            Fixed module.
         """
-        for sub_module_name, sub_module in module.named_children():
+        module = clone_module(module)
+        # iterate over all sub_modules
+        #   Need to get sub_module names first as we will be changing
+        #   inside the the loop.
+        sub_module_names = [name for name, _ in module.named_modules()]
+        for sub_module_name in sub_module_names:
+            # get sub_module
+            sub_module = module.get_submodule(sub_module_name)
+            # if sub_module has a registered fixer
             if type(sub_module) in ModuleValidator.FIXERS:
+                # get a repalcement for sub_module
                 sub_module_fixer = ModuleValidator.FIXERS[type(sub_module)]
                 new_sub_module = sub_module_fixer(sub_module)
-                setattr(module, sub_module_name, new_sub_module)
-                logger.info(
-                    f"Replaced `{sub_module_name}` from {sub_module} to {new_sub_module}"
+                # get module after replacement.
+                module = cls._repalce_sub_module(
+                    root=module,
+                    sub_module_name=sub_module_name,
+                    new_sub_module=new_sub_module,
                 )
+                # log it
+                logger.info(
+                    f"Replaced sub_module {sub_module_name} : {sub_module}"
+                    f" with {new_sub_module}"
+                )
+        # return fixed module
+        return module
 
     @classmethod
-    def fix_and_validate_(cls, module: nn.Module) -> None:
+    def _repalce_sub_module(
+        cls,
+        root: nn.Module,
+        sub_module_name: str,
+        new_sub_module: nn.Module,
+    ) -> None:
+        sub_module_path = sub_module_name.split(".")
+        if (
+            len(sub_module_path) == 1 and sub_module_path[0] == ""
+        ):  # root is the only sub_module of root
+            return new_sub_module
+        else:  # repalce root's descendant
+            sub_module_parent = root
+            for name in sub_module_path[:-1]:  # descend down to sub_module
+                sub_module_parent = sub_module_parent._modules[name]
+            sub_module_parent._modules[sub_module_path[-1]] = new_sub_module
+        return root
+
+    @classmethod
+    def fix_and_validate(cls, module: nn.Module) -> nn.Module:
         """
         Fix the module and sub_modules first, and then run validation.
 
@@ -107,14 +147,16 @@ class ModuleValidator:
             module: The root module to be fixed and validted
 
         Returns:
-            None. Fix happens in place.
+            Fixed module.
 
         Raises:
-            UnsupportedError in case of validation failures.
+            UnsupportedModuleError in case of validation failures.
         """
 
         errors = []
         # 1. replace any fixable modules
-        cls.fix_(module)
+        fixed_module = cls.fix(module)
         # 2. perform module specific validations.
-        cls.validate(module, raise_if_error=True)
+        cls.validate(fixed_module, raise_if_error=True)
+        # return fixed module
+        return fixed_module

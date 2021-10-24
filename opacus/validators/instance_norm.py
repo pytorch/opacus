@@ -6,7 +6,7 @@ from typing import Union
 import torch.nn as nn
 from opacus.utils.module_utils import clone_module
 
-from .errors import IllegalConfigurationError
+from .errors import IllegalModuleConfigurationError
 from .utils import register_module_validator, register_module_fixer
 
 
@@ -17,7 +17,7 @@ INSTANCENORM = Union[nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d]
 def validate(module: INSTANCENORM) -> None:
     return (
         [
-            IllegalConfigurationError(
+            IllegalModuleConfigurationError(
                 "We do not support tracking running stats with differential privacy. "
                 "To support it, we would have to add a DP mechanism for these statistics too, "
                 "which would incur a privacy cost for little value in model accuracy. "
@@ -30,7 +30,7 @@ def validate(module: INSTANCENORM) -> None:
 
 
 @register_module_fixer([nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d])
-def fix(module: INSTANCENORM) -> nn.INSTANCENORM:
+def fix(module: INSTANCENORM) -> INSTANCENORM:
     if len(self.validate(module)) == 0:
         return module
     # else
