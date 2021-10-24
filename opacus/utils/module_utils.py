@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import io
+import logging
+import sys
+from collections import OrderedDict
 from typing import Iterable
 
 import torch
 import torch.nn as nn
+
+logging.basicConfig(
+    format="%(asctime)s:%(levelname)s:%(message)s",
+    datefmt="%m/%d/%Y %H:%M:%S",
+    stream=sys.stderr,
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.INFO)
 
 
 def parametrized_modules(module: nn.Module) -> Iterable[nn.Module]:
@@ -63,3 +74,21 @@ def clone_module(module: nn.Module) -> nn.Module:
         bytesio.seek(0)
         module_copy = torch.load(bytesio)
     return module_copy
+
+
+def are_state_dict_equal(sd1: OrderedDict, sd2: OrderedDict):
+    if len(sd1) != len(sd2):
+        logger.error(f"Length mismatch: {len(sd1)} vs {len(sd2)}")
+        return False
+
+    for k_1, v_1 in sd1.items():
+        # keys are accounted for
+        if k_1 not in sd2:
+            logger.error(f"Key missing: {k_1} not in {sd2}")
+            return False
+        # value tensors are equal
+        v_2 = sd2[k_1]
+        if not torch.allclose(v_1, v_2):
+            logger.error(f"Tensor mismatch: {v_1} vs {v_2}")
+            return False
+    return True

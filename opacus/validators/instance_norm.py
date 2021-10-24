@@ -31,7 +31,7 @@ def validate(module: INSTANCENORM) -> None:
 
 @register_module_fixer([nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d])
 def fix(module: INSTANCENORM) -> INSTANCENORM:
-    if len(self.validate(module)) == 0:
+    if len(validate(module)) == 0:
         return module
     # else
     new_module = clone_module(module)
