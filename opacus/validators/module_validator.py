@@ -3,12 +3,11 @@
 
 import logging
 import sys
-from functools import partial
 from typing import List
 
 import torch.nn as nn
 from opacus.grad_sample.grad_sample_module import GradSampleModule
-from opacus.utils.module_utils import clone_module, trainable_modules
+from opacus.utils.module_utils import clone_module
 from opacus.validators.errors import (
     IllegalModuleConfigurationError,
     UnsupportedModuleError,
@@ -152,8 +151,6 @@ class ModuleValidator:
         Raises:
             UnsupportedModuleError in case of validation failures.
         """
-
-        errors = []
         # 1. replace any fixable modules
         fixed_module = cls.fix(module)
         # 2. perform module specific validations.

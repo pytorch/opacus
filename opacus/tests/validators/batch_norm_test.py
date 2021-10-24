@@ -2,7 +2,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
 
-import torch
 import torch.nn as nn
 from opacus.validators.errors import ShouldReplaceModuleError
 from opacus.validators.module_validator import ModuleValidator

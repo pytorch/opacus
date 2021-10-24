@@ -2,7 +2,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
 
-import torch
 import torch.nn as nn
 from opacus.validators.errors import IllegalModuleConfigurationError
 from opacus.validators.module_validator import ModuleValidator
@@ -26,7 +25,7 @@ class InstanceNormValidator_test(unittest.TestCase):
         self.assertTrue(len(val1), 1)
         self.assertTrue(len(val2), 1)
         self.assertTrue(len(val3), 1)
-        self.assertTrue(len(val3), 0)
+        self.assertTrue(len(vals), 0)
 
         self.assertTrue(isinstance(val1[0], IllegalModuleConfigurationError))
         self.assertTrue(isinstance(val2[0], IllegalModuleConfigurationError))

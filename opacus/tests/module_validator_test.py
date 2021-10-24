@@ -58,7 +58,7 @@ class ModuleValidator_test(unittest.TestCase):
 
     def test_fix(self):
         with self.assertLogs(level="INFO") as log_cm:
-            new_fixed_model = ModuleValidator.fix(self.original_model)
+            ModuleValidator.fix(self.original_model)
             self.assertGreater(len(log_cm.records), 0)
             for log_record in log_cm.records:
                 log_msg = log_record.getMessage()

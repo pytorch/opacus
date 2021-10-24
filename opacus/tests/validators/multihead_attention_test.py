@@ -2,7 +2,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
 
-import torch
 import torch.nn as nn
 from opacus.layers import DPMultiheadAttention
 from opacus.utils.module_utils import are_state_dict_equal

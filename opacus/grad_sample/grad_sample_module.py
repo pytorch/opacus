@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Iterable, List, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn

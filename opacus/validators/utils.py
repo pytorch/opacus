@@ -3,9 +3,6 @@
 
 from typing import Sequence, Union
 
-import torch
-import torch.nn as nn
-
 from .module_validator import ModuleValidator
 
 DEFAULT_MODULE_VALIDATOR = ModuleValidator
