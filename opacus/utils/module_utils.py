@@ -81,14 +81,14 @@ def are_state_dict_equal(sd1: OrderedDict, sd2: OrderedDict):
         logger.error(f"Length mismatch: {len(sd1)} vs {len(sd2)}")
         return False
 
-    for k_1, v_1 in sd1.items():
-        # keys are accounted for
-        if k_1 not in sd2:
-            logger.error(f"Key missing: {k_1} not in {sd2}")
+    for k1, v1 in sd1.items():
+        # check that all keys are accounted for.
+        if k1 not in sd2:
+            logger.error(f"Key missing: {k1} not in {sd2}")
             return False
-        # value tensors are equal
-        v_2 = sd2[k_1]
-        if not torch.allclose(v_1, v_2):
-            logger.error(f"Tensor mismatch: {v_1} vs {v_2}")
+        # check that value tensors are equal.
+        v2 = sd2[k1]
+        if not torch.allclose(v1, v2):
+            logger.error(f"Tensor mismatch: {v1} vs {v2}")
             return False
     return True
