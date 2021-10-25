@@ -3,9 +3,11 @@
 import unittest
 from typing import Optional, OrderedDict
 
+import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from hypothesis import given, settings
 from opacus import PrivacyEngine
 from opacus.dp_model_inspector import IncompatibleModuleException
 from torch.utils.data import DataLoader
@@ -319,6 +321,43 @@ class PrivacyEngine_test(unittest.TestCase):
                 torch.allclose(p1, p2),
                 "Model parameters after deterministic run must match",
             )
+
+    @given(
+        noise_multiplier=st.floats(0.5, 5.0),
+        max_steps=st.integers(8, 10),
+    )
+    @settings(deadline=20000)
+    def test_noise_level(self, noise_multiplier: float, max_steps: int):
+        """
+        Tests that the noise level is correctly set
+        """
+        # Initialize models with parameters to zero
+        model, optimizer, dl, _ = self._init_private_training(noise_multiplier=noise_multiplier)
+        for p in model.parameters():
+            p.data.zero_()
+
+        # Do max_steps steps of DP-SGD
+        n_params = sum([p.numel() for p in model.parameters() if p.requires_grad])
+        steps = 0
+        for x, y in dl:
+            optimizer.zero_grad()
+            logits = model(x)
+            loss = logits.view(logits.size(0), -1).sum(dim=1)
+            # Gradient should be 0
+            loss.backward(torch.zeros(logits.size(0)))
+
+            optimizer.step()
+            steps += 1
+
+            if max_steps and steps >= max_steps:
+                break
+
+        # Noise should be equal to lr*sigma*sqrt(n_params * steps) / batch_size
+        expected_norm = steps * n_params * optimizer.noise_multiplier**2 * self.LR**2 / (optimizer.expected_batch_size**2)
+        real_norm = sum([torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]).item()
+
+        self.assertAlmostEqual(real_norm, expected_norm, delta=0.05 * expected_norm)
+
 
     @unittest.skip("Not yet implemented")
     def test_raises_seed_set_on_secure_rng(self):
