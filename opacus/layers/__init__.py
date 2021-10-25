@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from .dp_ddp import DifferentiallyPrivateDistributedDataParallel
 from .dp_lstm import DPLSTM
 from .dp_multihead_attention import DPMultiheadAttention, SequenceBias
 from .param_rename import ParamRenamedModule
@@ -12,5 +11,4 @@ __all__ = [
     "DPMultiheadAttention",
     "ParamRenamedModule",
     "SequenceBias",
-    "DifferentiallyPrivateDistributedDataParallel",
 ]

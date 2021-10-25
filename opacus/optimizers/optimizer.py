@@ -55,7 +55,8 @@ class DPOptimizer(Optimizer):
         self.loss_reduction = loss_reduction
         self.expected_batch_size = expected_batch_size
         self.step_hook = None
-
+        self.param_groups = optimizer.param_groups
+        self.state = optimizer.state
         self._step_skip_queue = []
         self._is_last_step_skipped = False
 
@@ -108,7 +109,7 @@ class DPOptimizer(Optimizer):
 
     def clip_and_accumulate(self):
         per_param_norms = [
-            x.view(len(x), -1).norm(2, dim=-1) for x in self.grad_samples
+            g.view(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
         ]
         per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
         per_sample_clip_factor = (self.max_grad_norm / (per_sample_norms + 1e-6)).clamp(
@@ -148,8 +149,12 @@ class DPOptimizer(Optimizer):
 
         self.optimizer.zero_grad(set_to_none)
 
-    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        self.pre_step()
+    # TODO: potentially refactor to decouple memory wins from accounting/averaging
+    # TODO: We can potentially track virtual steps automatically (through GSM.forward() or empty activatons lists)
+    def pre_step(self) -> Optional[float]:
+    # TODO: wrap the rest of optim.Optimizer interface
+
+        self.clip_and_accumulate()
 
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
@@ -162,11 +167,13 @@ class DPOptimizer(Optimizer):
             self.step_hook(self)
 
         self._is_last_step_skipped = False
+
+    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
+        self.pre_step()
+        
         return self.optimizer.step(closure)
 
-    # TODO: potentially refactor to decouple memory wins from accounting/averaging
-    # TODO: We can potentially track virtual steps automatically (through GSM.forward() or empty activatons lists)
+
     def pre_step(self):
         self.clip_and_accumulate()
 
-    # TODO: wrap the rest of optim.Optimizer interface
