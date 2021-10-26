@@ -15,7 +15,6 @@ from opacus.optimizers import (
 )
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
-from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 
 

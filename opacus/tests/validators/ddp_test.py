@@ -13,7 +13,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 class DDPValidator_test(unittest.TestCase):
     def setUp(self):
-        self.l = nn.Linear(8, 4)
+        self.module = nn.Linear(8, 4)
         self.mv = ModuleValidator.VALIDATORS
         self.mf = ModuleValidator.FIXERS
         self._setup_dist()
@@ -32,12 +32,12 @@ class DDPValidator_test(unittest.TestCase):
         dist.init_process_group("gloo", rank=0, world_size=1)
 
     def test_validate(self):
-        ddp = DDP(self.l)
+        ddp = DDP(self.module)
         val_ddp = self.mv[type(ddp)](ddp)
         self.assertTrue(len(val_ddp), 1)
         self.assertTrue(isinstance(val_ddp[0], ShouldReplaceModuleError))
 
     def test_fix(self):
-        ddp = DDP(self.l)
+        ddp = DDP(self.module)
         with self.assertRaises(ShouldReplaceModuleError):
             fix_ddp = self.mf[type(ddp)](ddp)
