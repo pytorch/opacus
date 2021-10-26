@@ -258,15 +258,8 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
         )
 
-<<<<<<< HEAD
-    def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
-        if isinstance(data_loader, DPDataLoader):
-            return data_loader
-        return DPDataLoader.from_data_loader(data_loader)
-=======
     def _prepare_data_loader(self, data_loader: DataLoader, distributed: bool) -> DataLoader:
         return DPDataLoader.from_data_loader(data_loader, distributed=distributed)
->>>>>>> 09c91917a5c0e21b4ff1f4cfa05b199bc42023d9
 
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):
