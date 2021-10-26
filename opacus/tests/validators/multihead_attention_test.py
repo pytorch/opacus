@@ -17,7 +17,7 @@ class MultiheadAttentionValidator_test(unittest.TestCase):
 
     def test_validate(self):
         val_mha = self.mv[type(self.mha)](self.mha)
-        self.assertTrue(len(val_mha), 1)
+        self.assertEqual(len(val_mha), 1)
         self.assertTrue(isinstance(val_mha[0], ShouldReplaceModuleError))
 
     def test_fix(self):

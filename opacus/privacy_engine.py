@@ -5,18 +5,18 @@ from typing import List, Optional
 from opacus.accountants import RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
 from opacus.data_loader import DPDataLoader
+from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
-from opacus.optimizers import DPOptimizer, DistributedDPOptimizer, DPPerLayerOptimizer, DistributedPerLayerOptimizer
-from opacus.accountants.rdp import get_noise_multiplier
-from opacus.distributed import (
-    DifferentiallyPrivateDistributedDataParallel
-        as DPDDP
+from opacus.optimizers import (
+    DPOptimizer,
+    DistributedDPOptimizer,
+    DPPerLayerOptimizer,
+    DistributedPerLayerOptimizer,
 )
-from opacus.data_loader import DPDataLoader
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
-from torch.utils.data import DataLoader
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader
 
 
 def forbid_accumulation_hook(module: nn.Module, _):
@@ -70,12 +70,15 @@ class PrivacyEngine:
         try_fix_incompatible_modules: bool = False,
     ):
         distributed = type(module) is DPDDP
-        assert type(module) is not DDP
 
-        module = self._prepare_model(module, batch_first, loss_reduction, try_fix_incompatible_modules)
+        module = self._prepare_model(
+            module, batch_first, loss_reduction, try_fix_incompatible_modules
+        )
         # TODO: either validate consistent dataset or do per-dataset accounting
         if poisson_sampling:
-            data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
+            data_loader = self._prepare_data_loader(
+                data_loader, distributed=distributed
+            )
 
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
@@ -91,7 +94,8 @@ class PrivacyEngine:
 
         def accountant_hook(optim: DPOptimizer):
             # TODO: This works for Poisson for both single-node and distributed
-            # The reason is that the sample rate is the same in both cases (but in distributed mode, each node samples among a subset of the data)
+            # The reason is that the sample rate is the same in both cases (but in
+            # distributed mode, each node samples among a subset of the data)
             self.accountant.step(
                 noise_multiplier=optim.noise_multiplier,
                 sample_rate=sample_rate * optim.accumulated_iterations,
@@ -110,13 +114,21 @@ class PrivacyEngine:
         max_grad_norms: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        poisson_sampling: bool = True,
+        try_fix_incompatible_modules: bool = False,
     ):
-        distributed = type(module) is DDP
-        assert type(module) is not DPDDP
+        distributed = type(module) is DPDDP
 
-        # TODO: DP-Specific validation
+        module = self._prepare_model(
+            module, batch_first, loss_reduction, try_fix_incompatible_modules
+        )
+
         # TODO: either validate consistent dataset or do per-dataset accounting
-        module = self._prepare_model(module, batch_first, loss_reduction)
+        module = self._prepare_model(
+            module,
+            batch_first,
+            loss_reduction,
+        )
         data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
 
         sample_rate = 1 / len(data_loader)
@@ -136,7 +148,8 @@ class PrivacyEngine:
 
         def accountant_hook(optim: DPOptimizer):
             # TODO: This works for Poisson for both single-node and distributed
-            # The reason is that the sample rate is the same in both cases (but in distributed mode, each node samples among a subset of the data)
+            # The reason is that the sample rate is the same in both cases (but in
+            # distributed mode, each node samples among a subset of the data)
             self.accountant.step(
                 noise_multiplier=optim.noise_multiplier,
                 sample_rate=sample_rate * optim.accumulated_iterations,
@@ -214,7 +227,7 @@ class PrivacyEngine:
         max_grad_norm: float,
         expected_batch_size: int,
         loss_reduction: str = "mean",
-        distributed : bool = False,
+        distributed: bool = False,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             # TODO: lol rename optimizer optimizer optimizer
@@ -244,7 +257,7 @@ class PrivacyEngine:
         max_grad_norms: float,
         expected_batch_size: int,
         loss_reduction: str = "mean",
-        distributed : bool = False,
+        distributed: bool = False,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             # TODO: lol rename optimizer optimizer optimizer
@@ -258,7 +271,9 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
         )
 
-    def _prepare_data_loader(self, data_loader: DataLoader, distributed: bool) -> DataLoader:
+    def _prepare_data_loader(
+        self, data_loader: DataLoader, distributed: bool
+    ) -> DataLoader:
         return DPDataLoader.from_data_loader(data_loader, distributed=distributed)
 
     # TODO: default delta value?

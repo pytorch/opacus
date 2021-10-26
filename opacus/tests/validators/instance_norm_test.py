@@ -6,6 +6,7 @@ import torch.nn as nn
 from opacus.validators.errors import IllegalModuleConfigurationError
 from opacus.validators.module_validator import ModuleValidator
 
+
 class InstanceNormValidator_test(unittest.TestCase):
     def setUp(self):
         self.in1 = nn.InstanceNorm1d(4, affine=True, track_running_stats=True)
@@ -14,7 +15,7 @@ class InstanceNormValidator_test(unittest.TestCase):
         self.in_no_stats = nn.InstanceNorm3d(4, affine=True)
 
         self.mv = ModuleValidator.VALIDATORS
-        self.mf =ModuleValidator.FIXERS
+        self.mf = ModuleValidator.FIXERS
 
     def test_validate(self):
         val1 = self.mv[type(self.in1)](self.in1)
@@ -22,15 +23,14 @@ class InstanceNormValidator_test(unittest.TestCase):
         val3 = self.mv[type(self.in3)](self.in3)
         vals = self.mv[type(self.in_no_stats)](self.in_no_stats)
 
-        self.assertTrue(len(val1), 1)
-        self.assertTrue(len(val2), 1)
-        self.assertTrue(len(val3), 1)
-        self.assertTrue(len(vals), 0)
+        self.assertEqual(len(val1), 1)
+        self.assertEqual(len(val2), 1)
+        self.assertEqual(len(val3), 1)
+        self.assertEqual(len(vals), 0)
 
         self.assertTrue(isinstance(val1[0], IllegalModuleConfigurationError))
         self.assertTrue(isinstance(val2[0], IllegalModuleConfigurationError))
         self.assertTrue(isinstance(val3[0], IllegalModuleConfigurationError))
-
 
     def test_fix(self):
         fix1 = self.mf[type(self.in1)](self.in1)

@@ -35,7 +35,7 @@ class ModuleValidator_test(unittest.TestCase):
         self.assertTrue(ModuleValidator.is_valid(self.fixed_model))
 
     def test_is_valid_unsupported_grdsample_module(self):
-        unsupported_module = nn.Bilinear(2,2,2)  # currently not implemented
+        unsupported_module = nn.Bilinear(2, 2, 2)  # currently not implemented
         self.assertFalse(ModuleValidator.is_valid(unsupported_module))
 
     def test_is_valid_extra_param(self):

@@ -6,6 +6,7 @@ import torch.nn as nn
 from opacus.validators.errors import ShouldReplaceModuleError
 from opacus.validators.module_validator import ModuleValidator
 
+
 class BatchNormValidator_test(unittest.TestCase):
     def setUp(self):
         self.bn1 = nn.BatchNorm1d(4)
@@ -13,7 +14,7 @@ class BatchNormValidator_test(unittest.TestCase):
         self.bn3 = nn.BatchNorm3d(4)
         self.bns = nn.SyncBatchNorm(4)
         self.mv = ModuleValidator.VALIDATORS
-        self.mf =ModuleValidator.FIXERS
+        self.mf = ModuleValidator.FIXERS
 
     def test_validate(self):
         val1 = self.mv[type(self.bn1)](self.bn1)
@@ -21,10 +22,10 @@ class BatchNormValidator_test(unittest.TestCase):
         val3 = self.mv[type(self.bn3)](self.bn3)
         vals = self.mv[type(self.bns)](self.bns)
 
-        self.assertTrue(len(val1), 1)
-        self.assertTrue(len(val2), 1)
-        self.assertTrue(len(val3), 1)
-        self.assertTrue(len(vals), 1)
+        self.assertEqual(len(val1), 1)
+        self.assertEqual(len(val2), 1)
+        self.assertEqual(len(val3), 1)
+        self.assertEqual(len(vals), 1)
 
         self.assertTrue(isinstance(val1[0], ShouldReplaceModuleError))
         self.assertTrue(isinstance(val2[0], ShouldReplaceModuleError))

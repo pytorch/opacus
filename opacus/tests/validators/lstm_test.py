@@ -17,7 +17,7 @@ class LSTMValidator_test(unittest.TestCase):
 
     def test_validate(self):
         val_lstm = self.mv[type(self.lstm)](self.lstm)
-        self.assertTrue(len(val_lstm), 1)
+        self.assertEqual(len(val_lstm), 1)
         self.assertTrue(isinstance(val_lstm[0], ShouldReplaceModuleError))
 
     def test_fix(self):

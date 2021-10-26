@@ -48,7 +48,7 @@ class ModuleValidator:
             UnsupportedModuleError in case of validation failures.
         """
         errors = []
-        # 1. validate that module is in trainig mode
+        # 1. validate that module is in training mode
         if not module.training:
             errors.append(
                 IllegalModuleConfigurationError("Model needs to be in training mode")
@@ -56,7 +56,7 @@ class ModuleValidator:
         # 2. validate that all trainable modules are supported by GradSampleModule.
         errors.extend(GradSampleModule.validate(module=module, raise_if_error=False))
         # 3. perform module specific validations.
-        for _, sub_module in module.named_children():
+        for _, sub_module in module.named_modules():
             if type(sub_module) in ModuleValidator.VALIDATORS:
                 sub_module_validator = ModuleValidator.VALIDATORS[type(sub_module)]
                 errors.extend(sub_module_validator(sub_module))
@@ -64,7 +64,6 @@ class ModuleValidator:
         if raise_if_error and len(errors) > 0:
             raise UnsupportedModuleError(errors)
         else:
-            print(errors)
             return errors
 
     @classmethod

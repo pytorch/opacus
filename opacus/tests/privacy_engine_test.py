@@ -354,7 +354,9 @@ class PrivacyEngine_test(unittest.TestCase):
         Tests that the noise level is correctly set
         """
         # Initialize models with parameters to zero
-        model, optimizer, dl, _ = self._init_private_training(noise_multiplier=noise_multiplier)
+        model, optimizer, dl, _ = self._init_private_training(
+            noise_multiplier=noise_multiplier
+        )
         for p in model.parameters():
             p.data.zero_()
 
@@ -375,11 +377,18 @@ class PrivacyEngine_test(unittest.TestCase):
                 break
 
         # Noise should be equal to lr*sigma*sqrt(n_params * steps) / batch_size
-        expected_norm = steps * n_params * optimizer.noise_multiplier**2 * self.LR**2 / (optimizer.expected_batch_size**2)
-        real_norm = sum([torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]).item()
+        expected_norm = (
+            steps
+            * n_params
+            * optimizer.noise_multiplier ** 2
+            * self.LR ** 2
+            / (optimizer.expected_batch_size ** 2)
+        )
+        real_norm = sum(
+            [torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]
+        ).item()
 
         self.assertAlmostEqual(real_norm, expected_norm, delta=0.05 * expected_norm)
-
 
     @unittest.skip("Not yet implemented")
     def test_raises_seed_set_on_secure_rng(self):

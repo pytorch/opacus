@@ -2,6 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 from .batch_norm import validate, fix  # noqa
+from .ddp import validate, fix  # noqa
 from .instance_norm import validate, fix  # noqa
 from .lstm import validate, fix  # noqa
 from .module_validator import ModuleValidator

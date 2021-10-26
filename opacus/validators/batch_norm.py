@@ -61,7 +61,6 @@ def _batchnorm_to_groupnorm(module: BATCHNORM) -> nn.GroupNorm:
     )
 
 
-
 def _batchnorm_to_instancenorm(module: BATCHNORM) -> INSTANCENORM:
     """
     Converts a BatchNorm module to the corresponding InstanceNorm module
