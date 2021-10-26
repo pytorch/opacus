@@ -21,12 +21,8 @@ import torch.utils.data.distributed
 import torch.utils.tensorboard as tensorboard
 import torchvision.transforms as transforms
 from opacus import PrivacyEngine
-from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
+from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.utils import stats
-from opacus.utils.uniform_sampler import (
-    DistributedPoissonBatchSampler,
-    UniformWithReplacementSampler,
-)
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
@@ -124,7 +120,7 @@ def accuracy(preds, labels):
     return (preds == labels).mean()
 
 
-def train(args, model, train_loader, optimizer, epoch, device):
+def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
     start_time = datetime.now()
 
     model.train()
@@ -156,16 +152,14 @@ def train(args, model, train_loader, optimizer, epoch, device):
 
         # make sure we take a step after processing the last mini-batch in the
         # epoch to ensure we start the next epoch with a clean state
-        if ((i + 1) % args.n_accumulation_steps == 0) or ((i + 1) == len(train_loader)):
-            optimizer.step()
-            optimizer.zero_grad()
-        else:
-            optimizer.virtual_step()
+        optimizer.step()
+        optimizer.zero_grad()
 
         if i % args.print_freq == 0:
             if not args.disable_dp:
-                epsilon, best_alpha = optimizer.privacy_engine.get_privacy_spent(
-                    args.delta
+                epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
+                    args.delta,
+                    alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
                 )
                 print(
                     f"\tTrain Epoch: {epoch} \t"
@@ -219,21 +213,13 @@ def main():
         logger.setLevel(level=logging.DEBUG)
 
     # Sets `world_size = 1` if you run on a single GPU with `args.local_rank = -1`
-    if args.device != "cpu":
+    if args.local_rank != -1 or args.device != 'cpu':
         rank, local_rank, world_size = setup(args)
         device = local_rank
     else:
         device = "cpu"
         rank = 0
         world_size = 1
-
-    if args.disable_dp and args.n_accumulation_steps > 1:
-        raise ValueError("Virtual steps only works with enabled DP")
-
-    if args.dist_algo == "ddp_hook" and not args.clip_per_layer:
-        raise ValueError(
-            "Please enable `--clip_per_layer` if you want to use Opacus DDP"
-        )
 
     # The following few lines, enable stats gathering about the run
     # 1. where the stats should be logged
@@ -254,10 +240,10 @@ def main():
 
     # The following lines enable stat gathering for the clipping process
     # and set a default of per layer clipping for the Privacy Engine
-    clipping = {
-        "clip_per_layer": args.clip_per_layer,
-        "enable_stat": (rank == 0),
-    }
+    # clipping = {
+    #     "clip_per_layer": args.clip_per_layer,
+    #     "enable_stat": (rank == 0),
+    # }
 
     if args.secure_rng:
         try:
@@ -292,25 +278,9 @@ def main():
         root=args.data_root, train=True, download=True, transform=train_transform
     )
 
-    if world_size > 1:
-        train_sampler = DistributedPoissonBatchSampler(
-            total_size=len(train_dataset),
-            sample_rate=args.sample_rate,
-            num_replicas=world_size,
-            rank=rank,
-            generator=generator,
-        )
-
-    else:
-        train_sampler = UniformWithReplacementSampler(
-            num_samples=len(train_dataset),
-            sample_rate=args.sample_rate,
-            generator=generator,
-        )
-
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_sampler=train_sampler,
+        batch_size=int(args.sample_rate * len(train_dataset)),
         generator=generator,
         num_workers=args.workers,
         pin_memory=True,
@@ -334,14 +304,10 @@ def main():
     # Use the right distributed module wrapper if distributed training is enabled
     if world_size > 1:
         if not args.disable_dp:
-            if args.dist_algo == "naive":
-                model = DPDDP(model)
-            elif args.dist_algo == "ddp_hook":
+            if args.clip_per_layer:
                 model = DDP(model, device_ids=[device])
             else:
-                raise NotImplementedError(
-                    f"Unrecognized argument for the distributed algorithm: {args.dist_algo}"
-                )
+                model = DPDDP(model)
         else:
             model = DDP(model, device_ids=[device])
 
@@ -359,6 +325,7 @@ def main():
     else:
         raise NotImplementedError("Optimizer not recognized. Please check spelling")
 
+    privacy_engine = None
     if not args.disable_dp:
         if args.clip_per_layer:
             # Each layer has the same clipping threshold. The total grad norm is still bounded by `args.max_per_sample_grad_norm`.
@@ -372,15 +339,27 @@ def main():
             max_grad_norm = args.max_per_sample_grad_norm
 
         privacy_engine = PrivacyEngine(
-            model,
-            sample_rate=args.sample_rate * args.n_accumulation_steps,
-            alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
-            noise_multiplier=args.sigma,
-            max_grad_norm=max_grad_norm,
-            secure_rng=args.secure_rng,
-            **clipping,
+            secure_mode=args.secure_rng,
         )
-        privacy_engine.attach(optimizer)
+        if args.clip_per_layer:
+            model, optimizer, train_loader = privacy_engine.make_private_per_layer(
+                model,
+                optimizer,
+                train_loader,
+                noise_multiplier=args.sigma,
+                max_grad_norms=max_grad_norm,
+            )
+        else:
+            model, optimizer, train_loader = privacy_engine.make_private(
+                model,
+                optimizer,
+                train_loader,
+                noise_multiplier=args.sigma,
+                max_grad_norm=max_grad_norm,
+            )
+
+
+    print(train_loader.batch_sampler)
 
     # Store some logs
     accuracy_per_epoch = []
@@ -392,7 +371,7 @@ def main():
             for param_group in optimizer.param_groups:
                 param_group["lr"] = lr
 
-        train_duration = train(args, model, train_loader, optimizer, epoch, device)
+        train_duration = train(args, model, train_loader, optimizer, privacy_engine, epoch, device)
         top1_acc = test(args, model, test_loader, device)
 
         # remember best acc@1 and save checkpoint
@@ -474,14 +453,6 @@ def parse_args():
         type=float,
         metavar="SR",
         help="sample rate used for batch construction (default: 0.005)",
-    )
-    parser.add_argument(
-        "-na",
-        "--n_accumulation_steps",
-        default=1,
-        type=int,
-        metavar="N",
-        help="number of mini-batches to accumulate into an effective batch",
     )
     parser.add_argument(
         "--lr",
@@ -610,12 +581,6 @@ def parse_args():
         help="Choose the backend for torch distributed from: gloo, nccl, mpi",
     )
 
-    parser.add_argument(
-        "--dist_algo",
-        type=str,
-        default="naive",
-        help="Choose the algorithm for distributed DPSGD: `naive` for a simple aggregation with allreduce, or `ddp_hook` to use DDP with Opacus",
-    )
     parser.add_argument(
         "--clip_per_layer",
         action="store_true",
