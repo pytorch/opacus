@@ -3,7 +3,7 @@
 import unittest
 
 import torch
-from opacus.accountants import RDPAccountant, GaussianAccountant
+from opacus.accountants import GaussianAccountant, RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
 
 
@@ -42,4 +42,3 @@ class AccountingTest(unittest.TestCase):
         noise_multiplier = get_noise_multiplier(epsilon, delta, sample_rate, epochs)
 
         self.assertAlmostEqual(noise_multiplier, 1.425307617)
-
