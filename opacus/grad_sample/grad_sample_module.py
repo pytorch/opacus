@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Iterable, List, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
 from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
-from opacus.utils.module_inspection import requires_grad
-
-
-class UnsupportedModuleError(ValueError):
-    pass
+from opacus.utils.module_utils import requires_grad, trainable_modules
 
 
 def create_or_accumulate_grad_sample(
@@ -146,7 +142,7 @@ class GradSampleModule(nn.Module):
             self._module.autograd_grad_sample_hooks = []
             self.autograd_grad_sample_hooks = self._module.autograd_grad_sample_hooks
 
-        for module in self.trainable_modules():
+        for module in trainable_modules(self._module):
             if type(module) in self.GRAD_SAMPLERS:
                 self.autograd_grad_sample_hooks.append(
                     module.register_forward_hook(self.capture_activations_hook)
@@ -199,28 +195,6 @@ class GradSampleModule(nn.Module):
         disable them so you don't need to call this unless you want to re-enable them.
         """
         self.hooks_enabled = True
-
-    def parametrized_modules(self) -> Iterable[nn.Module]:
-        """
-        Recursively iterates over all submodules, returning those that
-        have parameters (as opposed to "wrapper modules" that just organize modules).
-        """
-        yield from (
-            m
-            for m in self._module.modules()
-            if any(p is not None for p in m.parameters(recurse=False))
-        )
-
-    def trainable_modules(self) -> Iterable[nn.Module]:
-        """
-        Recursively iterates over all submodules, returning those that
-        have parameters and are trainable (ie they want a grad).
-        """
-        yield from (
-            m
-            for m in self.parametrized_modules()
-            if any(p.requires_grad for p in m.parameters())
-        )
 
     def __repr__(self):
         return f"GradSampleModule({self._module.__repr__()})"
@@ -356,8 +330,27 @@ class GradSampleModule(nn.Module):
 
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
-        """Check if this module is supported"""
+        """Check if this individual module is supported"""
         return type(module) in cls.GRAD_SAMPLERS or type(module) is DPLSTM
+
+    @classmethod
+    def validate(
+        cls, module: nn.Module, raise_if_error: bool = False
+    ) -> List[NotImplementedError]:
+        """Validate support for module being wrapped"""
+        errors = []
+        errors.extend(
+            [
+                NotImplementedError(f"grad sampler is not yet implemented for {m}")
+                for m in trainable_modules(module)
+                if not GradSampleModule.is_supported(m)
+            ]
+        )
+        # raise or return errors as needed
+        if raise_if_error and len(errors) > 0:
+            raise NotImplementedError(errors)
+        else:
+            return errors
 
 
 def _get_batch_size(

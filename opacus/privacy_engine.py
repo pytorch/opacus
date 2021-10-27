@@ -5,17 +5,17 @@ from typing import List, Optional
 from opacus.accountants import RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
 from opacus.data_loader import DPDataLoader
+from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
-from opacus.optimizers import DPOptimizer, DistributedDPOptimizer, DPPerLayerOptimizer, DistributedPerLayerOptimizer
-from opacus.accountants.rdp import get_noise_multiplier
-from opacus.distributed import (  
-    DifferentiallyPrivateDistributedDataParallel     
-        as DPDDP
+from opacus.optimizers import (
+    DPOptimizer,
+    DistributedDPOptimizer,
+    DPPerLayerOptimizer,
+    DistributedPerLayerOptimizer,
 )
-from opacus.data_loader import DPDataLoader
+from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.utils.data import DataLoader
-from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 def forbid_accumulation_hook(module: nn.Module, _):
@@ -33,6 +33,29 @@ class PrivacyEngine:
         self.accountant = RDPAccountant()
         self.secure_mode = secure_mode  # TODO: actually support it
 
+    def is_compatible(
+        self,
+        module: nn.Module,
+        optimizer: Optional[optim.Optimizer],
+        data_loader: Optional[DataLoader],
+    ) -> bool:
+        """
+        Check if task components are compatible with DP.
+        """
+        return ModuleValidator.is_valid(module)
+
+    def validate(
+        self,
+        module: nn.Module,
+        optimizer: Optional[optim.Optimizer],
+        data_loader: Optional[DataLoader],
+    ):
+        """
+        Validate that task components are compatible with DP.
+        Same as ``is_compatible()``, but raises error instead of returning bool.
+        """
+        ModuleValidator.validate(module, raise_if_error=True)
+
     def make_private(
         self,
         module: nn.Module,
@@ -43,15 +66,18 @@ class PrivacyEngine:
         batch_first: bool = True,
         loss_reduction: str = "mean",
         poisson_sampling: bool = True,
+        try_fix_incompatible_modules: bool = False,
     ):
         distributed = type(module) is DPDDP
-        assert type(module) is not DDP
 
-        # TODO: DP-Specific validation
+        module = self._prepare_model(
+            module, batch_first, loss_reduction, try_fix_incompatible_modules
+        )
         # TODO: either validate consistent dataset or do per-dataset accounting
-        module = self._prepare_model(module, batch_first, loss_reduction)
         if poisson_sampling:
-            data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
+            data_loader = self._prepare_data_loader(
+                data_loader, distributed=distributed
+            )
 
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
@@ -67,7 +93,8 @@ class PrivacyEngine:
 
         def accountant_hook(optim: DPOptimizer):
             # TODO: This works for Poisson for both single-node and distributed
-            # The reason is that the sample rate is the same in both cases (but in distributed mode, each node samples among a subset of the data)
+            # The reason is that the sample rate is the same in both cases (but in
+            # distributed mode, each node samples among a subset of the data)
             self.accountant.step(
                 noise_multiplier=optim.noise_multiplier,
                 sample_rate=sample_rate * optim.accumulated_iterations,
@@ -86,13 +113,21 @@ class PrivacyEngine:
         max_grad_norms: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        poisson_sampling: bool = True,
+        try_fix_incompatible_modules: bool = False,
     ):
-        distributed = type(module) is DDP
-        assert type(module) is not DPDDP
+        distributed = type(module) is DPDDP
 
-        # TODO: DP-Specific validation
+        module = self._prepare_model(
+            module, batch_first, loss_reduction, try_fix_incompatible_modules
+        )
+
         # TODO: either validate consistent dataset or do per-dataset accounting
-        module = self._prepare_model(module, batch_first, loss_reduction)
+        module = self._prepare_model(
+            module,
+            batch_first,
+            loss_reduction,
+        )
         data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
 
         sample_rate = 1 / len(data_loader)
@@ -112,7 +147,8 @@ class PrivacyEngine:
 
         def accountant_hook(optim: DPOptimizer):
             # TODO: This works for Poisson for both single-node and distributed
-            # The reason is that the sample rate is the same in both cases (but in distributed mode, each node samples among a subset of the data)
+            # The reason is that the sample rate is the same in both cases (but in
+            # distributed mode, each node samples among a subset of the data)
             self.accountant.step(
                 noise_multiplier=optim.noise_multiplier,
                 sample_rate=sample_rate * optim.accumulated_iterations,
@@ -137,6 +173,7 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        try_fix_incompatible_modules: bool = False,
         alphas: Optional[List[float]] = None,
         sigma_min: Optional[float] = None,
         sigma_max: Optional[float] = None,
@@ -159,6 +196,7 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             batch_first=batch_first,
             loss_reduction=loss_reduction,
+            try_fix_incompatible_modules=try_fix_incompatible_modules,
         )
 
     def _prepare_model(
@@ -166,7 +204,14 @@ class PrivacyEngine:
         module: nn.Module,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        try_fix_incompatible_modules: bool = False,
     ) -> GradSampleModule:
+        # (fix and) validate
+        if try_fix_incompatible_modules:
+            module = ModuleValidator.fix(module)
+        self.validate(module=module, optimizer=None, data_loader=None)
+
+        # wrap
         if isinstance(module, GradSampleModule):
             return module
         else:
@@ -181,7 +226,7 @@ class PrivacyEngine:
         max_grad_norm: float,
         expected_batch_size: int,
         loss_reduction: str = "mean",
-        distributed : bool = False,
+        distributed: bool = False,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             # TODO: lol rename optimizer optimizer optimizer
@@ -211,7 +256,7 @@ class PrivacyEngine:
         max_grad_norms: float,
         expected_batch_size: int,
         loss_reduction: str = "mean",
-        distributed : bool = False,
+        distributed: bool = False,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             # TODO: lol rename optimizer optimizer optimizer
@@ -225,7 +270,9 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
         )
 
-    def _prepare_data_loader(self, data_loader: DataLoader, distributed: bool) -> DataLoader:
+    def _prepare_data_loader(
+        self, data_loader: DataLoader, distributed: bool
+    ) -> DataLoader:
         return DPDataLoader.from_data_loader(data_loader, distributed=distributed)
 
     # TODO: default delta value?

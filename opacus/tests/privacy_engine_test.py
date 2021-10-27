@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
-from opacus.dp_model_inspector import IncompatibleModuleException
+from opacus.validators.errors import UnsupportedModuleError
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
@@ -102,6 +102,7 @@ class PrivacyEngine_test(unittest.TestCase):
         noise_multiplier: float = 1.0,
         max_grad_norm: float = 1.0,
         poisson_sampling: bool = True,
+        try_fix_incompatible_modules: bool = False,
     ):
         model = SampleConvNet()
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
@@ -119,6 +120,7 @@ class PrivacyEngine_test(unittest.TestCase):
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
             poisson_sampling=poisson_sampling,
+            try_fix_incompatible_modules=try_fix_incompatible_modules,
         )
 
         return model, optimizer, dl, privacy_engine
@@ -282,24 +284,44 @@ class PrivacyEngine_test(unittest.TestCase):
         for p0, p1 in zip(first_run_params, second_run_params):
             self.assertFalse(torch.allclose(p0, p1))
 
-    @unittest.skip("Not yet implemented")
     def test_model_validator(self):
         """
-        Test that the privacy engine throws on attach
+        Test that the privacy engine raises errors
         if there are unsupported modules
         """
         resnet = models.resnet18()
         optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
         privacy_engine = PrivacyEngine()
+        dl, _ = self._init_data()
 
-        with self.assertRaises(IncompatibleModuleException):
+        with self.assertRaises(UnsupportedModuleError):
             _, _, _ = privacy_engine.make_private(
                 module=resnet,
                 optimizer=optimizer,
-                data_loader=self.dl,
+                data_loader=dl,
                 noise_multiplier=1.3,
                 max_grad_norm=1,
             )
+
+    def test_model_validator_after_fix(self):
+        """
+        Test that the privacy engine fixes unsupported modules
+        and succeeds.
+        """
+        resnet = models.resnet18()
+        optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
+        privacy_engine = PrivacyEngine()
+        dl, _ = self._init_data()
+
+        _, _, _ = privacy_engine.make_private(
+            module=resnet,
+            optimizer=optimizer,
+            data_loader=dl,
+            noise_multiplier=1.3,
+            max_grad_norm=1,
+            try_fix_incompatible_modules=True,
+        )
+        self.assertTrue(1, 1)
 
     def test_deterministic_run(self):
         """
@@ -332,7 +354,9 @@ class PrivacyEngine_test(unittest.TestCase):
         Tests that the noise level is correctly set
         """
         # Initialize models with parameters to zero
-        model, optimizer, dl, _ = self._init_private_training(noise_multiplier=noise_multiplier)
+        model, optimizer, dl, _ = self._init_private_training(
+            noise_multiplier=noise_multiplier
+        )
         for p in model.parameters():
             p.data.zero_()
 
@@ -353,11 +377,18 @@ class PrivacyEngine_test(unittest.TestCase):
                 break
 
         # Noise should be equal to lr*sigma*sqrt(n_params * steps) / batch_size
-        expected_norm = steps * n_params * optimizer.noise_multiplier**2 * self.LR**2 / (optimizer.expected_batch_size**2)
-        real_norm = sum([torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]).item()
+        expected_norm = (
+            steps
+            * n_params
+            * optimizer.noise_multiplier ** 2
+            * self.LR ** 2
+            / (optimizer.expected_batch_size ** 2)
+        )
+        real_norm = sum(
+            [torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]
+        ).item()
 
         self.assertAlmostEqual(real_norm, expected_norm, delta=0.05 * expected_norm)
-
 
     @unittest.skip("Not yet implemented")
     def test_raises_seed_set_on_secure_rng(self):
