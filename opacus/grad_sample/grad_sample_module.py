@@ -330,7 +330,7 @@ class GradSampleModule(nn.Module):
 
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
-        """Check if this individu module is supported"""
+        """Check if this individual module is supported"""
         return type(module) in cls.GRAD_SAMPLERS or type(module) is DPLSTM
 
     @classmethod

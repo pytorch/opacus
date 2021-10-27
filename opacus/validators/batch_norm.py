@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+import logging
+import sys
 from typing import Union
 
 import torch.nn as nn
 
-from .errors import ShouldReplaceModuleError
+from .errors import ShouldReplaceModuleError, UnsupportableModuleError
 from .utils import register_module_validator, register_module_fixer
+
+logging.basicConfig(
+    format="%(asctime)s:%(levelname)s:%(message)s",
+    datefmt="%m/%d/%Y %H:%M:%S",
+    stream=sys.stderr,
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.INFO)
 
 
 BATCHNORM = Union[nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.SyncBatchNorm]
@@ -38,6 +48,10 @@ def validate(module: BATCHNORM) -> None:
     [nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.SyncBatchNorm]
 )
 def fix(module: BATCHNORM) -> nn.GroupNorm:
+    logger.info("The default fixer replaces BatchNorm with GroupNorm."
+    " The batch_norm validator module also offeers implementations to replace"
+    " it with InstanceNorm or Identity. Please check them out and override the"
+    " fixer incase those are more suitable for your needs.")
     return _batchnorm_to_groupnorm(module)
 
 
@@ -80,8 +94,10 @@ def _batchnorm_to_instancenorm(module: BATCHNORM) -> INSTANCENORM:
         elif isinstance(module, nn.BatchNorm3d):
             return nn.InstanceNorm3d
         elif isinstance(module, nn.SyncBatchNorm):
-            # TODO handle this correctly
-            pass
+            raise UnsupportableModuleError(
+                "There is no equivalent InstanceNorm module to replace"
+                " SyncBatchNorm with. Consider replacing it with GroupNorm instead."
+            )
 
     return match_dim()(module.num_features)
 
