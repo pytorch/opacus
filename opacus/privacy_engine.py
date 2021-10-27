@@ -2,6 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from typing import Optional, List
 
+import torch
 from torch.utils.data import DataLoader
 from opacus.accountants import RDPAccountant
 from opacus.grad_sample.grad_sample_module import GradSampleModule
@@ -10,12 +11,14 @@ from opacus.accountants.rdp import get_noise_multiplier
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from opacus.data_loader import DPDataLoader
+import warnings
 
 
 class PrivacyEngine:
     def __init__(self, secure_mode=False):
         self.accountant = RDPAccountant()
         self.secure_mode = secure_mode
+
         if self.secure_mode:
             try:
                 import torchcsprng as csprng
@@ -26,8 +29,7 @@ class PrivacyEngine:
                 )
                 raise ImportError(msg) from e
 
-            self.seed = None
-            self.random_number_generator = csprng.create_random_device_generator(
+            self.secure_rng = csprng.create_random_device_generator(
                 "/dev/urandom"
             )
         else:
@@ -36,34 +38,6 @@ class PrivacyEngine:
                 "for much faster training performance, but remember to turn it on and retrain "
                 "one last time before production with ``secure_mode`` turned on."
             )
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                self.set_seed(int.from_bytes(os.urandom(8), byteorder="big", signed=True))
-
-    
-    def set_seed(self, seed: int):
-        r"""
-        Allows to manually set the seed allowing for a deterministic run. Useful if you want to
-        debug.
-        WARNING: MANUALLY SETTING THE SEED BREAKS THE GUARANTEE OF SECURE RNG.
-        For this reason, this method will raise a ValueError if you had ``secure_mode`` turned on.
-        Args:
-            seed : The **unsecure** seed
-        """
-        if self.secure_mode:
-            raise ValueError(
-                "Seed was manually set on a ``PrivacyEngine`` with ``secure_mode`` turned on."
-                "This fundamentally breaks secure_mode, and cannot be allowed. "
-                "If you do need reproducibility with a fixed seed, first instantiate the PrivacyEngine "
-                "with ``secure_seed`` turned off."
-            )
-        self.seed = seed
-
-        if self.params[0].device == "cpu":
-            self.random_number_generator = torch.random.manual_seed(self.seed)
-        else:
-            self.random_number_generator = torch.cuda.manual_seed(self.seed)
-
 
     def make_private(
         self,
@@ -74,9 +48,13 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        noise_seed: Optional[int] = None,
     ):
         # TODO: DP-Specific validation
         # TODO: either validate consistent dataset or do per-dataset accounting
+
+        if noise_seed and self.secure_mode:
+            raise ValueError("Passing seed is prohibited in secure mode")
 
         module = self._prepare_model(module, batch_first, loss_reduction)
         data_loader = self._prepare_data_loader(data_loader)
@@ -90,6 +68,7 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
+            noise_seed=noise_seed,
         )
 
         def accountant_hook(optim: DPOptimizer):
@@ -157,10 +136,18 @@ class PrivacyEngine:
         max_grad_norm: float,
         expected_batch_size: int,
         loss_reduction: str = "mean",
+        noise_seed: Optional[int] = None,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             # TODO: lol rename optimizer optimizer optimizer
             optimizer = optimizer.optimizer
+
+        generator = None
+        if self.secure_mode:
+            generator = self.secure_rng
+        elif noise_seed is not None:
+            generator = torch.Generator()
+            generator.manual_seed(noise_seed)
 
         return DPOptimizer(
             optimizer=optimizer,
@@ -168,14 +155,18 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
-            generator=self.random_number_generator,
+            generator=generator,
         )
 
     def _prepare_data_loader(self, data_loader: DataLoader) -> DataLoader:
         if isinstance(data_loader, DPDataLoader):
             return data_loader
 
-        return DPDataLoader.from_data_loader(data_loader, generator=self.random_number_generator)
+        generator = None
+        if self.secure_mode:
+            generator = self.secure_rng
+
+        return DPDataLoader.from_data_loader(data_loader, generator=generator)
 
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):
