@@ -2,7 +2,7 @@ import math
 from typing import List
 
 import numpy as np
-from opacus.optimizer import DPOptimizer
+from opacus.optimizers import DPOptimizer
 from torch.utils.data import DataLoader, Sampler
 
 

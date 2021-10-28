@@ -38,14 +38,16 @@ class BatchMemoryManagerTest(unittest.TestCase):
 
         return model, optimizer, data_loader
 
-    @given(
-        num_workers=st.integers(0, 4),
-        pin_memory=st.booleans(),
-    )
+    # @given(
+        # num_workers=st.integers(0, 4),
+        # pin_memory=st.booleans(),
+        # num_workers=st.just(0),
+        # pin_memory=st.just(False)
+    # )
     def test_basic(
         self,
-        num_workers: int,
-        pin_memory: bool,
+        num_workers: int = 0,
+        pin_memory: bool = False,
     ):
         model, optimizer, data_loader = self._init_training(
             num_workers=num_workers,

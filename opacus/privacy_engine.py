@@ -106,6 +106,7 @@ class PrivacyEngine:
             data_loader = self._prepare_data_loader(
                 data_loader, distributed=distributed
             )
+            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
@@ -161,7 +162,9 @@ class PrivacyEngine:
             batch_first,
             loss_reduction,
         )
-        data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
+        if poisson_sampling:
+            data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
+            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
@@ -189,9 +192,6 @@ class PrivacyEngine:
             )
 
         optimizer.attach_step_hook(accountant_hook)
-
-        if poisson_sampling:
-            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         return module, optimizer, data_loader
 

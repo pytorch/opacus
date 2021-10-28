@@ -8,20 +8,13 @@ import torch
 import torch.nn as nn
 from opacus import PrivacyEngine
 from opacus.accountants.analysis.rdp import compute_rdp, get_privacy_spent
-from opacus.dp_model_inspector import DPModelInspector, IncompatibleModuleException
 from opacus.layers.dp_multihead_attention import SequenceBias
 from opacus.utils import stats
-from opacus.utils.module_inspection import ModelInspector
-from opacus.utils.module_modification import (
-    convert_batchnorm_modules,
-    replace_all_modules,
-)
 from opacus.utils.tensor_utils import (
     calc_sample_norms,
     calc_sample_norms_one_layer,
     sum_over_all_but_batch_and_last_n,
 )
-
 
 class DocstringExamplesTest(unittest.TestCase):
     """
@@ -31,22 +24,6 @@ class DocstringExamplesTest(unittest.TestCase):
     This TestCase is a collection of all the examples we use at the moment.
     It is intended to catch breaking changes and signal to update the docstring alongside with the code.
     """
-
-    def setUp(self):
-        self.validator = DPModelInspector()
-
-    def test_dp_model_inspector_example(self):
-        # IMPORTANT: When changing this code you also need to update
-        # the docstring for opacus.dp_model_inspector.DPModelInspector.validate()
-
-        inspector = DPModelInspector()
-        valid_model = nn.Linear(16, 32)
-        is_valid = inspector.validate(valid_model)
-        self.assertTrue(is_valid)
-
-        invalid_model = nn.BatchNorm1d(2)
-        with self.assertRaises(IncompatibleModuleException):
-            is_valid = inspector.validate(invalid_model)
 
     def test_privacy_analysis_example(self):
         # IMPORTANT: When changing this code you also need to update
@@ -133,34 +110,6 @@ class DocstringExamplesTest(unittest.TestCase):
         input = torch.randn(20, 4, 16)
         output = m(input)
         self.assertEqual(output.size(), (21, 4, 16))
-
-    def test_module_inspection_example(self):
-        # IMPORTANT: When changing this code you also need to update
-        # the docstring for opacus.utils.module_inspection.ModelInspector
-        inspector = ModelInspector("simple", lambda x: isinstance(x, nn.Conv2d))
-        self.assertTrue(inspector.validate(nn.Conv2d(1, 1, 1)))
-
-    def test_module_modification_replace_example(self):
-        # IMPORTANT: When changing this code you also need to update
-        # the docstring for opacus.utils.module_modification.replace_all_modules()
-        from torchvision.models import resnet18
-
-        model = resnet18()
-        self.assertTrue(isinstance(model.layer1[0].bn1, nn.BatchNorm2d))
-
-        model = replace_all_modules(model, nn.BatchNorm2d, lambda _: nn.Identity())
-        self.assertTrue(isinstance(model.layer1[0].bn1, nn.Identity))
-
-    def test_module_modification_convert_example(self):
-        # IMPORTANT: When changing this code you also need to update
-        # the docstring for opacus.utils.module_modification.convert_batchnorm_modules()
-        from torchvision.models import resnet50
-
-        model = resnet50()
-        self.assertTrue(isinstance(model.layer1[0].bn1, nn.BatchNorm2d))
-
-        model = convert_batchnorm_modules(model)
-        self.assertTrue(isinstance(model.layer1[0].bn1, nn.GroupNorm))
 
     def test_tensor_utils_examples(self):
         # IMPORTANT: When changing this code you also need to update
