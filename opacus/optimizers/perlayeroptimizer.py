@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import torch
-from torch import nn
 from torch.optim import Optimizer
 
-from .optimizer import DPOptimizer, _generate_noise
+from .optimizer import DPOptimizer
 
 
 class DPPerLayerOptimizer(DPOptimizer):
@@ -18,16 +17,18 @@ class DPPerLayerOptimizer(DPOptimizer):
         max_grad_norms: List[float],
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
+        generator=None,
     ):
         assert len(max_grad_norms) == len(optimizer.params)
         self.max_grad_norms = max_grad_norms
-        max_grad_norm = torch.norm(torch.Tensor(self.max_grad_norms), p=2)
+        max_grad_norm = torch.norm(torch.Tensor(self.max_grad_norms), p=2).item()
         super().__init__(
             optimizer,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
+            generator=generator,
         )
 
     def attach(self, optimizer):

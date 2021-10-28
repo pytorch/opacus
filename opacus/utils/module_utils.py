@@ -4,7 +4,7 @@ import io
 import logging
 import sys
 from collections import OrderedDict
-from typing import Iterable
+from typing import Iterable, List
 
 import torch
 import torch.nn as nn

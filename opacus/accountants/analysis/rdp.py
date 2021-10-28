@@ -27,7 +27,7 @@ Example:
 """
 
 import math
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 from scipy import special

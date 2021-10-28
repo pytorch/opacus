@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import List, Optional
+from typing import List
 
 import torch
 from torch.utils.data import Sampler
@@ -73,7 +73,7 @@ class DistributedUniformWithReplacementSampler(Sampler):
         total_size: int,
         sample_rate: float,
         shuffle: bool = True,
-        seed: int = 0,
+        shuffle_seed: int = 0,
         generator=None,
     ):
         self.total_size = total_size

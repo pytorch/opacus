@@ -39,4 +39,4 @@ class DDPValidator_test(unittest.TestCase):
     def test_fix(self):
         ddp = DDP(self.module)
         with self.assertRaises(ShouldReplaceModuleError):
-            fix_ddp = self.mf[type(ddp)](ddp)
+            self.mf[type(ddp)](ddp)

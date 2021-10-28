@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 import torch
-from torch import nn
 from torch.optim import Optimizer
 
 from .optimizer import DPOptimizer
@@ -18,6 +17,7 @@ class DistributedDPOptimizer(DPOptimizer):
         max_grad_norm: float,
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
+        generator=None,
     ):
         super().__init__(
             optimizer,
@@ -25,6 +25,7 @@ class DistributedDPOptimizer(DPOptimizer):
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
+            generator=generator,
         )
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
