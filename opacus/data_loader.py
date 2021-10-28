@@ -81,7 +81,7 @@ class DPDataLoader(DataLoader):
         )
 
     @classmethod
-    def from_data_loader(cls, data_loader: DataLoader, distributed: bool, generator=None):
+    def from_data_loader(cls, data_loader: DataLoader, distributed: bool = False, generator=None):
         if isinstance(data_loader, cls):
             assert data_loader.distributed == distributed
             return data_loader
