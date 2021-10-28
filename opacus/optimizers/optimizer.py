@@ -11,6 +11,8 @@ def _generate_noise(
     std: float, reference: torch.Tensor, generator=None
 ) -> torch.Tensor:
     if std > 0:
+        #TODO: handle device transfers: generator and reference tensor
+        # could be on different devices
         return torch.normal(
             mean=0,
             std=std,
