@@ -1,12 +1,13 @@
 from __future__ import annotations
-from .optimizer import DPOptimizer, _generate_noise
 
-from typing import Callable, List, Optional
 from functools import partial
+from typing import Callable, List, Optional
 
 import torch
 from torch import nn
 from torch.optim import Optimizer
+
+from .optimizer import DPOptimizer, _generate_noise
 
 
 def _clip_and_accumulate_parameter(p: nn.Parameter, max_grad_norm: float):

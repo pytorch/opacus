@@ -7,7 +7,9 @@ from torch import nn
 from torch.optim import Optimizer
 
 
-def _generate_noise(std: float, reference: torch.Tensor, generator=None) -> torch.Tensor:
+def _generate_noise(
+    std: float, reference: torch.Tensor, generator=None
+) -> torch.Tensor:
     if std > 0:
         return torch.normal(
             mean=0,
@@ -134,7 +136,7 @@ class DPOptimizer(Optimizer):
             noise = _generate_noise(
                 std=self.noise_multiplier * self.max_grad_norm,
                 reference=p.summed_grad,
-                generator=self.generator
+                generator=self.generator,
             )
             p.grad = p.summed_grad + noise
 

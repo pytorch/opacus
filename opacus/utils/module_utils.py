@@ -9,6 +9,7 @@ from typing import Iterable
 import torch
 import torch.nn as nn
 
+
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s",
     datefmt="%m/%d/%Y %H:%M:%S",

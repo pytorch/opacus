@@ -1,25 +1,25 @@
-from typing import Optional
 import unittest
+from typing import Optional
+
 import torch
-from torch.utils.data import DataLoader, TensorDataset
-from opacus.data_loader import DPDataLoader
-from opacus.optimizers import DPOptimizer
-from opacus.grad_sample import GradSampleModule
-from opacus import PrivacyEngine
 import torch.nn as nn
+from opacus import PrivacyEngine
+from opacus.data_loader import DPDataLoader
+from opacus.grad_sample import GradSampleModule
+from opacus.optimizers import DPOptimizer
+from torch.utils.data import DataLoader, TensorDataset
 
 
 class DataLoaderRandomnessTest(unittest.TestCase):
-
     def setUp(self) -> None:
         self.batch_size = 8
         self.data = torch.randn(self.batch_size * 10, 32)
         self.dataset = TensorDataset(self.data)
 
     def _read_all_data(self, dp_generator, original_generator=None):
-        dl = DataLoader(self.dataset, batch_size=self.batch_size,
-                        generator=original_generator
-                        )
+        dl = DataLoader(
+            self.dataset, batch_size=self.batch_size, generator=original_generator
+        )
         dpdl = DPDataLoader.from_data_loader(dl, generator=dp_generator)
         return torch.cat([x for x, in dpdl], dim=0)
 
@@ -78,7 +78,7 @@ class DataLoaderRandomnessTest(unittest.TestCase):
 
 
 def _epoch(model: nn.Module, optim: torch.optim.Optimizer, dl: DataLoader):
-    for x, in dl:
+    for (x,) in dl:
         optim.zero_grad()
         out = model(x)
         loss = out.sum()
@@ -87,7 +87,6 @@ def _epoch(model: nn.Module, optim: torch.optim.Optimizer, dl: DataLoader):
 
 
 class OptimizerRandomnessTest(unittest.TestCase):
-
     def setUp(self) -> None:
         self.data = torch.randn(80, 32)
 
@@ -108,7 +107,7 @@ class OptimizerRandomnessTest(unittest.TestCase):
             noise_multiplier=noise,
             max_grad_norm=1.0,
             expected_batch_size=8,
-            generator=generator
+            generator=generator,
         )
 
         return model, dp_optim, dl
@@ -122,10 +121,10 @@ class OptimizerRandomnessTest(unittest.TestCase):
         self.assertFalse(torch.allclose(model1._module.weight, model2._module.weight))
 
     def test_no_noise(self):
-        model1, optim1, dl1 = self._init_training(generator=None, noise=0.)
+        model1, optim1, dl1 = self._init_training(generator=None, noise=0.0)
         _epoch(model1, optim1, dl1)
 
-        model2, optim2, dl2 = self._init_training(generator=None, noise=0.)
+        model2, optim2, dl2 = self._init_training(generator=None, noise=0.0)
         _epoch(model2, optim2, dl2)
 
         self.assertTrue(torch.allclose(model1._module.weight, model2._module.weight))
@@ -173,7 +172,6 @@ class OptimizerRandomnessTest(unittest.TestCase):
 
 
 class PrivacyEngineSecureModeTest(unittest.TestCase):
-
     def setUp(self) -> None:
         self.data = torch.randn(80, 32)
 
@@ -193,7 +191,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
         secure_mode: bool,
         dl_seed: Optional[int] = None,
         noise_seed: Optional[int] = None,
-        noise: float = 1.0
+        noise: float = 1.0,
     ):
         dl_generator = None
         if dl_seed:
@@ -209,7 +207,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
             data_loader=dl,
             noise_multiplier=noise,
             max_grad_norm=1.0,
-            noise_seed=noise_seed
+            noise_seed=noise_seed,
         )
 
     def test_basic(self):
@@ -223,10 +221,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
 
     def test_raise_secure_mode(self):
         with self.assertRaises(ValueError):
-            self._init_dp_training(
-                secure_mode=True,
-                noise_seed=42
-            )
+            self._init_dp_training(secure_mode=True, noise_seed=42)
 
     def test_global_seed(self):
         model1, optim1, dl1 = self._init_dp_training(secure_mode=False)
@@ -260,43 +255,42 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
         self.assertFalse(torch.allclose(model1._module.weight, model2._module.weight))
 
     def test_dl_seed_no_noise(self):
-        model1, optim1, dl1 = self._init_dp_training(secure_mode=False, dl_seed=96,
-                                                     noise=0.
-                                                     )
+        model1, optim1, dl1 = self._init_dp_training(
+            secure_mode=False, dl_seed=96, noise=0.0
+        )
         _epoch(model1, optim1, dl1)
 
-        model2, optim2, dl2 = self._init_dp_training(secure_mode=False, dl_seed=96,
-                                                     noise=0.
-                                                     )
+        model2, optim2, dl2 = self._init_dp_training(
+            secure_mode=False, dl_seed=96, noise=0.0
+        )
         _epoch(model2, optim2, dl2)
 
         self.assertTrue(torch.allclose(model1._module.weight, model2._module.weight))
 
     def test_seed(self):
-        model1, optim1, dl1 = self._init_dp_training(secure_mode=False, dl_seed=96,
-                                                     noise_seed=17
-                                                     )
+        model1, optim1, dl1 = self._init_dp_training(
+            secure_mode=False, dl_seed=96, noise_seed=17
+        )
         _epoch(model1, optim1, dl1)
 
-        model2, optim2, dl2 = self._init_dp_training(secure_mode=False, dl_seed=96,
-                                                     noise_seed=17
-                                                     )
+        model2, optim2, dl2 = self._init_dp_training(
+            secure_mode=False, dl_seed=96, noise_seed=17
+        )
         _epoch(model2, optim2, dl2)
 
         self.assertTrue(torch.allclose(model1._module.weight, model2._module.weight))
 
     def test_custom_and_global_seed(self):
-        model1, optim1, dl1 = self._init_dp_training(secure_mode=False, dl_seed=96,
-                                                     noise_seed=17
-                                                     )
+        model1, optim1, dl1 = self._init_dp_training(
+            secure_mode=False, dl_seed=96, noise_seed=17
+        )
         torch.manual_seed(1024)
         _epoch(model1, optim1, dl1)
 
-        model2, optim2, dl2 = self._init_dp_training(secure_mode=False, dl_seed=96,
-                                                     noise_seed=17
-                                                     )
+        model2, optim2, dl2 = self._init_dp_training(
+            secure_mode=False, dl_seed=96, noise_seed=17
+        )
         torch.manual_seed(2048)
         _epoch(model2, optim2, dl2)
 
         self.assertTrue(torch.allclose(model1._module.weight, model2._module.weight))
-

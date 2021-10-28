@@ -396,8 +396,9 @@ class PrivacyEngine_test(unittest.TestCase):
         Tests that when a seed is set on a secure PrivacyEngine, we raise a ValueError
         """
 
-
-        model, optimizer, dl, privacy_engine = self._init_private_training(secure_mode=True, noise_multiplier=1.3, max_grad_norm=1.0)
+        model, optimizer, dl, privacy_engine = self._init_private_training(
+            secure_mode=True, noise_multiplier=1.3, max_grad_norm=1.0
+        )
 
         with self.assertRaises(ValueError):
             privacy_engine.set_seed(20)

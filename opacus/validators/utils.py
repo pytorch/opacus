@@ -5,6 +5,7 @@ from typing import Sequence, Union
 
 from .module_validator import ModuleValidator
 
+
 DEFAULT_MODULE_VALIDATOR = ModuleValidator
 
 

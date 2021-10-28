@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+import warnings
 from typing import List, Optional
 
+import torch
 from opacus.accountants import RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
 from opacus.data_loader import DPDataLoader
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import (
-    DPOptimizer,
     DistributedDPOptimizer,
-    DPPerLayerOptimizer,
     DistributedPerLayerOptimizer,
+    DPOptimizer,
+    DPPerLayerOptimizer,
 )
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.utils.data import DataLoader
-from opacus.data_loader import DPDataLoader
-import warnings
-import torch
 
 
 def forbid_accumulation_hook(module: nn.Module, _):
@@ -46,9 +45,7 @@ class PrivacyEngine:
                 )
                 raise ImportError(msg) from e
 
-            self.secure_rng = csprng.create_random_device_generator(
-                "/dev/urandom"
-            )
+            self.secure_rng = csprng.create_random_device_generator("/dev/urandom")
         else:
             warnings.warn(
                 "Secure RNG turned off. This is perfectly fine for experimentation as it allows "
@@ -163,7 +160,9 @@ class PrivacyEngine:
             loss_reduction,
         )
         if poisson_sampling:
-            data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
+            data_loader = self._prepare_data_loader(
+                data_loader, distributed=distributed
+            )
             module.register_forward_pre_hook(forbid_accumulation_hook)
 
         sample_rate = 1 / len(data_loader)
@@ -316,7 +315,9 @@ class PrivacyEngine:
             generator = torch.Generator()
             generator.manual_seed(noise_seed)
 
-        optim_class = DistributedPerLayerOptimizer if distributed else DPPerLayerOptimizer
+        optim_class = (
+            DistributedPerLayerOptimizer if distributed else DPPerLayerOptimizer
+        )
 
         return optim_class(
             optimizer=optimizer,
@@ -327,7 +328,9 @@ class PrivacyEngine:
             generator=generator,
         )
 
-    def _prepare_data_loader(self, data_loader: DataLoader, distributed: bool) -> DataLoader:
+    def _prepare_data_loader(
+        self, data_loader: DataLoader, distributed: bool
+    ) -> DataLoader:
         if isinstance(data_loader, DPDataLoader):
             return data_loader
 
@@ -335,7 +338,9 @@ class PrivacyEngine:
         if self.secure_mode:
             generator = self.secure_rng
 
-        return DPDataLoader.from_data_loader(data_loader, generator=generator, distributed=distributed)
+        return DPDataLoader.from_data_loader(
+            data_loader, generator=generator, distributed=distributed
+        )
 
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):

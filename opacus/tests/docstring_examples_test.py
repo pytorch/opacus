@@ -16,6 +16,7 @@ from opacus.utils.tensor_utils import (
     sum_over_all_but_batch_and_last_n,
 )
 
+
 class DocstringExamplesTest(unittest.TestCase):
     """
     This test checks the correctness of the code snippets we use across the docstrings in the project.

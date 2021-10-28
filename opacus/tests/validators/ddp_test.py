@@ -6,7 +6,6 @@ import unittest
 import torch.distributed as dist
 import torch.nn as nn
 from opacus.validators.errors import ShouldReplaceModuleError
-from opacus.validators.errors import ShouldReplaceModuleError
 from opacus.validators.module_validator import ModuleValidator
 from torch.nn.parallel import DistributedDataParallel as DDP
 
