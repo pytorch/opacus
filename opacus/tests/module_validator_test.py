@@ -62,7 +62,12 @@ class ModuleValidator_test(unittest.TestCase):
             self.assertGreater(len(log_cm.records), 0)
             for log_record in log_cm.records:
                 log_msg = log_record.getMessage()
-                self.assertRegex(log_msg, "Replaced sub_module .+ with .*")
+                self.assertRegex(
+                    log_msg,
+                    "Replaced sub_module .+ with .*"
+                    "|"
+                    "The default batch_norm fixer replaces BatchNorm with GroupNorm",
+                )
 
         # with self.assertNoLogs(level="INFO"):
         #     ModuleValidator.fix(self.fixed_model)

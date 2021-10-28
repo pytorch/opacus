@@ -7,7 +7,7 @@ from typing import List
 
 import torch.nn as nn
 from opacus.grad_sample.grad_sample_module import GradSampleModule
-from opacus.utils.module_utils import clone_module
+from opacus.utils.module_utils import clone_module, get_submodule
 from opacus.validators.errors import (
     IllegalModuleConfigurationError,
     UnsupportedModuleError,
@@ -97,7 +97,7 @@ class ModuleValidator:
         sub_module_names = [name for name, _ in module.named_modules()]
         for sub_module_name in sub_module_names:
             # get sub_module
-            sub_module = module.get_submodule(sub_module_name)
+            sub_module = get_submodule(module, sub_module_name)
             # if sub_module has a registered fixer
             if type(sub_module) in ModuleValidator.FIXERS:
                 # get a repalcement for sub_module
