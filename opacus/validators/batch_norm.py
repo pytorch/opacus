@@ -48,10 +48,10 @@ def validate(module: BATCHNORM) -> None:
     [nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.SyncBatchNorm]
 )
 def fix(module: BATCHNORM) -> nn.GroupNorm:
-    logger.info("The default fixer replaces BatchNorm with GroupNorm."
-    " The batch_norm validator module also offeers implementations to replace"
+    logger.info("The default batch_norm fixer replaces BatchNorm with GroupNorm."
+    " The batch_norm validator module also offers implementations to replace"
     " it with InstanceNorm or Identity. Please check them out and override the"
-    " fixer incase those are more suitable for your needs.")
+    " fixer if those are more suitable for your needs.")
     return _batchnorm_to_groupnorm(module)
 
 

@@ -76,6 +76,33 @@ def clone_module(module: nn.Module) -> nn.Module:
     return module_copy
 
 
+def get_submodule(module: nn.Module, target: str) -> nn.Module:
+    """
+    Returns the submodule given by target if it exists, otherwise throws an error.
+
+    This is copy-pasta of Pytorch 1.9's ``get_submodule()`` implementation; and is
+    included here to also support Pytorch 1.8. This function can be removed in favour
+    of ``module.get_submodule()`` once Opacus abandons support for torch 1.8.
+
+    See more details at https://pytorch.org/docs/stable/generated/torch.nn.Module.html?highlight=get_submodule#torch.nn.Module.get_submodule
+    """
+    if target == "":
+        return module
+
+    atoms: List[str] = target.split(".")
+    mod: nn.Module = module
+
+    for item in atoms:
+        if not hasattr(mod, item):
+            raise AttributeError(
+                mod._get_name() + " has no " "attribute `" + item + "`"
+            )
+        mod = getattr(mod, item)
+        if not isinstance(mod, torch.nn.Module):
+            raise AttributeError("`" + item + "` is not " "an nn.Module")
+    return mod
+
+
 def are_state_dict_equal(sd1: OrderedDict, sd2: OrderedDict):
     if len(sd1) != len(sd2):
         logger.error(f"Length mismatch: {len(sd1)} vs {len(sd2)}")
