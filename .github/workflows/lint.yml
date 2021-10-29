@@ -1,0 +1,28 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+      - experimental_v1.0
+
+jobs:
+  run-linters:
+    name: Run linters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Run linters
+        uses: wearerequired/lint-action@v1
+        with:
+          auto_fix: true
+          black: true
+          flake8: true
+          flake8_args: "--config /Users/asablayrolles/code/utils/flake8_config.ini"
+
