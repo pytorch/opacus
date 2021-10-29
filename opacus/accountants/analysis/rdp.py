@@ -311,7 +311,8 @@ def get_privacy_spent(
 
     idx_opt = np.nanargmin(eps)  # Ignore NaNs
     if idx_opt == 0 or idx_opt == len(eps) - 1:
+        extreme = "smallest" if idx_opt == 0 else "largest"
         warnings.warn(
-            "Optimal order is the largest (or smallest) alpha. Please consider expanding the range of alphas to get a tighter privacy bound"
+            f"Optimal order is the {extreme} alpha. Please consider expanding the range of alphas to get a tighter privacy bound."
         )
     return eps[idx_opt], orders_vec[idx_opt]
