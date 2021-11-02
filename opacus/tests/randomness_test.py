@@ -4,77 +4,10 @@ from typing import Optional
 import torch
 import torch.nn as nn
 from opacus import PrivacyEngine
-from opacus.data_loader import DPDataLoader
+from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.grad_sample import GradSampleModule
 from opacus.optimizers import DPOptimizer
 from torch.utils.data import DataLoader, TensorDataset
-
-
-class DataLoaderRandomnessTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.batch_size = 8
-        self.data = torch.randn(self.batch_size * 10, 32)
-        self.dataset = TensorDataset(self.data)
-
-    def _read_all_data(self, dp_generator, original_generator=None):
-        dl = DataLoader(
-            self.dataset, batch_size=self.batch_size, generator=original_generator
-        )
-        dpdl = DPDataLoader.from_data_loader(dl, generator=dp_generator)
-        return torch.cat([x for x, in dpdl], dim=0)
-
-    def assertNotEqualTensors(self, a: torch.Tensor, b: torch.Tensor):
-        if a.shape != b.shape:
-            return
-        self.assertTrue(torch.allclose(a, b))
-
-    def assertEqualTensors(self, a: torch.Tensor, b: torch.Tensor):
-        self.assertTrue(torch.allclose(a, b))
-
-    def test_no_seed(self):
-        data1 = self._read_all_data(dp_generator=None)
-        data2 = self._read_all_data(dp_generator=None)
-        self.assertNotEqualTensors(data1, data2)
-
-    def test_global_seed(self):
-        torch.manual_seed(1337)
-        data1 = self._read_all_data(dp_generator=None)
-        torch.manual_seed(1337)
-        data2 = self._read_all_data(dp_generator=None)
-        self.assertEqualTensors(data1, data2)
-
-    def test_custom_generator(self):
-        gen = torch.Generator()
-        gen.manual_seed(1337)
-        data1 = self._read_all_data(dp_generator=gen)
-        gen.manual_seed(1337)
-        data2 = self._read_all_data(dp_generator=gen)
-        self.assertEqualTensors(data1, data2)
-
-    def test_custom_generator_with_global_seed(self):
-        gen = torch.Generator()
-        torch.manual_seed(1337)
-        data1 = self._read_all_data(dp_generator=gen)
-        torch.manual_seed(1337)
-        data2 = self._read_all_data(dp_generator=gen)
-        self.assertNotEqualTensors(data1, data2)
-
-    def test_original_generator(self):
-        gen = torch.Generator()
-        gen.manual_seed(1337)
-        data1 = self._read_all_data(dp_generator=None, original_generator=gen)
-        gen.manual_seed(1337)
-        data2 = self._read_all_data(dp_generator=None, original_generator=gen)
-        self.assertEqualTensors(data1, data2)
-
-    def test_custom_generator_overrides_original(self):
-        dp_gen = torch.Generator()
-        orig_gen = torch.Generator()
-        orig_gen.manual_seed(1337)
-        data1 = self._read_all_data(dp_generator=dp_gen, original_generator=orig_gen)
-        orig_gen.manual_seed(1337)
-        data2 = self._read_all_data(dp_generator=dp_gen, original_generator=orig_gen)
-        self.assertNotEqualTensors(data1, data2)
 
 
 def _epoch(model: nn.Module, optim: torch.optim.Optimizer, dl: DataLoader):
@@ -84,6 +17,145 @@ def _epoch(model: nn.Module, optim: torch.optim.Optimizer, dl: DataLoader):
         loss = out.sum()
         loss.backward()
         optim.step()
+
+
+def _read_all(dl: DataLoader):
+    return torch.cat([x for x, in dl], dim=0)
+
+
+class TensorCompareTestCase(unittest.TestCase):
+
+    def assertNotEqualTensors(self, a: torch.Tensor, b: torch.Tensor):
+        if a.shape != b.shape:
+            return
+        self.assertFalse(torch.allclose(a, b))
+
+    def assertEqualTensors(self, a: torch.Tensor, b: torch.Tensor):
+        self.assertTrue(torch.allclose(a, b))
+
+
+class DataLoaderRandomnessTest(TensorCompareTestCase):
+    def setUp(self) -> None:
+        self.batch_size = 8
+        self.data = torch.randn(self.batch_size * 10, 32)
+        self.dataset = TensorDataset(self.data)
+
+    def _read_all_dp(self, dp_generator, original_generator=None):
+        dl = DataLoader(
+            self.dataset, batch_size=self.batch_size, generator=original_generator
+        )
+        dpdl = DPDataLoader.from_data_loader(dl, generator=dp_generator)
+        return _read_all(dpdl)
+
+    def test_no_seed(self):
+        data1 = self._read_all_dp(dp_generator=None)
+        data2 = self._read_all_dp(dp_generator=None)
+        self.assertNotEqualTensors(data1, data2)
+
+    def test_global_seed(self):
+        torch.manual_seed(1337)
+        data1 = self._read_all_dp(dp_generator=None)
+        torch.manual_seed(1337)
+        data2 = self._read_all_dp(dp_generator=None)
+        self.assertEqualTensors(data1, data2)
+
+    def test_custom_generator(self):
+        gen = torch.Generator()
+        gen.manual_seed(1337)
+        data1 = self._read_all_dp(dp_generator=gen)
+        gen.manual_seed(1337)
+        data2 = self._read_all_dp(dp_generator=gen)
+        self.assertEqualTensors(data1, data2)
+
+    def test_custom_generator_with_global_seed(self):
+        gen = torch.Generator()
+        torch.manual_seed(1337)
+        data1 = self._read_all_dp(dp_generator=gen)
+        torch.manual_seed(1337)
+        data2 = self._read_all_dp(dp_generator=gen)
+        self.assertNotEqualTensors(data1, data2)
+
+    def test_original_generator(self):
+        gen = torch.Generator()
+        gen.manual_seed(1337)
+        data1 = self._read_all_dp(dp_generator=None, original_generator=gen)
+        gen.manual_seed(1337)
+        data2 = self._read_all_dp(dp_generator=None, original_generator=gen)
+        self.assertEqualTensors(data1, data2)
+
+    def test_custom_generator_overrides_original(self):
+        dp_gen = torch.Generator()
+        orig_gen = torch.Generator()
+        orig_gen.manual_seed(1337)
+        data1 = self._read_all_dp(dp_generator=dp_gen, original_generator=orig_gen)
+        orig_gen.manual_seed(1337)
+        data2 = self._read_all_dp(dp_generator=dp_gen, original_generator=orig_gen)
+        self.assertNotEqualTensors(data1, data2)
+
+
+class DataLoaderSwitchRandomnessTest(TensorCompareTestCase):
+
+    def setUp(self) -> None:
+        self.batch_size = 8
+        self.data = torch.randn(self.batch_size * 10, 32)
+        self.dataset = TensorDataset(self.data)
+
+    def _read_all_simple(self, orig_generator=None, shuffle=True):
+        dl = DataLoader(
+            self.dataset, batch_size=self.batch_size, shuffle=shuffle,
+            generator=orig_generator,
+        )
+        return _read_all(dl)
+
+    def _read_all_switch(self, orig_generator=None, new_generator=None, shuffle=True):
+        dl = DataLoader(
+            self.dataset, batch_size=self.batch_size, shuffle=shuffle,
+            generator=orig_generator,
+        )
+        dl = switch_generator(dl, new_generator)
+        return _read_all(dl)
+
+    def test_consistent(self):
+        orig_gen = torch.Generator()
+        orig_gen.manual_seed(1337)
+        data1 = self._read_all_simple(orig_generator=orig_gen)
+        orig_gen.manual_seed(1337)
+        data2 = self._read_all_simple(orig_generator=orig_gen)
+        self.assertEqualTensors(data1, data2)
+
+    def test_basic_switch(self):
+        orig_gen = torch.Generator()
+        orig_gen.manual_seed(1337)
+        data1 = self._read_all_simple(orig_generator=orig_gen)
+
+        other_gen = torch.Generator()
+        other_gen.manual_seed(7331)
+        orig_gen.manual_seed(1337)
+        data2 = self._read_all_switch(new_generator=other_gen,
+                                      orig_generator=orig_gen
+                                      )
+        self.assertNotEqualTensors(data1, data2)
+
+    def test_switch_same_seed(self):
+        orig_gen = torch.Generator()
+        orig_gen.manual_seed(1337)
+        data1 = self._read_all_simple(orig_generator=orig_gen)
+
+        other_gen = torch.Generator()
+        other_gen.manual_seed(1337)
+        orig_gen.manual_seed(1337)
+        data2 = self._read_all_switch(new_generator=other_gen,
+                                      orig_generator=orig_gen
+                                      )
+        self.assertEqualTensors(data1, data2)
+
+    def test_raise_sequential(self):
+        orig_gen = torch.Generator()
+        other_gen = torch.Generator()
+        with self.assertRaises(ValueError):
+            self._read_all_switch(orig_generator=orig_gen, new_generator=other_gen,
+                                  shuffle=False
+                                  )
 
 
 class OptimizerRandomnessTest(unittest.TestCase):
@@ -176,7 +248,9 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
         self.data = torch.randn(80, 32)
 
     def _init_training(self, dl_generator=None):
-        dl = DataLoader(TensorDataset(self.data), batch_size=8, generator=dl_generator)
+        dl = DataLoader(TensorDataset(self.data), batch_size=8, shuffle=True,
+                        generator=dl_generator
+                        )
 
         model = nn.Linear(32, 16)
         torch.nn.init.ones_(model.weight)
@@ -192,6 +266,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
         dl_seed: Optional[int] = None,
         noise_seed: Optional[int] = None,
         noise: float = 1.0,
+        poisson_sampling: bool = True,
     ):
         dl_generator = None
         if dl_seed:
@@ -208,6 +283,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
             noise_multiplier=noise,
             max_grad_norm=1.0,
             noise_seed=noise_seed,
+            poisson_sampling=poisson_sampling,
         )
 
     def test_basic(self):
@@ -294,3 +370,29 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
         _epoch(model2, optim2, dl2)
 
         self.assertTrue(torch.allclose(model1._module.weight, model2._module.weight))
+
+    def test_data_seed_consistency(self):
+        _, _, dl1 = self._init_dp_training(secure_mode=False, dl_seed=1337,
+                                           poisson_sampling=False
+                                           )
+        data1 = _read_all(dl1)
+
+        _, _, dl1 = self._init_dp_training(secure_mode=False, dl_seed=1337,
+                                           poisson_sampling=False
+                                           )
+        data2 = _read_all(dl1)
+
+        self.assertTrue(torch.allclose(data1, data2))
+
+    def test_secure_mode_no_poisson(self):
+        _, _, dl1 = self._init_dp_training(secure_mode=True, dl_seed=1337,
+                                           poisson_sampling=False
+                                           )
+        data1 = _read_all(dl1)
+
+        _, _, dl1 = self._init_dp_training(secure_mode=True, dl_seed=1337,
+                                           poisson_sampling=False
+                                           )
+        data2 = _read_all(dl1)
+
+        self.assertFalse(torch.allclose(data1, data2))

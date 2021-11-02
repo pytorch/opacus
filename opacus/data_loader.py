@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Optional, Sequence
 
 import torch
@@ -5,7 +6,7 @@ from opacus.utils.uniform_sampler import (
     DistributedUniformWithReplacementSampler,
     UniformWithReplacementSampler,
 )
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import BatchSampler, DataLoader, Dataset, RandomSampler, Sampler
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
@@ -88,8 +89,11 @@ class DPDataLoader(DataLoader):
         cls, data_loader: DataLoader, distributed: bool = False, generator=None
     ):
         if isinstance(data_loader, cls):
+            #TODO: this should be exception, not assert
             assert data_loader.distributed == distributed
             return data_loader
+
+        #TODO: check not iterabledataset
 
         return cls(
             dataset=data_loader.dataset,
@@ -106,3 +110,39 @@ class DPDataLoader(DataLoader):
             persistent_workers=data_loader.persistent_workers,
             distributed=distributed,
         )
+
+
+def _is_supported_batch_sampler(sampler: Sampler):
+    return isinstance(sampler, BatchSampler) \
+           or isinstance(sampler, UniformWithReplacementSampler)\
+           or isinstance(sampler, DistributedUniformWithReplacementSampler)
+
+
+def switch_generator(data_loader: DataLoader, generator):
+    batch_sampler = data_loader.batch_sampler
+
+    if batch_sampler is None or not _is_supported_batch_sampler(batch_sampler):
+        raise ValueError("Non-batch processing is not supported")
+
+    if isinstance(batch_sampler, BatchSampler):
+        if not isinstance(batch_sampler.sampler, RandomSampler):
+            raise ValueError("Can't switch generator for a non-random batch sampling")
+
+        batch_sampler.sampler.generator = generator
+    else:
+        batch_sampler.generator = generator
+
+    return DataLoader(
+        dataset=data_loader.dataset,
+        batch_sampler=batch_sampler,
+        num_workers=data_loader.num_workers,
+        collate_fn=data_loader.collate_fn,
+        pin_memory=data_loader.pin_memory,
+        drop_last=data_loader.drop_last,
+        timeout=data_loader.timeout,
+        worker_init_fn=data_loader.worker_init_fn,
+        multiprocessing_context=data_loader.multiprocessing_context,
+        generator=generator,
+        prefetch_factor=data_loader.prefetch_factor,
+        persistent_workers=data_loader.persistent_workers,
+    )

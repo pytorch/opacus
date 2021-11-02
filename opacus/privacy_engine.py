@@ -6,7 +6,7 @@ from typing import List, Optional
 import torch
 from opacus.accountants import RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
-from opacus.data_loader import DPDataLoader
+from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import (
@@ -34,6 +34,7 @@ class PrivacyEngine:
     def __init__(self, secure_mode=False):
         self.accountant = RDPAccountant()
         self.secure_mode = secure_mode
+        self.secure_rng = None
 
         if self.secure_mode:
             try:
@@ -99,10 +100,10 @@ class PrivacyEngine:
             module, batch_first, loss_reduction, try_fix_incompatible_modules
         )
         # TODO: either validate consistent dataset or do per-dataset accounting
+        data_loader = self._prepare_data_loader(
+            data_loader, distributed=distributed, poisson_sampling=poisson_sampling,
+        )
         if poisson_sampling:
-            data_loader = self._prepare_data_loader(
-                data_loader, distributed=distributed
-            )
             module.register_forward_pre_hook(forbid_accumulation_hook)
 
         sample_rate = 1 / len(data_loader)
@@ -159,10 +160,10 @@ class PrivacyEngine:
             batch_first,
             loss_reduction,
         )
+        data_loader = self._prepare_data_loader(
+            data_loader, distributed=distributed, poisson_sampling=poisson_sampling,
+        )
         if poisson_sampling:
-            data_loader = self._prepare_data_loader(
-                data_loader, distributed=distributed
-            )
             module.register_forward_pre_hook(forbid_accumulation_hook)
 
         sample_rate = 1 / len(data_loader)
@@ -329,18 +330,17 @@ class PrivacyEngine:
         )
 
     def _prepare_data_loader(
-        self, data_loader: DataLoader, distributed: bool
+        self, data_loader: DataLoader, distributed: bool, poisson_sampling: bool,
     ) -> DataLoader:
-        if isinstance(data_loader, DPDataLoader):
+        if poisson_sampling:
+            return DPDataLoader.from_data_loader(
+                data_loader, generator=self.secure_rng, distributed=distributed
+            )
+        elif self.secure_mode:
+            return switch_generator(data_loader, self.secure_rng)
+        else:
             return data_loader
 
-        generator = None
-        if self.secure_mode:
-            generator = self.secure_rng
-
-        return DPDataLoader.from_data_loader(
-            data_loader, generator=generator, distributed=distributed
-        )
 
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):
