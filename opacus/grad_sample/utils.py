@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Sequence, Union
+from typing import Sequence, Type, Union
 
 import torch
 import torch.nn as nn
@@ -9,7 +9,9 @@ import torch.nn as nn
 from .grad_sample_module import GradSampleModule
 
 
-def register_grad_sampler(target_class_or_classes: Union[type, Sequence[type]]):
+def register_grad_sampler(
+    target_class_or_classes: Union[Type[nn.Module], Sequence[Type[nn.Module]]]
+):
     """
     Registers the decorated function as the ``grad_sampler`` of ``target_class_or_classes``, which is
     the function that will be invoked every time you want to compute a per-sample gradient
