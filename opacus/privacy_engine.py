@@ -101,7 +101,9 @@ class PrivacyEngine:
         )
         # TODO: either validate consistent dataset or do per-dataset accounting
         data_loader = self._prepare_data_loader(
-            data_loader, distributed=distributed, poisson_sampling=poisson_sampling,
+            data_loader,
+            distributed=distributed,
+            poisson_sampling=poisson_sampling,
         )
         if poisson_sampling:
             module.register_forward_pre_hook(forbid_accumulation_hook)
@@ -161,7 +163,9 @@ class PrivacyEngine:
             loss_reduction,
         )
         data_loader = self._prepare_data_loader(
-            data_loader, distributed=distributed, poisson_sampling=poisson_sampling,
+            data_loader,
+            distributed=distributed,
+            poisson_sampling=poisson_sampling,
         )
         if poisson_sampling:
             module.register_forward_pre_hook(forbid_accumulation_hook)
@@ -330,7 +334,10 @@ class PrivacyEngine:
         )
 
     def _prepare_data_loader(
-        self, data_loader: DataLoader, distributed: bool, poisson_sampling: bool,
+        self,
+        data_loader: DataLoader,
+        distributed: bool,
+        poisson_sampling: bool,
     ) -> DataLoader:
         if poisson_sampling:
             return DPDataLoader.from_data_loader(
@@ -340,7 +347,6 @@ class PrivacyEngine:
             return switch_generator(data_loader, self.secure_rng)
         else:
             return data_loader
-
 
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):

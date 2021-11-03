@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Optional, Sequence
 
 import torch
@@ -89,11 +88,11 @@ class DPDataLoader(DataLoader):
         cls, data_loader: DataLoader, distributed: bool = False, generator=None
     ):
         if isinstance(data_loader, cls):
-            #TODO: this should be exception, not assert
+            # TODO: this should be exception, not assert
             assert data_loader.distributed == distributed
             return data_loader
 
-        #TODO: check not iterabledataset
+        # TODO: check not iterabledataset
 
         return cls(
             dataset=data_loader.dataset,
@@ -113,9 +112,11 @@ class DPDataLoader(DataLoader):
 
 
 def _is_supported_batch_sampler(sampler: Sampler):
-    return isinstance(sampler, BatchSampler) \
-           or isinstance(sampler, UniformWithReplacementSampler)\
-           or isinstance(sampler, DistributedUniformWithReplacementSampler)
+    return (
+        isinstance(sampler, BatchSampler)
+        or isinstance(sampler, UniformWithReplacementSampler)
+        or isinstance(sampler, DistributedUniformWithReplacementSampler)
+    )
 
 
 def switch_generator(data_loader: DataLoader, generator):
