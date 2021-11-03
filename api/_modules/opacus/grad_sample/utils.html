@@ -28,7 +28,7 @@
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
@@ -36,7 +36,9 @@
 <span class="kn">from</span> <span class="nn">.grad_sample_module</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
 
 
-<div class="viewcode-block" id="register_grad_sampler"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.utils.register_grad_sampler">[docs]</a><span class="k">def</span> <span class="nf">register_grad_sampler</span><span class="p">(</span><span class="n">target_class_or_classes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">type</span><span class="p">]]):</span>
+<div class="viewcode-block" id="register_grad_sampler"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.utils.register_grad_sampler">[docs]</a><span class="k">def</span> <span class="nf">register_grad_sampler</span><span class="p">(</span>
+    <span class="n">target_class_or_classes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]]]</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Registers the decorated function as the ``grad_sampler`` of ``target_class_or_classes``, which is</span>
 <span class="sd">    the function that will be invoked every time you want to compute a per-sample gradient</span>
