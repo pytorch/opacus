@@ -7,7 +7,6 @@ from torch.optim import Optimizer
 
 from .optimizer import DPOptimizer
 
-
 class DistributedDPOptimizer(DPOptimizer):
     def __init__(
         self,
@@ -48,6 +47,8 @@ class DistributedDPOptimizer(DPOptimizer):
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         self.pre_step()
-        self.reduce_gradients()
-
-        return self.optimizer.step(closure)
+        if self._is_last_step_skipped:
+            return None
+        else:
+            self.reduce_gradients()
+            return self.optimizer.step(closure)
