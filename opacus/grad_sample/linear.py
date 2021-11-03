@@ -21,7 +21,11 @@ def compute_linear_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
-    gs = torch.einsum("n...i,n...j->nij", backprops, activations)
+    # With activations with 3 dimensions (transformers) the original formula does not aggregate correctly
+    if activations.ndim == 2:
+        gs = torch.einsum("n...i,n...j->nij", backprops, activations)
+    else:
+        gs =  torch.einsum("nki,nkj->nij", backprops, activations)
     ret = {layer.weight: gs}
     if layer.bias is not None:
         ret[layer.bias] = torch.einsum("n...k->nk", backprops)
