@@ -15,3 +15,4 @@ tensorboard
 datasets
 transformers
 scikit-learn
+pytorch-lightning[extra]
