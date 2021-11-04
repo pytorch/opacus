@@ -1,6 +1,6 @@
 from typing import Callable
 
-from .optimizer import DPOptimizer
+from .optimizers import DPOptimizer
 
 
 class _NoiseScheduler(object):

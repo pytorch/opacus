@@ -149,16 +149,12 @@ class DPOptimizer(Optimizer):
 
         self.optimizer.zero_grad(set_to_none)
 
-    # TODO: potentially refactor to decouple memory wins from accounting/averaging
-    # TODO: We can potentially track virtual steps automatically (through GSM.forward() or empty activatons lists)
-    def pre_step(self) -> Optional[float]:
-    # TODO: wrap the rest of optim.Optimizer interface
-
+    def pre_step(self) -> bool:
         self.clip_and_accumulate()
 
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
-            return None
+            return False
 
         self.add_noise()
         self.scale_grad()
@@ -167,13 +163,13 @@ class DPOptimizer(Optimizer):
             self.step_hook(self)
 
         self._is_last_step_skipped = False
+        return True
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        self.pre_step()
-        
-        return self.optimizer.step(closure)
+        if self.pre_step():
+            return self.optimizer.step(closure)
+        else:
+            return None
 
-
-    def pre_step(self):
-        self.clip_and_accumulate()
+    # TODO: wrap the rest of optim.Optimizer interface
 

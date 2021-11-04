@@ -348,7 +348,7 @@ class PrivacyEngine_test(unittest.TestCase):
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
     )
-    @settings(deadline=20000)
+    @settings(max_examples=20, deadline=1000)
     def test_noise_level(self, noise_multiplier: float, max_steps: int):
         """
         Tests that the noise level is correctly set

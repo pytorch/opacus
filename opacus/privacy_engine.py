@@ -102,6 +102,9 @@ class PrivacyEngine:
 
         optimizer.attach_step_hook(accountant_hook)
 
+        if poisson_sampling:
+            module.register_forward_pre_hook(forbid_accumulation_hook)
+
         return module, optimizer, data_loader
 
     def make_private_per_layer(
