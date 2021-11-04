@@ -11,13 +11,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.data import DataLoader
+import pytorch_lightning as pl
 from pytorch_lightning.utilities.cli import LightningCLI
+from torchvision import datasets, transforms
+import torchmetrics
 
 from opacus import PrivacyEngine
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
-from torchvision import datasets, transforms
-import pytorch_lightning as pl
-import torchmetrics
 
 
 import warnings
@@ -123,8 +124,8 @@ class LitSampleConvNet(pl.LightningModule):
     def on_train_epoch_end(self):
         if self.enable_dp:
             epsilon, best_alpha = self.privacy_engine.get_privacy_spent(self.delta)
-            self.log("epsilon", epsilon)
-            self.log("best_alpha", best_alpha)
+            self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
+            self.log("best_alpha", best_alpha, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         data, target = batch
@@ -210,7 +211,10 @@ def cli_main():
         LitSampleConvNet,
         MNISTDataModule,
         save_config_overwrite=True,
-        trainer_defaults=dict(enable_model_summary=False),
+        trainer_defaults={
+            "max_epochs": 10,
+            "enable_model_summary": False,
+        },
         description="Training MNIST classifier with Opacus and PyTorch Lightning",
     )
     cli.trainer.fit(cli.model, datamodule=cli.datamodule)
