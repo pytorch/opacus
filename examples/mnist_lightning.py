@@ -17,7 +17,6 @@ $ tensorboard --logdir=lightning_logs/
 
 from typing import Optional
 
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -81,21 +80,6 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         # Metrics
         self.test_accuracy = torchmetrics.Accuracy()
 
-    def setup(self, stage=None):
-        if self.enable_dp and stage == "fit":
-            self.privacy_engine = PrivacyEngine(
-                self,
-                sample_rate=self.sample_rate,
-                alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
-                noise_multiplier=self.sigma,
-                max_grad_norm=self.max_per_sample_grad_norm,
-                secure_rng=self.secure_rng,
-            )
-
-    def teardown(self, stage=None):
-        if self.enable_dp and stage == "fit":
-            self.privacy_engine.detach()
-
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
         x = F.relu(self.conv1(x))  # -> [B, 16, 14, 14]
@@ -109,8 +93,6 @@ class LitSampleConvNetClassifier(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.SGD(self.parameters(), lr=self.lr, momentum=0)
-        if self.enable_dp:
-            self.privacy_engine.attach(optimizer)
         return optimizer
 
     def training_step(self, batch, batch_idx):
@@ -120,13 +102,6 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         return loss
 
-    def on_train_epoch_end(self):
-        if self.enable_dp:
-            epsilon, best_alpha = self.privacy_engine.get_privacy_spent(self.delta)
-            # Privacy spent: (epsilon, delta) for alpha
-            self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
-            self.log("alpha", best_alpha, on_epoch=True, prog_bar=True)
-
     def test_step(self, batch, batch_idx):
         data, target = batch
         output = self(data)
@@ -135,6 +110,34 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         self.log("test_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test_accuracy", self.test_accuracy, on_step=False, on_epoch=True)
         return loss
+
+    # Adding differential privacy learning
+
+    def on_train_start(self) -> None:
+        if self.enable_dp:
+            self.privacy_engine = PrivacyEngine(
+                self,
+                sample_rate=self.sample_rate,
+                alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
+                noise_multiplier=self.sigma,
+                max_grad_norm=self.max_per_sample_grad_norm,
+                secure_rng=self.secure_rng,
+            )
+
+            optimizer = self.optimizers()
+            self.privacy_engine.attach(optimizer)
+
+    def on_train_epoch_end(self):
+        if self.enable_dp:
+            epsilon, best_alpha = self.privacy_engine.get_privacy_spent(self.delta)
+            # Privacy spent: (epsilon, delta) for alpha
+            self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
+            self.log("alpha", best_alpha, on_epoch=True, prog_bar=True)
+
+    def on_train_end(self):
+        if self.enable_dp:
+            self.privacy_engine.detach()
+
 
 
 class MNISTDataModule(pl.LightningDataModule):
