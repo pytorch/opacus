@@ -10,7 +10,6 @@ $ python mnist_lightning.py fit
 
 To see logs:
 $ tensorboard --logdir=lightning_logs/
-
 """
 
 from typing import Optional
@@ -33,7 +32,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-class LitSampleConvNet(pl.LightningModule):
+class LitSampleConvNetClassifier(pl.LightningModule):
     def __init__(
             self,
             lr: float = 0.1,
@@ -42,7 +41,6 @@ class LitSampleConvNet(pl.LightningModule):
             max_per_sample_grad_norm: float = 1.0,
             delta: float = 1e-5,
             enable_dp: bool = True,
-            secure_rng: bool = False,
     ):
         super().__init__()
 
@@ -53,20 +51,6 @@ class LitSampleConvNet(pl.LightningModule):
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
         self.delta = delta
         self.enable_dp = enable_dp
-        self.secure_rng = secure_rng
-
-        if secure_rng:
-            try:
-                import torchcsprng as prng
-            except ImportError as e:
-                msg = (
-                    "To use secure RNG, you must install the torchcsprng package! "
-                    "Check out the instructions here: https://github.com/pytorch/csprng#installation"
-                )
-                raise ImportError(msg) from e
-            self.generator = prng.create_random_device_generator("/dev/urandom")
-        else:
-            self.generator = None
 
         # Parameters
         self.conv1 = nn.Conv2d(1, 16, 8, 2, padding=3)
@@ -216,7 +200,7 @@ class MNISTDataModule(pl.LightningDataModule):
 
 def cli_main():
     cli = LightningCLI(
-        LitSampleConvNet,
+        LitSampleConvNetClassifier,
         MNISTDataModule,
         save_config_overwrite=True,
         trainer_defaults={
