@@ -20,6 +20,13 @@ import pytorch_lightning as pl
 import torchmetrics
 
 
+import warnings
+warnings.filterwarnings('ignore')
+
+
+# TODO: disable validation step
+
+
 class LitSampleConvNet(pl.LightningModule):
     def __init__(
             self,
@@ -64,8 +71,12 @@ class LitSampleConvNet(pl.LightningModule):
         # Metrics
         self.test_accuracy = torchmetrics.Accuracy()
 
+        # Set manual optimization mode, otherwise PrivacyEngine crashes
+        # TODO: investigate why it doesn't work with automatic_optimization=True
+        self.automatic_optimization = False
+
     def setup(self, stage=None):
-        if not self.disable_dp:
+        if not self.disable_dp and stage == "fit":
             self.privacy_engine = PrivacyEngine(
                 self,
                 sample_rate=self.sample_rate,
@@ -74,6 +85,10 @@ class LitSampleConvNet(pl.LightningModule):
                 max_grad_norm=self.max_per_sample_grad_norm,
                 secure_rng=self.secure_rng,
             )
+
+    def teardown(self, stage=None):
+        if not self.disable_dp and stage == "fit":
+            self.privacy_engine.detach()
 
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
@@ -92,11 +107,18 @@ class LitSampleConvNet(pl.LightningModule):
             self.privacy_engine.attach(optimizer)
         return optimizer
 
-    def training_step(self, batch, batch_idx):
+    def compute_loss(self, batch):
         data, target = batch
         output = self(data)
         loss = F.cross_entropy(output, target)
         return loss
+
+    def training_step(self, batch, batch_idx):
+        opt = self.optimizers()
+        opt.zero_grad()
+        loss = self.compute_loss(batch)
+        self.manual_backward(loss)
+        opt.step()
 
     def test_step(self, batch, batch_idx):
         data, target = batch
@@ -112,7 +134,7 @@ class MNISTDataModule(pl.LightningDataModule):
             self,
             data_dir: Optional[str] = "../mnist",
             sample_rate: float = 0.001,
-            test_batch_size: int = 32,
+            test_batch_size: int = 1024,
             secure_rng: bool = False,
     ):
         super().__init__()
@@ -181,6 +203,8 @@ def cli_main():
     cli = LightningCLI(
         LitSampleConvNet,
         MNISTDataModule,
+        save_config_overwrite=True,
+        description="Training MNIST classifier with Opacus and PyTorch Lightning",
     )
     cli.trainer.fit(cli.model, datamodule=cli.datamodule)
     cli.trainer.test(ckpt_path="best", datamodule=cli.datamodule)
