@@ -35,7 +35,7 @@ class LitSampleConvNet(pl.LightningModule):
             sigma: float = 1.0,
             max_per_sample_grad_norm: float = 1.0,
             delta: float = 1e-5,
-            disable_dp: bool = False,
+            enable_dp: bool = True,
             secure_rng: bool = False,
     ):
         super().__init__()
@@ -46,7 +46,7 @@ class LitSampleConvNet(pl.LightningModule):
         self.sigma = sigma
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
         self.delta = delta
-        self.disable_dp = disable_dp
+        self.enable_dp = enable_dp
         self.secure_rng = secure_rng
 
         if secure_rng:
@@ -76,7 +76,7 @@ class LitSampleConvNet(pl.LightningModule):
         self.automatic_optimization = False
 
     def setup(self, stage=None):
-        if not self.disable_dp and stage == "fit":
+        if self.enable_dp and stage == "fit":
             self.privacy_engine = PrivacyEngine(
                 self,
                 sample_rate=self.sample_rate,
@@ -87,7 +87,7 @@ class LitSampleConvNet(pl.LightningModule):
             )
 
     def teardown(self, stage=None):
-        if not self.disable_dp and stage == "fit":
+        if self.enable_dp and stage == "fit":
             self.privacy_engine.detach()
 
     def forward(self, x):
@@ -103,7 +103,7 @@ class LitSampleConvNet(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.SGD(self.parameters(), lr=self.lr, momentum=0)
-        if not self.disable_dp:
+        if self.enable_dp:
             self.privacy_engine.attach(optimizer)
         return optimizer
 
@@ -119,6 +119,12 @@ class LitSampleConvNet(pl.LightningModule):
         loss = self.compute_loss(batch)
         self.manual_backward(loss)
         opt.step()
+
+    def on_train_epoch_end(self):
+        if self.enable_dp:
+            epsilon, best_alpha = self.privacy_engine.get_privacy_spent(self.delta)
+            self.log("epsilon", epsilon)
+            self.log("best_alpha", best_alpha)
 
     def test_step(self, batch, batch_idx):
         data, target = batch
@@ -204,6 +210,7 @@ def cli_main():
         LitSampleConvNet,
         MNISTDataModule,
         save_config_overwrite=True,
+        trainer_defaults=dict(enable_model_summary=False),
         description="Training MNIST classifier with Opacus and PyTorch Lightning",
     )
     cli.trainer.fit(cli.model, datamodule=cli.datamodule)
