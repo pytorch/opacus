@@ -15,22 +15,20 @@ To see logs:
 $ tensorboard --logdir=lightning_logs/
 """
 
+import warnings
 from typing import Optional
 
+import pytorch_lightning as pl
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import DataLoader
-import pytorch_lightning as pl
-from pytorch_lightning.utilities.cli import LightningCLI
-from torchvision import datasets, transforms
 import torchmetrics
-
 from opacus import PrivacyEngine
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
+from pytorch_lightning.utilities.cli import LightningCLI
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
 
-
-import warnings
 
 warnings.filterwarnings("ignore")
 
