@@ -139,7 +139,6 @@ class LitSampleConvNetClassifier(pl.LightningModule):
             self.privacy_engine.detach()
 
 
-
 class MNISTDataModule(pl.LightningDataModule):
     def __init__(
         self,
