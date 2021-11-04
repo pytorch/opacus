@@ -27,12 +27,11 @@ Example:
 """
 
 import math
+import warnings
 from typing import List, Tuple, Union
 
 import numpy as np
 from scipy import special
-
-import warnings
 
 
 ########################

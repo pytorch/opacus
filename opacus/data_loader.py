@@ -5,7 +5,7 @@ from opacus.utils.uniform_sampler import (
     DistributedUniformWithReplacementSampler,
     UniformWithReplacementSampler,
 )
-from torch.utils.data import BatchSampler, DataLoader, Dataset, RandomSampler, Sampler
+from torch.utils.data import BatchSampler, DataLoader, Dataset, Sampler
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
@@ -123,11 +123,15 @@ def switch_generator(data_loader: DataLoader, generator):
     batch_sampler = data_loader.batch_sampler
 
     if batch_sampler is None or not _is_supported_batch_sampler(batch_sampler):
-        raise ValueError("Non-batch processing is not supported")
+        raise ValueError(
+            "Non-batch processing is not supported: Opacus always assumes one of the input dimensions to be batch dimension."
+        )
 
     if isinstance(batch_sampler, BatchSampler):
-        if not isinstance(batch_sampler.sampler, RandomSampler):
-            raise ValueError("Can't switch generator for a non-random batch sampling")
+        if not hasattr(batch_sampler.sampler, "generator"):
+            raise ValueError(
+                "Target sampler doesn't have generator attribute: nothing to switch"
+            )
 
         batch_sampler.sampler.generator = generator
     else:
