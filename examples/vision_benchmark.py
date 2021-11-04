@@ -144,15 +144,13 @@ def main():
             optimizer.step()
             data_end = time.time()
     else:
-        for (images, target) in train_loader:
-            images = images.cuda()
-            target = target.cuda()
-            break
+        images, target = next(iter(train_loader))
+        images = images.cuda()
+        target = target.cuda()
 
         torch.cuda.synchronize()
         start = time.time()
         for _ in tqdm(range(args.steps)):
-            # compute output
             output = model(images)
             loss = criterion(output, target)
             optimizer.zero_grad()
