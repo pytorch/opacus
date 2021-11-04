@@ -41,6 +41,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
             max_per_sample_grad_norm: float = 1.0,
             delta: float = 1e-5,
             enable_dp: bool = True,
+            secure_rng: bool = False,
     ):
         super().__init__()
 
@@ -51,6 +52,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
         self.delta = delta
         self.enable_dp = enable_dp
+        self.secure_rng = secure_rng
 
         # Parameters
         self.conv1 = nn.Conv2d(1, 16, 8, 2, padding=3)
@@ -60,10 +62,6 @@ class LitSampleConvNetClassifier(pl.LightningModule):
 
         # Metrics
         self.test_accuracy = torchmetrics.Accuracy()
-
-        # Set manual optimization mode, otherwise PrivacyEngine crashes
-        # TODO: investigate why it doesn't work with automatic_optimization=True
-        self.automatic_optimization = False
 
     def setup(self, stage=None):
         if self.enable_dp and stage == "fit":
@@ -97,24 +95,17 @@ class LitSampleConvNetClassifier(pl.LightningModule):
             self.privacy_engine.attach(optimizer)
         return optimizer
 
-    def compute_loss(self, batch):
+    def training_step(self, batch, batch_idx):
         data, target = batch
         output = self(data)
         loss = F.cross_entropy(output, target)
-        return loss
-
-    def training_step(self, batch, batch_idx):
-        opt = self.optimizers()
-        opt.zero_grad()
-        loss = self.compute_loss(batch)
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.manual_backward(loss)
-        opt.step()
+        return loss
 
     def on_train_epoch_end(self):
         if self.enable_dp:
             epsilon, best_alpha = self.privacy_engine.get_privacy_spent(self.delta)
-            # (epsilon, delta) for alpha
+            # Privacy spent: (epsilon, delta) for alpha
             self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
             self.log("alpha", best_alpha, on_epoch=True, prog_bar=True)
 
