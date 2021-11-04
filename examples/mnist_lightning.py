@@ -8,6 +8,9 @@ This example demonstrates how to use Opacus with PyTorch Lightning.
 To start training:
 $ python mnist_lightning.py fit
 
+More information about setting training parameters:
+$ python mnist_lightning.py fit --help
+
 To see logs:
 $ tensorboard --logdir=lightning_logs/
 """
@@ -36,22 +39,33 @@ class LitSampleConvNetClassifier(pl.LightningModule):
     def __init__(
             self,
             lr: float = 0.1,
+            enable_dp: bool = True,
+            delta: float = 1e-5,
             sample_rate: float = 0.001,
             sigma: float = 1.0,
             max_per_sample_grad_norm: float = 1.0,
-            delta: float = 1e-5,
-            enable_dp: bool = True,
             secure_rng: bool = False,
     ):
+        """A simple conv-net for classifying MNIST with differential privacy
+
+        Args:
+            lr: Learning rate
+            enable_dp: Enables training with privacy guarantees using Opacus (if True), vanilla SGD otherwise
+            delta: Target delta for which (eps, delta)-DP is computed
+            sample_rate: Sample rate used for batch construction
+            sigma: Noise multiplier
+            max_per_sample_grad_norm: Clip per-sample gradients to this norm
+            secure_rng: Use secure random number generator
+        """
         super().__init__()
 
         # Hyper-parameters
         self.lr = lr
+        self.enable_dp = enable_dp
+        self.delta = delta
         self.sample_rate = sample_rate
         self.sigma = sigma
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
-        self.delta = delta
-        self.enable_dp = enable_dp
         self.secure_rng = secure_rng
 
         # Parameters
@@ -59,6 +73,9 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         self.conv2 = nn.Conv2d(16, 32, 4, 2)
         self.fc1 = nn.Linear(32 * 4 * 4, 32)
         self.fc2 = nn.Linear(32, 10)
+
+        # Privacy engine
+        self.privacy_engine = None  # Created before training
 
         # Metrics
         self.test_accuracy = torchmetrics.Accuracy()
@@ -123,10 +140,18 @@ class MNISTDataModule(pl.LightningDataModule):
     def __init__(
             self,
             data_dir: Optional[str] = "../mnist",
-            sample_rate: float = 0.001,
             test_batch_size: int = 1024,
+            sample_rate: float = 0.001,
             secure_rng: bool = False,
     ):
+        """MNIST DataModule with DP-ready batch sampling
+
+        Args:
+            data_dir: A path where MNIST is stored
+            test_batch_size: Size of batch for predicting on test
+            sample_rate: Sample rate used for batch construction
+            secure_rng: Use secure random number generator
+        """
         super().__init__()
         self.data_root = data_dir
         self.dataloader_kwargs = {"num_workers": 1, "pin_memory": True}
