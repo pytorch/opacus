@@ -15,4 +15,5 @@ tensorboard
 datasets
 transformers
 scikit-learn
-pytorch-lightning[extra]
+pytorch-lightning
+jsonargparse[signatures]>=3.19.3 # required for Lightning CLI
