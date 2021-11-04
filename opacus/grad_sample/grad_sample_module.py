@@ -7,7 +7,7 @@ from typing import List, Tuple
 
 import torch
 import torch.nn as nn
-from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
+from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
 from opacus.utils.module_utils import requires_grad, trainable_modules
 
 
@@ -38,7 +38,6 @@ def create_or_accumulate_grad_sample(
             dtype=grad_sample.dtype,
         )
         param._current_grad_sample[: grad_sample.shape[0]] = grad_sample
-
 
 def promote_current_grad_sample(p: nn.Parameter) -> None:
     if p.requires_grad:
@@ -298,7 +297,7 @@ class GradSampleModule(nn.Module):
             )
 
         # TODO: that's not right; DPLSTM isn't always batch_first=False
-        batch_dim = 0 if batch_first or type(module) is LSTMLinear else 1
+        batch_dim = 0 if batch_first or type(module) is RNNLinear else 1
 
         activations = module.activations.pop()
 
@@ -331,7 +330,9 @@ class GradSampleModule(nn.Module):
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
         """Check if this individual module is supported"""
-        return type(module) in cls.GRAD_SAMPLERS or type(module) is DPLSTM
+        return type(module) in cls.GRAD_SAMPLERS or isinstance(
+            module, (DPRNNBase, DPRNNCellBase)
+        )
 
     @classmethod
     def validate(

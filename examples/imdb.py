@@ -113,11 +113,13 @@ def evaluate(args, model, test_loader):
             losses.append(loss.item())
             accuracies.append(acc.item())
 
+    mean_accuracy = np.mean(accuracies)
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {:.2f}%\n".format(
             np.mean(losses), np.mean(accuracies) * 100
         )
     )
+    return mean_accuracy
 
 
 def main():
@@ -261,9 +263,12 @@ def main():
             max_grad_norm=args.max_per_sample_grad_norm,
         )
 
+    mean_accuracy = 0
     for epoch in range(1, args.epochs + 1):
         train(args, model, train_loader, optimizer, privacy_engine, epoch)
-        evaluate(args, model, test_loader)
+        mean_accuracy = evaluate(args, model, test_loader)
+
+    torch.save(mean_accuracy, "run_results_imdb_classification.pt")
 
 
 if __name__ == "__main__":

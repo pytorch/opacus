@@ -7,7 +7,7 @@ Gradient Sample Module
 .. automodule:: opacus.grad_sample.conv
     :members:
 
-.. automodule:: opacus.grad_sample.dp_lstm
+.. automodule:: opacus.grad_sample.dp_rnn
     :members:
 
 .. automodule:: opacus.grad_sample.dp_multihead_attention

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+import abc
 import unittest
 from typing import Optional, OrderedDict
+from abc import ABC
 
 import hypothesis.strategies as st
 import torch
@@ -10,55 +12,31 @@ import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
 from opacus.validators.errors import UnsupportedModuleError
+from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
+def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
+    if tensor.grad_sample is None:
+        raise ValueError(
+            f"The input tensor {tensor} has grad computed, but missing grad_sample."
+            f"Please attach PrivacyEngine"
+        )
 
-class SampleConvNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(1, 16, 8, 3)
-        self.gnorm1 = nn.GroupNorm(4, 16)
-        self.conv2 = nn.Conv1d(16, 32, 3, 1)
-        self.lnorm1 = nn.LayerNorm((32, 23))
-        self.conv3 = nn.Conv1d(32, 32, 3, 1, bias=False)
-        self.instnorm1 = nn.InstanceNorm1d(32, affine=True)
-        self.convf = nn.Conv1d(32, 32, 1, 1)
-        for p in self.convf.parameters():
-            p.requires_grad = False
-        self.fc1 = nn.Linear(21, 17)
-        self.lnorm2 = nn.LayerNorm(17)
-        self.fc2 = nn.Linear(32 * 17, 10)
+    if loss_type not in ("sum", "mean"):
+        raise ValueError(f"loss_type = {loss_type}. Only 'sum' and 'mean' supported")
 
-        for layer in (self.gnorm1, self.lnorm1, self.lnorm2, self.instnorm1):
-            nn.init.uniform_(layer.weight)
-            nn.init.uniform_(layer.bias)
+    grad_sample_aggregated = torch.einsum("i...->...", tensor.grad_sample)
+    if loss_type == "mean":
+        b_sz = tensor.grad_sample.shape[0]
+        grad_sample_aggregated /= b_sz
 
-    def forward(self, x):
-        # x of shape [B, 1, 28, 28]
-        x = self.conv1(x)  # -> [B, 16, 10, 10]
-        x = self.gnorm1(x)  # -> [B, 16, 10, 10]
-        x = F.relu(x)  # -> [B, 16, 10, 10]
-        x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 5, 5]
-        x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
-        x = self.conv2(x)  # -> [B, 32, 23]
-        x = self.lnorm1(x)  # -> [B, 32, 23]
-        x = F.relu(x)  # -> [B, 32, 23]
-        x = self.conv3(x)  # -> [B, 32, 21]
-        x = self.instnorm1(x)  # -> [B, 32, 21]
-        x = self.convf(x)  # -> [B, 32, 21]
-        x = self.fc1(x)  # -> [B, 32, 17]
-        x = self.lnorm2(x)  # -> [B, 32, 17]
-        x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 17]
-        x = self.fc2(x)  # -> [B, 10]
-        return x
-
-    def name(self):
-        return "SampleConvNet"
+    return grad_sample_aggregated
 
 
-class PrivacyEngine_test(unittest.TestCase):
+class BasePrivacyEngineTest(ABC):
+
     @classmethod
     def setUpClass(cls):
         cls.DATA_SIZE = 512
@@ -71,24 +49,19 @@ class PrivacyEngine_test(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(42)
 
+    @abc.abstractmethod
     def _init_data(self):
-        ds = FakeData(
-            size=self.DATA_SIZE,
-            image_size=(1, 35, 35),
-            num_classes=10,
-            transform=transforms.Compose(
-                [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-            ),
-        )
-        dl = DataLoader(ds, batch_size=self.BATCH_SIZE)
+        pass
 
-        return dl, ds
+    @abc.abstractmethod
+    def _init_model(self):
+        pass
 
     def _init_vanilla_training(
         self,
         state_dict: Optional[OrderedDict[str, torch.Tensor]] = None,
     ):
-        model = SampleConvNet()
+        model = self._init_model()
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
         if state_dict:
             model.load_state_dict(state_dict)
@@ -104,7 +77,7 @@ class PrivacyEngine_test(unittest.TestCase):
         poisson_sampling: bool = True,
         try_fix_incompatible_modules: bool = False,
     ):
-        model = SampleConvNet()
+        model = self._init_model()
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
 
         if state_dict:
@@ -428,3 +401,92 @@ class PrivacyEngine_test(unittest.TestCase):
         second_run_params = (p for p in model.parameters() if p.requires_grad)
         for p0, p1 in zip(first_run_params, second_run_params):
             self.assertFalse(torch.allclose(p0, p1))
+
+class SampleConvNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 16, 8, 3)
+        self.gnorm1 = nn.GroupNorm(4, 16)
+        self.conv2 = nn.Conv1d(16, 32, 3, 1)
+        self.lnorm1 = nn.LayerNorm((32, 23))
+        self.conv3 = nn.Conv1d(32, 32, 3, 1)
+        self.instnorm1 = nn.InstanceNorm1d(32, affine=True)
+        self.convf = nn.Conv1d(32, 32, 1, 1)
+        for p in self.convf.parameters():
+            p.requires_grad = False
+        self.fc1 = nn.Linear(21, 17)
+        self.lnorm2 = nn.LayerNorm(17)
+        self.fc2 = nn.Linear(32 * 17, 10)
+
+        for layer in (self.gnorm1, self.lnorm1, self.lnorm2, self.instnorm1):
+            nn.init.uniform_(layer.weight)
+            nn.init.uniform_(layer.bias)
+
+    def forward(self, x):
+        # x of shape [B, 1, 28, 28]
+        x = self.conv1(x)  # -> [B, 16, 10, 10]
+        x = self.gnorm1(x)  # -> [B, 16, 10, 10]
+        x = F.relu(x)  # -> [B, 16, 10, 10]
+        x = F.max_pool2d(x, 2, 2)  # -> [B, 16, 5, 5]
+        x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
+        x = self.conv2(x)  # -> [B, 32, 23]
+        x = self.lnorm1(x)  # -> [B, 32, 23]
+        x = F.relu(x)  # -> [B, 32, 23]
+        x = self.conv3(x)  # -> [B, 32, 21]
+        x = self.instnorm1(x)  # -> [B, 32, 21]
+        x = self.convf(x)  # -> [B, 32, 21]
+        x = self.fc1(x)  # -> [B, 32, 17]
+        x = self.lnorm2(x)  # -> [B, 32, 17]
+        x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 17]
+        x = self.fc2(x)  # -> [B, 10]
+        return x
+
+    def name(self):
+        return "SampleConvNet"
+
+
+class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
+
+    def _init_data(self):
+        self.ds = FakeData(
+            size=self.DATA_SIZE,
+            image_size=(1, 35, 35),
+            num_classes=10,
+            transform=transforms.Compose(
+                [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+            ),
+        )
+        self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
+
+    def _init_model(
+        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
+    ):
+        return SampleConvNet()
+
+
+class SampleAttnNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.emb = nn.Embedding(100, 8)
+        self.attn = DPMultiheadAttention(8, 1)
+        self.fc = nn.Linear(8, 1)
+
+    def forward(self, x):
+        x = self.emb(x)
+        x, _ = self.attn(x, x, x)
+        x = self.fc(x)
+        x = x.permute(1, 0, 2)
+        x = x.reshape(x.shape[0], -1)
+        return x
+
+
+class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
+    def _init_data(self):
+        x = torch.randint(0, 100, (12, self.BATCH_SIZE))
+        y = torch.randint(0, 12, (self.BATCH_SIZE,))
+        self.dl = [(x, y)]
+
+    def _init_model(
+        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
+    ):
+        return SampleAttnNet()

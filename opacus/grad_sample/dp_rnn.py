@@ -6,20 +6,17 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from opacus.layers.dp_lstm import LSTMLinear
+from opacus.layers.dp_rnn import RNNLinear
 
 from .utils import register_grad_sampler
 
-
-@register_grad_sampler(LSTMLinear)
-def compute_lstm_linear_grad_sample(
-    layer: LSTMLinear,
-    activations: torch.Tensor,
-    backprops: torch.Tensor,
+@register_grad_sampler(RNNLinear)
+def compute_rnn_linear_grad_sample(
+    layer: RNNLinear, activations: torch.Tensor, backprops: torch.Tensor
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
-    Computes per sample gradients for ``LSTMLinear`` layer. The DPLSTM class is written using
-    this layer as its building block.
+    Computes per sample gradients for ``RNNLinear`` layer. The RNN-like (DPLSTM, DPGRU) models
+    are written using this layer as its building block.
 
     class
 
@@ -27,7 +24,6 @@ def compute_lstm_linear_grad_sample(
         layer: Layer
         activations: Activations
         backprops: Backpropagations
-        batch_dim: Batch dimension position
     """
 
     gs = torch.einsum("n...i,n...j->nij", backprops, activations)

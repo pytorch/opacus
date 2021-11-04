@@ -18,16 +18,28 @@ def filter_out_old_keys(self, state_dict, prefix, local_metadata):
     return new_state_dict
 
 
-class ParamRenamedModule(nn.Module):
+class RenameParamsMixin:
     """
     This class defines a nn.Module whose parameters are renamed. This is useful when you want to
     reimplement a layer but make sure its state_dict and list of parameters are exactly the same
     as another reference layer so that you can have a drop-in replacement that does not depend on
     how your layer is actually implemented. In Opacus, this is used for DPLSTM, where our
     implementation leverages submodules and requires alignment to the state_dict of nn.LSTM.
+
+    Example:
+
+        class DPModel(RenameParamsMixin, nn.Module):
+            def __init__(self, hidden_size):
+                super().__init__()
+                self.w = nn.Parameter(torch.zeros(hidden_size, requires_grad=True))
+                self.set_rename_map({"w": "weights"})
+
+        >>> model = DPModel(5)
+        >>> model.state_dict()
+        {'weights': tensor([0., 0., 0., 0., 0.])}
     """
 
-    def __init__(self, rename_map: Dict[str, str]):
+    def set_rename_map(self, rename_map: Dict[str, str]):
         """
         Initializes internal state. Subclass this instead of ``torch.nn.Module`` whenever you need
         to rename your model's state.
@@ -36,7 +48,6 @@ class ParamRenamedModule(nn.Module):
             rename_map: mapping from old name -> new name for each parameter you want renamed.
                 Note that this must be a 1:1 mapping!
         """
-        super().__init__()
         self.old_to_new = rename_map
         self.new_to_old = {v: k for k, v in rename_map.items()}
 

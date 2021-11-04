@@ -31,7 +31,7 @@ class TutorialHome extends React.Component {
               This is the tutorials page. Navigate the sidebar to find various
               tutorials.
             </p>
-            <h2>External Blog Posts</h2>
+            <h4>External Blog Posts</h4>
             <p>
               <a
                 href="https://ai.facebook.com/blog/introducing-opacus-a-high-speed-library-for-training-pytorch-models-with-differential-privacy/"
@@ -47,6 +47,31 @@ class TutorialHome extends React.Component {
                   href="https://bit.ly/dp-sgd-algorithm-explained"
                   target="_blank">
                   DP-SGD Algorithm Explained
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://bit.ly/per-sample-gradient-computing-opacus"
+                  target="_blank">
+                  Efficient Per-Sample Gradient Computation in Opacus
+                </a>
+              </li>
+            </ol>
+            <h4>Videos*</h4>
+            <p>* Note that Opacus API has changed over time and some of the code samples and demos in the videos may not work. The concepts presented in the videos though are concrete and still valid.</p>
+            <ol>
+              <li>
+                <a
+                  href="https://www.youtube.com/watch?v=MWPwofiQMdE&list=PLUNOsx6Az_ZGKQd_p4StdZRFQkCBwnaY6&index=51"
+                  target="_blank">
+                  OpenMined PriCon 2020 Tutorial: DP Model Training with Opacus
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.youtube.com/watch?v=l6fbl2CBnq0"
+                  target="_blank">
+                  PyTorch Developer Day 2020: Differential Privacy on PyTorch
                 </a>
               </li>
             </ol>
