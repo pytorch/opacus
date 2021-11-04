@@ -74,10 +74,10 @@ class GradSampleModule(nn.Module):
     # I think there's a way to intercept calls to all unknown attributes and
     # forward it to the self._module - is it a good idea?
 
-    def forward(self, x):
+    def forward(self, x, *args, **kwargs):
         # TODO: check to forbid double forward
         # TODO: also check to force zero_grad
-        return self._module(x)
+        return self._module(x, *args, **kwargs)
 
     # TODO: match nn.Module signature
     def zero_grad(self):
