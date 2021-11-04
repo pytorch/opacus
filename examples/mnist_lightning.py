@@ -32,19 +32,20 @@ from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 
 
 import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 
 class LitSampleConvNetClassifier(pl.LightningModule):
     def __init__(
-            self,
-            lr: float = 0.1,
-            enable_dp: bool = True,
-            delta: float = 1e-5,
-            sample_rate: float = 0.001,
-            sigma: float = 1.0,
-            max_per_sample_grad_norm: float = 1.0,
-            secure_rng: bool = False,
+        self,
+        lr: float = 0.1,
+        enable_dp: bool = True,
+        delta: float = 1e-5,
+        sample_rate: float = 0.001,
+        sigma: float = 1.0,
+        max_per_sample_grad_norm: float = 1.0,
+        secure_rng: bool = False,
     ):
         """A simple conv-net for classifying MNIST with differential privacy
 
@@ -132,17 +133,17 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         loss = F.cross_entropy(output, target)
         self.test_accuracy(output, target)
         self.log("test_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('test_accuracy', self.test_accuracy, on_step=False, on_epoch=True)
+        self.log("test_accuracy", self.test_accuracy, on_step=False, on_epoch=True)
         return loss
 
 
 class MNISTDataModule(pl.LightningDataModule):
     def __init__(
-            self,
-            data_dir: Optional[str] = "../mnist",
-            test_batch_size: int = 1024,
-            sample_rate: float = 0.001,
-            secure_rng: bool = False,
+        self,
+        data_dir: Optional[str] = "../mnist",
+        test_batch_size: int = 1024,
+        sample_rate: float = 0.001,
+        secure_rng: bool = False,
     ):
         """MNIST DataModule with DP-ready batch sampling
 
@@ -190,7 +191,7 @@ class MNISTDataModule(pl.LightningDataModule):
             download=False,
             transform=self.transform,
         )
-        return torch.utils.data.DataLoader(
+        return DataLoader(
             train_dataset,
             batch_sampler=UniformWithReplacementSampler(
                 num_samples=len(train_dataset),
@@ -201,7 +202,7 @@ class MNISTDataModule(pl.LightningDataModule):
         )
 
     def test_dataloader(self):
-        return torch.utils.data.DataLoader(
+        return DataLoader(
             datasets.MNIST(
                 self.data_root,
                 train=False,
