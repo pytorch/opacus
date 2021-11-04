@@ -3,6 +3,14 @@
 
 """
 Runs MNIST training with differential privacy.
+This example demonstrates how to use Opacus with PyTorch Lightning.
+
+To start training:
+$ python mnist_lightning.py fit
+
+To see logs:
+$ tensorboard --logdir=lightning_logs/
+
 """
 
 from typing import Optional
@@ -23,9 +31,6 @@ from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 
 import warnings
 warnings.filterwarnings('ignore')
-
-
-# TODO: disable validation step
 
 
 class LitSampleConvNet(pl.LightningModule):
@@ -118,20 +123,23 @@ class LitSampleConvNet(pl.LightningModule):
         opt = self.optimizers()
         opt.zero_grad()
         loss = self.compute_loss(batch)
+        self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.manual_backward(loss)
         opt.step()
 
     def on_train_epoch_end(self):
         if self.enable_dp:
             epsilon, best_alpha = self.privacy_engine.get_privacy_spent(self.delta)
+            # (epsilon, delta) for alpha
             self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
-            self.log("best_alpha", best_alpha, on_epoch=True, prog_bar=True)
+            self.log("alpha", best_alpha, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         data, target = batch
         output = self(data)
         loss = F.cross_entropy(output, target)
         self.test_accuracy(output, target)
+        self.log("test_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('test_accuracy', self.test_accuracy, on_step=False, on_epoch=True)
         return loss
 
