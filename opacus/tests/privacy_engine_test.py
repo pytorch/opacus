@@ -2,8 +2,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import abc
 import unittest
-from typing import Optional, OrderedDict
 from abc import ABC
+from typing import Optional, OrderedDict
 
 import hypothesis.strategies as st
 import torch
@@ -11,9 +11,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
-from opacus.validators.errors import UnsupportedModuleError
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
-from torch.utils.data import DataLoader, TensorDataset, Dataset
+from opacus.validators.errors import UnsupportedModuleError
+from torch.utils.data import DataLoader, Dataset
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
@@ -37,7 +37,6 @@ def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
 
 
 class BasePrivacyEngineTest(ABC):
-
     @classmethod
     def setUpClass(cls):
         cls.DATA_SIZE = 512
@@ -332,7 +331,7 @@ class BasePrivacyEngineTest(ABC):
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
     )
-    @settings(max_examples=20, deadline=1000)
+    @settings(max_examples=20, deadline=10000)
     def test_noise_level(self, noise_multiplier: float, max_steps: int):
         """
         Tests that the noise level is correctly set
@@ -421,7 +420,6 @@ class SampleConvNet(nn.Module):
 
 
 class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
-
     def _init_data(self):
         ds = FakeData(
             size=self.DATA_SIZE,
@@ -459,7 +457,6 @@ class SampleAttnNet(nn.Module):
 
 
 class MockTextDataset(Dataset):
-
     def __init__(self, x: torch.Tensor, y: torch.Tensor, batch_first: bool = False):
         if batch_first:
             x_batch = x.shape[0]
@@ -469,7 +466,7 @@ class MockTextDataset(Dataset):
         if x_batch != y.shape[0]:
             raise ValueError(
                 f"Tensor shapes don't match. x:{x.shape}, y:{y.shape}, batch_first:{batch_first}"
-                )
+            )
 
         self.x = x
         self.y = y
@@ -479,19 +476,25 @@ class MockTextDataset(Dataset):
         if self.batch_first:
             return (self.x[index], self.y[index])
         else:
-            return (self.x[:, index, ], self.y[index])
+            return (
+                self.x[
+                    :,
+                    index,
+                ],
+                self.y[index],
+            )
 
     def __len__(self):
         return self.y.shape[0]
 
 
 def batch_second_collate(batch):
-    data = torch.stack([x[0] for x in batch]).permute(1,0)
+    data = torch.stack([x[0] for x in batch]).permute(1, 0)
     labels = torch.stack([x[1] for x in batch])
     return data, labels
 
-class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
 
+class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -502,9 +505,7 @@ class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
         y = torch.randint(0, 12, (self.DATA_SIZE,))
         ds = MockTextDataset(x, y)
         return DataLoader(
-            ds,
-            batch_size=self.BATCH_SIZE,
-            collate_fn=batch_second_collate
+            ds, batch_size=self.BATCH_SIZE, collate_fn=batch_second_collate
         )
 
     def _init_model(

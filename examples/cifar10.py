@@ -163,7 +163,7 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
             if not args.disable_dp:
                 epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
                     args.delta,
-                    alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+                    alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
                 )
                 print(
                     f"\tTrain Epoch: {epoch} \t"
@@ -217,7 +217,7 @@ def main():
         logger.setLevel(level=logging.DEBUG)
 
     # Sets `world_size = 1` if you run on a single GPU with `args.local_rank = -1`
-    if args.local_rank != -1 or args.device != 'cpu':
+    if args.local_rank != -1 or args.device != "cpu":
         rank, local_rank, world_size = setup(args)
         device = local_rank
     else:
@@ -362,7 +362,6 @@ def main():
                 max_grad_norm=max_grad_norm,
             )
 
-
     print(train_loader.batch_sampler)
 
     # Store some logs
@@ -375,7 +374,9 @@ def main():
             for param_group in optimizer.param_groups:
                 param_group["lr"] = lr
 
-        train_duration = train(args, model, train_loader, optimizer, privacy_engine, epoch, device)
+        train_duration = train(
+            args, model, train_loader, optimizer, privacy_engine, epoch, device
+        )
         top1_acc = test(args, model, test_loader, device)
 
         # remember best acc@1 and save checkpoint

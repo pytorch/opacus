@@ -10,6 +10,7 @@ from opacus.layers.dp_rnn import RNNLinear
 
 from .utils import register_grad_sampler
 
+
 @register_grad_sampler(RNNLinear)
 def compute_rnn_linear_grad_sample(
     layer: RNNLinear, activations: torch.Tensor, backprops: torch.Tensor

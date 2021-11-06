@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import torch.nn as nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from .errors import ShouldReplaceModuleError
-from .utils import register_module_validator, register_module_fixer
+from .utils import register_module_fixer, register_module_validator
 
 
 @register_module_validator(DDP)

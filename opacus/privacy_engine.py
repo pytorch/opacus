@@ -8,10 +8,10 @@ from opacus.data_loader import DPDataLoader
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import (
-    DPOptimizer,
     DistributedDPOptimizer,
-    DPPerLayerOptimizer,
     DistributedPerLayerOptimizer,
+    DPOptimizer,
+    DPPerLayerOptimizer,
 )
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim

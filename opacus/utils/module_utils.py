@@ -4,10 +4,11 @@ import io
 import logging
 import sys
 from collections import OrderedDict
-from typing import Iterable
+from typing import Iterable, List
 
 import torch
 import torch.nn as nn
+
 
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s",

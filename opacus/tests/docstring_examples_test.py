@@ -26,7 +26,6 @@ class DocstringExamplesTest(unittest.TestCase):
     It is intended to catch breaking changes and signal to update the docstring alongside with the code.
     """
 
-
     def test_privacy_analysis_example(self):
         # IMPORTANT: When changing this code you also need to update
         # the docstring for opacus.privacy_analysis module

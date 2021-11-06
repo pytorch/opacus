@@ -172,4 +172,3 @@ class DPOptimizer(Optimizer):
             return None
 
     # TODO: wrap the rest of optim.Optimizer interface
-

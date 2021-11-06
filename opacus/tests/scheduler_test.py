@@ -46,7 +46,9 @@ class SchedulerTest(unittest.TestCase):
         self.assertEqual(self.optimizer.noise_multiplier, gamma ** 2)
 
     def test_lambda_scheduler(self):
-        noise_lambda = lambda epoch: (1 - epoch / 10)
+        def noise_lambda(epoch):
+            return 1 - epoch / 10
+
         scheduler = LambdaNoise(self.optimizer, noise_lambda=noise_lambda)
 
         self.assertEqual(self.optimizer.noise_multiplier, 1.0)

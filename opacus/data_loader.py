@@ -1,7 +1,10 @@
 from typing import Optional, Sequence
 
 import torch
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler, DistributedUniformWithReplacementSampler
+from opacus.utils.uniform_sampler import (
+    DistributedUniformWithReplacementSampler,
+    UniformWithReplacementSampler,
+)
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
@@ -97,5 +100,5 @@ class DPDataLoader(DataLoader):
             generator=data_loader.generator,
             prefetch_factor=data_loader.prefetch_factor,
             persistent_workers=data_loader.persistent_workers,
-            distributed=distributed
+            distributed=distributed,
         )
