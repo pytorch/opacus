@@ -10,7 +10,6 @@ import torch
 import torch.nn as nn
 from opacus import PrivacyEngine
 from opacus.layers import DPGRU, DPLSTM, DPRNN
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
@@ -321,7 +320,9 @@ def train(
         f"\t Epoch {epoch}. Accuracy: {mean(accs):.6f} | Loss: {mean(losses):.6f}"
     )
     try:
-        epsilon, best_alpha = privacy_engine.get_privacy_spent(delta=target_delta)
+        epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
+            delta=target_delta
+        )
         printstr += f" | (ε = {epsilon:.2f}, δ = {target_delta}) for α = {best_alpha}"
     except AttributeError:
         pass
@@ -346,7 +347,9 @@ def test(model, test_loader, privacy_engine, target_delta, device="cuda:0"):
     mean_acc = mean(accs)
     printstr = "\n----------------------------\n" f"Test Accuracy: {mean_acc:.6f}"
     if privacy_engine:
-        epsilon, best_alpha = privacy_engine.get_privacy_spent(delta=target_delta)
+        epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
+            delta=target_delta
+        )
         printstr += f" (ε = {epsilon:.2f}, δ = {target_delta}) for α = {best_alpha}"
     print(printstr + "\n----------------------------\n")
     return mean_acc

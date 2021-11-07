@@ -228,7 +228,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install scikit-learn
-            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --batch-size 400 --n-lstm-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="runs/charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
+            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --batch-size 400 --n-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="runs/charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
             python -c "import torch; accuracy = torch.load('run_results_chr_lstm_classification.pt'); exit(0) if (accuracy>0.60 and accuracy<0.74) else exit(1)"
           when: always
       - store_test_results:

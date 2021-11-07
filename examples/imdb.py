@@ -80,7 +80,7 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch):
         accuracies.append(acc.item())
 
     if not args.disable_dp:
-        epsilon, best_alpha = privacy_engine.get_privacy_spent(args.delta)
+        epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(args.delta)
         print(
             f"Train Epoch: {epoch} \t"
             f"Train Loss: {np.mean(losses):.6f} "
@@ -261,6 +261,9 @@ def main():
             data_loader=train_loader,
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
+            # TODO: we need to switch poisson sampling back on, but the
+            # model exhibits strange behaviour with batch_size=1
+            poisson_sampling=False,
         )
 
     mean_accuracy = 0
