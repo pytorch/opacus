@@ -102,9 +102,11 @@ class PrivacyEngine_test(unittest.TestCase):
         noise_multiplier: float = 1.0,
         max_grad_norm: float = 1.0,
         poisson_sampling: bool = True,
-        try_fix_incompatible_modules: bool = False,
     ):
+        privacy_engine = PrivacyEngine(secure_mode=secure_mode)
+
         model = SampleConvNet()
+        model = privacy_engine.get_compatible_module(model)
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
 
         if state_dict:
@@ -112,7 +114,6 @@ class PrivacyEngine_test(unittest.TestCase):
 
         dl, _ = self._init_data()
 
-        privacy_engine = PrivacyEngine(secure_mode=secure_mode)
         model, optimizer, poisson_dl = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
@@ -120,7 +121,6 @@ class PrivacyEngine_test(unittest.TestCase):
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
             poisson_sampling=poisson_sampling,
-            try_fix_incompatible_modules=try_fix_incompatible_modules,
         )
 
         return model, optimizer, dl, privacy_engine
@@ -308,9 +308,9 @@ class PrivacyEngine_test(unittest.TestCase):
         Test that the privacy engine fixes unsupported modules
         and succeeds.
         """
-        resnet = models.resnet18()
-        optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
         privacy_engine = PrivacyEngine()
+        resnet = privacy_engine.get_compatible_module(models.resnet18())
+        optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
         dl, _ = self._init_data()
 
         _, _, _ = privacy_engine.make_private(
@@ -319,7 +319,6 @@ class PrivacyEngine_test(unittest.TestCase):
             data_loader=dl,
             noise_multiplier=1.3,
             max_grad_norm=1,
-            try_fix_incompatible_modules=True,
         )
         self.assertTrue(1, 1)
 

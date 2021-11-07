@@ -56,6 +56,15 @@ class PrivacyEngine:
         """
         ModuleValidator.validate(module, raise_if_error=True)
 
+    def get_compatible_module(self, module: nn.Module) -> nn.Module:
+        """
+        Return a privacy engine compatible module. Also validates the module after
+        running registered fixes.
+        """
+        module = ModuleValidator.fix(module)
+        ModuleValidator.validate(module, raise_if_error=True)
+        return module
+
     def make_private(
         self,
         module: nn.Module,
@@ -66,13 +75,10 @@ class PrivacyEngine:
         batch_first: bool = True,
         loss_reduction: str = "mean",
         poisson_sampling: bool = True,
-        try_fix_incompatible_modules: bool = False,
     ):
         distributed = type(module) is DPDDP
 
-        module = self._prepare_model(
-            module, batch_first, loss_reduction, try_fix_incompatible_modules
-        )
+        module = self._prepare_model(module, batch_first, loss_reduction)
         # TODO: either validate consistent dataset or do per-dataset accounting
         if poisson_sampling:
             data_loader = self._prepare_data_loader(
@@ -114,20 +120,12 @@ class PrivacyEngine:
         batch_first: bool = True,
         loss_reduction: str = "mean",
         poisson_sampling: bool = True,
-        try_fix_incompatible_modules: bool = False,
     ):
         distributed = type(module) is DPDDP
 
-        module = self._prepare_model(
-            module, batch_first, loss_reduction, try_fix_incompatible_modules
-        )
+        module = self._prepare_model(module, batch_first, loss_reduction)
 
         # TODO: either validate consistent dataset or do per-dataset accounting
-        module = self._prepare_model(
-            module,
-            batch_first,
-            loss_reduction,
-        )
         data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
 
         sample_rate = 1 / len(data_loader)
@@ -173,7 +171,6 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
-        try_fix_incompatible_modules: bool = False,
         alphas: Optional[List[float]] = None,
         sigma_min: Optional[float] = None,
         sigma_max: Optional[float] = None,
@@ -196,7 +193,6 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             batch_first=batch_first,
             loss_reduction=loss_reduction,
-            try_fix_incompatible_modules=try_fix_incompatible_modules,
         )
 
     def _prepare_model(
@@ -207,6 +203,9 @@ class PrivacyEngine:
         try_fix_incompatible_modules: bool = False,
     ) -> GradSampleModule:
         # (fix and) validate
+        # Note: This should have already been performed by the user in most cases
+        #       by explicitly calling `get_compatible_module()` before calling
+        #       `make_private()`.
         if try_fix_incompatible_modules:
             module = ModuleValidator.fix(module)
         self.validate(module=module, optimizer=None, data_loader=None)
