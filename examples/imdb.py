@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import BertTokenizerFast
 
+#TODO: this is still broken
 
 class SampleNet(nn.Module):
     def __init__(self, vocab_size: int):
@@ -116,7 +117,7 @@ def evaluate(args, model, test_loader):
     mean_accuracy = np.mean(accuracies)
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {:.2f}%\n".format(
-            np.mean(losses), np.mean(accuracies) * 100
+            np.mean(losses), mean_accuracy * 100
         )
     )
     return mean_accuracy
@@ -231,13 +232,13 @@ def main():
     train_dataset = dataset["train"]
     test_dataset = dataset["test"]
 
-    print(len(train_dataset))
     train_loader = DataLoader(
         train_dataset,
         num_workers=args.workers,
         batch_size=args.batch_size,
         collate_fn=padded_collate,
         pin_memory=True,
+        shuffle=True,
     )
 
     test_loader = torch.utils.data.DataLoader(
