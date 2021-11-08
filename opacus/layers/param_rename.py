@@ -20,7 +20,7 @@ def filter_out_old_keys(self, state_dict, prefix, local_metadata):
 
 class RenameParamsMixin:
     """
-    This class defines a nn.Module whose parameters are renamed. This is useful when you want to
+    This class defines an nn.Module whose parameters are renamed. This is useful when you want to
     reimplement a layer but make sure its state_dict and list of parameters are exactly the same
     as another reference layer so that you can have a drop-in replacement that does not depend on
     how your layer is actually implemented. In Opacus, this is used for DPLSTM, where our
