@@ -7,13 +7,18 @@ from torch import nn
 from torch.optim import Optimizer
 
 
-def _generate_noise(std: float, reference: torch.Tensor) -> torch.Tensor:
+def _generate_noise(
+    std: float, reference: torch.Tensor, generator=None
+) -> torch.Tensor:
     if std > 0:
+        # TODO: handle device transfers: generator and reference tensor
+        # could be on different devices
         return torch.normal(
             mean=0,
             std=std,
             size=reference.shape,
             device=reference.device,
+            generator=generator,
         )
     return torch.zeros(reference.shape, device=reference.device)
 
@@ -40,6 +45,7 @@ class DPOptimizer(Optimizer):
         max_grad_norm: float,
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
+        generator=None,
     ):
         if loss_reduction not in ("mean", "sum"):
             raise ValueError(f"Unexpected value for loss_reduction: {loss_reduction}")
@@ -55,6 +61,8 @@ class DPOptimizer(Optimizer):
         self.loss_reduction = loss_reduction
         self.expected_batch_size = expected_batch_size
         self.step_hook = None
+        self.generator = generator
+
         self.param_groups = optimizer.param_groups
         self.state = optimizer.state
         self._step_skip_queue = []
@@ -128,7 +136,9 @@ class DPOptimizer(Optimizer):
     def add_noise(self):
         for p in self.params:
             noise = _generate_noise(
-                self.noise_multiplier * self.max_grad_norm, p.summed_grad
+                std=self.noise_multiplier * self.max_grad_norm,
+                reference=p.summed_grad,
+                generator=self.generator,
             )
             p.grad = p.summed_grad + noise
 
@@ -149,7 +159,8 @@ class DPOptimizer(Optimizer):
 
         self.optimizer.zero_grad(set_to_none)
 
-    def pre_step(self) -> bool:
+
+    def pre_step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         self.clip_and_accumulate()
 
         if self._check_skip_next_step():
@@ -163,7 +174,6 @@ class DPOptimizer(Optimizer):
             self.step_hook(self)
 
         self._is_last_step_skipped = False
-        return True
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         # TODO: handle closure call - we should do it before pre_step()

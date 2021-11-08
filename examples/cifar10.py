@@ -42,7 +42,6 @@ logger.setLevel(level=logging.INFO)
 
 
 def setup(args):
-
     if not torch.cuda.is_available():
         raise NotImplementedError(
             "DistributedDataParallel device_ids and output_device arguments \
@@ -210,7 +209,6 @@ def test(args, model, test_loader, device):
 
 # flake8: noqa: C901
 def main():
-
     args = parse_args()
 
     if args.debug >= 1:
@@ -399,7 +397,6 @@ def main():
         )
 
     if rank == 0:
-
         time_per_epoch_seconds = [t.total_seconds() for t in time_per_epoch]
         avg_time_per_epoch = sum(time_per_epoch_seconds) / len(time_per_epoch_seconds)
         metrics = {
@@ -531,7 +528,9 @@ def parse_args():
         "--secure-rng",
         action="store_true",
         default=False,
-        help="Enable Secure RNG to have trustworthy privacy guarantees. Comes at a performance cost",
+        help="Enable Secure RNG to have trustworthy privacy guarantees."
+        "Comes at a performance cost. Opacus will emit a warning if secure rng is off,"
+        "indicating that for production use it's recommender to turn it on.",
     )
     parser.add_argument(
         "--delta",

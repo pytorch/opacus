@@ -23,11 +23,6 @@ class UniformWithReplacementSampler(Sampler[List[int]]):
         self.num_samples = num_samples
         self.sample_rate = sample_rate
         self.generator = generator
-        if self.generator is None:
-            generator = torch.Generator()
-            generator.manual_seed(
-                int(torch.empty((), dtype=torch.int64).random_().item())
-            )
 
         if self.num_samples <= 0:
             raise ValueError(
@@ -73,7 +68,7 @@ class DistributedUniformWithReplacementSampler(Sampler):
         total_size: int,
         sample_rate: float,
         shuffle: bool = True,
-        seed: int = 0,
+        shuffle_seed: int = 0,
         generator=None,
     ):
         self.total_size = total_size
@@ -83,12 +78,7 @@ class DistributedUniformWithReplacementSampler(Sampler):
         self.rank = torch.distributed.get_rank()
         self.epoch = 0
         self.shuffle = shuffle
-        self.seed = seed
-        if self.generator is None:
-            generator = torch.Generator()
-            generator.manual_seed(
-                int(torch.empty((), dtype=torch.int64).random_().item())
-            )
+        self.shuffle_seed = shuffle_seed
 
         if self.total_size <= 0:
             raise ValueError(
@@ -112,7 +102,7 @@ class DistributedUniformWithReplacementSampler(Sampler):
         if self.shuffle:
             # deterministically shuffle based on epoch and seed
             g = torch.Generator()
-            g.manual_seed(self.seed + self.epoch)
+            g.manual_seed(self.shuffle_seed + self.epoch)
             indices = torch.randperm(self.total_size, generator=g)  # type: ignore
         else:
             indices = torch.arange(self.total_size)  # type: ignore
