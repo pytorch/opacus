@@ -27,6 +27,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 
+
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s",
     datefmt="%m/%d/%Y %H:%M:%S",
@@ -330,8 +331,8 @@ def main():
                 [(n, p) for n, p in model.named_parameters() if p.requires_grad]
             )
             max_grad_norm = [
-                                args.max_per_sample_grad_norm / np.sqrt(n_layers)
-                            ] * n_layers
+                args.max_per_sample_grad_norm / np.sqrt(n_layers)
+            ] * n_layers
         else:
             max_grad_norm = args.max_per_sample_grad_norm
 
@@ -441,8 +442,8 @@ def parse_args():
         type=int,
         metavar="N",
         help="mini-batch size for test dataset (default: 256), this is the total "
-             "batch size of all GPUs on the current node when "
-             "using Data Parallel or Distributed Data Parallel",
+        "batch size of all GPUs on the current node when "
+        "using Data Parallel or Distributed Data Parallel",
     )
     parser.add_argument(
         "--sample-rate",
@@ -523,8 +524,8 @@ def parse_args():
         "--secure-rng",
         action="store_true",
         default=False,
-        help="Enable Secure RNG to have trustworthy privacy guarantees."\
-        "Comes at a performance cost. Opacus will emit a warning if secure rng is off,"\
+        help="Enable Secure RNG to have trustworthy privacy guarantees."
+        "Comes at a performance cost. Opacus will emit a warning if secure rng is off,"
         "indicating that for production use it's recommender to turn it on.",
     )
     parser.add_argument(
