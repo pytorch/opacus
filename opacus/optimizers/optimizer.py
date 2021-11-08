@@ -159,16 +159,14 @@ class DPOptimizer(Optimizer):
 
         self.optimizer.zero_grad(set_to_none)
 
-    def pre_step(self) -> Optional[float]:
+    def pre_step(
+        self, closure: Optional[Callable[[], float]] = None
+    ) -> Optional[float]:
         self.clip_and_accumulate()
-
-    # TODO: wrap the rest of optim.Optimizer interface
-    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        self.pre_step()
 
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
-            return None
+            return False
 
         self.add_noise()
         self.scale_grad()
@@ -177,4 +175,13 @@ class DPOptimizer(Optimizer):
             self.step_hook(self)
 
         self._is_last_step_skipped = False
-        return self.optimizer.step(closure)
+        return True
+
+    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
+        # TODO: handle closure call - we should do it before pre_step()
+        if self.pre_step():
+            return self.optimizer.step(closure)
+        else:
+            return None
+
+    # TODO: wrap the rest of optim.Optimizer interface

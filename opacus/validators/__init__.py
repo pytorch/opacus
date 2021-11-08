@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+# we import fix and validate methods from all submodules here
+# to ensure that when `opacus.validators` is imported,
+# we call register_module_validator and register_module_fixer
+# on respective methods
+
 from .batch_norm import fix, validate  # noqa
 from .ddp import fix, validate  # noqa
 from .instance_norm import fix, validate  # noqa

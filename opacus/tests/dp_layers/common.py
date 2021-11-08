@@ -91,7 +91,7 @@ class DPModules_test(unittest.TestCase):
         nn_module: nn.Module,
         dp_module: nn.Module,
         *module_args,
-        output_names: Optional[Tuple[str]] = None,
+        output_names: Optional[Tuple[str, ...]] = None,
         atol: float = 10e-6,
         rtol: float = 10e-5,
         **module_kwargs,

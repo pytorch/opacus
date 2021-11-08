@@ -21,6 +21,9 @@ from torch.utils.data import DataLoader
 
 
 def forbid_accumulation_hook(module: nn.Module, _):
+    if not module.training:
+        return
+
     for p in module.parameters():
         if hasattr(p, "grad_sample"):
             # TODO: this correspond to either not calling optimizer.step()
@@ -138,6 +141,9 @@ class PrivacyEngine:
             )
 
         optimizer.attach_step_hook(accountant_hook)
+
+        if poisson_sampling:
+            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         return module, optimizer, data_loader
 
