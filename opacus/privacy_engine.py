@@ -157,11 +157,6 @@ class PrivacyEngine:
         )
 
         # TODO: either validate consistent dataset or do per-dataset accounting
-        module = self._prepare_model(
-            module,
-            batch_first,
-            loss_reduction,
-        )
         data_loader = self._prepare_data_loader(
             data_loader,
             distributed=distributed,
