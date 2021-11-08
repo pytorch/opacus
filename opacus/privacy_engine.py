@@ -80,6 +80,16 @@ class PrivacyEngine:
         """
         ModuleValidator.validate(module, raise_if_error=True)
 
+    @classmethod
+    def get_compatible_module(cls, module: nn.Module) -> nn.Module:
+        """
+        Return a privacy engine compatible module. Also validates the module after
+        running registered fixes.
+        """
+        module = ModuleValidator.fix(module)
+        ModuleValidator.validate(module, raise_if_error=True)
+        return module
+
     # TODO: add * syntax for keyword args
     def make_private(
         self,
@@ -92,16 +102,13 @@ class PrivacyEngine:
         loss_reduction: str = "mean",
         noise_seed: Optional[int] = None,
         poisson_sampling: bool = True,
-        try_fix_incompatible_modules: bool = False,
     ):
         distributed = type(module) is DPDDP
 
         if noise_seed and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
 
-        module = self._prepare_model(
-            module, batch_first, loss_reduction, try_fix_incompatible_modules
-        )
+        module = self._prepare_model(module, batch_first, loss_reduction)
         # TODO: either validate consistent dataset or do per-dataset accounting
         data_loader = self._prepare_data_loader(
             data_loader,
@@ -151,16 +158,13 @@ class PrivacyEngine:
         loss_reduction: str = "mean",
         noise_seed: Optional[int] = None,
         poisson_sampling: bool = True,
-        try_fix_incompatible_modules: bool = False,
     ):
         distributed = type(module) is DPDDP
 
         if noise_seed and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
 
-        module = self._prepare_model(
-            module, batch_first, loss_reduction, try_fix_incompatible_modules
-        )
+        module = self._prepare_model(module, batch_first, loss_reduction)
 
         # TODO: either validate consistent dataset or do per-dataset accounting
         data_loader = self._prepare_data_loader(
@@ -213,7 +217,6 @@ class PrivacyEngine:
         batch_first: bool = True,
         loss_reduction: str = "mean",
         noise_seed: Optional[int] = None,
-        try_fix_incompatible_modules: bool = False,
         alphas: Optional[List[float]] = None,
         sigma_min: Optional[float] = None,
         sigma_max: Optional[float] = None,
@@ -237,23 +240,13 @@ class PrivacyEngine:
             batch_first=batch_first,
             loss_reduction=loss_reduction,
             noise_seed=noise_seed,
-            try_fix_incompatible_modules=try_fix_incompatible_modules,
         )
 
     def _prepare_model(
-        self,
-        module: nn.Module,
-        batch_first: bool = True,
-        loss_reduction: str = "mean",
-        try_fix_incompatible_modules: bool = False,
+        self, module: nn.Module, batch_first: bool = True, loss_reduction: str = "mean"
     ) -> GradSampleModule:
-        # (fix and) validate
-        if try_fix_incompatible_modules:
-            # TODO: this doesn't work and needs to be fixed
-            # When replacing modules, we copy the parameters.
-            # Optimizer, however, still points to the old set of parameters,
-            # which won't be gettings gradients
-            module = ModuleValidator.fix(module)
+        # Ideally, validation should have been taken care of by calling
+        # `get_compatible_module()`
         self.validate(module=module, optimizer=None, data_loader=None)
 
         # wrap
