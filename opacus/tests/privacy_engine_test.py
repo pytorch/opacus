@@ -292,7 +292,7 @@ class BasePrivacyEngineTest(ABC):
         """
         resnet = PrivacyEngine.get_compatible_module(models.resnet18())
         optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
-        dl, _ = self._init_data()
+        dl = self._init_data()
         privacy_engine = PrivacyEngine()
         _, _, _ = privacy_engine.make_private(
             module=resnet,
