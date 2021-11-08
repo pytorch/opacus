@@ -144,9 +144,8 @@ def main():
             optimizer.step()
             data_end = time.time()
     else:
-        images, target = next(iter(train_loader))
-        images = images.cuda()
-        target = target.cuda()
+        images = torch.randn(B, 3, H, W).cuda()
+        target = torch.arange(B).cuda()
 
         torch.cuda.synchronize()
         start = time.time()
