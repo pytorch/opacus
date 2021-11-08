@@ -96,47 +96,27 @@ class DPLightningDataModule(pl.LightningDataModule):
         return self.datamodule.on_after_batch_transfer(batch, dataloader_idx)
 
 
-class LightningPrivacyEngine(pl.Callback):
+class PrivacyEngineCallback(pl.Callback):
 
     def __init__(
         self,
-        delta: float = 1e-5,
-        sample_rate: float = 0.001,
-        sigma: float = 1.0,
-        max_per_sample_grad_norm: float = 1.0,
-        secure_rng: bool = False,
+        privacy_engine: PrivacyEngine,
 
     ):
-        """Callback enabling differential privacy learning
-        Args:
-            delta: Target delta for which (eps, delta)-DP is computed
-            sample_rate: Sample rate used for batch construction
-            sigma: Noise multiplier
-            max_per_sample_grad_norm: Clip per-sample gradients to this norm
-            secure_rng: Use secure random number generator
-        """
-        self.delta = delta
-        self.sample_rate = sample_rate
-        self.sigma = sigma
-        self.max_per_sample_grad_norm = max_per_sample_grad_norm
-        self.secure_rng = secure_rng
+        """Callback enabling differential privacy learning in PyTorch Lightning trainer
 
-        if secure_rng:
-            try:
-                import torchcsprng as prng
-            except ImportError as e:
-                msg = (
-                    "To use secure RNG, you must install the torchcsprng package! "
-                    "Check out the instructions here: https://github.com/pytorch/csprng#installation"
-                )
-                raise ImportError(msg) from e
-            self.generator = prng.create_random_device_generator("/dev/urandom")
-        else:
-            self.generator = None
+        Args:
+            privacy_engine:
+        """
+        self.privacy_engine = privacy_engine
 
         self.original_dataloader = None
 
     def on_train_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+        optimizer = pl_module.optimizers()
+
+        model, optimizer, data_loader = self.privacy_engine.make_private(pl_module, optimizer, trainer.train_dataloader.lia)
+
         pl_module.privacy_engine = PrivacyEngine(
             pl_module,
             sample_rate=self.sample_rate,
@@ -146,10 +126,10 @@ class LightningPrivacyEngine(pl.Callback):
             secure_rng=self.secure_rng,
         )
 
-        optimizer = pl_module.optimizers()
+
         pl_module.privacy_engine.attach(optimizer.optimizer)
 
-        # TODO: check data loader is DP-compatible
+        # TODO: check if data loader is DP-compatible
 
     def on_train_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         epsilon, best_alpha = pl_module.privacy_engine.get_privacy_spent(self.delta)
@@ -159,8 +139,6 @@ class LightningPrivacyEngine(pl.Callback):
 
     def on_train_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         pl_module.privacy_engine.detach()
-        trainer.train_dataloader.loaders = self.original_dataloader
-        self.original_dataloader = None
 
     def wrap_datamodule(self, datamodule: pl.LightningDataModule) -> DPLightningDataModule:
         return DPLightningDataModule(
