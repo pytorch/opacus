@@ -331,7 +331,7 @@ class BasePrivacyEngineTest(ABC):
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
     )
-    @settings(max_examples=20, deadline=10000)
+    @settings(max_examples=20, deadline=20000)
     def test_noise_level(self, noise_multiplier: float, max_steps: int):
         """
         Tests that the noise level is correctly set

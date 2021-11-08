@@ -166,6 +166,7 @@ class DPOptimizer(Optimizer):
         return True
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
+        # TODO: handle closure call - we should do it before pre_step()
         if self.pre_step():
             return self.optimizer.step(closure)
         else:
