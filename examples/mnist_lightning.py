@@ -41,6 +41,10 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         """A simple conv-net for classifying MNIST
         Args:
             lr: Learning rate
+            enable_dp: Enables training with privacy guarantees using Opacus (if True), vanilla SGD otherwise
+            delta: Target delta for which (eps, delta)-DP is computed
+            noise_multiplier: Noise multiplier
+            max_grad_norm: Clip per-sample gradients to this norm
         """
         super().__init__()
 
@@ -56,6 +60,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         # Metrics
         self.test_accuracy = torchmetrics.Accuracy()
 
+        # Differential privacy
         self.enable_dp = enable_dp
         self.delta = delta
         self.noise_multiplier = noise_multiplier
@@ -78,9 +83,11 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         optimizer = optim.SGD(self.parameters(), lr=self.lr, momentum=0)
 
         if self.enable_dp:
+            # dirty introspection of the trainer instance to get the training data
             data_loader = (
                 self.trainer._data_connector._train_dataloader_source.dataloader()
             )
+            # transform (model, optimizer, dataloader) to DP-versions
             dp_model, dp_optimizer, dp_dataloader = self.privacy_engine.make_private(
                 self,
                 optimizer,
@@ -97,7 +104,8 @@ class LitSampleConvNetClassifier(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         data, target = batch
         if self.enable_dp:
-            output = self.privacy_engine.model(data)  # using wrapped model
+            # using wrapped model with grad sampler
+            output = self.privacy_engine.model(data)
         else:
             output = self(data)
         loss = F.cross_entropy(output, target)
@@ -120,6 +128,9 @@ class LitSampleConvNetClassifier(pl.LightningModule):
 
 
 def main():
+    """
+    Using vanilla Lightning API to train/test
+    """
     data = MNISTDataModule(batch_size=64)
     model = LitSampleConvNetClassifier()
 
@@ -136,6 +147,9 @@ def main():
 
 
 def cli_main():
+    """
+    Using LightningCLI to automatically setup argparse
+    """
     cli = LightningCLI(
         LitSampleConvNetClassifier,
         MNISTDataModule,
