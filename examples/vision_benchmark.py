@@ -6,13 +6,7 @@ Runs CIFAR10 training with differential privacy.
 """
 
 import argparse
-import logging
-import os
-import shutil
-import sys
 import time
-import warnings
-from datetime import datetime, timedelta
 
 import numpy as np
 import torch
@@ -20,17 +14,12 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
-import torch.utils.tensorboard as tensorboard
-import torchvision.transforms as transforms
+from opacus import PrivacyEngine
+from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import TensorDataset
 from torchvision import models
-from torchvision.datasets import CIFAR10
 from tqdm import tqdm
-
-from opacus import PrivacyEngine
-from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.utils import stats
 
 
 def pretty_number(n):
@@ -77,13 +66,13 @@ def main():
             if args.dist_algo == "naive":
                 model = DPDDP(model)
             elif args.dist_algo == "ddp_hook":
-                model = DDP(model, device_ids=[device])
+                model = DDP(model, device_ids=[args.device])
             else:
                 raise NotImplementedError(
                     f"Unrecognized argument for the distributed algorithm: {args.dist_algo}"
                 )
         else:
-            model = DDP(model, device_ids=[device])
+            model = DDP(model, device_ids=[args.device])
 
     if args.optim == "SGD":
         optimizer = optim.SGD(
