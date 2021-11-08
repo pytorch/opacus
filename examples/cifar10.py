@@ -23,6 +23,10 @@ import torchvision.transforms as transforms
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.utils import stats
+from opacus.utils.uniform_sampler import (
+    DistributedUniformWithReplacementSampler,
+    UniformWithReplacementSampler,
+)
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm

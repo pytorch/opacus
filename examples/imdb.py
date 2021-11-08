@@ -20,6 +20,9 @@ from tqdm import tqdm
 from transformers import BertTokenizerFast
 
 
+# TODO: this is still broken
+
+
 class SampleNet(nn.Module):
     def __init__(self, vocab_size: int):
         super().__init__()
@@ -80,7 +83,7 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch):
         accuracies.append(acc.item())
 
     if not args.disable_dp:
-        epsilon, best_alpha = privacy_engine.get_privacy_spent(args.delta)
+        epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(args.delta)
         print(
             f"Train Epoch: {epoch} \t"
             f"Train Loss: {np.mean(losses):.6f} "
@@ -113,11 +116,13 @@ def evaluate(args, model, test_loader):
             losses.append(loss.item())
             accuracies.append(acc.item())
 
+    mean_accuracy = np.mean(accuracies)
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {:.2f}%\n".format(
-            np.mean(losses), np.mean(accuracies) * 100
+            np.mean(losses), mean_accuracy * 100
         )
     )
+    return mean_accuracy
 
 
 def main():
@@ -229,13 +234,13 @@ def main():
     train_dataset = dataset["train"]
     test_dataset = dataset["test"]
 
-    print(len(train_dataset))
     train_loader = DataLoader(
         train_dataset,
         num_workers=args.workers,
         batch_size=args.batch_size,
         collate_fn=padded_collate,
         pin_memory=True,
+        shuffle=True,
     )
 
     test_loader = torch.utils.data.DataLoader(
@@ -259,11 +264,17 @@ def main():
             data_loader=train_loader,
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
+            # TODO: we need to switch poisson sampling back on, but the
+            # model exhibits strange behaviour with batch_size=1
+            poisson_sampling=False,
         )
 
+    mean_accuracy = 0
     for epoch in range(1, args.epochs + 1):
         train(args, model, train_loader, optimizer, privacy_engine, epoch)
-        evaluate(args, model, test_loader)
+        mean_accuracy = evaluate(args, model, test_loader)
+
+    torch.save(mean_accuracy, "run_results_imdb_classification.pt")
 
 
 if __name__ == "__main__":

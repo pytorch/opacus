@@ -21,6 +21,9 @@ from torch.utils.data import DataLoader
 
 
 def forbid_accumulation_hook(module: nn.Module, _):
+    if not module.training:
+        return
+
     for p in module.parameters():
         if hasattr(p, "grad_sample"):
             # TODO: this correspond to either not calling optimizer.step()
@@ -131,6 +134,9 @@ class PrivacyEngine:
             )
 
         optimizer.attach_step_hook(accountant_hook)
+
+        if poisson_sampling:
+            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         return module, optimizer, data_loader
 
@@ -243,6 +249,10 @@ class PrivacyEngine:
     ) -> GradSampleModule:
         # (fix and) validate
         if try_fix_incompatible_modules:
+            # TODO: this doesn't work and needs to be fixed
+            # When replacing modules, we copy the parameters.
+            # Optimizer, however, still points to the old set of parameters,
+            # which won't be gettings gradients
             module = ModuleValidator.fix(module)
         self.validate(module=module, optimizer=None, data_loader=None)
 

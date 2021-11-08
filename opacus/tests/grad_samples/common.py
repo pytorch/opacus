@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus.grad_sample import GradSampleModule
+from opacus.utils.packed_sequences import compute_seq_lengths
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
 from torch.testing import assert_allclose
 
@@ -336,41 +337,12 @@ def _unpack_packedsequences(X: PackedSequence) -> List[torch.Tensor]:
     if X.sorted_indices is not None:
         X_padded = X_padded[X.sorted_indices]
 
-    seq_lens = _compute_seq_lengths(X.batch_sizes)
+    seq_lens = compute_seq_lengths(X.batch_sizes)
     unpacked_data = [0] * len(seq_lens)
     for idx, length in enumerate(seq_lens):
         unpacked_data[idx] = X_padded[idx][:length, :]
 
     return unpacked_data
-
-
-def _compute_seq_lengths(batch_sizes: torch.Tensor) -> List[int]:
-    r"""
-    Computes the sequence lengths (the length parameter used in the packed_padded_sequence function to create a PackedSequence).
-
-    Args:
-        batch_sizes: Contains the batch sizes as stored in a PackedSequence
-
-    Returns:
-        running_seq_lengths: the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function to create a PackedSequence.
-        It's a list of the same length as batch_sizes.
-    """
-
-    max_batch_size = batch_sizes[0]
-    if len(batch_sizes) == 1:
-        return [1] * max_batch_size
-
-    running_seq = 0
-    running_seq_lengths = []
-    for i in range(1, len(batch_sizes)):
-        delta = batch_sizes[i - 1].item() - batch_sizes[i].item()
-        running_seq += 1
-        running_seq_lengths += delta * [running_seq]
-
-    running_seq += 1
-    running_seq_lengths += batch_sizes[-1].item() * [running_seq]
-    running_seq_lengths.reverse()
-    return running_seq_lengths
 
 
 def _compute_loss_packedsequences(
