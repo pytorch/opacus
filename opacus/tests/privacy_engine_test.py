@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
+from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
@@ -103,10 +104,8 @@ class PrivacyEngine_test(unittest.TestCase):
         max_grad_norm: float = 1.0,
         poisson_sampling: bool = True,
     ):
-        privacy_engine = PrivacyEngine(secure_mode=secure_mode)
-
         model = SampleConvNet()
-        model = privacy_engine.get_compatible_module(model)
+        model = PrivacyEngine.get_compatible_module(model)
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
 
         if state_dict:
@@ -114,6 +113,7 @@ class PrivacyEngine_test(unittest.TestCase):
 
         dl, _ = self._init_data()
 
+        privacy_engine = PrivacyEngine(secure_mode=secure_mode)
         model, optimizer, poisson_dl = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
@@ -308,11 +308,10 @@ class PrivacyEngine_test(unittest.TestCase):
         Test that the privacy engine fixes unsupported modules
         and succeeds.
         """
-        privacy_engine = PrivacyEngine()
-        resnet = privacy_engine.get_compatible_module(models.resnet18())
+        resnet = PrivacyEngine.get_compatible_module(models.resnet18())
         optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
         dl, _ = self._init_data()
-
+        privacy_engine = PrivacyEngine()
         _, _, _ = privacy_engine.make_private(
             module=resnet,
             optimizer=optimizer,
@@ -321,6 +320,12 @@ class PrivacyEngine_test(unittest.TestCase):
             max_grad_norm=1,
         )
         self.assertTrue(1, 1)
+
+    def test_get_compatible_module_inaction(self):
+        needs_no_replacement_module = nn.Linear(1, 2)
+        fixed_module = PrivacyEngine.get_compatible_module(needs_no_replacement_module)
+        self.assertFalse(fixed_module is needs_no_replacement_module)
+        self.assertTrue(are_state_dict_equal(needs_no_replacement_module, fixed_module))
 
     def test_deterministic_run(self):
         """
@@ -347,7 +352,7 @@ class PrivacyEngine_test(unittest.TestCase):
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
     )
-    @settings(deadline=20000)
+    @settings(max_examples=20, deadline=2000)
     def test_noise_level(self, noise_multiplier: float, max_steps: int):
         """
         Tests that the noise level is correctly set
@@ -388,42 +393,3 @@ class PrivacyEngine_test(unittest.TestCase):
         ).item()
 
         self.assertAlmostEqual(real_norm, expected_norm, delta=0.05 * expected_norm)
-
-    @unittest.skip("Not yet implemented")
-    def test_raises_seed_set_on_secure_rng(self):
-        """
-        Tests that when a seed is set on a secure PrivacyEngine, we raise a ValueError
-        """
-        model, optimizer, dl = self.setUp_init_model(
-            private=True, secure_mode=True, noise_multiplier=1.3, max_grad_norm=1.0
-        )
-        with self.assertRaises(ValueError):
-            optimizer.privacy_engine._set_seed(20)
-
-    @unittest.skip("Not yet implemented")
-    def test_noise_changes_every_time_secure_rng(self):
-        """
-        Test that adding noise results in ever different model params.
-        We disable clipping in this test by setting it to a very high threshold.
-        """
-        model, optimizer, dl = self.setUp_init_model(
-            private=True,
-            state_dict=self.original_model.state_dict(),
-            secure_mode=True,
-            noise_multiplier=1.3,
-            max_grad_norm=999,
-        )
-        self.setUp_model_step(model, optimizer, dl)
-        first_run_params = (p for p in model.parameters() if p.requires_grad)
-
-        model, optimizer, dl = self.setUp_init_model(
-            private=True,
-            state_dict=self.original_model.state_dict(),
-            secure_mode=True,
-            noise_multiplier=1.3,
-            max_grad_norm=999,
-        )
-        self.setUp_model_step(model, optimizer, dl)
-        second_run_params = (p for p in model.parameters() if p.requires_grad)
-        for p0, p1 in zip(first_run_params, second_run_params):
-            self.assertFalse(torch.allclose(p0, p1))

@@ -1,6 +1,6 @@
-from typing import Callable
+from typing import Callable, Dict
 
-from .optimizer import DPOptimizer
+from .optimizers import DPOptimizer
 
 
 class _NoiseScheduler(object):
@@ -10,7 +10,7 @@ class _NoiseScheduler(object):
 
         self.step()
 
-    def state_dict(self) -> dict:
+    def state_dict(self) -> Dict:
         """Returns the state of the scheduler as a :class:`dict`.
         It contains an entry for every variable in self.__dict__ which
         is not the optimizer.
@@ -19,7 +19,7 @@ class _NoiseScheduler(object):
             key: value for key, value in self.__dict__.items() if key != "optimizer"
         }
 
-    def load_state_dict(self, state_dict: dict):
+    def load_state_dict(self, state_dict: Dict):
         """Loads the schedulers state.
         Args:
             state_dict (dict): scheduler state. Should be an object returned

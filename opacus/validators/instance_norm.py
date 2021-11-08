@@ -7,7 +7,7 @@ import torch.nn as nn
 from opacus.utils.module_utils import clone_module
 
 from .errors import IllegalModuleConfigurationError
-from .utils import register_module_validator, register_module_fixer
+from .utils import register_module_fixer, register_module_validator
 
 
 INSTANCENORM = Union[nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d]

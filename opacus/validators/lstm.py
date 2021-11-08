@@ -5,7 +5,7 @@ import torch.nn as nn
 from opacus.layers import DPLSTM
 
 from .errors import ShouldReplaceModuleError
-from .utils import register_module_validator, register_module_fixer
+from .utils import register_module_fixer, register_module_validator
 
 
 @register_module_validator(nn.LSTM)

@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import torch.nn as nn
+from typing import List
+
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from .errors import ShouldReplaceModuleError
-from .utils import register_module_validator, register_module_fixer
+from .errors import ShouldReplaceModuleError, UnsupportedError
+from .utils import register_module_fixer, register_module_validator
 
 
 @register_module_validator(DDP)
-def validate(module: DDP) -> None:
+def validate(module: DDP) -> List[UnsupportedError]:
     return [
         ShouldReplaceModuleError(
             "We do not support DistributedDataParallel as we need to perform"
