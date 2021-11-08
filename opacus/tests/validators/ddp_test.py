@@ -6,7 +6,6 @@ import unittest
 import torch.distributed as dist
 import torch.nn as nn
 from opacus.validators.errors import ShouldReplaceModuleError
-from opacus.validators.errors import ShouldReplaceModuleError
 from opacus.validators.module_validator import ModuleValidator
 from torch.nn.parallel import DistributedDataParallel as DDP
 
@@ -40,4 +39,4 @@ class DDPValidator_test(unittest.TestCase):
     def test_fix(self):
         ddp = DDP(self.module)
         with self.assertRaises(ShouldReplaceModuleError):
-            fix_ddp = self.mf[type(ddp)](ddp)
+            self.mf[type(ddp)](ddp)

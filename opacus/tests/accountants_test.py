@@ -2,7 +2,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
 
-import torch
 from opacus.accountants import GaussianAccountant, RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
 

@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+import warnings
 from typing import List, Optional
 
+import torch
 from opacus.accountants import RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
-from opacus.data_loader import DPDataLoader
+from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import (
-    DPOptimizer,
     DistributedDPOptimizer,
-    DPPerLayerOptimizer,
     DistributedPerLayerOptimizer,
+    DPOptimizer,
+    DPPerLayerOptimizer,
 )
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
@@ -31,7 +33,26 @@ def forbid_accumulation_hook(module: nn.Module, _):
 class PrivacyEngine:
     def __init__(self, secure_mode=False):
         self.accountant = RDPAccountant()
-        self.secure_mode = secure_mode  # TODO: actually support it
+        self.secure_mode = secure_mode
+        self.secure_rng = None
+
+        if self.secure_mode:
+            try:
+                import torchcsprng as csprng
+            except ImportError as e:
+                msg = (
+                    "To use secure RNG, you must install the torchcsprng package! "
+                    "Check out the instructions here: https://github.com/pytorch/csprng#installation"
+                )
+                raise ImportError(msg) from e
+
+            self.secure_rng = csprng.create_random_device_generator("/dev/urandom")
+        else:
+            warnings.warn(
+                "Secure RNG turned off. This is perfectly fine for experimentation as it allows "
+                "for much faster training performance, but remember to turn it on and retrain "
+                "one last time before production with ``secure_mode`` turned on."
+            )
 
     def is_compatible(
         self,
@@ -56,6 +77,7 @@ class PrivacyEngine:
         """
         ModuleValidator.validate(module, raise_if_error=True)
 
+    # TODO: add * syntax for keyword args
     def make_private(
         self,
         module: nn.Module,
@@ -65,19 +87,26 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        noise_seed: Optional[int] = None,
         poisson_sampling: bool = True,
         try_fix_incompatible_modules: bool = False,
     ):
         distributed = type(module) is DPDDP
 
+        if noise_seed and self.secure_mode:
+            raise ValueError("Passing seed is prohibited in secure mode")
+
         module = self._prepare_model(
             module, batch_first, loss_reduction, try_fix_incompatible_modules
         )
         # TODO: either validate consistent dataset or do per-dataset accounting
+        data_loader = self._prepare_data_loader(
+            data_loader,
+            distributed=distributed,
+            poisson_sampling=poisson_sampling,
+        )
         if poisson_sampling:
-            data_loader = self._prepare_data_loader(
-                data_loader, distributed=distributed
-            )
+            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
@@ -88,6 +117,7 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
+            noise_seed=noise_seed,
             distributed=distributed,
         )
 
@@ -113,22 +143,27 @@ class PrivacyEngine:
         max_grad_norms: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        noise_seed: Optional[int] = None,
         poisson_sampling: bool = True,
         try_fix_incompatible_modules: bool = False,
     ):
         distributed = type(module) is DPDDP
+
+        if noise_seed and self.secure_mode:
+            raise ValueError("Passing seed is prohibited in secure mode")
 
         module = self._prepare_model(
             module, batch_first, loss_reduction, try_fix_incompatible_modules
         )
 
         # TODO: either validate consistent dataset or do per-dataset accounting
-        module = self._prepare_model(
-            module,
-            batch_first,
-            loss_reduction,
+        data_loader = self._prepare_data_loader(
+            data_loader,
+            distributed=distributed,
+            poisson_sampling=poisson_sampling,
         )
-        data_loader = self._prepare_data_loader(data_loader, distributed=distributed)
+        if poisson_sampling:
+            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
@@ -139,6 +174,7 @@ class PrivacyEngine:
             max_grad_norms=max_grad_norms,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
+            noise_seed=noise_seed,
             distributed=distributed,
         )
 
@@ -156,9 +192,6 @@ class PrivacyEngine:
 
         optimizer.attach_step_hook(accountant_hook)
 
-        if poisson_sampling:
-            module.register_forward_pre_hook(forbid_accumulation_hook)
-
         return module, optimizer, data_loader
 
     # TODO: we need a test for that
@@ -173,6 +206,7 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
+        noise_seed: Optional[int] = None,
         try_fix_incompatible_modules: bool = False,
         alphas: Optional[List[float]] = None,
         sigma_min: Optional[float] = None,
@@ -196,6 +230,7 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             batch_first=batch_first,
             loss_reduction=loss_reduction,
+            noise_seed=noise_seed,
             try_fix_incompatible_modules=try_fix_incompatible_modules,
         )
 
@@ -226,11 +261,19 @@ class PrivacyEngine:
         max_grad_norm: float,
         expected_batch_size: int,
         loss_reduction: str = "mean",
+        noise_seed: Optional[int] = None,
         distributed: bool = False,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             # TODO: lol rename optimizer optimizer optimizer
             optimizer = optimizer.optimizer
+
+        generator = None
+        if self.secure_mode:
+            generator = self.secure_rng
+        elif noise_seed is not None:
+            generator = torch.Generator()
+            generator.manual_seed(noise_seed)
 
         if distributed:
             return DistributedDPOptimizer(
@@ -239,6 +282,7 @@ class PrivacyEngine:
                 max_grad_norm=max_grad_norm,
                 expected_batch_size=expected_batch_size,
                 loss_reduction=loss_reduction,
+                generator=generator,
             )
         else:
             return DPOptimizer(
@@ -247,6 +291,7 @@ class PrivacyEngine:
                 max_grad_norm=max_grad_norm,
                 expected_batch_size=expected_batch_size,
                 loss_reduction=loss_reduction,
+                generator=generator,
             )
 
     def _prepare_optimizer_per_layer(
@@ -256,24 +301,47 @@ class PrivacyEngine:
         max_grad_norms: float,
         expected_batch_size: int,
         loss_reduction: str = "mean",
+        noise_seed: Optional[int] = None,
         distributed: bool = False,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             # TODO: lol rename optimizer optimizer optimizer
             optimizer = optimizer.optimizer
 
-        return (DistributedPerLayerOptimizer if distributed else DPPerLayerOptimizer)(
+        generator = None
+        if self.secure_mode:
+            generator = self.secure_rng
+        elif noise_seed is not None:
+            generator = torch.Generator()
+            generator.manual_seed(noise_seed)
+
+        optim_class = (
+            DistributedPerLayerOptimizer if distributed else DPPerLayerOptimizer
+        )
+
+        return optim_class(
             optimizer=optimizer,
             noise_multiplier=noise_multiplier,
             max_grad_norms=max_grad_norms,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
+            generator=generator,
         )
 
     def _prepare_data_loader(
-        self, data_loader: DataLoader, distributed: bool
+        self,
+        data_loader: DataLoader,
+        distributed: bool,
+        poisson_sampling: bool,
     ) -> DataLoader:
-        return DPDataLoader.from_data_loader(data_loader, distributed=distributed)
+        if poisson_sampling:
+            return DPDataLoader.from_data_loader(
+                data_loader, generator=self.secure_rng, distributed=distributed
+            )
+        elif self.secure_mode:
+            return switch_generator(data_loader, self.secure_rng)
+        else:
+            return data_loader
 
     # TODO: default delta value?
     def get_epsilon(self, delta, alphas=None):
