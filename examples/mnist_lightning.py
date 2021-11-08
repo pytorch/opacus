@@ -19,12 +19,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchmetrics
-
 from opacus import PrivacyEngine
 from opacus.data_loader import DPDataLoader
 from opacus.lightning import DPLightningDataModule
-from pytorch_lightning.utilities.cli import LightningCLI
 from pl_bolts.datamodules import MNISTDataModule
+from pytorch_lightning.utilities.cli import LightningCLI
+
 
 warnings.filterwarnings("ignore")
 
@@ -33,7 +33,6 @@ class LitSampleConvNetClassifier(pl.LightningModule):
     def __init__(
         self,
         lr: float = 0.1,
-
         enable_dp: bool = True,
         delta: float = 1e-5,
         noise_multiplier: float = 1.0,
@@ -79,7 +78,9 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         optimizer = optim.SGD(self.parameters(), lr=self.lr, momentum=0)
 
         if self.enable_dp:
-            data_loader = self.trainer._data_connector._train_dataloader_source.dataloader()
+            data_loader = (
+                self.trainer._data_connector._train_dataloader_source.dataloader()
+            )
             dp_model, dp_optimizer, dp_dataloader = self.privacy_engine.make_private(
                 self,
                 optimizer,
@@ -151,4 +152,4 @@ def cli_main():
 
 if __name__ == "__main__":
     cli_main()
-    #main()
+    # main()

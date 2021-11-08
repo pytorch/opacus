@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from opacus.data_loader import DPDataLoader
-
-from typing import Optional, Any
+from typing import Any, Optional
 
 import pytorch_lightning as pl
 import torch
+from opacus.data_loader import DPDataLoader
 
 
 class DPLightningDataModule(pl.LightningDataModule):
@@ -38,7 +37,9 @@ class DPLightningDataModule(pl.LightningDataModule):
     def predict_dataloader(self):
         return self.datamodule.predict_dataloader()
 
-    def transfer_batch_to_device(self, batch: Any, device: torch.device, dataloader_idx: int) -> Any:
+    def transfer_batch_to_device(
+        self, batch: Any, device: torch.device, dataloader_idx: int
+    ) -> Any:
         return self.datamodule.transfer_batch_to_device(batch, device, dataloader_idx)
 
     def on_before_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
