@@ -22,12 +22,16 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchmetrics
 
+from opacus import PrivacyEngine
 from opacus.accountants import RDPAccountant
-from opacus.lightning import PrivacyEngineCallback, DPLightningDataModule
+from opacus.grad_sample import GradSampleModule
+from opacus.lightning import DPLightningDataModule
 from pytorch_lightning.utilities.cli import LightningCLI
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from pl_bolts.datamodules import MNISTDataModule
+
+from opacus.optimizers import DPOptimizer
 
 warnings.filterwarnings("ignore")
 
@@ -55,6 +59,9 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         # Metrics
         self.test_accuracy = torchmetrics.Accuracy()
 
+        self.delta = 1e-5
+        self.accountant = RDPAccountant()
+
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
         x = F.relu(self.conv1(x))  # -> [B, 16, 14, 14]
@@ -66,13 +73,48 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         x = self.fc2(x)  # -> [B, 10]
         return x
 
+    def on_train_start(self) -> None:
+        print("on_train_start")
+
+    def setup(self, stage):
+        if stage == 'fit':
+            print("setup", self.trainer._data_connector._train_dataloader_source.is_defined())
+
+
     def configure_optimizers(self):
-        optimizer = optim.SGD(self.parameters(), lr=self.lr, momentum=0)
-        return optimizer
+        print("configure_optimizers")
+
+        print("train_dataloader:", self.trainer._data_connector._train_dataloader_source.is_defined())
+        data_loader = self.trainer._data_connector._train_dataloader_source.dataloader()
+
+        sample_rate = 1 / len(data_loader)
+        expected_batch_size = int(len(data_loader.dataset) * sample_rate)
+
+        dp_model = GradSampleModule(self)
+        self.dp_model = {"dp_model": dp_model}
+        optimizer = optim.SGD(dp_model.parameters(), lr=self.lr, momentum=0)
+        dp_optimizer = DPOptimizer(
+            optimizer=optimizer,
+            noise_multiplier=1.0,
+            max_grad_norm=1.0,
+            expected_batch_size=expected_batch_size,  # requires data
+        )
+
+        sample_rate = 0.01  # requires data
+
+        def accountant_hook(optim: DPOptimizer):
+            self.accountant.step(
+                noise_multiplier=optim.noise_multiplier,
+                sample_rate=sample_rate * optim.accumulated_iterations,
+            )
+
+        dp_optimizer.attach_step_hook(accountant_hook)
+
+        return dp_optimizer
 
     def training_step(self, batch, batch_idx):
         data, target = batch
-        output = self(data)
+        output = self.dp_model["dp_model"](data)
         loss = F.cross_entropy(output, target)
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         return loss
@@ -86,6 +128,12 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         self.log("test_accuracy", self.test_accuracy, on_step=False, on_epoch=True)
         return loss
 
+    def on_train_epoch_end(self):
+        epsilon, best_alpha = self.accountant.get_privacy_spent(self.delta)
+        # Privacy spent: (epsilon, delta) for alpha
+        self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
+        self.log("alpha", best_alpha, on_epoch=True, prog_bar=True)
+
 
 def main():
     # Look ma, no privacy burden here!
@@ -93,13 +141,13 @@ def main():
     model = LitSampleConvNetClassifier()
 
     # Here we add some privacy
-    accountant = RDPAccountant()
-    privacy_engine_callback = PrivacyEngineCallback(
-        accountant=accountant,
-        delta=1e-5,
-        noise_multiplier=1.0,
-        max_grad_norm=1.0,
-    )
+    # accountant = RDPAccountant()
+    # privacy_engine_callback = PrivacyEngineCallback(
+    #     accountant=accountant,
+    #     delta=1e-5,
+    #     noise_multiplier=1.0,
+    #     max_grad_norm=1.0,
+    # )
 
     dp_data = DPLightningDataModule(data)
 
@@ -107,7 +155,6 @@ def main():
     trainer = pl.Trainer(
         max_epochs=2,
         enable_model_summary=False,
-        callbacks=[privacy_engine_callback],
     )
     trainer.fit(model, dp_data)
 

@@ -25,13 +25,6 @@ from opacus import PrivacyEngine
 from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 
 
-ACCOUNTANTS = {
-    "rdp": RDPAccountant,
-    "gaussian": GaussianAccountant,
-}
-
-
-
 class DPLightningDataModule(pl.LightningDataModule):
     def __init__(
         self,
@@ -93,64 +86,64 @@ class DPLightningDataModule(pl.LightningDataModule):
         return self.datamodule.on_after_batch_transfer(batch, dataloader_idx)
 
 
-class PrivacyEngineCallback(pl.Callback):
-
-    def __init__(
-        self,
-        accountant: RDPAccountant,
-        delta: float,
-
-        noise_multiplier: float,
-        max_grad_norm: float,
-        loss_reduction: str = "mean",
-    ):
-        """Callback enabling differential privacy learning in PyTorch Lightning trainer
-        """
-        self.accountant = accountant
-        self.delta = delta
-
-        self.noise_multiplier = noise_multiplier
-        self.max_grad_norm = max_grad_norm
-        self.loss_reduction = loss_reduction
-
-    def on_train_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
-        # wrap module
-        #dp_module = GradSampleModule(pl_module)
-        #trainer.model = dp_module
-
-        # inspect train dataloader
-        assert trainer._data_connector._train_dataloader_source.is_defined()
-        dataloader = trainer._data_connector._train_dataloader_source.dataloader()
-        # TODO: check poisson sampling
-
-        sample_rate = 1 / len(dataloader)
-        expected_batch_size = int(len(dataloader.dataset) * sample_rate)
-
-        # wrap optimizer
-        original_optimizer = trainer.optimizers
-        optimizer = DPOptimizer(
-            optimizer=original_optimizer,
-            noise_multiplier=self.noise_multiplier,
-            max_grad_norm=self.max_grad_norm,
-            loss_reduction=self.loss_reduction,
-            expected_batch_size=expected_batch_size,
-        )
-        trainer.optimizers = optimizer
-
-        def accountant_hook(optim: DPOptimizer):
-            # TODO: This works for Poisson for both single-node and distributed
-            # The reason is that the sample rate is the same in both cases (but in
-            # distributed mode, each node samples among a subset of the data)
-            self.accountant.step(
-                noise_multiplier=optim.noise_multiplier,
-                sample_rate=sample_rate * optim.accumulated_iterations,
-            )
-
-        optimizer.attach_step_hook(accountant_hook)
-
-    def on_train_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
-        epsilon, best_alpha = self.accountant.get_privacy_spent(self.delta)[0]
-        # Privacy spent: (epsilon, delta) for alpha
-        pl_module.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
-        pl_module.log("alpha", best_alpha, on_epoch=True, prog_bar=True)
+# class PrivacyEngineCallback(pl.Callback):
+#
+#     def __init__(
+#         self,
+#         accountant: RDPAccountant,
+#         delta: float,
+#
+#         noise_multiplier: float,
+#         max_grad_norm: float,
+#         loss_reduction: str = "mean",
+#     ):
+#         """Callback enabling differential privacy learning in PyTorch Lightning trainer
+#         """
+#         self.accountant = accountant
+#         self.delta = delta
+#
+#         self.noise_multiplier = noise_multiplier
+#         self.max_grad_norm = max_grad_norm
+#         self.loss_reduction = loss_reduction
+#
+#     def on_train_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+#         # wrap module
+#         #dp_module = GradSampleModule(pl_module)
+#         #trainer.model = dp_module
+#
+#         # inspect train dataloader
+#         assert trainer._data_connector._train_dataloader_source.is_defined()
+#         dataloader = trainer._data_connector._train_dataloader_source.dataloader()
+#         # TODO: check poisson sampling
+#
+#         sample_rate = 1 / len(dataloader)
+#         expected_batch_size = int(len(dataloader.dataset) * sample_rate)
+#
+#         # wrap optimizer
+#         original_optimizer = trainer.optimizers
+#         optimizer = DPOptimizer(
+#             optimizer=original_optimizer,
+#             noise_multiplier=self.noise_multiplier,
+#             max_grad_norm=self.max_grad_norm,
+#             loss_reduction=self.loss_reduction,
+#             expected_batch_size=expected_batch_size,
+#         )
+#         trainer.optimizers = optimizer
+#
+#         def accountant_hook(optim: DPOptimizer):
+#             # TODO: This works for Poisson for both single-node and distributed
+#             # The reason is that the sample rate is the same in both cases (but in
+#             # distributed mode, each node samples among a subset of the data)
+#             self.accountant.step(
+#                 noise_multiplier=optim.noise_multiplier,
+#                 sample_rate=sample_rate * optim.accumulated_iterations,
+#             )
+#
+#         optimizer.attach_step_hook(accountant_hook)
+#
+#     def on_train_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+#         epsilon, best_alpha = self.accountant.get_privacy_spent(self.delta)[0]
+#         # Privacy spent: (epsilon, delta) for alpha
+#         pl_module.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
+#         pl_module.log("alpha", best_alpha, on_epoch=True, prog_bar=True)
 
