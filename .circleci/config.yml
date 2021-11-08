@@ -134,7 +134,7 @@ commands:
             mkdir -p runs/mnist/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
-            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device <<parameters.device>>
+            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 64 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device <<parameters.device>>
             python -c "import torch; accuracy = torch.load('run_results_mnist_0.25_0.7_1.5_32_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
           when: always
       - store_test_results:

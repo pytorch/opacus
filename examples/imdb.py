@@ -19,7 +19,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import BertTokenizerFast
 
-#TODO: this is still broken
+
+# TODO: this is still broken
+
 
 class SampleNet(nn.Module):
     def __init__(self, vocab_size: int):
