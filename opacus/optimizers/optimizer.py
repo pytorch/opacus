@@ -179,8 +179,14 @@ class DPOptimizer(Optimizer):
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         # TODO: handle closure call - we should do it before pre_step()
+        loss = None
+        if closure is not None:
+            with torch.enable_grad():
+                loss = closure()
+
         if self.pre_step():
-            return self.optimizer.step(closure)
+            self.optimizer.step()
+            return loss
         else:
             return None
 
