@@ -13,25 +13,18 @@ $ tensorboard --logdir=lightning_logs/
 """
 
 import warnings
-from typing import Optional, Any
 
 import pytorch_lightning as pl
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchmetrics
 
 from opacus import PrivacyEngine
-from opacus.accountants import RDPAccountant
-from opacus.grad_sample import GradSampleModule
+from opacus.data_loader import DPDataLoader
 from opacus.lightning import DPLightningDataModule
 from pytorch_lightning.utilities.cli import LightningCLI
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 from pl_bolts.datamodules import MNISTDataModule
-
-from opacus.optimizers import DPOptimizer
 
 warnings.filterwarnings("ignore")
 
@@ -40,6 +33,11 @@ class LitSampleConvNetClassifier(pl.LightningModule):
     def __init__(
         self,
         lr: float = 0.1,
+
+        enable_dp: bool = True,
+        delta: float = 1e-5,
+        noise_multiplier: float = 1.0,
+        max_grad_norm: float = 1.0,
     ):
         """A simple conv-net for classifying MNIST
         Args:
@@ -59,8 +57,12 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         # Metrics
         self.test_accuracy = torchmetrics.Accuracy()
 
-        self.delta = 1e-5
-        self.accountant = RDPAccountant()
+        self.enable_dp = enable_dp
+        self.delta = delta
+        self.noise_multiplier = noise_multiplier
+        self.max_grad_norm = max_grad_norm
+        if self.enable_dp:
+            self.privacy_engine = PrivacyEngine()
 
     def forward(self, x):
         # x of shape [B, 1, 28, 28]
@@ -73,48 +75,30 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         x = self.fc2(x)  # -> [B, 10]
         return x
 
-    def on_train_start(self) -> None:
-        print("on_train_start")
-
-    def setup(self, stage):
-        if stage == 'fit':
-            print("setup", self.trainer._data_connector._train_dataloader_source.is_defined())
-
-
     def configure_optimizers(self):
-        print("configure_optimizers")
+        optimizer = optim.SGD(self.parameters(), lr=self.lr, momentum=0)
 
-        print("train_dataloader:", self.trainer._data_connector._train_dataloader_source.is_defined())
-        data_loader = self.trainer._data_connector._train_dataloader_source.dataloader()
-
-        sample_rate = 1 / len(data_loader)
-        expected_batch_size = int(len(data_loader.dataset) * sample_rate)
-
-        dp_model = GradSampleModule(self)
-        self.dp_model = {"dp_model": dp_model}
-        optimizer = optim.SGD(dp_model.parameters(), lr=self.lr, momentum=0)
-        dp_optimizer = DPOptimizer(
-            optimizer=optimizer,
-            noise_multiplier=1.0,
-            max_grad_norm=1.0,
-            expected_batch_size=expected_batch_size,  # requires data
-        )
-
-        sample_rate = 0.01  # requires data
-
-        def accountant_hook(optim: DPOptimizer):
-            self.accountant.step(
-                noise_multiplier=optim.noise_multiplier,
-                sample_rate=sample_rate * optim.accumulated_iterations,
+        if self.enable_dp:
+            data_loader = self.trainer._data_connector._train_dataloader_source.dataloader()
+            dp_model, dp_optimizer, dp_dataloader = self.privacy_engine.make_private(
+                self,
+                optimizer,
+                data_loader,
+                noise_multiplier=self.noise_multiplier,
+                max_grad_norm=self.max_grad_norm,
+                poisson_sampling=isinstance(data_loader, DPDataLoader),
             )
-
-        dp_optimizer.attach_step_hook(accountant_hook)
-
-        return dp_optimizer
+            self.privacy_engine.model = dp_model
+            return dp_optimizer
+        else:
+            return optimizer
 
     def training_step(self, batch, batch_idx):
         data, target = batch
-        output = self.dp_model["dp_model"](data)
+        if self.enable_dp:
+            output = self.privacy_engine.model(data)  # using wrapped model
+        else:
+            output = self(data)
         loss = F.cross_entropy(output, target)
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         return loss
@@ -129,45 +113,28 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
-        epsilon, best_alpha = self.accountant.get_privacy_spent(self.delta)
-        # Privacy spent: (epsilon, delta) for alpha
+        epsilon = self.privacy_engine.get_epsilon(self.delta)
+        # Privacy spent: (epsilon, delta)
         self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
-        self.log("alpha", best_alpha, on_epoch=True, prog_bar=True)
 
 
 def main():
-    # Look ma, no privacy burden here!
-    data = MNISTDataModule()
+    data = MNISTDataModule(batch_size=64)
     model = LitSampleConvNetClassifier()
-
-    # Here we add some privacy
-    # accountant = RDPAccountant()
-    # privacy_engine_callback = PrivacyEngineCallback(
-    #     accountant=accountant,
-    #     delta=1e-5,
-    #     noise_multiplier=1.0,
-    #     max_grad_norm=1.0,
-    # )
 
     dp_data = DPLightningDataModule(data)
 
-    # Now we go
     trainer = pl.Trainer(
         max_epochs=2,
         enable_model_summary=False,
     )
     trainer.fit(model, dp_data)
 
-    # TODO:
-    # trainer.fit(model, data)
-    # Must crash with the message: either remove PrivacyEngine or use certified data modules
-
     trainer.test(model, data)
     trainer.test(model, dp_data)  # identical
 
 
 def cli_main():
-    # TODO: add optional LightningPrivacyEngine() callback
     cli = LightningCLI(
         LitSampleConvNetClassifier,
         MNISTDataModule,
@@ -183,5 +150,5 @@ def cli_main():
 
 
 if __name__ == "__main__":
-    #cli_main()
-    main()
+    cli_main()
+    #main()
