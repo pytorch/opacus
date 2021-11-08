@@ -325,7 +325,11 @@ class PrivacyEngine_test(unittest.TestCase):
         needs_no_replacement_module = nn.Linear(1, 2)
         fixed_module = PrivacyEngine.get_compatible_module(needs_no_replacement_module)
         self.assertFalse(fixed_module is needs_no_replacement_module)
-        self.assertTrue(are_state_dict_equal(needs_no_replacement_module, fixed_module))
+        self.assertTrue(
+            are_state_dict_equal(
+                needs_no_replacement_module.state_dict(), fixed_module.state_dict()
+            )
+        )
 
     def test_deterministic_run(self):
         """
