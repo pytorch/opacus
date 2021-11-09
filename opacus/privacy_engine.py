@@ -352,6 +352,8 @@ class PrivacyEngine:
                 self.privacy_engine.steps += 1
                 return self.original_step(closure)
             else:
+                # Before running privacy_engine.step() we need to reevaluate the model and run backward() to compute
+                # grad_sample. In case these steps are provided in a closure, we need to run it.
                 loss = None
                 if closure is not None:
                     with torch.enable_grad():
