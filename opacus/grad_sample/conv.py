@@ -38,17 +38,17 @@ from .utils import register_grad_sampler
 #     return out
 
 def unfold2d(input, kernel_size: Tuple[int, int], padding: Tuple[int, int], stride: Tuple[int, int], dilation: Tuple[int, int]):
-    print("input shape", input.shape)
+    # print("input shape", input.shape)
     *shape, H, W = input.shape
     H_effective = (H + 2 * padding[0] - (kernel_size[0] + (kernel_size[0] - 1) * (dilation[0] - 1))) // stride[0] + 1
     W_effective = (W + 2 * padding[1] - (kernel_size[1] + (kernel_size[1] - 1) * (dilation[1] - 1))) // stride[1] + 1
     input = F.pad(input, (padding[0], padding[0], padding[1], padding[1]))
     *shape_pad, H_pad, W_pad = input.shape
-    print(input.shape, input.stride())
+    # print(input.shape, input.stride())
     strides = list(input.stride())
     strides = strides[:-2] + [W_pad * dilation[0], dilation[1], W_pad*stride[0], stride[1]]
-    print("STRIDES", strides)
-    print("SHAPE", shape + [kernel_size[0], kernel_size[1], H_effective, W_effective])
+    # print("STRIDES", strides)
+    # print("SHAPE", shape + [kernel_size[0], kernel_size[1], H_effective, W_effective])
     out = input.as_strided(shape + [kernel_size[0], kernel_size[1], H_effective, W_effective], strides)
 
     return out.reshape(input.size(0), -1, H_effective * W_effective)
@@ -80,18 +80,18 @@ def compute_conv_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
-    start = time.time()
+    # start = time.time()
     n = activations.shape[0]
     # get A and B in shape depending on the Conv layer
     if type(layer) == nn.Conv2d:
-        activations3 = torch.nn.functional.unfold(
-            activations,
-            layer.kernel_size,
-            padding=layer.padding,
-            stride=layer.stride,
-            dilation=layer.dilation,
-        )
-        # activations3 = unfold2d(activations, layer.kernel_size, layer.padding, layer.stride, layer.dilation)
+        # activations3 = torch.nn.functional.unfold(
+        #     activations,
+        #     layer.kernel_size,
+        #     padding=layer.padding,
+        #     stride=layer.stride,
+        #     dilation=layer.dilation,
+        # )
+        activations3 = unfold2d(activations, layer.kernel_size, layer.padding, layer.stride, layer.dilation)
         backprops = backprops.view(n, -1, activations3.shape[-1])
         # try:
         #     assert torch.norm(activations3 - activations2) < 1e-4
@@ -117,7 +117,7 @@ def compute_conv_grad_sample(
         #     stride=(1, layer.stride[0]),
         #     dilation=(1, layer.dilation[0]),
         # )
-        print(activations.shape)
+        # print(activations.shape)
         backprops = backprops.view(n, -1, activations.shape[-1])
     elif type(layer) == nn.Conv3d:
         activations = unfold3d(
@@ -129,7 +129,7 @@ def compute_conv_grad_sample(
         )
         backprops = backprops.reshape(n, -1, activations.shape[-1])
 
-    end_unfold = time.time()
+    # end_unfold = time.time()
     # n=batch_sz; o=num_out_channels; p=(num_in_channels/groups)*kernel_sz
     grad_sample = torch.einsum("noq,npq->nop", backprops, activations)
     # rearrange the above tensor and extract diagonals.
@@ -148,7 +148,7 @@ def compute_conv_grad_sample(
     if layer.bias is not None:
         ret[layer.bias] = torch.sum(backprops, dim=2)
 
-    end = time.time()
-    print(f"Timings:\tunfold:{end_unfold - start:.2e}\trest:{end - end_unfold:.2e}")
+    # end = time.time()
+    # print(f"Timings:\tunfold:{end_unfold - start:.2e}\trest:{end - end_unfold:.2e}")
 
     return ret
