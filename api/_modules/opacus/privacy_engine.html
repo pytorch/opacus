@@ -377,15 +377,24 @@
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="s2">"ddp_hooks"</span><span class="p">):</span>
                 <span class="c1"># We just update the accountant</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
-
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Before running privacy_engine.step() we need to reevaluate the model and run backward() to compute</span>
+                <span class="c1"># grad_sample. In case these steps are provided in a closure, we need to run it.</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">closure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">enable_grad</span><span class="p">():</span>
+                        <span class="n">loss</span> <span class="o">=</span> <span class="n">closure</span><span class="p">()</span>
+
                 <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">is_empty</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span>
                     <span class="n">DifferentiallyPrivateDistributedDataParallel</span><span class="p">,</span>
                 <span class="p">):</span>
                     <span class="n">average_gradients</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">original_step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">original_step</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">loss</span>
 
         <span class="k">def</span> <span class="nf">poisson_dp_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
             <span class="c1"># Perform one step as usual</span>
@@ -510,6 +519,7 @@
 
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">is_empty</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">clip_and_accumulate</span><span class="p">()</span>
             <span class="n">clip_values</span><span class="p">,</span> <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipper</span><span class="o">.</span><span class="n">pre_step</span><span class="p">()</span>
