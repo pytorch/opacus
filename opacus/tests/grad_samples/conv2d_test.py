@@ -15,13 +15,13 @@ class Conv2d_test(GradSampleHooks_test):
     @given(
         N=st.integers(1, 4),
         C=st.sampled_from([1, 3, 32]),
-        H=st.integers(6, 10),
-        W=st.integers(6, 10),
+        H=st.integers(11, 17),
+        W=st.integers(11, 17),
         out_channels_mapper=st.sampled_from([expander, shrinker]),
         kernel_size=st.integers(2, 3),
         stride=st.integers(1, 2),
-        padding=st.sampled_from([0]),
-        dilation=st.integers(1),
+        padding=st.sampled_from([0, 2]),
+        dilation=st.integers(1,3),
         groups=st.integers(1, 16),
     )
     @settings(deadline=10000)
