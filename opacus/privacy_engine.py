@@ -350,15 +350,24 @@ class PrivacyEngine:
             if hasattr(self.privacy_engine.module, "ddp_hooks"):
                 # We just update the accountant
                 self.privacy_engine.steps += 1
-
+                return self.original_step(closure)
             else:
+                # Before running privacy_engine.step() we need to reevaluate the model and run backward() to compute
+                # grad_sample. In case these steps are provided in a closure, we need to run it.
+                loss = None
+                if closure is not None:
+                    with torch.enable_grad():
+                        loss = closure()
+
                 self.privacy_engine.step(is_empty)
                 if isinstance(
                     self.privacy_engine.module._module,
                     DifferentiallyPrivateDistributedDataParallel,
                 ):
                     average_gradients(self.privacy_engine.module)
-            self.original_step(closure)
+
+                self.original_step()
+                return loss
 
         def poisson_dp_step(self, closure=None):
             # Perform one step as usual
@@ -483,6 +492,7 @@ class PrivacyEngine:
 
         """
         self.steps += 1
+
         if not is_empty:
             self.clipper.clip_and_accumulate()
             clip_values, batch_size = self.clipper.pre_step()
