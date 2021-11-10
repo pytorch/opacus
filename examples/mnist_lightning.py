@@ -4,14 +4,18 @@
 """
 Runs MNIST training with differential privacy.
 This example demonstrates how to use Opacus with PyTorch Lightning.
+
 To start training:
 $ python mnist_lightning.py fit
+
 More information about setting training parameters:
 $ python mnist_lightning.py fit --help
+
 To see logs:
 $ tensorboard --logdir=lightning_logs/
 """
 
+import os
 import warnings
 
 import pytorch_lightning as pl
@@ -24,7 +28,6 @@ from opacus.data_loader import DPDataLoader
 from opacus.lightning import DPLightningDataModule
 from pl_bolts.datamodules import MNISTDataModule
 from pytorch_lightning.utilities.cli import LightningCLI
-
 
 warnings.filterwarnings("ignore")
 
@@ -160,5 +163,7 @@ def cli_main():
 
 
 if __name__ == "__main__":
-    cli_main()
-    # main()
+    if os.environ.get("LIGHTNING_VANILLA") == "true":
+        main()
+    else:
+        cli_main()
