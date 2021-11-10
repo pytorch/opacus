@@ -12,6 +12,7 @@ import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader, TensorDataset
 
 
 PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
@@ -68,36 +69,41 @@ def demo_basic(rank, weight, world_size, dp):
 
     # create model and move it to GPU with id rank
     model = ToyModel().to(rank)
+    optimizer = optim.SGD(model.parameters(), lr=1)
+
+    labels = torch.randn(batch_size, 5).to(rank)
+    data = torch.randn(batch_size, 10)
+
+    data_loader = DataLoader(TensorDataset(data, labels), batch_size=batch_size)
+
+    loss_fn = nn.MSELoss()
     if dp:
         ddp_model = DPDDP(model)
-        engine = PrivacyEngine(
-            ddp_model,
-            batch_size=batch_size,
-            sample_size=10 * batch_size,
-            alphas=PRIVACY_ALPHAS,
-            noise_multiplier=0,
-            max_grad_norm=1e8,
-        )
     else:
         ddp_model = DDP(model, device_ids=[rank])
 
-    loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(ddp_model.parameters(), lr=1)
-    if dp:
-        engine.attach(optimizer)
+    privacy_engine = PrivacyEngine()
 
-    # if rank == 0:
-    #     print(model.net1.weight)
+    if dp:
+        ddp_model, optimizer, data_loader = privacy_engine.make_private(
+            module=ddp_model,
+            optimizer=optimizer,
+            data_loader=data_loader,
+            noise_multiplier=0,
+            max_grad_norm=1e8,
+            poisson_sampling=False,
+        )
+
     optimizer.zero_grad()
-    labels = torch.randn(batch_size, 5).to(rank)
-    outputs = ddp_model(torch.randn(batch_size, 10).to(rank))
-    loss_fn(outputs, labels).backward()
-    optimizer.step()
-    # if rank == 0:
-    #     print(model.net1.weight)
+
+    for x, y in data_loader:
+        outputs = ddp_model(x.to(rank))
+        loss = loss_fn(outputs, y)
+        loss.backward()
+        optimizer.step()
+        break
 
     weight.copy_(model.net1.weight.data.cpu())
-
     cleanup()
 
 
@@ -116,4 +122,4 @@ class GradientComputationTest(unittest.TestCase):
         run_demo(demo_basic, weight_dp, 2, dp=True)
         run_demo(demo_basic, weight_nodp, 2, dp=False)
 
-        self.assertTrue(torch.norm(weight_dp - weight_nodp) < 1e-7)
+        self.assertTrue(torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3))
