@@ -34,6 +34,29 @@ def forbid_accumulation_hook(module: nn.Module, _):
 
 
 class PrivacyEngine:
+    """
+    # TODO: Add docstring with doctest
+    # - Creating PrivacyEngine and applying make_private (test_privacy_engine_class_example)
+    # - Moving model to another device
+    # - Virtual step
+
+    Example:
+        >>> dataloader = getfixture("demo_dataloader")  # doctest: +SKIP
+        >>> criterion = nn.CrossEntropyLoss()  # doctest: +SKIP
+        >>> optimizer = torch.optim.SGD(model.parameters(), lr=0.05)  # doctest: +SKIP
+        >>> privacy_engine = PrivacyEngine()  # doctest: +SKIP
+        >>> for i, (X, y) in enumerate(dataloader):  # doctest: +SKIP
+        ...     logits = model(X)
+        ...     loss = criterion(logits, y)
+        ...     loss.backward()
+        ...     if i % 16 == 15:
+        ...         optimizer.step()  # this will call privacy engine's step()
+        ...         optimizer.zero_grad()
+        ...     else:
+        ...         optimizer.virtual_step()  # this will call privacy engine's virtual_step()
+
+    """
+
     def __init__(self, secure_mode=False):
         self.accountant = RDPAccountant()
         self.secure_mode = secure_mode
