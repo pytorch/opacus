@@ -14,15 +14,22 @@ Example:
 
     To call this script from command line, you can enter:
 
-    >>>  python compute_dp_sgd_privacy.py --dataset-size=60000 --batch-size=256 --noise_multiplier=1.12 --epochs=60 --delta=1e-5 --a 10 20 100
+    $ python -m opacus.scripts.compute_dp_sgd_privacy --epochs=3 --delta=1e-5 --sample-rate 0.01 --noise-multiplier 1.0 --alphas 2 5 10 20 100
 
-    The training process with these parameters satisfies (epsilon,delta)-DP of (2.95, 1e-5).
+    DP-SGD with
+        sampling rate = 1%,
+        noise_multiplier = 1.0,
+        iterated over 300 steps,
+    satisfies differential privacy with
+        epsilon = 2.39,
+        delta = 1e-05.
+    The optimal alpha is 5.0.
 """
 import argparse
 import math
 from typing import List, Tuple
 
-from opacus import privacy_analysis
+from opacus.accountants.analysis.rdp import compute_rdp, get_privacy_spent
 
 
 def _apply_dp_sgd_analysis(
@@ -49,8 +56,8 @@ def _apply_dp_sgd_analysis(
     Returns:
         Pair of privacy loss epsilon and optimal order alpha
     """
-    rdp = privacy_analysis.compute_rdp(sample_rate, noise_multiplier, steps, alphas)
-    eps, opt_alpha = privacy_analysis.get_privacy_spent(alphas, rdp, delta=delta)
+    rdp = compute_rdp(sample_rate, noise_multiplier, steps, alphas)
+    eps, opt_alpha = get_privacy_spent(alphas, rdp, delta=delta)
 
     if verbose:
         print(
@@ -110,7 +117,9 @@ def compute_dp_sgd_privacy(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="RDP computation")
+    parser = argparse.ArgumentParser(
+        description="Estimate privacy of a model trained with DP-SGD using RDP accountant",
+    )
     parser.add_argument(
         "-r",
         "--sample-rate",
@@ -151,11 +160,11 @@ def main():
     args = parser.parse_args()
 
     compute_dp_sgd_privacy(
-        args.sample_rate,
-        args.noise_multiplier,
-        args.epochs,
-        args.delta,
-        args.alphas,
+        sample_rate=args.sample_rate,
+        noise_multiplier=args.noise_multiplier,
+        epochs=args.epochs,
+        delta=args.delta,
+        alphas=args.alphas,
     )
 
 
