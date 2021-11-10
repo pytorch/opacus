@@ -265,7 +265,6 @@ class SequentialBatchDataLoaderMixin:
 
 # TODO: inheritance or another mixin?
 class PrivacyEngineFlatClippingBase(PrivacyEngineBase):
-
     def make_private(
         self,
         module: nn.Module,

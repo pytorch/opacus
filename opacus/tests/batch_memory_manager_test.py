@@ -2,7 +2,7 @@ import unittest
 
 import torch
 import torch.nn as nn
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from opacus import PrivacyEngineFactory
 from opacus.utils.batch_memory_manager import BatchMemoryManager
@@ -42,6 +42,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
         num_workers=st.integers(0, 4),
         pin_memory=st.booleans(),
     )
+    @settings(deadline=10000)
     def test_basic(
         self,
         num_workers,
