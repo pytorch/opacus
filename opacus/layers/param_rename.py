@@ -28,7 +28,6 @@ class RenameParamsMixin:
 
     Example:
 
-        >>> import torch  # TODO: import torch automatically for all docstrings
         >>> class DPModel(RenameParamsMixin, nn.Module):
         ...    def __init__(self, hidden_size):
         ...        super().__init__()

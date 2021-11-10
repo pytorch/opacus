@@ -18,11 +18,16 @@ Example:
     The example code would be:
 
     >>> max_order = 32
-    >>> orders = range(2, max_order + 1)  # doctest: +SKIP
-    >>> rdp = np.zeros_like(orders, dtype=float)  # doctest: +SKIP
-    >>> for q, sigma, steps in parameters:  # doctest: +SKIP
+    >>> orders = range(2, max_order + 1)
+    >>> rdp = np.zeros_like(orders, dtype=float)
+    >>> parameters = [(0.01, 1.0, 1), (0.01, 3.0, 2)]
+    >>> for q, sigma, steps in parameters:
     ...     rdp += compute_rdp(q, sigma, steps, orders)
-    >>> epsilon, opt_order = get_privacy_spent(orders, rdp, delta)  # doctest: +SKIP
+    >>> epsilon, opt_order = get_privacy_spent(orders, rdp, delta=1e-5)
+    >>> epsilon  # doctest: +NUMBER
+    0.96
+    >>> opt_order
+    10
 
 """
 

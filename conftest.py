@@ -5,6 +5,8 @@ from torch import nn
 
 
 class MyCustomModule(nn.Module):
+    """Demo module to use in doctests"""
+
     def __init__(self):
         super().__init__()
         self.f = nn.Linear(5, 3)
@@ -19,6 +21,7 @@ def create_namespace(doctest_namespace):
     Initialize namespace for doctest.
     Everything added to `doctest_namespace` will be available in the doctest.
     """
+    import numpy as np  # noqa
     import opacus  # noqa
     import torch  # noqa
     from torch import nn  # noqa

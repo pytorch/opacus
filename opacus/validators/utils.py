@@ -20,8 +20,7 @@ def register_module_validator(
     You may supply your own validator_class that holds the registry of VALIDATORS.
     The signature of every validator is always the same:
 
-    >>> from typing import List  # TODO: add to fixture
-    >>> @register_module_validator(nn.Linear)  # TODO: change nn.Linear to MyCustomModule mock
+    >>> @register_module_validator(MyCustomModule)
     ... def validate(module: nn.Module, **kwargs) -> List[opacus.validators.errors.UnsupportedError]:
     ...    pass
 
@@ -52,8 +51,7 @@ def register_module_fixer(
     You may supply your own validator_class that holds the registry of FIXERS.
     The signature of every fixer is always the same:
 
-    >>> from typing import List
-    >>> @register_module_fixer(nn.Linear)  # TODO: change nn.Linear to MyCustomModule mock
+    >>> @register_module_fixer(MyCustomModule)
     ... def fix(module: nn.Module, **kwargs) -> nn.Module:
     ...    pass
 

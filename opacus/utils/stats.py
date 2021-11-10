@@ -73,11 +73,9 @@ class Stat:
         and then update the stat meter in the proper location using:
 
         >>> acc1_value = compute_accuracy(x, y)  # doctest: +SKIP
-
         (you can supply your metrics functions, and Stats later displays them)
 
         >>> stats.update(stats.StatType.TEST, acc1=acc1_value)  # doctest: +SKIP
-
         (pass to Stats the result so that the result gets logged)
     """
     summary_writer: Optional[SummaryWriter] = None

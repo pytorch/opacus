@@ -33,10 +33,8 @@ def calc_sample_norms(
         >>> t1 = torch.rand((2, 5))
         >>> t2 = torch.rand((2, 5))
         >>> norms = calc_sample_norms([("1", t1), ("2", t2)])
-        >>> norms
-        [tensor([...])]
-        >>> norms[0].shape
-        torch.Size([2])
+        >>> norms, norms[0].shape
+        ([tensor([...])], torch.Size([2]))
     """
     norms = [param.view(len(param), -1).norm(2, dim=-1) for name, param in named_params]
     # calc norm over all layer norms if flat = True
@@ -67,10 +65,8 @@ def calc_sample_norms_one_layer(param: torch.Tensor) -> torch.Tensor:
     Example:
         >>> t1 = torch.rand((2, 5))
         >>> norms = calc_sample_norms_one_layer(t1)
-        >>> norms
-        tensor([...])
-        >>> norms.shape
-        torch.Size([2])
+        >>> norms, norms.shape
+        (tensor([...]), torch.Size([2]))
     """
     norms = param.view(len(param), -1).norm(2, dim=-1)
     return norms
