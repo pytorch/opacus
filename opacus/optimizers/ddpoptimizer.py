@@ -46,8 +46,7 @@ class DistributedDPOptimizer(DPOptimizer):
                 p.grad /= self.world_size
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        self.pre_step()
-        if self._is_last_step_skipped:
+        if self.pre_step():
             return None
         else:
             self.reduce_gradients()
