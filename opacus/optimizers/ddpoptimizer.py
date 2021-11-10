@@ -47,7 +47,7 @@ class DistributedDPOptimizer(DPOptimizer):
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         if self.pre_step():
-            return None
-        else:
             self.reduce_gradients()
             return self.optimizer.step(closure)
+        else:
+            return None
