@@ -1,13 +1,14 @@
 from typing import Optional, Sequence
 
 import torch
+from torch.utils.data import BatchSampler, DataLoader, Dataset, Sampler
+from torch.utils.data._utils.collate import default_collate
+from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
+
 from opacus.utils.uniform_sampler import (
     DistributedUniformWithReplacementSampler,
     UniformWithReplacementSampler,
 )
-from torch.utils.data import BatchSampler, DataLoader, Dataset, Sampler
-from torch.utils.data._utils.collate import default_collate
-from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
 
 def wrap_collate_with_empty(
