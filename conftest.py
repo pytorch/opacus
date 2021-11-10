@@ -1,11 +1,9 @@
 from collections import defaultdict
 
 import pytest
-
 import torch
-from torch import nn
-
 from opacus.utils import stats
+from torch import nn
 
 
 class MyCustomModule(nn.Module):
@@ -35,6 +33,7 @@ class MockSummaryWriter:
     def add_scalar(self, name, value, iter):
         self.logs[name][iter] = value
 
+
 mock_summary_writer = MockSummaryWriter()
 stats.set_global_summary_writer(mock_summary_writer)
 
@@ -45,11 +44,12 @@ def create_namespace(doctest_namespace):
     Initialize namespace for doctest.
     Everything added to `doctest_namespace` will be available in the doctest.
     """
+    from typing import Any, Dict, List, Set, Tuple, Union  # noqa
+
     import numpy as np  # noqa
     import opacus  # noqa
     import torch  # noqa
     from torch import nn  # noqa
-    from typing import Any, List, Tuple, Dict, Set, Union  # noqa
 
     doctest_namespace.update(**locals())
     doctest_namespace["MyCustomModule"] = MyCustomModule
