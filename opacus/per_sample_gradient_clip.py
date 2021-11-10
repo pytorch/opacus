@@ -34,9 +34,8 @@ Notes:
 from typing import Callable, Iterator, Optional, Tuple
 
 import torch
-from torch import nn
-
 from opacus.grad_sample import GradSampleModule
+from torch import nn
 
 from .utils.clipping import NormClipper
 from .utils.tensor_utils import calc_sample_norms

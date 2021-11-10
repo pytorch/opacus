@@ -4,9 +4,6 @@ import warnings
 from typing import List, Optional
 
 import torch
-from torch import nn, optim
-from torch.utils.data import DataLoader
-
 from opacus.accountants import RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
@@ -19,6 +16,8 @@ from opacus.optimizers import (
     DPPerLayerOptimizer,
 )
 from opacus.validators.module_validator import ModuleValidator
+from torch import nn, optim
+from torch.utils.data import DataLoader
 
 
 def forbid_accumulation_hook(module: nn.Module, _):
