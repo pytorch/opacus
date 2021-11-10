@@ -265,6 +265,29 @@ class SequentialBatchDataLoaderMixin:
 
 # TODO: inheritance or another mixin?
 class PrivacyEngineFlatClippingBase(PrivacyEngineBase):
+
+    def make_private(
+        self,
+        module: nn.Module,
+        optimizer: optim.Optimizer,
+        data_loader: DataLoader,
+        noise_multiplier: float,
+        max_grad_norm: float,
+        batch_first: bool = True,
+        loss_reduction: str = "mean",
+        noise_seed: Optional[int] = None,
+    ):
+        return super().make_private(
+            module=module,
+            optimizer=optimizer,
+            data_loader=data_loader,
+            noise_multiplier=noise_multiplier,
+            max_grad_norm=max_grad_norm,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+            noise_seed=noise_seed,
+        )
+
     def _prepare_optimizer(
         self,
         optimizer: optim.Optimizer,
