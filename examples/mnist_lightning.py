@@ -38,7 +38,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         noise_multiplier: float = 1.0,
         max_grad_norm: float = 1.0,
     ):
-        """A simple conv-net for classifying MNIST
+        """A simple conv-net for classifying MNIST with differential privacy training
 
         Args:
             lr: Learning rate
