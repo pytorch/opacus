@@ -3,8 +3,15 @@
 
 from . import utils
 from .per_sample_gradient_clip import PerSampleGradientClipper
-from .privacy_engine import PrivacyEngine
+from .privacy_engine.catalog import PrivacyEngine
+from .privacy_engine.factory import PrivacyEngineFactory
 from .version import __version__
 
 
-__all__ = ["PrivacyEngine", "PerSampleGradientClipper", "utils", "__version__"]
+__all__ = [
+    "PrivacyEngine",
+    "PrivacyEngineFactory",
+    "PerSampleGradientClipper",
+    "utils",
+    "__version__",
+]

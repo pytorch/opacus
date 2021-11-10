@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from hypothesis import given, settings
-from opacus import PrivacyEngine
+from opacus import PrivacyEngine, PrivacyEngineFactory
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
@@ -87,18 +87,19 @@ class BasePrivacyEngineTest(ABC):
 
         dl = self._init_data()
 
-        privacy_engine = PrivacyEngine(secure_mode=secure_mode)
+        privacy_engine = PrivacyEngineFactory.get(
+            poisson_sampling=poisson_sampling, secure_mode=secure_mode
+        )
         model, optimizer, poisson_dl = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=dl,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
-            poisson_sampling=poisson_sampling,
             batch_first=self.BATCH_FIRST,
         )
 
-        return model, optimizer, dl, privacy_engine
+        return model, optimizer, poisson_dl, privacy_engine
 
     def _train_steps(
         self,
@@ -207,8 +208,8 @@ class BasePrivacyEngineTest(ABC):
         Compare gradients and updated weights with vanilla model initialized
         with the same seed
         """
-        for do_noise in (False,):
-            for do_clip in (True,):
+        for do_noise in (True, False):
+            for do_clip in (True, False):
                 with self.subTest(do_noise=do_noise, do_clip=do_clip):
                     self._compare_to_vanilla(
                         do_noise=do_noise,

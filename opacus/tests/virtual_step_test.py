@@ -5,7 +5,7 @@ import unittest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus import PrivacyEngine
+from opacus import PrivacyEngine, PrivacyEngineFactory
 from opacus.grad_sample import GradSampleModule
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -147,7 +147,6 @@ class GradientAccumulation_test(unittest.TestCase):
             data_loader=self.dl,
             noise_multiplier=0.0,
             max_grad_norm=999,
-            poisson_sampling=True,
         )
         data = iter(dl)
         self.model_forward_backward(model, data, num_steps=1)
@@ -160,14 +159,13 @@ class GradientAccumulation_test(unittest.TestCase):
         Calling `privacy_engine.make_private` should call optimizer.virtual_step()
         under the hood.
         """
-        privacy_engine = PrivacyEngine()
+        privacy_engine = PrivacyEngineFactory.get(poisson_sampling=False)
         model, optimizer, dl = privacy_engine.make_private(
             module=self.model,
             optimizer=self.optimizer,
             data_loader=self.dl,
             noise_multiplier=0.0,
             max_grad_norm=999,
-            poisson_sampling=False,
         )
         data = iter(dl)  # 4 batches of size 4 each
 

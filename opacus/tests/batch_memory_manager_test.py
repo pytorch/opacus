@@ -2,7 +2,9 @@ import unittest
 
 import torch
 import torch.nn as nn
-from opacus import PrivacyEngine
+from hypothesis import given
+from hypothesis import strategies as st
+from opacus import PrivacyEngineFactory
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -36,28 +38,27 @@ class BatchMemoryManagerTest(unittest.TestCase):
 
         return model, optimizer, data_loader
 
-    # @given(
-    # num_workers=st.integers(0, 4),
-    # pin_memory=st.booleans(),
-    # )
+    @given(
+        num_workers=st.integers(0, 4),
+        pin_memory=st.booleans(),
+    )
     def test_basic(
         self,
-        num_workers: int = 0,
-        pin_memory: bool = True,
+        num_workers,
+        pin_memory,
     ):
         model, optimizer, data_loader = self._init_training(
             num_workers=num_workers,
             pin_memory=pin_memory,
         )
 
-        privacy_engine = PrivacyEngine()
+        privacy_engine = PrivacyEngineFactory.get(poisson_sampling=False)
         model, optimizer, data_loader = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=data_loader,
             noise_multiplier=1.0,
             max_grad_norm=1.0,
-            poisson_sampling=False,
         )
         with BatchMemoryManager(
             data_loader=data_loader, max_physical_batch_size=3, optimizer=optimizer
@@ -88,14 +89,13 @@ class BatchMemoryManagerTest(unittest.TestCase):
         torch.manual_seed(1337)
         model, optimizer, data_loader = self._init_training()
 
-        privacy_engine = PrivacyEngine()
+        privacy_engine = PrivacyEngineFactory.get(poisson_sampling=False)
         model, optimizer, data_loader = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=data_loader,
             noise_multiplier=1.0,
             max_grad_norm=1.0,
-            poisson_sampling=False,
         )
 
         with BatchMemoryManager(
@@ -114,14 +114,13 @@ class BatchMemoryManagerTest(unittest.TestCase):
         torch.manual_seed(1337)
         model, optimizer, data_loader = self._init_training()
 
-        privacy_engine = PrivacyEngine()
+        privacy_engine = PrivacyEngineFactory.get(poisson_sampling=False)
         model, optimizer, data_loader = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=data_loader,
             noise_multiplier=1.0,
             max_grad_norm=1.0,
-            poisson_sampling=False,
         )
 
         for x, y in data_loader:
