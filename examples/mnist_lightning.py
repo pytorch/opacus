@@ -39,6 +39,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         max_grad_norm: float = 1.0,
     ):
         """A simple conv-net for classifying MNIST
+
         Args:
             lr: Learning rate
             enable_dp: Enables training with privacy guarantees using Opacus (if True), vanilla SGD otherwise
@@ -88,7 +89,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
                 self.trainer._data_connector._train_dataloader_source.dataloader()
             )
             # transform (model, optimizer, dataloader) to DP-versions
-            dp_model, dp_optimizer, dp_dataloader = self.privacy_engine.make_private(
+            model, optimizer, dataloader = self.privacy_engine.make_private(
                 self,
                 optimizer,
                 data_loader,
@@ -96,18 +97,12 @@ class LitSampleConvNetClassifier(pl.LightningModule):
                 max_grad_norm=self.max_grad_norm,
                 poisson_sampling=isinstance(data_loader, DPDataLoader),
             )
-            self.privacy_engine.model = dp_model
-            return dp_optimizer
-        else:
-            return optimizer
+
+        return optimizer
 
     def training_step(self, batch, batch_idx):
         data, target = batch
-        if self.enable_dp:
-            # using wrapped model with grad sampler
-            output = self.privacy_engine.model(data)
-        else:
-            output = self(data)
+        output = self(data)
         loss = F.cross_entropy(output, target)
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         return loss
@@ -122,8 +117,8 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
+        # Logging privacy spent: (epsilon, delta)
         epsilon = self.privacy_engine.get_epsilon(self.delta)
-        # Privacy spent: (epsilon, delta)
         self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)
 
 
