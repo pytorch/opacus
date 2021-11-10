@@ -31,7 +31,7 @@ def pretty_number(n):
         return str(n)
 
 
-def main():
+def main():  # noqa: C901
     world_size = 1
 
     args = parse_args()
