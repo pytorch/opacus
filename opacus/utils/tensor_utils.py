@@ -27,10 +27,10 @@ def calc_sample_norms(
             layers norms
 
     Example:
-        >>> t1 = torch.rand((2, 5))
-        >>> t2 = torch.rand((2, 5))
+        >>> t1 = torch.zeros((2, 5))  # TODO: return rand
+        >>> t2 = torch.zeros((2, 5))
         >>> calc_sample_norms([("1", t1), ("2", t2)])
-            [tensor([1.5117, 1.0618])]
+        [tensor([0., 0.])]
 
     Returns:
         A list of tensor norms where length of the list is the number of layers
@@ -59,9 +59,9 @@ def calc_sample_norms_one_layer(param: torch.Tensor) -> torch.Tensor:
             is the size of the batch and is the 0th dimension.
 
     Example:
-        >>> t1 = torch.rand((2, 5))
-        >>> calc_sample_norms_one_layer(t1)
-            tensor([1.4757, 0.8128])
+        >>> t1 = torch.rand((2, 5))  # doctest: +SKIP
+        >>> calc_sample_norms_one_layer(t1)  # doctest: +SKIP
+        tensor([1.4757, 0.8128])
 
     Returns:
         A tensor of norms
@@ -121,7 +121,7 @@ def unfold3d(
 
     Example:
         >>> B, C, D, H, W = 3, 4, 5, 6, 7
-        >>> tensor = torch.arange(1,B*C*D*H*W+1.).view(B,C,D,H,W)
+        >>> tensor = torch.arange(1, B*C*D*H*W + 1.).view(B, C, D, H, W)
         >>> unfold3d(tensor, kernel_size=2, padding=0, stride=1).shape
         torch.Size([3, 32, 120])
 

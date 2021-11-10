@@ -15,7 +15,7 @@ to be clipped so that if they were to be put in a single vector together. If ``C
 threshold, this ensures the total norm will be at most ``C``.
 
 Example:
-    >>> T = torch.cat([p.grad_sample.flatten() for p in model.parameters()])
+    >>> T = torch.cat([p.grad_sample.flatten() for p in model.parameters()])  # doctest: +SKIP
 
     ``T`` will have shape ``[B, N_TOTAL_PARAMS]``. The total L2 norm of each row of ``T``
     cannot be greater than ``C``.

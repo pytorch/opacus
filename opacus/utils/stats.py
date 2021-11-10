@@ -57,11 +57,13 @@ class Stat:
 
         >>> stat = Stat(StatType.GRAD, 'sample_stats', frequency=0.1)
         >>> for i in range(20):
-        >>>    stat.log({"val":i})
+        ...    stat.log({"val": i})
 
         If an instance of ``tensorboard.SummaryWriter`` exists it can be used
         for stat gathering by passing it like this:
 
+        >>> from torch.utils import tensorboard
+        >>> from opacus.utils import stats
         >>> stats.set_global_summary_writer(tensorboard.SummaryWriter())
 
         To add stats about test accuracy you can do:
@@ -70,8 +72,13 @@ class Stat:
 
         and then update the stat meter in the proper location using:
 
-        >>> acc1_value = compute_accuracy(x, y)  # you can supply your metrics functions, and Stats later displays them
-        >>> stats.update(stats.StatType.TEST, acc1=acc1_value)  # pass to Stats the result so that the result gets logged
+        >>> acc1_value = compute_accuracy(x, y)  # doctest: +SKIP
+
+        (you can supply your metrics functions, and Stats later displays them)
+
+        >>> stats.update(stats.StatType.TEST, acc1=acc1_value)  # doctest: +SKIP
+
+        (pass to Stats the result so that the result gets logged)
     """
     summary_writer: Optional[SummaryWriter] = None
 
