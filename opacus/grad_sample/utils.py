@@ -16,7 +16,7 @@ def register_grad_sampler(
     the function that will be invoked every time you want to compute a per-sample gradient
     of ``target_class_or_classes``. The signature of every grad_sampler is always the same:
 
-    >>> @register_grad_sampler(nn.MyCustomClass)  # doctest: +SKIP
+    >>> @register_grad_sampler(MyCustomModule)
     ... def compute_grad_sample(module, activations, backprops):
     ...    pass
 
