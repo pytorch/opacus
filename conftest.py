@@ -6,7 +6,7 @@ from opacus.utils import stats
 from torch import nn
 
 
-class MyCustomModule(nn.Module):
+class MyCustomModel(nn.Module):
     """Demo module to use in doctests"""
 
     def __init__(self):
@@ -51,7 +51,9 @@ def create_namespace(doctest_namespace):
     import torch  # noqa
     from torch import nn  # noqa
 
+    # Adding all imports in the doctest namespace
     doctest_namespace.update(**locals())
-    doctest_namespace["MyCustomModule"] = MyCustomModule
+
+    doctest_namespace["MyCustomModel"] = MyCustomModel
     doctest_namespace["demo_dataloader"] = create_demo_dataloader()
     doctest_namespace["mock_summary_writer"] = mock_summary_writer
