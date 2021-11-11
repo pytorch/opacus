@@ -20,22 +20,12 @@ PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
 def setup(rank, world_size):
     if sys.platform == "win32":
-        # Distributed package only covers collective communications with Gloo
-        # backend and FileStore on Windows platform. Set init_method parameter
-        # in init_process_group to a local file.
-        # Example init_method="file:///f:/libtmp/some_file"
-        init_method = "file:///{your local file path}"
-
-        # initialize the process group
-        dist.init_process_group(
-            "gloo", init_method=init_method, rank=rank, world_size=world_size
-        )
+        raise ValueError("Windows platform is not supported for this test")
     else:
         os.environ["MASTER_ADDR"] = "localhost"
         os.environ["MASTER_PORT"] = "12355"
 
         # initialize the process group
-        # dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
         os.environ["RANK"] = str(rank)
         os.environ["WORLD_SIZE"] = str(world_size)
