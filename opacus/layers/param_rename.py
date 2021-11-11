@@ -28,12 +28,12 @@ class RenameParamsMixin:
 
     Example:
 
-        class DPModel(RenameParamsMixin, nn.Module):
-            def __init__(self, hidden_size):
-                super().__init__()
-                self.w = nn.Parameter(torch.zeros(hidden_size, requires_grad=True))
-                self.set_rename_map({"w": "weights"})
-
+        >>> class DPModel(RenameParamsMixin, nn.Module):
+        ...    def __init__(self, hidden_size):
+        ...        super().__init__()
+        ...        self.w = nn.Parameter(torch.zeros(hidden_size, requires_grad=True))
+        ...        self.set_rename_map({"w": "weights"})
+        ...
         >>> model = DPModel(5)
         >>> model.state_dict()
         {'weights': tensor([0., 0., 0., 0., 0.])}

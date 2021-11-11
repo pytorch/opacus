@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
+from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from torch.utils.data import DataLoader, Dataset
 from torchvision import models, transforms
@@ -76,9 +77,9 @@ class BasePrivacyEngineTest(ABC):
         noise_multiplier: float = 1.0,
         max_grad_norm: float = 1.0,
         poisson_sampling: bool = True,
-        try_fix_incompatible_modules: bool = False,
     ):
         model = self._init_model()
+        model = PrivacyEngine.get_compatible_module(model)
         optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
 
         if state_dict:
@@ -94,7 +95,6 @@ class BasePrivacyEngineTest(ABC):
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
             poisson_sampling=poisson_sampling,
-            try_fix_incompatible_modules=try_fix_incompatible_modules,
             batch_first=self.BATCH_FIRST,
         )
 
@@ -274,9 +274,8 @@ class BasePrivacyEngineTest(ABC):
         """
         resnet = models.resnet18()
         optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
-        privacy_engine = PrivacyEngine()
         dl = self._init_data()
-
+        privacy_engine = PrivacyEngine()
         with self.assertRaises(UnsupportedModuleError):
             _, _, _ = privacy_engine.make_private(
                 module=resnet,
@@ -291,20 +290,28 @@ class BasePrivacyEngineTest(ABC):
         Test that the privacy engine fixes unsupported modules
         and succeeds.
         """
-        resnet = models.resnet18()
+        resnet = PrivacyEngine.get_compatible_module(models.resnet18())
         optimizer = torch.optim.SGD(resnet.parameters(), lr=1.0)
-        privacy_engine = PrivacyEngine()
         dl = self._init_data()
-
+        privacy_engine = PrivacyEngine()
         _, _, _ = privacy_engine.make_private(
             module=resnet,
             optimizer=optimizer,
             data_loader=dl,
             noise_multiplier=1.3,
             max_grad_norm=1,
-            try_fix_incompatible_modules=True,
         )
         self.assertTrue(1, 1)
+
+    def test_get_compatible_module_inaction(self):
+        needs_no_replacement_module = nn.Linear(1, 2)
+        fixed_module = PrivacyEngine.get_compatible_module(needs_no_replacement_module)
+        self.assertFalse(fixed_module is needs_no_replacement_module)
+        self.assertTrue(
+            are_state_dict_equal(
+                needs_no_replacement_module.state_dict(), fixed_module.state_dict()
+            )
+        )
 
     def test_deterministic_run(self):
         """

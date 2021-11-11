@@ -25,7 +25,7 @@ class SequenceBias(nn.Module):
         >>> m = SequenceBias(16)
         >>> input = torch.randn(20, 4, 16)
         >>> output = m(input)
-        >>> print(output.size())
+        >>> output.size()
         torch.Size([21, 4, 16])
     """
 
