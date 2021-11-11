@@ -8,7 +8,7 @@ import pytest
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-from opacus.layers import DPMultiheadAttention
+import opacus.layers as dp
 
 from .common import DPModules_test
 
@@ -66,7 +66,7 @@ class DPMultiheadAttention_test(DPModules_test):
             kdim=kdim,
             vdim=vdim,
         )
-        dp_attn = DPMultiheadAttention(
+        dp_attn = dp.MultiheadAttention(
             embed_dim,
             num_heads,
             dropout=0.0,  # Untestable between two different implementations

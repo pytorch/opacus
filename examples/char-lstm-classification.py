@@ -9,7 +9,7 @@ from statistics import mean
 import torch
 import torch.nn as nn
 from opacus import PrivacyEngine
-from opacus.layers import DPGRU, DPLSTM, DPRNN
+from opacus.layers import DPGRU, LSTM, RNN
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
@@ -384,11 +384,11 @@ def main():
     )
 
     if args.mode == "rnn":
-        rnn_type = DPRNN
+        rnn_type = RNN
     elif args.mode == "gru":
         rnn_type = DPGRU
     elif args.mode == "lstm":
-        rnn_type = DPLSTM
+        rnn_type = LSTM
     else:
         raise ValueError(f"Invalid network type: {args.mode}")
 

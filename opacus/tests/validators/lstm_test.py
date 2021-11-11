@@ -3,7 +3,7 @@
 import unittest
 
 import torch.nn as nn
-from opacus.layers import DPLSTM
+import opacus.layers as dp
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import ShouldReplaceModuleError
 from opacus.validators.module_validator import ModuleValidator
@@ -22,7 +22,7 @@ class LSTMValidator_test(unittest.TestCase):
 
     def test_fix(self):
         fix_lstm = self.mf[type(self.lstm)](self.lstm)
-        self.assertTrue(isinstance(fix_lstm, DPLSTM))
+        self.assertTrue(isinstance(fix_lstm, dp.LSTM))
         self.assertTrue(
             are_state_dict_equal(self.lstm.state_dict(), fix_lstm.state_dict())
         )

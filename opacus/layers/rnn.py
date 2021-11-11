@@ -12,7 +12,7 @@ from torch import Tensor
 from torch.nn.utils.rnn import PackedSequence
 
 from ..utils.packed_sequences import compute_seq_lengths
-from .param_rename import RenameParamsMixin
+from opacus.layers.utils.param_rename import RenameParamsMixin
 
 
 def apply_permutation(tensor: Tensor, dim: int, permutation: Optional[Tensor]):
@@ -41,7 +41,7 @@ class RNNLinear(nn.Linear):
         super().__init__(in_features, out_features, bias)
 
 
-class DPRNNCellBase(nn.Module):
+class RNNCellBase(nn.Module):
     has_cell_state: bool = False
 
     def __init__(
@@ -67,7 +67,7 @@ class DPRNNCellBase(nn.Module):
         self.hh.max_batch_len = max_batch_length
 
 
-class DPRNNCell(DPRNNCellBase):
+class RNNCell(RNNCellBase):
     """An Elman RNN cell with tanh or ReLU non-linearity.
 
     DP-friendly drop-in replacement of the ``torch.nn.RNNCell`` module to use in ``DPRNN``.
@@ -106,7 +106,7 @@ class DPRNNCell(DPRNNCellBase):
         return h_t
 
 
-class DPGRUCell(DPRNNCellBase):
+class GRUCell(RNNCellBase):
     """A gated recurrent unit (GRU) cell
 
     DP-friendly drop-in replacement of the ``torch.nn.GRUCell`` module to use in ``DPGRU``.
@@ -143,7 +143,7 @@ class DPGRUCell(DPRNNCellBase):
         return h_t
 
 
-class DPLSTMCell(DPRNNCellBase):
+class LSTMCell(RNNCellBase):
     """A long short-term memory (LSTM) cell.
 
     DP-friendly drop-in replacement of the ``torch.nn.LSTMCell`` module to use in ``DPLSTM``.
@@ -196,14 +196,14 @@ class DPLSTMCell(DPRNNCellBase):
 
 
 RNN_CELL_TYPES = {
-    "RNN_TANH": (DPRNNCell, {"nonlinearity": "tanh"}),
-    "RNN_RELU": (DPRNNCell, {"nonlinearity": "relu"}),
-    "GRU": (DPGRUCell, {}),
-    "LSTM": (DPLSTMCell, {}),
+    "RNN_TANH": (RNNCell, {"nonlinearity": "tanh"}),
+    "RNN_RELU": (RNNCell, {"nonlinearity": "relu"}),
+    "GRU": (GRUCell, {}),
+    "LSTM": (LSTMCell, {}),
 }
 
 
-class DPRNNBase(RenameParamsMixin, nn.Module):
+class RNNBase(RenameParamsMixin, nn.Module):
     """Base class for all RNN-like sequence models.
 
     DP-friendly drop-in replacement of the ``torch.nn.RNNBase`` module.
@@ -219,7 +219,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
 
     def __init__(
         self,
-        mode: Union[str, Type[DPRNNCellBase]],
+        mode: Union[str, Type[RNNCellBase]],
         input_size: int,
         hidden_size: int,
         num_layers: int = 1,
@@ -440,7 +440,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         h_0: Tensor,
         c_0: Optional[Tensor],
         batch_sizes: Tensor,
-        cell: DPRNNCellBase,
+        cell: RNNCellBase,
         max_batch_size: int,
         seq_length: int,
         is_packed: bool,
@@ -613,7 +613,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         return cells
 
 
-class DPRNN(DPRNNBase):
+class RNN(RNNBase):
     """Applies a multi-layer Elman RNN with :math:`\tanh` or :math:`\text{ReLU}` non-linearity to an
     input sequence.
 
@@ -636,7 +636,7 @@ class DPRNN(DPRNNBase):
         nonlinearity: str = "tanh",
     ) -> None:
         super().__init__(
-            DPRNNCell,
+            RNNCell,
             input_size,
             hidden_size,
             num_layers=num_layers,
@@ -649,7 +649,7 @@ class DPRNN(DPRNNBase):
         )
 
 
-class DPGRU(DPRNNBase):
+class DPGRU(RNNBase):
     """Applies a multi-layer gated recurrent unit (GRU) RNN to an input sequence.
 
     DP-friendly drop-in replacement of the ``torch.nn.GRU`` module.
@@ -670,7 +670,7 @@ class DPGRU(DPRNNBase):
         proj_size: int = 0,
     ) -> None:
         super().__init__(
-            DPGRUCell,
+            GRUCell,
             input_size,
             hidden_size,
             num_layers=num_layers,
@@ -682,7 +682,7 @@ class DPGRU(DPRNNBase):
         )
 
 
-class DPLSTM(DPRNNBase):
+class LSTM(RNNBase):
     """Applies a multi-layer long short-term memory (LSTM) RNN to an input
     sequence.
 
@@ -704,7 +704,7 @@ class DPLSTM(DPRNNBase):
         proj_size: int = 0,
     ) -> None:
         super().__init__(
-            DPLSTMCell,
+            LSTMCell,
             input_size,
             hidden_size,
             num_layers=num_layers,

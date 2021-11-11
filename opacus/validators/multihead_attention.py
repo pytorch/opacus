@@ -2,7 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import torch.nn as nn
-from opacus.layers import DPMultiheadAttention
+import opacus.layers as dp
 
 from .errors import ShouldReplaceModuleError
 from .utils import register_module_fixer, register_module_validator
@@ -21,8 +21,8 @@ def validate(module: nn.MultiheadAttention) -> None:
 
 
 @register_module_fixer(nn.MultiheadAttention)
-def fix(module: nn.MultiheadAttention) -> DPMultiheadAttention:
-    dp_attn = DPMultiheadAttention(
+def fix(module: nn.MultiheadAttention) -> dp.MultiheadAttention:
+    dp_attn = dp.MultiheadAttention(
         embed_dim=module.embed_dim,
         num_heads=module.num_heads,
         dropout=module.dropout,

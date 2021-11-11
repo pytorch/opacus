@@ -7,7 +7,7 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-from opacus.layers import DPGRU, DPLSTM, DPRNN
+import opacus.layers as dp
 from opacus.utils.packed_sequences import _gen_packed_data
 from torch.nn.utils.rnn import PackedSequence
 
@@ -63,13 +63,13 @@ class DPLSTM_test(DPModules_test):
         use_cn = False
         if mode == "rnn":
             original_rnn_class = nn.RNN
-            dp_rnn_class = DPRNN
+            dp_rnn_class = dp.RNN
         elif mode == "gru":
             original_rnn_class = nn.GRU
-            dp_rnn_class = DPGRU
+            dp_rnn_class = dp.DPGRU
         elif mode == "lstm":
             original_rnn_class = nn.LSTM
-            dp_rnn_class = DPLSTM
+            dp_rnn_class = dp.LSTM
             use_cn = True
         else:
             raise ValueError("Invalid RNN mode")

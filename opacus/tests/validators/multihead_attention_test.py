@@ -3,7 +3,7 @@
 import unittest
 
 import torch.nn as nn
-from opacus.layers import DPMultiheadAttention
+import opacus.layers as dp
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import ShouldReplaceModuleError
 from opacus.validators.module_validator import ModuleValidator
@@ -22,7 +22,7 @@ class MultiheadAttentionValidator_test(unittest.TestCase):
 
     def test_fix(self):
         fix_mha = self.mf[type(self.mha)](self.mha)
-        self.assertTrue(isinstance(fix_mha, DPMultiheadAttention))
+        self.assertTrue(isinstance(fix_mha, dp.MultiheadAttention))
         self.assertFalse(  # state_dicts are not same
             are_state_dict_equal(self.mha.state_dict(), fix_mha.state_dict())
         )

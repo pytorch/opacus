@@ -5,7 +5,7 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-from opacus.layers import DPMultiheadAttention
+import opacus.layers as dp
 
 from .common import GradSampleHooks_test
 
@@ -23,7 +23,7 @@ class DPMultiheadAttentionAdapter(nn.Module):
 
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.attn = DPMultiheadAttention(*args, **kwargs)
+        self.attn = dp.MultiheadAttention(*args, **kwargs)
 
     def forward(self, x):
         q, k, v = x.unbind(-1)

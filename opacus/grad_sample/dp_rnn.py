@@ -6,7 +6,7 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from opacus.layers.dp_rnn import RNNLinear
+from opacus.layers.rnn import RNNLinear
 
 from .utils import register_grad_sampler
 

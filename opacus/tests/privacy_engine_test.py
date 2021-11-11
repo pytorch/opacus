@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
-from opacus.layers.dp_multihead_attention import DPMultiheadAttention
+import opacus.layers as dp
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from torch.utils.data import DataLoader, Dataset
@@ -448,7 +448,7 @@ class SampleAttnNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.emb = nn.Embedding(100, 8)
-        self.attn = DPMultiheadAttention(8, 1)
+        self.attn = dp.MultiheadAttention(8, 1)
         self.fc = nn.Linear(8, 1)
 
         for param in self.parameters():

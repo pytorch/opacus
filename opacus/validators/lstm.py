@@ -2,7 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import torch.nn as nn
-from opacus.layers import DPLSTM
+import opacus.layers as dp
 
 from .errors import ShouldReplaceModuleError
 from .utils import register_module_fixer, register_module_validator
@@ -21,8 +21,8 @@ def validate(module: nn.LSTM) -> None:
 
 
 @register_module_fixer(nn.LSTM)
-def fix(module: nn.LSTM) -> DPLSTM:
-    dplstm = DPLSTM(
+def fix(module: nn.LSTM) -> dp.LSTM:
+    dplstm = dp.LSTM(
         input_size=module.input_size,
         hidden_size=module.hidden_size,
         num_layers=module.num_layers,

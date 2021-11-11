@@ -50,7 +50,7 @@ class SequenceBias(nn.Module):
         return torch.cat([x, self.bias.repeat(1, bsz, 1)])
 
 
-class DPMultiheadAttention(nn.Module):
+class MultiheadAttention(nn.Module):
     r"""
     This is DP-friendly implementation of nn.MultiheadAttention.
     For full reference see original module refer to
@@ -72,7 +72,7 @@ class DPMultiheadAttention(nn.Module):
         kdim=None,
         vdim=None,
     ):
-        super(DPMultiheadAttention, self).__init__()
+        super(MultiheadAttention, self).__init__()
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -148,7 +148,7 @@ class DPMultiheadAttention(nn.Module):
             state_dict["vlinear.weight"] = state_dict["v_proj_weight"]
             del state_dict["v_proj_weight"]
 
-        super(DPMultiheadAttention, self).load_state_dict(state_dict)
+        super(MultiheadAttention, self).load_state_dict(state_dict)
 
     # flake8: noqa C901
     def forward(
