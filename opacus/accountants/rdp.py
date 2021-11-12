@@ -50,6 +50,10 @@ class RDPAccountant(IAccountant):
 
         return float(eps), float(best_alpha)
 
+    def get_epsilon(self, delta: float):
+        eps, _ = self.get_privacy_spent(delta)
+        return eps
+
 
 def get_noise_multiplier(
     target_epsilon: float,

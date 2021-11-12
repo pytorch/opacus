@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from hypothesis import given, settings
-from opacus import PrivacyEngine, PrivacyEngineFactory
+from opacus import PrivacyEngine
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
@@ -87,9 +87,7 @@ class BasePrivacyEngineTest(ABC):
 
         dl = self._init_data()
 
-        privacy_engine = PrivacyEngineFactory.get(
-            poisson_sampling=poisson_sampling, secure_mode=secure_mode
-        )
+        privacy_engine = PrivacyEngine(secure_mode=secure_mode)
         model, optimizer, poisson_dl = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
@@ -97,6 +95,7 @@ class BasePrivacyEngineTest(ABC):
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
             batch_first=self.BATCH_FIRST,
+            poisson_sampling=poisson_sampling,
         )
 
         return model, optimizer, poisson_dl, privacy_engine

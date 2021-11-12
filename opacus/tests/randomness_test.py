@@ -3,7 +3,7 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-from opacus import PrivacyEngineFactory
+from opacus import PrivacyEngine
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.grad_sample import GradSampleModule
 from opacus.optimizers import DPOptimizer
@@ -272,9 +272,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
             dl_generator.manual_seed(dl_seed)
 
         model, optim, dl = self._init_training(dl_generator=dl_generator)
-        privacy_engine = PrivacyEngineFactory.get(
-            secure_mode=secure_mode, poisson_sampling=poisson_sampling
-        )
+        privacy_engine = PrivacyEngine(secure_mode=secure_mode)
 
         return privacy_engine.make_private(
             module=model,
@@ -283,6 +281,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
             noise_multiplier=noise,
             max_grad_norm=1.0,
             noise_seed=noise_seed,
+            poisson_sampling=poisson_sampling,
         )
 
     def test_basic(self):

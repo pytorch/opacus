@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import warnings
-from abc import ABC, abstractmethod
 from typing import List, Optional, Union
 
 import torch
@@ -34,9 +33,13 @@ def forbid_accumulation_hook(module: nn.Module, _):
             )
 
 
-class PrivacyEngineBase(ABC):
-    def __init__(self, secure_mode=False):
-        self.accountant = self._init_accountant()
+class PrivacyEngine:
+    def __init__(self, accountant: Optional[IAccountant] = None, secure_mode=False):
+        if accountant:
+            self.accountant = accountant
+        else:
+            self.accountant = RDPAccountant()
+
         self.secure_mode = secure_mode
         self.secure_rng = None
 
@@ -58,30 +61,69 @@ class PrivacyEngineBase(ABC):
                 "one last time before production with ``secure_mode`` turned on."
             )
 
-    @abstractmethod
-    def _init_accountant(self) -> IAccountant:
-        pass
+    @classmethod
+    def _get_optimizer_class(cls, clipping: str, distributed: bool):
+        if clipping == "flat" and distributed is False:
+            return DPOptimizer
+        elif clipping == "flat" and distributed is True:
+            return DistributedDPOptimizer
+        elif clipping == "per_layer" and distributed is False:
+            return DPPerLayerOptimizer
+        elif clipping == "per_layer" and distributed is True:
+            return DistributedPerLayerOptimizer
 
-    @abstractmethod
+        raise ValueError
+
     def _prepare_optimizer(
         self,
         optimizer: optim.Optimizer,
+        *,
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
         expected_batch_size: int,
         loss_reduction: str = "mean",
         noise_seed: Optional[int] = None,
         distributed: bool = False,
+        clipping: str = "flat",
     ) -> DPOptimizer:
-        pass
+        if isinstance(optimizer, DPOptimizer):
+            # TODO: lol rename optimizer optimizer optimizer
+            optimizer = optimizer.optimizer
 
-    @abstractmethod
+        generator = None
+        if self.secure_mode:
+            generator = self.secure_rng
+        elif noise_seed is not None:
+            generator = torch.Generator()
+            generator.manual_seed(noise_seed)
+
+        optim_class = self._get_optimizer_class(
+            clipping=clipping, distributed=distributed
+        )
+
+        return optim_class(
+            optimizer=optimizer,
+            noise_multiplier=noise_multiplier,
+            max_grad_norm=max_grad_norm,
+            expected_batch_size=expected_batch_size,
+            loss_reduction=loss_reduction,
+            generator=generator,
+        )
+
     def _prepare_data_loader(
         self,
         data_loader: DataLoader,
+        poisson_sampling: bool,
         distributed: bool,
     ) -> DataLoader:
-        pass
+        if poisson_sampling:
+            return DPDataLoader.from_data_loader(
+                data_loader, generator=self.secure_rng, distributed=distributed
+            )
+        elif self.secure_mode:
+            return switch_generator(data_loader, self.secure_rng)
+        else:
+            return data_loader
 
     def _prepare_model(
         self, module: nn.Module, batch_first: bool = True, loss_reduction: str = "mean"
@@ -131,17 +173,18 @@ class PrivacyEngineBase(ABC):
         ModuleValidator.validate(module, raise_if_error=True)
         return module
 
-    # TODO: add * syntax for keyword args
     def make_private(
         self,
         module: nn.Module,
         optimizer: optim.Optimizer,
         data_loader: DataLoader,
+        *,
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
         batch_first: bool = True,
         loss_reduction: str = "mean",
         noise_seed: Optional[int] = None,
+        poisson_sampling: bool = True,
     ):
         if noise_seed and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
@@ -151,11 +194,12 @@ class PrivacyEngineBase(ABC):
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
         module = self._prepare_model(module, batch_first, loss_reduction)
+        if poisson_sampling:
+            module.register_forward_pre_hook(forbid_accumulation_hook)
 
         # TODO: either validate consistent dataset or do per-dataset accounting
         data_loader = self._prepare_data_loader(
-            data_loader,
-            distributed=distributed,
+            data_loader, distributed=distributed, poisson_sampling=poisson_sampling
         )
 
         optimizer = self._prepare_optimizer(
@@ -169,9 +213,7 @@ class PrivacyEngineBase(ABC):
         )
 
         def accountant_hook(optim: DPOptimizer):
-            # TODO: Should the comment below be TODO or just a regular comment?
-
-            # TODO: This works for Poisson for both single-node and distributed
+            # This works for Poisson for both single-node and distributed
             # The reason is that the sample rate is the same in both cases (but in
             # distributed mode, each node samples among a subset of the data)
             self.accountant.step(
@@ -221,173 +263,5 @@ class PrivacyEngineBase(ABC):
             noise_seed=noise_seed,
         )
 
-
-class RDPAccontantMixin:
-    def _init_accountant(self):
-        return RDPAccountant()
-
-    # TODO: default delta value?
     def get_epsilon(self, delta):
-        return self.accountant.get_privacy_spent(delta)[0]
-
-
-class PoissonDataLoaderMixin:
-    def _prepare_data_loader(
-        self,
-        data_loader: DataLoader,
-        distributed: bool,
-    ) -> DataLoader:
-        return DPDataLoader.from_data_loader(
-            data_loader, generator=self.secure_rng, distributed=distributed
-        )
-
-    def _prepare_model(
-        self, module: nn.Module, batch_first: bool = True, loss_reduction: str = "mean"
-    ):
-        module = super()._prepare_model(module, batch_first, loss_reduction)
-        module.register_forward_pre_hook(forbid_accumulation_hook)
-
-        return module
-
-
-class SequentialBatchDataLoaderMixin:
-    def _prepare_data_loader(
-        self,
-        data_loader: DataLoader,
-        distributed: bool,
-    ) -> DataLoader:
-
-        if self.secure_mode:
-            return switch_generator(data_loader, self.secure_rng)
-        else:
-            return data_loader
-
-
-# TODO: inheritance or another mixin?
-class PrivacyEngineFlatClippingBase(PrivacyEngineBase):
-    def make_private(
-        self,
-        module: nn.Module,
-        optimizer: optim.Optimizer,
-        data_loader: DataLoader,
-        noise_multiplier: float,
-        max_grad_norm: float,
-        batch_first: bool = True,
-        loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
-    ):
-        return super().make_private(
-            module=module,
-            optimizer=optimizer,
-            data_loader=data_loader,
-            noise_multiplier=noise_multiplier,
-            max_grad_norm=max_grad_norm,
-            batch_first=batch_first,
-            loss_reduction=loss_reduction,
-            noise_seed=noise_seed,
-        )
-
-    def _prepare_optimizer(
-        self,
-        optimizer: optim.Optimizer,
-        noise_multiplier: float,
-        max_grad_norm: float,
-        expected_batch_size: int,
-        loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
-        distributed: bool = False,
-    ) -> DPOptimizer:
-        if isinstance(optimizer, DPOptimizer):
-            # TODO: lol rename optimizer optimizer optimizer
-            optimizer = optimizer.optimizer
-
-        generator = None
-        if self.secure_mode:
-            generator = self.secure_rng
-        elif noise_seed is not None:
-            generator = torch.Generator()
-            generator.manual_seed(noise_seed)
-
-        if distributed:
-            return DistributedDPOptimizer(
-                optimizer=optimizer,
-                noise_multiplier=noise_multiplier,
-                max_grad_norm=max_grad_norm,
-                expected_batch_size=expected_batch_size,
-                loss_reduction=loss_reduction,
-                generator=generator,
-            )
-        else:
-            return DPOptimizer(
-                optimizer=optimizer,
-                noise_multiplier=noise_multiplier,
-                max_grad_norm=max_grad_norm,
-                expected_batch_size=expected_batch_size,
-                loss_reduction=loss_reduction,
-                generator=generator,
-            )
-
-
-class PrivacyEnginePerLayerClippingBase(PrivacyEngineBase):
-    def make_private(
-        self,
-        module: nn.Module,
-        optimizer: optim.Optimizer,
-        data_loader: DataLoader,
-        noise_multiplier: float,
-        max_grad_norm: List[float],
-        batch_first: bool = True,
-        loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
-    ):
-        distributed = type(module) is DPDDP
-
-        model, optimizer, data_loader = super().make_private(
-            module=module,
-            optimizer=optimizer,
-            data_loader=data_loader,
-            noise_multiplier=noise_multiplier,
-            max_grad_norm=max_grad_norm,
-            batch_first=batch_first,
-            loss_reduction=loss_reduction,
-            noise_seed=noise_seed,
-        )
-
-        if distributed:
-            optimizer.register_hooks(module)
-
-        return model, optimizer, data_loader
-
-    def _prepare_optimizer(
-        self,
-        optimizer: optim.Optimizer,
-        noise_multiplier: float,
-        max_grad_norm: List[float],
-        expected_batch_size: int,
-        loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
-        distributed: bool = False,
-    ) -> DPOptimizer:
-        if isinstance(optimizer, DPOptimizer):
-            # TODO: lol rename optimizer optimizer optimizer
-            optimizer = optimizer.optimizer
-
-        generator = None
-        if self.secure_mode:
-            generator = self.secure_rng
-        elif noise_seed is not None:
-            generator = torch.Generator()
-            generator.manual_seed(noise_seed)
-
-        optim_class = (
-            DistributedPerLayerOptimizer if distributed else DPPerLayerOptimizer
-        )
-
-        return optim_class(
-            optimizer=optimizer,
-            noise_multiplier=noise_multiplier,
-            max_grad_norms=max_grad_norm,
-            expected_batch_size=expected_batch_size,
-            loss_reduction=loss_reduction,
-            generator=generator,
-        )
+        return self.accountant.get_epsilon(delta)

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from opacus import PrivacyEngineFactory
+from opacus import PrivacyEngine
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -45,21 +45,22 @@ class BatchMemoryManagerTest(unittest.TestCase):
     @settings(deadline=10000)
     def test_basic(
         self,
-        num_workers,
-        pin_memory,
+        num_workers: int,
+        pin_memory: bool,
     ):
         model, optimizer, data_loader = self._init_training(
             num_workers=num_workers,
             pin_memory=pin_memory,
         )
 
-        privacy_engine = PrivacyEngineFactory.get(poisson_sampling=False)
+        privacy_engine = PrivacyEngine()
         model, optimizer, data_loader = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=data_loader,
             noise_multiplier=1.0,
             max_grad_norm=1.0,
+            poisson_sampling=False,
         )
         with BatchMemoryManager(
             data_loader=data_loader, max_physical_batch_size=3, optimizer=optimizer
@@ -90,13 +91,14 @@ class BatchMemoryManagerTest(unittest.TestCase):
         torch.manual_seed(1337)
         model, optimizer, data_loader = self._init_training()
 
-        privacy_engine = PrivacyEngineFactory.get(poisson_sampling=False)
+        privacy_engine = PrivacyEngine()
         model, optimizer, data_loader = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=data_loader,
             noise_multiplier=1.0,
             max_grad_norm=1.0,
+            poisson_sampling=False,
         )
 
         with BatchMemoryManager(
@@ -115,13 +117,14 @@ class BatchMemoryManagerTest(unittest.TestCase):
         torch.manual_seed(1337)
         model, optimizer, data_loader = self._init_training()
 
-        privacy_engine = PrivacyEngineFactory.get(poisson_sampling=False)
+        privacy_engine = PrivacyEngine()
         model, optimizer, data_loader = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=data_loader,
             noise_multiplier=1.0,
             max_grad_norm=1.0,
+            poisson_sampling=False,
         )
 
         for x, y in data_loader:

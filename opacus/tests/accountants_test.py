@@ -16,7 +16,7 @@ class AccountingTest(unittest.TestCase):
         for _ in range(steps):
             accountant.step(noise_multiplier, sample_rate)
 
-        epsilon = accountant.get_privacy_spent(delta=1e-5)[0]
+        epsilon = accountant.get_epsilon(delta=1e-5)
         self.assertAlmostEqual(epsilon, 7.32911117143)
 
     def test_gdp_accountant(self):
@@ -28,7 +28,7 @@ class AccountingTest(unittest.TestCase):
         for _ in range(steps):
             accountant.step(noise_multiplier, sample_rate)
 
-        epsilon = accountant.get_privacy_spent(delta=1e-5)
+        epsilon = accountant.get_epsilon(delta=1e-5)
         self.assertLess(6.59, epsilon)
         self.assertLess(epsilon, 6.6)
 

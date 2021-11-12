@@ -16,7 +16,7 @@ class GaussianAccountant(IAccountant):
             )
         self.steps += 1
 
-    def get_privacy_spent(self, delta: float) -> float:
+    def get_epsilon(self, delta: float) -> float:
         if self.poisson:
             epsilon = privacy_analysis.compute_eps_poisson(
                 self.steps, self.noise_multiplier, self.sample_rate, delta
