@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from datasets import load_dataset
-from opacus import PrivacyEngineFactory
+from opacus import PrivacyEngine
 from torch.functional import F
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
@@ -256,18 +256,17 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     privacy_engine = None
     if not args.disable_dp:
+        privacy_engine = PrivacyEngine(secure_mode=args.secure_rng)
+
         # TODO: we need to switch poisson sampling back on, but the
         # model exhibits strange behaviour with batch_size=1
-        privacy_engine = PrivacyEngineFactory.get(
-            poisson_sampling=False, secure_mode=args.secure_rng
-        )
-
         model, optimizer, train_loader = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=train_loader,
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
+            poisson_sampling=False,
         )
 
     mean_accuracy = 0
