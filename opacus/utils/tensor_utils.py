@@ -26,14 +26,15 @@ def calc_sample_norms(
         flat: A flag, when set to `True` returns a flat norm over all
             layers norms
 
+    Returns:
+        A list of tensor norms where length of the list is the number of layers
+
     Example:
         >>> t1 = torch.rand((2, 5))
         >>> t2 = torch.rand((2, 5))
-        >>> calc_sample_norms([("1", t1), ("2", t2)])
-            [tensor([1.5117, 1.0618])]
-
-    Returns:
-        A list of tensor norms where length of the list is the number of layers
+        >>> norms = calc_sample_norms([("1", t1), ("2", t2)])
+        >>> norms, norms[0].shape
+        ([tensor([...])], torch.Size([2]))
     """
     norms = [param.view(len(param), -1).norm(2, dim=-1) for name, param in named_params]
     # calc norm over all layer norms if flat = True
@@ -58,13 +59,14 @@ def calc_sample_norms_one_layer(param: torch.Tensor) -> torch.Tensor:
         param: A tensor of shape ``[B, ...]`` where ``B``
             is the size of the batch and is the 0th dimension.
 
-    Example:
-        >>> t1 = torch.rand((2, 5))
-        >>> calc_sample_norms_one_layer(t1)
-            tensor([1.4757, 0.8128])
-
     Returns:
         A tensor of norms
+
+    Example:
+        >>> t1 = torch.rand((2, 5))
+        >>> norms = calc_sample_norms_one_layer(t1)
+        >>> norms, norms.shape
+        (tensor([...]), torch.Size([2]))
     """
     norms = param.view(len(param), -1).norm(2, dim=-1)
     return norms
@@ -84,13 +86,13 @@ def sum_over_all_but_batch_and_last_n(
         tensor: An input tensor of shape ``(B, ..., X[n_dims-1])``.
         n_dims: Number of dimensions to keep.
 
+    Returns:
+        A tensor of shape ``(B, ..., X[n_dims-1])``
+
     Example:
         >>> tensor = torch.ones(1, 2, 3, 4, 5)
         >>> sum_over_all_but_batch_and_last_n(tensor, n_dims=2).shape
         torch.Size([1, 4, 5])
-
-    Returns:
-        A tensor of shape ``(B, ..., X[n_dims-1])``
     """
     if tensor.dim() == n_dims + 1:
         return tensor
@@ -119,15 +121,15 @@ def unfold3d(
         stride: the stride of the sliding blocks in the input spatial dimensions
         dilation: the spacing between the kernel points.
 
-    Example:
-        >>> B, C, D, H, W = 3, 4, 5, 6, 7
-        >>> tensor = torch.arange(1,B*C*D*H*W+1.).view(B,C,D,H,W)
-        >>> unfold3d(tensor, kernel_size=2, padding=0, stride=1).shape
-        torch.Size([3, 32, 120])
-
     Returns:
         A tensor of shape ``(B, C * np.product(kernel_size), L)``, where L - output spatial dimensions.
         See :class:`torch.nn.Unfold` for more details
+
+    Example:
+        >>> B, C, D, H, W = 3, 4, 5, 6, 7
+        >>> tensor = torch.arange(1, B*C*D*H*W + 1.).view(B, C, D, H, W)
+        >>> unfold3d(tensor, kernel_size=2, padding=0, stride=1).shape
+        torch.Size([3, 32, 120])
     """
 
     if len(tensor.shape) != 5:

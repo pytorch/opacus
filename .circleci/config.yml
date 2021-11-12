@@ -108,11 +108,11 @@ commands:
     description: "Run unit tests"
     steps:
       - run:
-          name: "Unit tests"
+          name: "Unit tests & doctests"
           no_output_timeout: 1h
           command: |
             mkdir unittest-reports
-            python -m pytest --junitxml=unittest-reports/junit.xml
+            python -m pytest --doctest-modules -p conftest --junitxml=unittest-reports/junit.xml opacus
 
       - store_test_results:
           path: unittest-reports
