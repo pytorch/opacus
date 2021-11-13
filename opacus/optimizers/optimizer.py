@@ -32,7 +32,7 @@ def _generate_noise(
         https://arxiv.org/abs/2107.10138)
     """
     zeros = torch.zeros(reference.shape, device=reference.device)
-    if std = 0:
+    if std == 0:
         return zeros
     # TODO: handle device transfers: generator and reference tensor
     # could be on different devices
