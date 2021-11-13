@@ -33,6 +33,7 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
         generator=None,
+        secure_mode=False,
     ):
         self.rank = torch.distributed.get_rank()
         self.max_grad_norms = max_grad_norms
@@ -44,6 +45,7 @@ class DistributedPerLayerOptimizer(DPOptimizer):
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
             generator=generator,
+            secure_mode=secure_mode,
         )
 
     def _add_noise_parameter(self, p):
@@ -51,7 +53,7 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         The reason why we need self is because of generator for secure_mode
         """
         noise = _generate_noise(
-            self.noise_multiplier * self.max_grad_norm, p.summed_grad
+            self.noise_multiplier * self.max_grad_norm, p.summed_grad, None, self.secure_mode,
         )
         p.grad = p.summed_grad + noise
 
