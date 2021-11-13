@@ -53,7 +53,10 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         The reason why we need self is because of generator for secure_mode
         """
         noise = _generate_noise(
-            self.noise_multiplier * self.max_grad_norm, p.summed_grad, None, self.secure_mode,
+            std = self.noise_multiplier * self.max_grad_norm,
+            reference = p.summed_grad,
+            generator = None,
+            secure_mode = self.secure_mode,
         )
         p.grad = p.summed_grad + noise
 

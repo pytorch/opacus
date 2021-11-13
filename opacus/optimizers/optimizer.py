@@ -11,7 +11,7 @@ def _generate_noise(
     std: float,
     reference: torch.Tensor,
     generator=None,
-    secure_mode : bool = False,
+    secure_mode: bool = False,
 ) -> torch.Tensor:
     """
     Generates noise according to a Gaussian distribution with mean 0
@@ -40,10 +40,10 @@ def _generate_noise(
         torch.normal(
             mean=0,
             std=std,
-            size=(1,1),
+            size=(1, 1),
             device=reference.device,
             generator=generator,
-        ) # throw away first random number generated
+        )  # throw away first generated random number
         sum = zeros
         for i in range(4):
             sum += torch.normal(
@@ -62,7 +62,6 @@ def _generate_noise(
             device=reference.device,
             generator=generator,
         )
-
 
 
 def _get_flat_grad_sample(p: torch.Tensor):
