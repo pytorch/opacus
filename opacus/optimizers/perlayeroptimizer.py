@@ -18,7 +18,6 @@ class DPPerLayerOptimizer(DPOptimizer):
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
         generator=None,
-        secure_mode=False,
     ):
         assert len(max_grad_norms) == len(optimizer.params)
         self.max_grad_norms = max_grad_norms
@@ -30,7 +29,6 @@ class DPPerLayerOptimizer(DPOptimizer):
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
             generator=generator,
-            secure_mode=secure_mode,
         )
 
     def attach(self, optimizer):
