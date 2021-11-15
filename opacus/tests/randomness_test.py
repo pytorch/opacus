@@ -178,7 +178,6 @@ class OptimizerRandomnessTest(unittest.TestCase):
             max_grad_norm=1.0,
             expected_batch_size=8,
             generator=generator,
-            secure_mode=False,
         )
 
         return model, dp_optim, dl

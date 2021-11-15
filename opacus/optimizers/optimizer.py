@@ -29,7 +29,15 @@ def _generate_noise(
         against the floating point representation attacks, such as the ones
         in https://arxiv.org/abs/2107.10138. This is achieved through calling
         the Gaussian noise function 2*n times, when n=2 (see section 5.1 in
-        https://arxiv.org/abs/2107.10138)
+        https://arxiv.org/abs/2107.10138).
+
+        Reason for choosing n=2: n can be any number > 1. The bigger, the more
+        computation needs to be done (`2n` Gaussian samples will be generated).
+        The reason we chose `n=2` is that, `n=1` could be easy to break and `n>2`
+        is not really necessary. The complexity of the attack is `2^p(2n-1)`.
+        In PyTorch, `p=53` and so complexity is `2^53(2n-1)`. With `n=1`, we get
+        `2^53` (easy to break) but with `n=2`, we get `2^159`, which is hard
+        enough for an attacker to break.
     """
     zeros = torch.zeros(reference.shape, device=reference.device)
     if std == 0:
@@ -43,7 +51,7 @@ def _generate_noise(
             size=(1, 1),
             device=reference.device,
             generator=generator,
-        )  # throw away first generated random number
+        )  # generate, but throw away first generated Gaussian sample
         sum = zeros
         for i in range(4):
             sum += torch.normal(
