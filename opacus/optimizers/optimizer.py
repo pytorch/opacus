@@ -163,7 +163,6 @@ class DPOptimizer(Optimizer):
         self, closure: Optional[Callable[[], float]] = None
     ) -> Optional[float]:
         self.clip_and_accumulate()
-
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return False

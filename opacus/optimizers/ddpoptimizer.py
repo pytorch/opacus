@@ -7,7 +7,6 @@ from torch.optim import Optimizer
 
 from .optimizer import DPOptimizer
 
-
 class DistributedDPOptimizer(DPOptimizer):
     def __init__(
         self,
@@ -46,8 +45,9 @@ class DistributedDPOptimizer(DPOptimizer):
             if self.loss_reduction == "mean":
                 p.grad /= self.world_size
 
-    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        self.pre_step()
-        self.reduce_gradients()
-
-        return self.optimizer.step(closure)
+    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[Tensor]:
+        if self.pre_step():
+            self.reduce_gradients()
+            return self.optimizer.step(closure)
+        else:
+            return None
