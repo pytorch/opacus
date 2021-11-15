@@ -24,7 +24,7 @@ class AccountingTest(unittest.TestCase):
         sample_rate = 0.04
         steps = int(90 // 0.04)
 
-        accountant = GaussianAccountant(noise_multiplier, sample_rate, poisson=True)
+        accountant = GaussianAccountant()
         for _ in range(steps):
             accountant.step(noise_multiplier, sample_rate)
 

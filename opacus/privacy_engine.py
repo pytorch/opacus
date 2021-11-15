@@ -4,7 +4,7 @@ import warnings
 from typing import List, Optional, Union
 
 import torch
-from opacus.accountants import IAccountant, RDPAccountant
+from opacus.accountants import GaussianAccountant, IAccountant, RDPAccountant
 from opacus.accountants.rdp import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
@@ -34,7 +34,7 @@ def forbid_accumulation_hook(module: nn.Module, _):
 
 
 class PrivacyEngine:
-    def __init__(self, accountant: Optional[IAccountant] = None, secure_mode=False):
+    def __init__(self, accountant: str = "rdp", secure_mode=False):
         """
         # TODO: Add docstring with doctest
         # - Creating PrivacyEngine and applying make_private (test_privacy_engine_class_example)
@@ -57,11 +57,7 @@ class PrivacyEngine:
             ...         optimizer.virtual_step()  # this will call privacy engine's virtual_step()
 
         """
-        if accountant:
-            self.accountant = accountant
-        else:
-            self.accountant = RDPAccountant()
-
+        self.accountant = self._prepare_accountant(mechanism=accountant)
         self.secure_mode = secure_mode
         self.secure_rng = None
 
@@ -83,8 +79,15 @@ class PrivacyEngine:
                 "one last time before production with ``secure_mode`` turned on."
             )
 
-    @classmethod
-    def _get_optimizer_class(cls, clipping: str, distributed: bool):
+    def _prepare_accountant(self, mechanism: str) -> IAccountant:
+        if mechanism == "rdp":
+            return RDPAccountant()
+        elif mechanism == "gdp":
+            return GaussianAccountant()
+
+        raise ValueError(f"Unexpected accounting mechanism: {mechanism}")
+
+    def _get_optimizer_class(self, clipping: str, distributed: bool):
         if clipping == "flat" and distributed is False:
             return DPOptimizer
         elif clipping == "flat" and distributed is True:
@@ -98,8 +101,8 @@ class PrivacyEngine:
 
     def _prepare_optimizer(
         self,
-        optimizer: optim.Optimizer,
         *,
+        optimizer: optim.Optimizer,
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
         expected_batch_size: int,
@@ -197,10 +200,10 @@ class PrivacyEngine:
 
     def make_private(
         self,
+        *,
         module: nn.Module,
         optimizer: optim.Optimizer,
         data_loader: DataLoader,
-        *,
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
         batch_first: bool = True,
@@ -212,8 +215,6 @@ class PrivacyEngine:
             raise ValueError("Passing seed is prohibited in secure mode")
 
         distributed = type(module) is DPDDP
-        sample_rate = 1 / len(data_loader)
-        expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
         module = self._prepare_model(module, batch_first, loss_reduction)
         if poisson_sampling:
@@ -223,6 +224,9 @@ class PrivacyEngine:
         data_loader = self._prepare_data_loader(
             data_loader, distributed=distributed, poisson_sampling=poisson_sampling
         )
+
+        sample_rate = 1 / len(data_loader)
+        expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
         optimizer = self._prepare_optimizer(
             optimizer=optimizer,

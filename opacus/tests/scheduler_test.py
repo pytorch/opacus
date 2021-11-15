@@ -19,7 +19,11 @@ class SchedulerTest(unittest.TestCase):
         self.engine = PrivacyEngine()
 
         self.module, self.optimizer, self.data_loader = self.engine.make_private(
-            model, optimizer, data_loader, noise_multiplier=1.0, max_grad_norm=1.0
+            module=model,
+            optimizer=optimizer,
+            data_loader=data_loader,
+            noise_multiplier=1.0,
+            max_grad_norm=1.0,
         )
 
     def test_exponential_scheduler(self):

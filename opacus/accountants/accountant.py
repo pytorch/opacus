@@ -7,5 +7,5 @@ class IAccountant(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_epsilon(self, delta: float):
+    def get_epsilon(self, delta: float, *args, **kwargs) -> float:
         pass
