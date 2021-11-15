@@ -343,24 +343,15 @@ def main():
         privacy_engine = PrivacyEngine(
             secure_mode=args.secure_rng,
         )
-        if args.clip_per_layer:
-            model, optimizer, train_loader = privacy_engine.make_private_per_layer(
-                model,
-                optimizer,
-                train_loader,
-                noise_multiplier=args.sigma,
-                max_grad_norms=max_grad_norm,
-            )
-        else:
-            model, optimizer, train_loader = privacy_engine.make_private(
-                model,
-                optimizer,
-                train_loader,
-                noise_multiplier=args.sigma,
-                max_grad_norm=max_grad_norm,
-            )
-
-    print(train_loader.batch_sampler)
+        clipping = "per_layer" if args.clip_per_layer else "flat"
+        model, optimizer, train_loader = privacy_engine.make_private(
+            module=model,
+            optimizer=optimizer,
+            data_loader=train_loader,
+            noise_multiplier=args.sigma,
+            max_grad_norm=max_grad_norm,
+            clipping=clipping,
+        )
 
     # Store some logs
     accuracy_per_epoch = []

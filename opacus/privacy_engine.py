@@ -210,6 +210,7 @@ class PrivacyEngine:
         loss_reduction: str = "mean",
         noise_seed: Optional[int] = None,
         poisson_sampling: bool = True,
+        clipping: str = "flat",
     ):
         if noise_seed and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
@@ -236,6 +237,7 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             noise_seed=noise_seed,
             distributed=distributed,
+            clipping=clipping,
         )
 
         def accountant_hook(optim: DPOptimizer):
