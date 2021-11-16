@@ -345,7 +345,9 @@ class BasePrivacyEngineTest(ABC):
         """
         Tests that the noise level is correctly set
         """
-        def helper_test_noise_level(noise_multiplier: float, max_steps: int, secure_mode: bool):
+        def helper_test_noise_level(
+            noise_multiplier: float, max_steps: int, secure_mode: bool
+        ):
             torch.manual_seed(100)
             # Initialize models with parameters to zero
             model, optimizer, dl, _ = self._init_private_training(
@@ -396,7 +398,7 @@ class BasePrivacyEngineTest(ABC):
             secure_mode=True,
         )
 
-    @patch('torch.normal', MagicMock(return_value=torch.Tensor([0.6])))
+    @patch("torch.normal", MagicMock(return_value=torch.Tensor([0.6])))
     def test_generate_noise_in_secure_mode(self):
         """
         Tests that the noise is added correctly in secure_mode,
@@ -408,8 +410,8 @@ class BasePrivacyEngineTest(ABC):
         """
         noise = _generate_noise(
             std=2.0,
-            reference=torch.Tensor([1,2,3]),  # arbitrary size = 3
-            secure_mode=True
+            reference=torch.Tensor([1, 2, 3]),  # arbitrary size = 3
+            secure_mode=True,
         )
         self.assertTrue(
             torch.allclose(noise, torch.Tensor([1.2, 1.2, 1.2])),
