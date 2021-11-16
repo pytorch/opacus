@@ -4,6 +4,7 @@ import abc
 import unittest
 from abc import ABC
 from typing import Optional, OrderedDict
+from unittest.mock import MagicMock, patch
 
 import hypothesis.strategies as st
 import torch
@@ -18,7 +19,6 @@ from opacus.validators.errors import UnsupportedModuleError
 from torch.utils.data import DataLoader, Dataset
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
-from unittest.mock import MagicMock, patch
 
 
 def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
