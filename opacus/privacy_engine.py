@@ -4,17 +4,12 @@ import warnings
 from typing import List, Optional, Union
 
 import torch
-from opacus.accountants import GaussianAccountant, IAccountant, RDPAccountant
+from opacus.accountants import get_accountant
 from opacus.accountants.rdp import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
-from opacus.optimizers import (
-    DistributedDPOptimizer,
-    DistributedPerLayerOptimizer,
-    DPOptimizer,
-    DPPerLayerOptimizer,
-)
+from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.utils.data import DataLoader
@@ -57,7 +52,7 @@ class PrivacyEngine:
             ...         optimizer.virtual_step()  # this will call privacy engine's virtual_step()
 
         """
-        self.accountant = self._prepare_accountant(mechanism=accountant)
+        self.accountant = get_accountant(mechanism=accountant)
         self.secure_mode = secure_mode
         self.secure_rng = None
 
@@ -78,26 +73,6 @@ class PrivacyEngine:
                 "for much faster training performance, but remember to turn it on and retrain "
                 "one last time before production with ``secure_mode`` turned on."
             )
-
-    def _prepare_accountant(self, mechanism: str) -> IAccountant:
-        if mechanism == "rdp":
-            return RDPAccountant()
-        elif mechanism == "gdp":
-            return GaussianAccountant()
-
-        raise ValueError(f"Unexpected accounting mechanism: {mechanism}")
-
-    def _get_optimizer_class(self, clipping: str, distributed: bool):
-        if clipping == "flat" and distributed is False:
-            return DPOptimizer
-        elif clipping == "flat" and distributed is True:
-            return DistributedDPOptimizer
-        elif clipping == "per_layer" and distributed is False:
-            return DPPerLayerOptimizer
-        elif clipping == "per_layer" and distributed is True:
-            return DistributedPerLayerOptimizer
-
-        raise ValueError
 
     def _prepare_optimizer(
         self,
@@ -122,9 +97,7 @@ class PrivacyEngine:
             generator = torch.Generator()
             generator.manual_seed(noise_seed)
 
-        optim_class = self._get_optimizer_class(
-            clipping=clipping, distributed=distributed
-        )
+        optim_class = get_optimizer_class(clipping=clipping, distributed=distributed)
 
         return optim_class(
             optimizer=optimizer,
@@ -276,6 +249,7 @@ class PrivacyEngine:
             module=module,
             optimizer=optimizer,
             data_loader=data_loader,
+            # TODO: what if the client has selected non-RDP accountant?
             noise_multiplier=get_noise_multiplier(
                 target_epsilon=target_epsilon,
                 target_delta=target_delta,
