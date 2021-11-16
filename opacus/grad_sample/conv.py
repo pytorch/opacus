@@ -8,43 +8,9 @@ import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus.utils.tensor_utils import unfold3d
+from opacus.utils.tensor_utils import unfold2d, unfold3d
 
 from .utils import register_grad_sampler
-
-
-def unfold2d(
-    input,
-    kernel_size: Tuple[int, int],
-    padding: Tuple[int, int],
-    stride: Tuple[int, int],
-    dilation: Tuple[int, int],
-):
-    # print("input shape", input.shape)
-    *shape, H, W = input.shape
-    H_effective = (
-        H + 2 * padding[0] - (kernel_size[0] + (kernel_size[0] - 1) * (dilation[0] - 1))
-    ) // stride[0] + 1
-    W_effective = (
-        W + 2 * padding[1] - (kernel_size[1] + (kernel_size[1] - 1) * (dilation[1] - 1))
-    ) // stride[1] + 1
-    input = F.pad(input, (padding[0], padding[0], padding[1], padding[1]))
-    *shape_pad, H_pad, W_pad = input.shape
-    # print(input.shape, input.stride())
-    strides = list(input.stride())
-    strides = strides[:-2] + [
-        W_pad * dilation[0],
-        dilation[1],
-        W_pad * stride[0],
-        stride[1],
-    ]
-    # print("STRIDES", strides)
-    # print("SHAPE", shape + [kernel_size[0], kernel_size[1], H_effective, W_effective])
-    out = input.as_strided(
-        shape + [kernel_size[0], kernel_size[1], H_effective, W_effective], strides
-    )
-
-    return out.reshape(input.size(0), -1, H_effective * W_effective)
 
 
 @register_grad_sampler([nn.Conv1d, nn.Conv2d, nn.Conv3d])
