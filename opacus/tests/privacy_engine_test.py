@@ -345,6 +345,7 @@ class BasePrivacyEngineTest(ABC):
         """
         Tests that the noise level is correctly set
         """
+
         def helper_test_noise_level(
             noise_multiplier: float, max_steps: int, secure_mode: bool
         ):
@@ -385,7 +386,7 @@ class BasePrivacyEngineTest(ABC):
                 [torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]
             ).item()
 
-            self.assertAlmostEqual(real_norm, expected_norm, delta=0.1 * expected_norm)
+            self.assertAlmostEqual(real_norm, expected_norm, delta=0.15 * expected_norm)
 
         helper_test_noise_level(
             noise_multiplier=noise_multiplier,
