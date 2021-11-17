@@ -39,17 +39,14 @@ def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
 
 
 class BasePrivacyEngineTest(ABC):
-    @classmethod
-    def setUpClass(cls):
-        cls.DATA_SIZE = 512
-        cls.BATCH_SIZE = 64
-        cls.SAMPLE_RATE = cls.BATCH_SIZE / cls.DATA_SIZE
-        cls.LR = 0.5
-        cls.ALPHAS = [1 + x / 10.0 for x in range(1, 100, 10)]
-        cls.criterion = nn.CrossEntropyLoss()
-        cls.BATCH_FIRST = True
-
     def setUp(self):
+        self.DATA_SIZE = 512
+        self.BATCH_SIZE = 64
+        self.LR = 0.5
+        self.ALPHAS = [1 + x / 10.0 for x in range(1, 100, 10)]
+        self.criterion = nn.CrossEntropyLoss()
+        self.BATCH_FIRST = True
+
         torch.manual_seed(42)
 
     @abc.abstractmethod
@@ -78,6 +75,7 @@ class BasePrivacyEngineTest(ABC):
         noise_multiplier: float = 1.0,
         max_grad_norm: float = 1.0,
         poisson_sampling: bool = True,
+        clipping: str = "flat",
     ):
         model = self._init_model()
         model = PrivacyEngine.get_compatible_module(model)
@@ -88,6 +86,10 @@ class BasePrivacyEngineTest(ABC):
 
         dl = self._init_data()
 
+        if clipping == "per_layer":
+            num_layers = len([p for p in model.parameters() if p.requires_grad])
+            max_grad_norm = [max_grad_norm] * num_layers
+
         privacy_engine = PrivacyEngine(secure_mode=secure_mode)
         model, optimizer, poisson_dl = privacy_engine.make_private(
             module=model,
@@ -97,6 +99,7 @@ class BasePrivacyEngineTest(ABC):
             max_grad_norm=max_grad_norm,
             batch_first=self.BATCH_FIRST,
             poisson_sampling=poisson_sampling,
+            clipping=clipping,
         )
 
         return model, optimizer, poisson_dl, privacy_engine
@@ -232,6 +235,55 @@ class BasePrivacyEngineTest(ABC):
                         expected_match=not (do_noise or do_clip),
                     )
 
+    def test_flat_clipping(self):
+        self.BATCH_SIZE = 1
+        max_grad_norm = 0.5
+
+        model, optimizer, dl, _ = self._init_private_training(
+            noise_multiplier=0.0,
+            max_grad_norm=max_grad_norm,
+            clipping="flat",
+            poisson_sampling=False,
+        )
+        optimizer.signal_skip_step()
+
+        self._train_steps(model, optimizer, dl, max_steps=1)
+        non_clipped_grads = torch.cat(
+            [p.grad.view(-1) for p in model.parameters() if p.requires_grad]
+        )
+        clipped_grads = torch.cat(
+            [p.summed_grad.view(-1) for p in model.parameters() if p.requires_grad]
+        )
+
+        self.assertAlmostEqual(clipped_grads.norm().item(), max_grad_norm, places=3)
+        self.assertGreater(non_clipped_grads.norm(), clipped_grads.norm())
+
+    def test_per_layer_clipping(self):
+        self.BATCH_SIZE = 1
+        max_grad_norm_per_layer = 1.0
+
+        model, optimizer, dl, _ = self._init_private_training(
+            noise_multiplier=0.0,
+            max_grad_norm=max_grad_norm_per_layer,
+            clipping="per_layer",
+            poisson_sampling=False,
+        )
+
+        optimizer.signal_skip_step()
+
+        self._train_steps(model, optimizer, dl, max_steps=1)
+
+        for p in model.parameters():
+            if not p.requires_grad:
+                continue
+
+            non_clipped_norm = p.grad.norm().item()
+            clipped_norm = p.summed_grad.norm().item()
+
+            self.assertAlmostEqual(
+                min(non_clipped_norm, max_grad_norm_per_layer), clipped_norm, places=3
+            )
+
     def test_sample_grad_aggregation(self):
         """
         Check if final gradient is indeed an aggregation over per-sample gradients
@@ -362,7 +414,7 @@ class BasePrivacyEngineTest(ABC):
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
     )
-    @settings(max_examples=20, deadline=20000)
+    @settings(max_examples=20, deadline=None)
     def test_noise_level(self, noise_multiplier: float, max_steps: int):
         """
         Tests that the noise level is correctly set
@@ -526,10 +578,9 @@ def batch_second_collate(batch):
 
 
 class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.BATCH_FIRST = False
+    def setUp(self):
+        super().setUp()
+        self.BATCH_FIRST = False
 
     def _init_data(self):
         x = torch.randint(0, 100, (12, self.DATA_SIZE))
