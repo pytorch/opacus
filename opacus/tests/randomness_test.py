@@ -272,7 +272,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
             dl_generator.manual_seed(dl_seed)
 
         model, optim, dl = self._init_training(dl_generator=dl_generator)
-        privacy_engine = PrivacyEngine(secure_mode)
+        privacy_engine = PrivacyEngine(secure_mode=secure_mode)
 
         return privacy_engine.make_private(
             module=model,

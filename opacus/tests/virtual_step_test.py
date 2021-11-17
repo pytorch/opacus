@@ -147,7 +147,6 @@ class GradientAccumulation_test(unittest.TestCase):
             data_loader=self.dl,
             noise_multiplier=0.0,
             max_grad_norm=999,
-            poisson_sampling=True,
         )
         data = iter(dl)
         self.model_forward_backward(model, data, num_steps=1)

@@ -4,7 +4,6 @@ from functools import partial
 from typing import List, Optional
 
 import torch
-from opacus.grad_sample import GradSampleModule
 from torch import nn
 from torch.optim import Optimizer
 
@@ -45,6 +44,7 @@ class DistributedPerLayerOptimizer(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
         )
+        self.register_hooks()
 
     def _add_noise_parameter(self, p):
         """
@@ -92,12 +92,14 @@ class DistributedPerLayerOptimizer(DPOptimizer):
 
         return p.grad
 
-    def register_hooks(self, module: GradSampleModule):
-        module.ddp_hooks = []
+    def register_hooks(self):
         for p, max_grad_norm in zip(self.params, self.max_grad_norms):
             if not p.requires_grad:
                 continue
 
-            module.ddp_hooks.append(
+            if not hasattr(p, "ddp_hooks"):
+                p.ddp_hooks = []
+
+            p.ddp_hooks.append(
                 p.register_hook(partial(self._ddp_per_layer_hook, p, max_grad_norm))
             )

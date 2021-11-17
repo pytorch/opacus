@@ -2,6 +2,8 @@ import unittest
 
 import torch
 import torch.nn as nn
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from opacus import PrivacyEngine
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader, TensorDataset
@@ -36,14 +38,15 @@ class BatchMemoryManagerTest(unittest.TestCase):
 
         return model, optimizer, data_loader
 
-    # @given(
-    # num_workers=st.integers(0, 4),
-    # pin_memory=st.booleans(),
-    # )
+    @given(
+        num_workers=st.integers(0, 4),
+        pin_memory=st.booleans(),
+    )
+    @settings(deadline=10000)
     def test_basic(
         self,
-        num_workers: int = 0,
-        pin_memory: bool = True,
+        num_workers: int,
+        pin_memory: bool,
     ):
         model, optimizer, data_loader = self._init_training(
             num_workers=num_workers,

@@ -94,11 +94,11 @@ class BasePrivacyEngineTest(ABC):
             data_loader=dl,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
-            poisson_sampling=poisson_sampling,
             batch_first=self.BATCH_FIRST,
+            poisson_sampling=poisson_sampling,
         )
 
-        return model, optimizer, dl, privacy_engine
+        return model, optimizer, poisson_dl, privacy_engine
 
     def _train_steps(
         self,
@@ -207,8 +207,8 @@ class BasePrivacyEngineTest(ABC):
         Compare gradients and updated weights with vanilla model initialized
         with the same seed
         """
-        for do_noise in (False,):
-            for do_clip in (True,):
+        for do_noise in (True, False):
+            for do_clip in (True, False):
                 with self.subTest(do_noise=do_noise, do_clip=do_clip):
                     self._compare_to_vanilla(
                         do_noise=do_noise,
