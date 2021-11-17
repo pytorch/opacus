@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable, List, Optional
 
 import torch
+from opacus.optimizers.utils import params
 from torch import nn
 from torch.optim import Optimizer
 
@@ -79,10 +80,7 @@ class DPOptimizer(Optimizer):
 
     @property
     def params(self) -> List[nn.Parameter]:
-        ret = []
-        for param_group in self.optimizer.param_groups:
-            ret += [p for p in param_group["params"] if p.requires_grad]
-        return ret
+        return params(self)
 
     @property
     def grad_samples(self) -> List[torch.Tensor]:
