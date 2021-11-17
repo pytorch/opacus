@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Dict, Union, Tuple
+from typing import Dict, Union
 
 import numpy as np
-import time
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from opacus.utils.tensor_utils import unfold2d, unfold3d
 
 from .utils import register_grad_sampler
