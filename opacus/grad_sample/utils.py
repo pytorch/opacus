@@ -7,14 +7,20 @@ import torch.nn as nn
 
 from .grad_sample_module import GradSampleModule
 
+DEFAULT_GRAD_SAMPLE_MODULE = GradSampleModule
+
 
 def register_grad_sampler(
-    target_class_or_classes: Union[Type[nn.Module], Sequence[Type[nn.Module]]]
+    target_class_or_classes: Union[Type[nn.Module], Sequence[Type[nn.Module]]],
+    grad_sample_module_class: type = DEFAULT_GRAD_SAMPLE_MODULE,
 ):
     """
     Registers the decorated function as the ``grad_sampler`` of ``target_class_or_classes``, which is
     the function that will be invoked every time you want to compute a per-sample gradient
-    of ``target_class_or_classes``. The signature of every grad_sampler is always the same:
+    of ``target_class_or_classes``. You may supply your own grad_sample_module_class that holds the registry
+    of your custom grad_samplers.
+
+    The signature of every grad_sampler is always the same:
 
     >>> @register_grad_sampler(MyCustomModel)
     ... def compute_grad_sample(module, activations, backprops):
@@ -30,7 +36,7 @@ def register_grad_sampler(
             else [target_class_or_classes]
         )
         for target_class in target_classes:
-            GradSampleModule.GRAD_SAMPLERS[target_class] = f
+            grad_sample_module_class.GRAD_SAMPLERS[target_class] = f
         return f
 
     return decorator
