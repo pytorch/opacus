@@ -50,4 +50,4 @@ class DistributedDPOptimizer(DPOptimizer):
         self.pre_step()
         self.reduce_gradients()
 
-        return self.optimizer.step(closure)
+        return self.original_optimizer.step(closure)

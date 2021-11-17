@@ -5,7 +5,7 @@ from typing import List, Optional
 import torch
 from torch.optim import Optimizer
 
-from .optimizer import DPOptimizer
+from .optimizer import DPOptimizer, _check_processed_flag, _label_processed
 
 
 class DPPerLayerOptimizer(DPOptimizer):
@@ -36,6 +36,8 @@ class DPPerLayerOptimizer(DPOptimizer):
 
     def clip_and_accumulate(self):
         for (p, max_grad_norm) in zip(self.params, self.max_grad_norms):
+            _check_processed_flag(p.grad_sample)
+
             per_sample_norms = p.grad_sample.view(len(p.grad_sample), -1).norm(2, dim=1)
             per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(
                 max=1.0
@@ -46,3 +48,5 @@ class DPPerLayerOptimizer(DPOptimizer):
                 p.summed_grad += grad
             else:
                 p.summed_grad = grad
+
+            _label_processed(p.grad_sample)

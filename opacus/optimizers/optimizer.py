@@ -1,10 +1,35 @@
 from __future__ import annotations
 
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 import torch
 from torch import nn
 from torch.optim import Optimizer
+
+
+def _label_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
+    if isinstance(obj, torch.Tensor):
+        obj.processed = True
+    elif isinstance(obj, list):
+        for x in obj:
+            x.processed = True
+
+
+def _check_processed_flag_tensor(x: torch.Tensor):
+    if hasattr(x, "processed"):
+        raise ValueError(
+            "Gradients hasn't been cleared since the last optimizer step. "
+            "In order to obtain privacy guarantees you must call optimizer.zero_grad()"
+            "on each step"
+        )
+
+
+def _check_processed_flag(obj: Union[torch.Tensor, List[torch.Tensor]]):
+    if isinstance(obj, torch.Tensor):
+        _check_processed_flag_tensor(obj)
+    elif isinstance(obj, list):
+        for x in obj:
+            _check_processed_flag_tensor(x)
 
 
 def _generate_noise(
@@ -55,7 +80,7 @@ class DPOptimizer(Optimizer):
                 "You must provide expected batch size of the loss reduction is mean"
             )
 
-        self.optimizer = optimizer
+        self.original_optimizer = optimizer
         self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
         self.loss_reduction = loss_reduction
@@ -80,7 +105,7 @@ class DPOptimizer(Optimizer):
     @property
     def params(self) -> List[nn.Parameter]:
         ret = []
-        for param_group in self.optimizer.param_groups:
+        for param_group in self.original_optimizer.param_groups:
             ret += [p for p in param_group["params"] if p.requires_grad]
         return ret
 
@@ -125,6 +150,8 @@ class DPOptimizer(Optimizer):
         )
 
         for p in self.params:
+            _check_processed_flag(p.grad_sample)
+
             grad_sample = _get_flat_grad_sample(p)
             grad = torch.einsum("i,i...", per_sample_clip_factor, grad_sample)
 
@@ -133,8 +160,12 @@ class DPOptimizer(Optimizer):
             else:
                 p.summed_grad = grad
 
+            _label_processed(p.grad_sample)
+
     def add_noise(self):
         for p in self.params:
+            _check_processed_flag(p.summed_grad)
+
             noise = _generate_noise(
                 std=self.noise_multiplier * self.max_grad_norm,
                 reference=p.summed_grad,
@@ -142,13 +173,13 @@ class DPOptimizer(Optimizer):
             )
             p.grad = p.summed_grad + noise
 
+            _label_processed(p.summed_grad)
+
     def scale_grad(self):
         if self.loss_reduction == "mean":
             for p in self.params:
                 p.grad /= self.expected_batch_size * self.accumulated_iterations
 
-    # TODO: see GradSampleModule.zero_grad()
-    # TODO: actually, not calling zero_grad() after step() does break privacy accounting - add warning?
     def zero_grad(self, set_to_none: bool = False):
         for p in self.params:
             if hasattr(p, "grad_sample"):
@@ -157,7 +188,7 @@ class DPOptimizer(Optimizer):
             if hasattr(p, "summed_grad") and not self._is_last_step_skipped:
                 del p.summed_grad
 
-        self.optimizer.zero_grad(set_to_none)
+        self.original_optimizer.zero_grad(set_to_none)
 
     def pre_step(
         self, closure: Optional[Callable[[], float]] = None
@@ -180,7 +211,12 @@ class DPOptimizer(Optimizer):
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         # TODO: handle closure call - we should do it before pre_step()
         if self.pre_step():
-            return self.optimizer.step(closure)
+            ret = self.original_optimizer.step(closure)
+
+            # we have to clear gradients after every step
+            # otherwise accounting is broken
+            # self.zero_grad()
+            return ret
         else:
             return None
 
