@@ -6,7 +6,7 @@ def get_noise_multiplier(
     target_delta: float,
     sample_rate: float,
     epochs: int,
-    accounting_mechanism: str = "rdp",
+    accountant: str = "rdp",
     **kwargs,
 ) -> float:
     r"""
@@ -24,7 +24,7 @@ def get_noise_multiplier(
     eps = float("inf")
     sigma_min = 0.01
     sigma_max = 10.0
-    accountant = get_accountant(accounting_mechanism)
+    accountant = get_accountant(mechanism=accountant)
 
     while eps > target_epsilon:
         sigma_max = 2 * sigma_max

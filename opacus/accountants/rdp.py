@@ -54,3 +54,7 @@ class RDPAccountant(IAccountant):
 
     def __len__(self):
         return len(self.steps)
+
+    @classmethod
+    def mechanism(cls) -> str:
+        return "rdp"

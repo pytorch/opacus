@@ -15,5 +15,10 @@ class IAccountant(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def __len__(self):
+    def __len__(self) -> int:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def mechanism(cls) -> str:
         pass

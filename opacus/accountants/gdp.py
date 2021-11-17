@@ -36,3 +36,7 @@ class GaussianAccountant(IAccountant):
 
     def __len__(self):
         return self.steps
+
+    @classmethod
+    def mechanism(cls) -> str:
+        return "gpd"

@@ -6,7 +6,7 @@ import torch
 from opacus.optimizers.utils import params
 from torch.optim import Optimizer
 
-from .optimizer import DPOptimizer, _check_processed_flag, _label_processed
+from .optimizer import DPOptimizer, _check_processed_flag, _mark_as_processed
 
 
 class DPPerLayerOptimizer(DPOptimizer):
@@ -50,4 +50,4 @@ class DPPerLayerOptimizer(DPOptimizer):
             else:
                 p.summed_grad = grad
 
-            _label_processed(p.grad_sample)
+            _mark_as_processed(p.grad_sample)

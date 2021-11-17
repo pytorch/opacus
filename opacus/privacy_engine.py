@@ -53,8 +53,6 @@ class PrivacyEngine:
 
         """
         self.accountant = get_accountant(mechanism=accountant)
-        self.accounting_mechanism = accountant
-
         self.secure_mode = secure_mode
         self.secure_rng = None
         self.dataset = None  # only used to detect switching to a different dataset
@@ -269,7 +267,7 @@ class PrivacyEngine:
         if len(self.accountant) > 0:
             warnings.warn(
                 "You're calling make_private_with_epsilon with non-zero privacy budget "
-                "already spent. Returned noise_multiplier assumes zero starting poing, "
+                "already spent. Returned noise_multiplier assumes zero starting point, "
                 "so your overall privacy budget will be higher."
             )
 
@@ -282,7 +280,7 @@ class PrivacyEngine:
                 target_delta=target_delta,
                 sample_rate=sample_rate,
                 epochs=epochs,
-                accounting_mechanism=self.accounting_mechanism,
+                accountant=self.accountant.mechanism(),
                 **kwargs,
             ),
             max_grad_norm=max_grad_norm,

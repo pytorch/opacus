@@ -8,16 +8,16 @@ from torch import nn
 from torch.optim import Optimizer
 
 
-def _label_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
+def _mark_as_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
     if isinstance(obj, torch.Tensor):
-        obj.processed = True
+        obj._processed = True
     elif isinstance(obj, list):
         for x in obj:
-            x.processed = True
+            x._processed = True
 
 
 def _check_processed_flag_tensor(x: torch.Tensor):
-    if hasattr(x, "processed"):
+    if hasattr(x, "_processed"):
         raise ValueError(
             "Gradients hasn't been cleared since the last optimizer step. "
             "In order to obtain privacy guarantees you must call optimizer.zero_grad()"
@@ -158,7 +158,7 @@ class DPOptimizer(Optimizer):
             else:
                 p.summed_grad = grad
 
-            _label_processed(p.grad_sample)
+            _mark_as_processed(p.grad_sample)
 
     def add_noise(self):
         for p in self.params:
@@ -171,7 +171,7 @@ class DPOptimizer(Optimizer):
             )
             p.grad = p.summed_grad + noise
 
-            _label_processed(p.summed_grad)
+            _mark_as_processed(p.summed_grad)
 
     def scale_grad(self):
         if self.loss_reduction == "mean":
