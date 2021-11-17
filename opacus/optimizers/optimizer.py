@@ -211,12 +211,7 @@ class DPOptimizer(Optimizer):
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         # TODO: handle closure call - we should do it before pre_step()
         if self.pre_step():
-            ret = self.original_optimizer.step(closure)
-
-            # we have to clear gradients after every step
-            # otherwise accounting is broken
-            # self.zero_grad()
-            return ret
+            return self.original_optimizer.step(closure)
         else:
             return None
 
