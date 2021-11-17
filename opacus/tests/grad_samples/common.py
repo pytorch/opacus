@@ -200,22 +200,16 @@ class GradSampleHooks_test(unittest.TestCase):
         atol=10e-6,
         rtol=10e-5,
     ):
-        self.run_test_with_reduction(
-            x,
-            module,
-            batch_first=batch_first,
-            loss_reduction="mean",
-            atol=atol,
-            rtol=rtol,
-        )
-        self.run_test_with_reduction(
-            x,
-            module,
-            batch_first=batch_first,
-            loss_reduction="sum",
-            atol=atol,
-            rtol=rtol,
-        )
+        for loss_reduction in ["mean", "sum"]:
+            for batch_first in [True, False]:
+                self.run_test_with_reduction(
+                    x,
+                    module,
+                    batch_first=batch_first,
+                    loss_reduction=loss_reduction,
+                    atol=atol,
+                    rtol=rtol,
+                )
 
     def run_test_with_reduction(
         self,
