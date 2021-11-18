@@ -1,4 +1,4 @@
-from opacus.accountants import get_accountant
+from opacus.accountants import create_accountant
 
 
 # min range bound when searching for sigma given epsilon
@@ -41,7 +41,7 @@ def get_noise_multiplier(
     eps = float("inf")
     sigma_min = DEFAULT_SIGMA_MIN_BOUND
     sigma_max = DEFAULT_SIGMA_MAX_BOUND
-    accountant = get_accountant(mechanism=accountant)
+    accountant = create_accountant(mechanism=accountant)
 
     while eps > target_epsilon:
         sigma_max = 2 * sigma_max
