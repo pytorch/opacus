@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 import torch
+from opacus.optimizers.utils import params
 from torch.optim import Optimizer
 
 from .optimizer import DPOptimizer
@@ -14,14 +15,14 @@ class DPPerLayerOptimizer(DPOptimizer):
         optimizer: Optimizer,
         *,
         noise_multiplier: float,
-        max_grad_norms: List[float],
+        max_grad_norm: List[float],
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
         generator=None,
         secure_mode=False,
     ):
-        assert len(max_grad_norms) == len(optimizer.params)
-        self.max_grad_norms = max_grad_norms
+        assert len(max_grad_norm) == len(params(optimizer))
+        self.max_grad_norms = max_grad_norm
         max_grad_norm = torch.norm(torch.Tensor(self.max_grad_norms), p=2).item()
         super().__init__(
             optimizer,

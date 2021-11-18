@@ -6,7 +6,7 @@ from typing import Dict, Union
 import numpy as np
 import torch
 import torch.nn as nn
-from opacus.utils.tensor_utils import unfold3d
+from opacus.utils.tensor_utils import unfold2d, unfold3d
 
 from .utils import register_grad_sampler
 
@@ -28,12 +28,8 @@ def compute_conv_grad_sample(
     n = activations.shape[0]
     # get A and B in shape depending on the Conv layer
     if type(layer) == nn.Conv2d:
-        activations = torch.nn.functional.unfold(
-            activations,
-            layer.kernel_size,
-            padding=layer.padding,
-            stride=layer.stride,
-            dilation=layer.dilation,
+        activations = unfold2d(
+            activations, layer.kernel_size, layer.padding, layer.stride, layer.dilation
         )
         backprops = backprops.reshape(n, -1, activations.shape[-1])
     elif type(layer) == nn.Conv1d:

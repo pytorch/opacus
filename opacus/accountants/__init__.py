@@ -8,3 +8,12 @@ __all__ = [
     "GaussianAccountant",
     "RDPAccountant",
 ]
+
+
+def get_accountant(mechanism: str) -> IAccountant:
+    if mechanism == "rdp":
+        return RDPAccountant()
+    elif mechanism == "gdp":
+        return GaussianAccountant()
+
+    raise ValueError(f"Unexpected accounting mechanism: {mechanism}")

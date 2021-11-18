@@ -110,6 +110,7 @@ def main():  # noqa: C901
             train_loader,
             noise_multiplier=args.sigma,
             max_grad_norm=max_grad_norm,
+            poisson_sampling=False,
         )
 
     criterion = nn.CrossEntropyLoss()

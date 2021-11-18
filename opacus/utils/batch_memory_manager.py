@@ -38,7 +38,6 @@ def wrap_data_loader(data_loader, max_batch_size: int, optimizer: DPOptimizer):
         num_workers=data_loader.num_workers,
         collate_fn=data_loader.collate_fn,
         pin_memory=data_loader.pin_memory,
-        drop_last=data_loader.drop_last,
         timeout=data_loader.timeout,
         worker_init_fn=data_loader.worker_init_fn,
         multiprocessing_context=data_loader.multiprocessing_context,

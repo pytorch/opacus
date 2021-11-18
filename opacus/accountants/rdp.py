@@ -7,9 +7,8 @@ from .analysis import rdp as privacy_analysis
 class RDPAccountant(IAccountant):
     DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
-    def __init__(self, alphas=None):
+    def __init__(self):
         self.steps = []
-        self.alphas = alphas
 
     def step(self, noise_multiplier: float, sample_rate: float):
         if len(self.steps) >= 1:
@@ -32,10 +31,7 @@ class RDPAccountant(IAccountant):
         self, delta: float, alphas: Optional[List[Union[float, int]]] = None
     ) -> Tuple[float, float]:
         if alphas is None:
-            if self.alphas is None:
-                alphas = self.DEFAULT_ALPHAS
-            else:
-                alphas = self.alphas
+            alphas = self.DEFAULT_ALPHAS
 
         rdp = sum(
             [
@@ -49,6 +45,12 @@ class RDPAccountant(IAccountant):
         eps, best_alpha = privacy_analysis.get_privacy_spent(alphas, rdp, delta)
 
         return float(eps), float(best_alpha)
+
+    def get_epsilon(
+        self, delta: float, alphas: Optional[List[Union[float, int]]] = None
+    ):
+        eps, _ = self.get_privacy_spent(delta, alphas)
+        return eps
 
 
 def get_noise_multiplier(

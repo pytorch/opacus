@@ -2,6 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from __future__ import annotations
 
+import logging
 from functools import partial
 from typing import List, Tuple
 
@@ -9,6 +10,9 @@ import torch
 import torch.nn as nn
 from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
 from opacus.utils.module_utils import requires_grad, trainable_modules
+
+
+logger = logging.getLogger(__name__)
 
 
 def create_or_accumulate_grad_sample(
@@ -59,8 +63,24 @@ class GradSampleModule(nn.Module):
     """
     GRAD_SAMPLERS = {}
 
-    def __init__(self, m: nn.Module, *, batch_first=True, loss_reduction="mean"):
+    def __init__(
+        self,
+        m: nn.Module,
+        *,
+        batch_first=True,
+        loss_reduction="mean",
+        strict: bool = True,
+    ):
         super().__init__()
+
+        errors = self.validate(module=m, raise_if_error=strict)
+        if errors and not strict:
+            logger.info(
+                f"GradSampleModule found the following errors: {errors}."
+                "Using non-strict mode, continuing"
+            )
+
+        # TODO: accessing weights via _module is inconveniet, override _getattr_
         self._module = m  # TODO: it's not 100% certain that this should stay private
         self.hooks_enabled = False
         self.batch_first = batch_first
@@ -165,11 +185,12 @@ class GradSampleModule(nn.Module):
         """
         self.disable_hooks()
 
-        if hasattr(self, "ddp_hooks"):
-            while self.ddp_hooks:
-                handle = self.ddp_hooks.pop()
-                handle.remove()
-            delattr(self, "ddp_hooks")
+        for p in self.parameters():
+            if hasattr(p, "ddp_hooks"):
+                while p.ddp_hooks:
+                    handle = p.ddp_hooks.pop()
+                    handle.remove()
+                delattr(p, "ddp_hooks")
 
         if not hasattr(self, "autograd_grad_sample_hooks"):
             raise ValueError("Asked to remove hooks, but no hooks found")

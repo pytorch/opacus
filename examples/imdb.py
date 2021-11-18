@@ -258,14 +258,14 @@ def main():
     if not args.disable_dp:
         privacy_engine = PrivacyEngine(secure_mode=args.secure_rng)
 
+        # TODO: we need to switch poisson sampling back on, but the
+        # model exhibits strange behaviour with batch_size=1
         model, optimizer, train_loader = privacy_engine.make_private(
             module=model,
             optimizer=optimizer,
             data_loader=train_loader,
             noise_multiplier=args.sigma,
             max_grad_norm=args.max_per_sample_grad_norm,
-            # TODO: we need to switch poisson sampling back on, but the
-            # model exhibits strange behaviour with batch_size=1
             poisson_sampling=False,
         )
 
