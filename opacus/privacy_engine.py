@@ -4,7 +4,7 @@ import warnings
 from typing import List, Optional, Union
 
 import torch
-from opacus.accountants import get_accountant
+from opacus.accountants import create_accountant
 from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
@@ -52,7 +52,7 @@ class PrivacyEngine:
             ...         optimizer.virtual_step()  # this will call privacy engine's virtual_step()
 
         """
-        self.accountant = get_accountant(mechanism=accountant)
+        self.accountant = create_accountant(mechanism=accountant)
         self.secure_mode = secure_mode
         self.secure_rng = None
         self.dataset = None  # only used to detect switching to a different dataset
