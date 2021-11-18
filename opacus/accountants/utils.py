@@ -1,5 +1,6 @@
 from opacus.accountants import get_accountant
 
+
 # min range bound when searching for sigma given epsilon
 DEFAULT_SIGMA_MIN_BOUND = 0.01
 # starting point for a max range bound when searching for sigma given epsilon
@@ -9,6 +10,7 @@ SIGMA_PRECISION = 0.01
 # max possible value for returned sigma.
 # Noise higher than MAX_SIGMA considered unreasonable
 MAX_SIGMA = 2000
+
 
 def get_noise_multiplier(
     target_epsilon: float,
@@ -32,7 +34,9 @@ def get_noise_multiplier(
     """
     if accountant != "rdp":
         # TODO: rewrite method to accept GDP
-        raise NotImplementedError("get_noise_multiplier is currently only supports RDP accountant")
+        raise NotImplementedError(
+            "get_noise_multiplier is currently only supports RDP accountant"
+        )
 
     eps = float("inf")
     sigma_min = DEFAULT_SIGMA_MIN_BOUND
