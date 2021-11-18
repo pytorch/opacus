@@ -3,7 +3,6 @@
 import warnings
 from typing import List, Optional, Union
 
-import torch
 from opacus.accountants import get_accountant
 from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
@@ -15,12 +14,12 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 
-def forbid_accumulation_hook(module: nn.Module, _):
+def forbid_accumulation_hook(module: GradSampleModule, _):
     if not module.training:
         return
 
     for p in module.parameters():
-        if hasattr(p, "grad_sample"):
+        if p.grad_sample is not None:
             raise ValueError(
                 "Poisson sampling is not compatible with grad accumulation. "
                 "You need to call optimizer.step() after every forward/backward pass "
@@ -83,9 +82,9 @@ class PrivacyEngine:
         max_grad_norm: Union[float, List[float]],
         expected_batch_size: int,
         loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
         distributed: bool = False,
         clipping: str = "flat",
+        noise_generator=None,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             optimizer = optimizer.original_optimizer
@@ -93,9 +92,8 @@ class PrivacyEngine:
         generator = None
         if self.secure_mode:
             generator = self.secure_rng
-        elif noise_seed is not None:
-            generator = torch.Generator()
-            generator.manual_seed(noise_seed)
+        elif noise_generator is not None:
+            generator = noise_generator
 
         optim_class = get_optimizer_class(clipping=clipping, distributed=distributed)
 
@@ -204,11 +202,11 @@ class PrivacyEngine:
         max_grad_norm: Union[float, List[float]],
         batch_first: bool = True,
         loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
         poisson_sampling: bool = True,
         clipping: str = "flat",
+        noise_generator=None,
     ):
-        if noise_seed and self.secure_mode:
+        if noise_generator and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
 
         distributed = type(module) is DPDDP
@@ -230,7 +228,7 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
-            noise_seed=noise_seed,
+            noise_generator=noise_generator,
             distributed=distributed,
             clipping=clipping,
         )
@@ -259,7 +257,7 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
+        noise_generator=None,
         **kwargs,
     ):
         sample_rate = 1 / len(data_loader)
@@ -286,7 +284,7 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             batch_first=batch_first,
             loss_reduction=loss_reduction,
-            noise_seed=noise_seed,
+            noise_generator=noise_generator,
         )
 
     def get_epsilon(self, delta):

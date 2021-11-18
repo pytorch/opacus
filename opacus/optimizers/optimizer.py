@@ -37,8 +37,6 @@ def _generate_noise(
     std: float, reference: torch.Tensor, generator=None
 ) -> torch.Tensor:
     if std > 0:
-        # TODO: handle device transfers: generator and reference tensor
-        # could be on different devices
         return torch.normal(
             mean=0,
             std=std,
@@ -93,6 +91,9 @@ class DPOptimizer(Optimizer):
         self.state = optimizer.state
         self._step_skip_queue = []
         self._is_last_step_skipped = False
+
+        for p in self.params:
+            p.summed_grad = None
 
     def signal_skip_step(self, do_skip=True):
         self._step_skip_queue.append(do_skip)
@@ -153,7 +154,7 @@ class DPOptimizer(Optimizer):
             grad_sample = _get_flat_grad_sample(p)
             grad = torch.einsum("i,i...", per_sample_clip_factor, grad_sample)
 
-            if hasattr(p, "summed_grad"):
+            if p.summed_grad is not None:
                 p.summed_grad += grad
             else:
                 p.summed_grad = grad
@@ -180,11 +181,10 @@ class DPOptimizer(Optimizer):
 
     def zero_grad(self, set_to_none: bool = False):
         for p in self.params:
-            if hasattr(p, "grad_sample"):
-                del p.grad_sample
+            p.grad_sample = None
 
-            if hasattr(p, "summed_grad") and not self._is_last_step_skipped:
-                del p.summed_grad
+            if not self._is_last_step_skipped:
+                p.summed_grad = None
 
         self.original_optimizer.zero_grad(set_to_none)
 
@@ -212,4 +212,11 @@ class DPOptimizer(Optimizer):
         else:
             return None
 
-    # TODO: wrap the rest of optim.Optimizer interface
+    def __repr__(self):
+        return self.original_optimizer.__repr__()
+
+    def state_dict(self):
+        return self.original_optimizer.state_dict()
+
+    def load_state_dict(self, state_dict) -> None:
+        self.original_optimizer.load_state_dict(state_dict)

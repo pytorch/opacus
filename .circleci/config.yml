@@ -74,13 +74,6 @@ commands:
           name: "Check import order with isort"
           command: isort -v -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
 
-  mypy_check:
-    description: "Static type checking with mypy"
-    steps:
-      - run:
-          name: "Mypy checks"
-          command: ./scripts/run_mypy.sh
-
   configure_docusaurus_bot:
     description: "Configure Docusaurus GitHub bot"
     steps:
@@ -251,7 +244,6 @@ jobs:
       - lint_flake8
       - lint_black
       - isort
-      # - mypy_check  TODO re-enable
 
   unittest_py37_torch_release:
     docker:
