@@ -4,6 +4,7 @@ import abc
 import unittest
 from abc import ABC
 from typing import Optional, OrderedDict
+from unittest.mock import MagicMock, patch
 
 import hypothesis.strategies as st
 import torch
@@ -12,6 +13,7 @@ import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
+from opacus.optimizers.optimizer import _generate_noise
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from torch.utils.data import DataLoader, Dataset
@@ -395,42 +397,81 @@ class BasePrivacyEngineTest(ABC):
         """
         Tests that the noise level is correctly set
         """
-        # Initialize models with parameters to zero
-        model, optimizer, dl, _ = self._init_private_training(
-            noise_multiplier=noise_multiplier
+
+        def helper_test_noise_level(
+            noise_multiplier: float, max_steps: int, secure_mode: bool
+        ):
+            torch.manual_seed(100)
+            # Initialize models with parameters to zero
+            model, optimizer, dl, _ = self._init_private_training(
+                noise_multiplier=noise_multiplier,
+                secure_mode=secure_mode,
+            )
+            for p in model.parameters():
+                p.data.zero_()
+
+            # Do max_steps steps of DP-SGD
+            n_params = sum([p.numel() for p in model.parameters() if p.requires_grad])
+            steps = 0
+            for x, y in dl:
+                optimizer.zero_grad()
+                logits = model(x)
+                loss = logits.view(logits.size(0), -1).sum(dim=1)
+                # Gradient should be 0
+                loss.backward(torch.zeros(logits.size(0)))
+
+                optimizer.step()
+                steps += 1
+
+                if max_steps and steps >= max_steps:
+                    break
+
+            # Noise should be equal to lr*sigma*sqrt(n_params * steps) / batch_size
+            expected_norm = (
+                steps
+                * n_params
+                * optimizer.noise_multiplier ** 2
+                * self.LR ** 2
+                / (optimizer.expected_batch_size ** 2)
+            )
+            real_norm = sum(
+                [torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]
+            ).item()
+
+            self.assertAlmostEqual(real_norm, expected_norm, delta=0.15 * expected_norm)
+
+        with self.subTest(secure_mode=False):
+            helper_test_noise_level(
+                noise_multiplier=noise_multiplier,
+                max_steps=max_steps,
+                secure_mode=False,
+            )
+        with self.subTest(secure_mode=True):
+            helper_test_noise_level(
+                noise_multiplier=noise_multiplier,
+                max_steps=max_steps,
+                secure_mode=True,
+            )
+
+    @patch("torch.normal", MagicMock(return_value=torch.Tensor([0.6])))
+    def test_generate_noise_in_secure_mode(self):
+        """
+        Tests that the noise is added correctly in secure_mode,
+        according to section 5.1 in https://arxiv.org/abs/2107.10138.
+        Since n=2, noise should be summed 4 times and divided by 2.
+
+        In this example, torch.normal returns a constant value of 0.6.
+        So, the overal noise would be (0.6 + 0.6 + 0.6 + 0.6)/2 = 1.2
+        """
+        noise = _generate_noise(
+            std=2.0,
+            reference=torch.Tensor([1, 2, 3]),  # arbitrary size = 3
+            secure_mode=True,
         )
-        for p in model.parameters():
-            p.data.zero_()
-
-        # Do max_steps steps of DP-SGD
-        n_params = sum([p.numel() for p in model.parameters() if p.requires_grad])
-        steps = 0
-        for x, y in dl:
-            optimizer.zero_grad()
-            logits = model(x)
-            loss = logits.view(logits.size(0), -1).sum(dim=1)
-            # Gradient should be 0
-            loss.backward(torch.zeros(logits.size(0)))
-
-            optimizer.step()
-            steps += 1
-
-            if max_steps and steps >= max_steps:
-                break
-
-        # Noise should be equal to lr*sigma*sqrt(n_params * steps) / batch_size
-        expected_norm = (
-            steps
-            * n_params
-            * optimizer.noise_multiplier ** 2
-            * self.LR ** 2
-            / (optimizer.expected_batch_size ** 2)
+        self.assertTrue(
+            torch.allclose(noise, torch.Tensor([1.2, 1.2, 1.2])),
+            "Model parameters after deterministic run must match",
         )
-        real_norm = sum(
-            [torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]
-        ).item()
-
-        self.assertAlmostEqual(real_norm, expected_norm, delta=0.1 * expected_norm)
 
 
 class SampleConvNet(nn.Module):

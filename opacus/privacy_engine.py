@@ -106,6 +106,7 @@ class PrivacyEngine:
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
             generator=generator,
+            secure_mode=self.secure_mode,
         )
 
     def _prepare_data_loader(

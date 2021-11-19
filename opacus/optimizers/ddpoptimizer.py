@@ -18,6 +18,7 @@ class DistributedDPOptimizer(DPOptimizer):
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
         generator=None,
+        secure_mode=False,
     ):
         super().__init__(
             optimizer,
@@ -26,6 +27,7 @@ class DistributedDPOptimizer(DPOptimizer):
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
             generator=generator,
+            secure_mode=secure_mode,
         )
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
