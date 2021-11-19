@@ -415,9 +415,12 @@ class BasePrivacyEngineTest(ABC):
     @given(
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
+        secure_mode=st.booleans(),
     )
     @settings(max_examples=20, deadline=None)
-    def test_noise_level(self, noise_multiplier: float, max_steps: int):
+    def test_noise_level(
+        self, noise_multiplier: float, max_steps: int, secure_mode: bool
+    ):
         """
         Tests that the noise level is correctly set
         """
@@ -464,18 +467,11 @@ class BasePrivacyEngineTest(ABC):
 
             self.assertAlmostEqual(real_norm, expected_norm, delta=0.15 * expected_norm)
 
-        with self.subTest(secure_mode=False):
-            helper_test_noise_level(
-                noise_multiplier=noise_multiplier,
-                max_steps=max_steps,
-                secure_mode=False,
-            )
-        with self.subTest(secure_mode=True):
-            helper_test_noise_level(
-                noise_multiplier=noise_multiplier,
-                max_steps=max_steps,
-                secure_mode=True,
-            )
+        helper_test_noise_level(
+            noise_multiplier=noise_multiplier,
+            max_steps=max_steps,
+            secure_mode=secure_mode,
+        )
 
     @patch("torch.normal", MagicMock(return_value=torch.Tensor([0.6])))
     def test_generate_noise_in_secure_mode(self):
