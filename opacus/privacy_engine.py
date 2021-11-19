@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import warnings
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 import torch
 from opacus.accountants import get_accountant
@@ -15,7 +15,20 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 
-def forbid_accumulation_hook(module: nn.Module, _):
+def forbid_accumulation_hook(module: GradSampleModule, _):
+    """
+    Model hook, that detects repetitive forward/backward passes between optimizer
+    steps.
+
+    Args:
+        module: input module
+        _:
+
+    Raises:
+        ValueError
+            If the hook detected multiple forward/backward passes between optimizer steps
+
+    """
     if not module.training:
         return
 
@@ -29,29 +42,43 @@ def forbid_accumulation_hook(module: nn.Module, _):
 
 
 class PrivacyEngine:
+    """
+    Main entry point to the Opacus API - use ``PrivacyEngine``  to enable differential
+    privacy for your model training.
+
+    ``PrivacyEngine`` object encapsulates current privacy state (privacy budget +
+    method it's been calculated) and exposes ``make_private`` method to wrap your
+    PyTorch training objects with their private counterparts.
+
+    Example:
+        >>> dataloader = demo_dataloader
+        >>> model = MyCustomModel()
+        >>> optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
+        >>> privacy_engine = PrivacyEngine()
+        >>>
+        >>> model, optimizer, dataloader = privacy_engine.make_private(
+        ...    module=model,
+        ...    optimizer=optimizer,
+        ...    data_loader=dataloader,
+        ...    noise_multiplier=1.0,
+        ...    max_grad_norm=1.0,
+        ... )
+        >>> # continue training as normal
+    """
     def __init__(self, accountant: str = "rdp", secure_mode=False):
         """
-        # TODO: Add docstring with doctest
-        # - Creating PrivacyEngine and applying make_private (test_privacy_engine_class_example)
-        # - Moving model to another device
-        # - Virtual step
 
-        Example:
-            >>> dataloader = getfixture("demo_dataloader")  # doctest: +SKIP
-            >>> criterion = nn.CrossEntropyLoss()  # doctest: +SKIP
-            >>> optimizer = torch.optim.SGD(model.parameters(), lr=0.05)  # doctest: +SKIP
-            >>> privacy_engine = PrivacyEngine()  # doctest: +SKIP
-            >>> for i, (X, y) in enumerate(dataloader):  # doctest: +SKIP
-            ...     logits = model(X)
-            ...     loss = criterion(logits, y)
-            ...     loss.backward()
-            ...     if i % 16 == 15:
-            ...         optimizer.step()  # this will call privacy engine's step()
-            ...         optimizer.zero_grad()
-            ...     else:
-            ...         optimizer.virtual_step()  # this will call privacy engine's virtual_step()
-
+        Args:
+            accountant: Accounting mechanism. Currently supported:
+                - rdp (:class:`~opacus.accountants.RDPAccountant`)
+                - gdp (:class:`~opacus.accountants.GaussianAccountant`)
+            secure_mode: Set to ``True`` if cryptographically strong DP guarantee is
+                requires. ``secure_mode=True`` uses secure random number generator for
+                noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and
+                prevents certain floating-point arithmetic-based attacks.
+                See :meth:`~opacus.optimizers.optimizer._generate_noise` for details
         """
+
         self.accountant = get_accountant(mechanism=accountant)
         self.secure_mode = secure_mode
         self.secure_rng = None
@@ -147,6 +174,14 @@ class PrivacyEngine:
     ) -> bool:
         """
         Check if task components are compatible with DP.
+
+        Args:
+            module:
+            optimizer:
+            data_loader:
+
+        Returns:
+            ``True`` if compatible, ``False`` otherwise
         """
         return ModuleValidator.is_valid(module)
 
@@ -159,6 +194,15 @@ class PrivacyEngine:
         """
         Validate that task components are compatible with DP.
         Same as ``is_compatible()``, but raises error instead of returning bool.
+
+        Args:
+            module:
+            optimizer:
+            data_loader:
+
+        Raises:
+            UnsupportedModuleError
+                If one or more modules found to be incompatible
         """
         ModuleValidator.validate(module, raise_if_error=True)
 
@@ -167,6 +211,15 @@ class PrivacyEngine:
         """
         Return a privacy engine compatible module. Also validates the module after
         running registered fixes.
+
+        Args:
+            module:
+
+        Returns:
+            Module with some submodules replaced for their deep copies or
+            close equivalents.
+            See :class:`~opacus.validators.module_validator.ModuleValidator` for
+            more details
         """
         module = ModuleValidator.fix(module)
         ModuleValidator.validate(module, raise_if_error=True)
@@ -185,7 +238,59 @@ class PrivacyEngine:
         noise_seed: Optional[int] = None,
         poisson_sampling: bool = True,
         clipping: str = "flat",
-    ):
+    ) -> Tuple[GradSampleModule, DPOptimizer, DataLoader]:
+        """
+        Add privacy-related responsibilites to the main PyTorch training objects:
+        model, optimizer and the data loader.
+
+        All of the returned objects act just like treir non-private counterparts
+        passed as arguments, but with added DP tasks.
+
+        Model is wrapped to also compute per sample gradients.
+        Optimizer is now responsible for gradient clipping and adding noise to the
+            gradients
+        DataLoader is updated to perform Poisson sampling.
+
+        Note, that using any other models, optimizers or data sources during training
+        will invalidate stated privacy guarantees.
+
+        Args:
+            module: PyTorch module to be used for training
+            optimizer: Optimizer to be used for training
+            data_loader: DataLoader to be used for training
+            noise_multiplier: The ratio of the standard deviation of the Gaussian noise to
+                the L2-sensitivity of the function to which the noise is added
+                (How much noise to add)
+            max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm
+                higher than this will be clipped to this value.
+            batch_first: Flag to indicate if the input tensor to the corresponding module
+                has the first dimension representing the batch. If set to True, dimensions on
+                input tensor will be ``[batch_size, ..., ...]``.
+            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+                is a sum or a mean operation. Can take values "sum" or "mean"
+            noise_seed: Seed to be used for random noise generation
+            poisson_sampling: ``True`` if you want to use standard sampling required
+                for DP guarantees. Setting ``False`` will leave provided data_loader
+                unchanged. Technically this doesn't fit the assumptions made by
+                privacy accounting mechanism, but it can be a good approximation when
+                using Poisson sampling is unfeasible.
+            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer").
+                Flat clipping calculates the norm of the entire gradient over
+                all parameters, while per layer clipping sets individual norms for
+                every parameter tensor. Flat clipping is usually preferred, but using
+                per layer clipping in combination with distributed training can provide
+                notable performance gains.
+
+        Returns:
+            Tuple of (model, optimizer, data_loader)
+            Model is a wrapper around the original model that also computes per sample
+                gradients
+            Optimizer is a wrapper around the original optimizer that also does
+             gradient clipping and adding noise to the gradients
+            DataLoader is a brand new DataLoader object, constructed to behave as
+                equivalent to the original data loader, possibly with updated
+                sampling mechanism. Points to the same dataset object.
+        """
         if noise_seed and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
 
@@ -244,6 +349,50 @@ class PrivacyEngine:
         sigma_min: Optional[float] = None,
         sigma_max: Optional[float] = None,
     ):
+        """
+        Version of :meth:`~opacus.privacy_engine.PrivacyEngine.make_private`,
+        that calculates privacy parameters based on a given privacy budget.
+
+        For the full documentation see
+        :meth:`~opacus.privacy_engine.PrivacyEngine.make_private`
+
+        Args:
+            module: PyTorch module to be used for training
+            optimizer: Optimizer to be used for training
+            data_loader: DataLoader to be used for training
+            noise_multiplier: The ratio of the standard deviation of the Gaussian noise to
+                the L2-sensitivity of the function to which the noise is added
+                (How much noise to add)
+            max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm
+                higher than this will be clipped to this value.
+            batch_first: Flag to indicate if the input tensor to the corresponding module
+                has the first dimension representing the batch. If set to True, dimensions on
+                input tensor will be ``[batch_size, ..., ...]``.
+            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+                is a sum or a mean operation. Can take values "sum" or "mean"
+            noise_seed: Seed to be used for random noise generation
+            poisson_sampling: ``True`` if you want to use standard sampling required
+                for DP guarantees. Setting ``False`` will leave provided data_loader
+                unchanged. Technically this doesn't fit the assumptions made by
+                privacy accounting mechanism, but it can be a good approximation when
+                using Poisson sampling is unfeasible.
+            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer").
+                Flat clipping calculates the norm of the entire gradient over
+                all parameters, while per layer clipping sets individual norms for
+                every parameter tensor. Flat clipping is usually preferred, but using
+                per layer clipping in combination with distributed training can provide
+                notable performance gains.
+
+        Returns:
+            Tuple of (model, optimizer, data_loader)
+            Model is a wrapper around the original model that also computes per sample
+                gradients
+            Optimizer is a wrapper around the original optimizer that also does
+             gradient clipping and adding noise to the gradients
+            DataLoader is a brand new DataLoader object, constructed to behave as
+                equivalent to the original data loader, possibly with updated
+                sampling mechanism. Points to the same dataset object.
+        """
         sample_rate = 1 / len(data_loader)
 
         return self.make_private(
@@ -267,4 +416,11 @@ class PrivacyEngine:
         )
 
     def get_epsilon(self, delta):
+        """
+        Computes the (epsilon, delta) privacy budget spent so far.
+        Args:
+            target_delta: The Target delta.
+        Returns:
+            Pair of epsilon and optimal order alpha.
+        """
         return self.accountant.get_epsilon(delta)

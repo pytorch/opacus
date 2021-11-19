@@ -38,7 +38,18 @@ class _NoiseScheduler(object):
 
 
 class ExponentialNoise(_NoiseScheduler):
+    """
+    Decays the noise_multiplier by gamma every epoch.
+    When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
+    """
     def __init__(self, optimizer: DPOptimizer, gamma: float, last_epoch: int = -1):
+        """
+
+        Args:
+            optimizer: Wrapped optimizer
+            gamma: Multiplicative factor of learning rate decay.
+            last_epoch: The index of last epoch
+        """
         self.gamma = gamma
         super().__init__(optimizer, last_epoch)
 
@@ -50,12 +61,24 @@ class ExponentialNoise(_NoiseScheduler):
 
 
 class LambdaNoise(_NoiseScheduler):
+    """
+    Sets the noise_multiplier to the initial noise_multiplier times a given function.
+    When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
+    """
     def __init__(
         self,
         optimizer: DPOptimizer,
         noise_lambda: Callable[[int], float],
         last_epoch: int = -1,
     ):
+        """
+
+        Args:
+            optimizer: Wrapped optimizer.
+            noise_lambda: A function which computes a multiplicative factor given
+                an integer epoch
+            last_epoch: The index of last epoch. Default: -1.
+        """
         self.noise_lambda = noise_lambda
         self.base_noise_multiplier = optimizer.noise_multiplier
         super().__init__(optimizer, last_epoch)
@@ -65,9 +88,21 @@ class LambdaNoise(_NoiseScheduler):
 
 
 class StepNoise(_NoiseScheduler):
+    """
+    Decays the noise_multiplier by gamma every step_size epochs.
+    When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
+    """
     def __init__(
         self, optimizer: DPOptimizer, step_size: int, gamma: float, last_epoch: int = -1
     ):
+        """
+
+        Args:
+            optimizer: Wrapped optimizer.
+            step_size: Period of learning rate decay.
+            gamma: Multiplicative factor of learning rate decay.
+            last_epoch: The index of last epoch
+        """
         self.step_size = step_size
         self.gamma = gamma
         super().__init__(optimizer, last_epoch)
