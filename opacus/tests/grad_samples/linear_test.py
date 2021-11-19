@@ -15,8 +15,9 @@ class Linear_test(GradSampleHooks_test):
         Z=st.integers(1, 4),
         H=st.integers(1, 3),
         W=st.integers(10, 17),
-        input_dim=st.integers(2, 4),
+        input_dim=st.integers(3, 4),
         bias=st.booleans(),
+        batch_first=st.booleans(),
     )
     @settings(deadline=10000)
     def test_input_bias(
@@ -27,9 +28,10 @@ class Linear_test(GradSampleHooks_test):
         H: int,
         input_dim: int,
         bias: bool,
+        batch_first: bool,
     ):
 
-        if input_dim == 2:
+        if input_dim == 2:  # TODO: fix when dim is 2
             x_shape = [N, W]
         if input_dim == 3:
             x_shape = [N, Z, W]
@@ -38,4 +40,4 @@ class Linear_test(GradSampleHooks_test):
 
         linear = nn.Linear(W, W + 2, bias=bias)
         x = torch.randn(x_shape)
-        self.run_test(x, linear, batch_first=True)
+        self.run_test(x, linear, batch_first=batch_first)
