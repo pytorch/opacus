@@ -8,13 +8,13 @@ Opacus only works with supported ``nn.Module``s. The following modules are suppo
 1. Modules with no trainable parameters (eg ``nn.ReLU``, `nn.Tanh`)
 2. Modules which are frozen. A nn.Module can be frozen in PyTorch by unsetting ``requires_grad``
 in each of its parameters, ie `for p in module.parameters(): p.requires_grad = False`.
-3. Explicitly supported modules (we keep a dictionary in opacus.SUPPORTED_LAYERS), eg ``nn.Conv2d``.
+3. Explicitly supported modules and settings (see `grad_sample/` folder), eg ``nn.Conv2d``.
 4. Any complex nn.Module that contains only supported nn.Modules. This means that most models
 will be compatible, given that we support most of the common building blocks. This however also
 means that Opacus support depends on how a specific ``nn.Module`` is implemented. For example,
 ``nn.LSTM`` *could* be written by using ``nn.Linear`` (which we support), but its actual
 implementation does not use it (so that it can fuse operators and be faster). Any layer that
-needs a rewrite to be supported is in the `/layers` folder.
+needs a rewrite to be supported is in the `grad_sample/` folder.
 
 As an example, the following ``nn.Module`` is supported, because it's made entirely of supported
 nn.Modules:
@@ -42,4 +42,4 @@ class SampleConvNet(nn.Module):
 
 ## Limitations of backward hooks
 The implementation of gradient clipping in autograd_grad_sample.py uses backward hooks to capture per-sample gradients.
-The `register_backward hook` function has a known issue being tracked at https://github.com/pytorch/pytorch/issues/598. However, this is the only known way of implementing this as of now (your suggestions and contributions are very welcome). The behavior has been verified to be correct for the layers currently supported by opacus.
+The `register_backward hook` function has a known issue being tracked at https://github.com/pytorch/pytorch/issues/598. However, this is the only known way of implementing this as of now (your suggestions and contributions are very welcome). The behavior has been verified to be correct for the layers currently supported by Opacus.
