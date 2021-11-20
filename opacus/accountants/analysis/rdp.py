@@ -17,22 +17,28 @@ Example:
 
     The example code would be:
 
+    >>> parameters = [(1e-5, 1.0, 10), (1e-4, 3.0, 4)]
+    >>> delta = 1e-5
+
     >>> max_order = 32
     >>> orders = range(2, max_order + 1)
     >>> rdp = np.zeros_like(orders, dtype=float)
     >>> for q, sigma, steps in parameters:
-    >>>     rdp += privacy_analysis.compute_rdp(q, sigma, steps, orders)
-    >>> epsilon, opt_order = privacy_analysis.get_privacy_spent(orders, rdp, delta)
+    ...     rdp += compute_rdp(q, sigma, steps, orders)
+
+    >>> epsilon, opt_order = get_privacy_spent(orders, rdp, delta=1e-5)
+    >>> epsilon, opt_order  # doctest: +NUMBER
+    (0.336, 23)
 
 """
 
 import math
-from typing import List, Tuple, Union, Optional
+import warnings
+from typing import List, Tuple, Union
 
 import numpy as np
 from scipy import special
 
-DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
 ########################
 # LOG-SPACE ARITHMETIC #
@@ -309,6 +315,9 @@ def get_privacy_spent(
         return np.inf, np.nan
 
     idx_opt = np.nanargmin(eps)  # Ignore NaNs
+    if idx_opt == 0 or idx_opt == len(eps) - 1:
+        extreme = "smallest" if idx_opt == 0 else "largest"
+        warnings.warn(
+            f"Optimal order is the {extreme} alpha. Please consider expanding the range of alphas to get a tighter privacy bound."
+        )
     return eps[idx_opt], orders_vec[idx_opt]
-
-

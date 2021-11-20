@@ -3,10 +3,10 @@
 import unittest
 
 import torch
+from opacus import PrivacyEngine
+from opacus.scheduler import ExponentialNoise, LambdaNoise, StepNoise
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
-from opacus import PrivacyEngine
-from opacus.scheduler import ExponentialNoise, StepNoise, LambdaNoise
 
 
 class SchedulerTest(unittest.TestCase):
@@ -19,7 +19,11 @@ class SchedulerTest(unittest.TestCase):
         self.engine = PrivacyEngine()
 
         self.module, self.optimizer, self.data_loader = self.engine.make_private(
-            model, optimizer, data_loader, noise_multiplier=1.0, max_grad_norm=1.0
+            module=model,
+            optimizer=optimizer,
+            data_loader=data_loader,
+            noise_multiplier=1.0,
+            max_grad_norm=1.0,
         )
 
     def test_exponential_scheduler(self):
@@ -46,7 +50,9 @@ class SchedulerTest(unittest.TestCase):
         self.assertEqual(self.optimizer.noise_multiplier, gamma ** 2)
 
     def test_lambda_scheduler(self):
-        noise_lambda = lambda epoch: (1 - epoch / 10)
+        def noise_lambda(epoch):
+            return 1 - epoch / 10
+
         scheduler = LambdaNoise(self.optimizer, noise_lambda=noise_lambda)
 
         self.assertEqual(self.optimizer.noise_multiplier, 1.0)

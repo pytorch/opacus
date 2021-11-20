@@ -1,16 +1,60 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+from __future__ import annotations
+
+import logging
 from functools import partial
-from typing import Iterable, List, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
-from opacus.layers.dp_lstm import DPLSTM, LSTMLinear
-from opacus.utils.module_inspection import requires_grad
+from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
+from opacus.utils.module_utils import requires_grad, trainable_modules
 
 
-class UnsupportedModuleError(ValueError):
-    pass
+logger = logging.getLogger(__name__)
+
+
+def create_or_accumulate_grad_sample(
+    param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
+) -> None:
+    """
+    Creates a ``_current_grad_sample`` attribute in the given parameter, or adds to it
+    if the ``_current_grad_sample`` attribute already exists.
+
+
+
+    Args:
+        param: Parameter to which ``grad_sample`` will be added
+        grad_sample: Per-sample gradients tensor. Must be of the same
+            shape as ``param`` with extra batch dimension
+    """
+
+    if hasattr(param, "_current_grad_sample"):
+        param._current_grad_sample[: grad_sample.shape[0]] += grad_sample
+    else:
+        # TODO: maybe set max_batch_len on a parameter level, so
+        # you don't need to pass layer here?
+        max_batch_len = layer.max_batch_len
+        param._current_grad_sample = torch.zeros(
+            torch.Size([max_batch_len]) + grad_sample.shape[1:],
+            device=grad_sample.device,
+            dtype=grad_sample.dtype,
+        )
+        param._current_grad_sample[: grad_sample.shape[0]] = grad_sample
+
+
+def promote_current_grad_sample(p: nn.Parameter) -> None:
+    if p.requires_grad:
+        if hasattr(p, "grad_sample"):
+            if isinstance(p.grad_sample, list):
+                p.grad_sample.append(p._current_grad_sample)
+            else:
+                p.grad_sample = [p.grad_sample, p._current_grad_sample]
+        else:
+            p.grad_sample = p._current_grad_sample
+
+        del p._current_grad_sample
 
 
 class GradSampleModule(nn.Module):
@@ -19,21 +63,43 @@ class GradSampleModule(nn.Module):
     """
     GRAD_SAMPLERS = {}
 
-    def __init__(self, m: nn.Module, *, batch_first=True, loss_reduction="mean"):
+    def __init__(
+        self,
+        m: nn.Module,
+        *,
+        batch_first=True,
+        loss_reduction="mean",
+        strict: bool = True,
+    ):
         super().__init__()
+
+        errors = self.validate(module=m, raise_if_error=strict)
+        if errors and not strict:
+            logger.info(
+                f"GradSampleModule found the following errors: {errors}."
+                "Using non-strict mode, continuing"
+            )
+
+        # TODO: accessing weights via _module is inconveniet, override _getattr_
         self._module = m  # TODO: it's not 100% certain that this should stay private
         self.hooks_enabled = False
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
         self.add_hooks(loss_reduction=loss_reduction, batch_first=batch_first)
 
+        # TODO: Do we want to initialize empty grad_sample attribures here?
+        # e.g. p.grad_sample = torch.zeros([0, p.shape[1:]])
+
     # TODO: few other common methods needs to be forwarded (e.g. name())
     # I think there's a way to intercept calls to all unknown attributes and
     # forward it to the self._module - is it a good idea?
 
-    def forward(self, x):
-        return self._module(x)
+    def forward(self, x, *args, **kwargs):
+        # TODO: check to forbid double forward
+        # TODO: also check to force zero_grad
+        return self._module(x, *args, **kwargs)
 
+    # TODO: match nn.Module signature
     def zero_grad(self):
         self.del_grad_sample()
         super().zero_grad()
@@ -52,10 +118,16 @@ class GradSampleModule(nn.Module):
         """
         for p in self.parameters():
             if hasattr(p, "grad_sample") and p.grad_sample is not None:
-                if p.grad_sample.grad_fn is not None:
-                    p.grad_sample.detach_()
+                if isinstance(p.grad_sample, list):
+                    grad_samples = p.grad_sample
                 else:
-                    p.grad_sample.requires_grad_(False)
+                    grad_samples = [p.grad_sample]
+
+                for grad_sample in grad_samples:
+                    if grad_sample.grad_fn is not None:
+                        grad_sample.detach_()
+                    else:
+                        grad_sample.requires_grad_(False)
 
                 del p.grad_sample
 
@@ -90,7 +162,7 @@ class GradSampleModule(nn.Module):
             self._module.autograd_grad_sample_hooks = []
             self.autograd_grad_sample_hooks = self._module.autograd_grad_sample_hooks
 
-        for module in self.trainable_modules():
+        for module in trainable_modules(self._module):
             if type(module) in self.GRAD_SAMPLERS:
                 self.autograd_grad_sample_hooks.append(
                     module.register_forward_hook(self.capture_activations_hook)
@@ -113,11 +185,12 @@ class GradSampleModule(nn.Module):
         """
         self.disable_hooks()
 
-        if hasattr(self, "ddp_hooks"):
-            while self.ddp_hooks:
-                handle = self.ddp_hooks.pop()
-                handle.remove()
-            delattr(self, "ddp_hooks")
+        for p in self.parameters():
+            if hasattr(p, "ddp_hooks"):
+                while p.ddp_hooks:
+                    handle = p.ddp_hooks.pop()
+                    handle.remove()
+                delattr(p, "ddp_hooks")
 
         if not hasattr(self, "autograd_grad_sample_hooks"):
             raise ValueError("Asked to remove hooks, but no hooks found")
@@ -143,28 +216,6 @@ class GradSampleModule(nn.Module):
         disable them so you don't need to call this unless you want to re-enable them.
         """
         self.hooks_enabled = True
-
-    def parametrized_modules(self) -> Iterable[nn.Module]:
-        """
-        Recursively iterates over all submodules, returning those that
-        have parameters (as opposed to "wrapper modules" that just organize modules).
-        """
-        yield from (
-            m
-            for m in self._module.modules()
-            if any(p is not None for p in m.parameters(recurse=False))
-        )
-
-    def trainable_modules(self) -> Iterable[nn.Module]:
-        """
-        Recursively iterates over all submodules, returning those that
-        have parameters and are trainable (ie they want a grad).
-        """
-        yield from (
-            m
-            for m in self.parametrized_modules()
-            if any(p.requires_grad for p in m.parameters())
-        )
 
     def __repr__(self):
         return f"GradSampleModule({self._module.__repr__()})"
@@ -201,7 +252,30 @@ class GradSampleModule(nn.Module):
         loss_reduction: str,
         batch_first: bool,
     ):
-        """Captures backprops in backward pass and store per-sample gradients."""
+        """
+        Computes per sample gradients given the current backprops and activations
+        stored by the associated forward hook. Computed per sample gradients are
+        stored in ``grad_sample`` field in each parameter.
+
+        For non-recurrent layers the process is straightforward: for each
+        ``loss.backward()`` call this hook will be called exactly one. For recurrent
+        layers, however, this is more complicated and the hook will be called multiple
+        times, while still processing the same batch of data.
+
+        For this reason we first accumulate the gradients from *the same batch* in
+        ``p._current_grad_sample`` and then, when we detect the end of a full backward
+        pass - we store accumulated result on ``p.grad_sample``.
+
+        From there, ``p.grad_sample`` could be either a Tensor or a list of Tensors,
+        if accumulated over multiple batches
+
+        Args:
+            module: nn.Module,
+            _forward_input: torch.Tensor,
+            forward_output: torch.Tensor,
+            loss_reduction: str,
+            batch_first: bool,
+        """
         if not self.hooks_enabled:
             return
 
@@ -210,12 +284,16 @@ class GradSampleModule(nn.Module):
             module, backprops, loss_reduction, batch_first
         )
         grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
-        grad_sampler_fn(module, activations, backprops)
+        grad_samples = grad_sampler_fn(module, activations, backprops)
+        for param, gs in grad_samples.items():
+            create_or_accumulate_grad_sample(param, gs, module)
 
-        if (
-            not isinstance(module.activations, list) or len(module.activations) == 0
-        ) and hasattr(module, "max_batch_len"):
-            del module.max_batch_len
+        if len(module.activations) == 0:
+            if hasattr(module, "max_batch_len"):
+                del module.max_batch_len
+
+            for p in module.parameters():
+                promote_current_grad_sample(p)
 
     def rearrange_grad_samples(
         self,
@@ -240,23 +318,21 @@ class GradSampleModule(nn.Module):
                 " run forward after add_hooks(model)"
             )
 
-        batch_dim = 0 if batch_first or type(module) is LSTMLinear else 1
+        # TODO: that's not right; DPLSTM isn't always batch_first=False
+        batch_dim = 0 if batch_first or type(module) is RNNLinear else 1
 
-        if isinstance(module.activations, list):
-            A = module.activations.pop()
-        else:
-            A = module.activations
+        activations = module.activations.pop()
 
         if not hasattr(module, "max_batch_len"):
             # For packed sequences, max_batch_len is set in the forward of the model (e.g. the LSTM)
             # Otherwise we infer it here
-            module.max_batch_len = _get_batch_size(module, A, batch_dim)
+            module.max_batch_len = _get_batch_size(module, activations, batch_dim)
 
         n = module.max_batch_len
         if loss_reduction == "mean":
-            B = backprops * n
+            backprops = backprops * n
         elif loss_reduction == "sum":
-            B = backprops
+            backprops = backprops
         else:
             raise ValueError(
                 f"loss_reduction = {loss_reduction}. Only 'sum' and 'mean' losses are supported"
@@ -264,15 +340,40 @@ class GradSampleModule(nn.Module):
 
         # No matter where the batch dimension was, .grad_samples will *always* put it in the first dim
         if batch_dim != 0:
-            A = A.permute([batch_dim] + [x for x in range(A.dim()) if x != batch_dim])
-            B = B.permute([batch_dim] + [x for x in range(B.dim()) if x != batch_dim])
+            activations = activations.permute(
+                [batch_dim] + [x for x in range(activations.dim()) if x != batch_dim]
+            )
+            backprops = backprops.permute(
+                [batch_dim] + [x for x in range(backprops.dim()) if x != batch_dim]
+            )
 
-        return A, B
+        return activations, backprops
 
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
-        """Check if this module is supported"""
-        return type(module) in cls.GRAD_SAMPLERS or type(module) is DPLSTM
+        """Check if this individual module is supported"""
+        return type(module) in cls.GRAD_SAMPLERS or isinstance(
+            module, (DPRNNBase, DPRNNCellBase)
+        )
+
+    @classmethod
+    def validate(
+        cls, module: nn.Module, raise_if_error: bool = False
+    ) -> List[NotImplementedError]:
+        """Validate support for module being wrapped"""
+        errors = []
+        errors.extend(
+            [
+                NotImplementedError(f"grad sampler is not yet implemented for {m}")
+                for m in trainable_modules(module)
+                if not GradSampleModule.is_supported(m)
+            ]
+        )
+        # raise or return errors as needed
+        if raise_if_error and len(errors) > 0:
+            raise NotImplementedError(errors)
+        else:
+            return errors
 
 
 def _get_batch_size(
@@ -285,10 +386,9 @@ def _get_batch_size(
     """
 
     max_batch_len = 0
-    if isinstance(module.activations, list):
-        for out in module.activations:
-            if out.shape[batch_dim] > max_batch_len:
-                max_batch_len = out.shape[batch_dim]
+    for out in module.activations:
+        if out.shape[batch_dim] > max_batch_len:
+            max_batch_len = out.shape[batch_dim]
 
     max_batch_len = max(max_batch_len, grad_sample.shape[batch_dim])
     return max_batch_len

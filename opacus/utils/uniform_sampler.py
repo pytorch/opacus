@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Optional
+from typing import List
 
 import torch
 from torch.utils.data import Sampler
 
 
-class UniformWithReplacementSampler(Sampler):
+class UniformWithReplacementSampler(Sampler[List[int]]):
     r"""
     This sampler samples elements according to the Sampled Gaussian Mechanism.
     Each sample is selected with a probability equal to ``sample_rate``.
@@ -23,11 +23,6 @@ class UniformWithReplacementSampler(Sampler):
         self.num_samples = num_samples
         self.sample_rate = sample_rate
         self.generator = generator
-        if self.generator is None:
-            generator = torch.Generator()
-            generator.manual_seed(
-                int(torch.empty((), dtype=torch.int64).random_().item())
-            )
 
         if self.num_samples <= 0:
             raise ValueError(
@@ -51,7 +46,7 @@ class UniformWithReplacementSampler(Sampler):
             num_batches -= 1
 
 
-class DistributedPoissonBatchSampler(Sampler):
+class DistributedUniformWithReplacementSampler(Sampler):
     """
     Distributed batch sampler.
 
@@ -72,25 +67,18 @@ class DistributedPoissonBatchSampler(Sampler):
         self,
         total_size: int,
         sample_rate: float,
-        num_replicas: Optional[int] = None,
-        rank: Optional[int] = None,
         shuffle: bool = True,
-        seed: int = 0,
+        shuffle_seed: int = 0,
         generator=None,
     ):
         self.total_size = total_size
         self.sample_rate = sample_rate
         self.generator = generator
-        self.num_replicas = num_replicas
-        self.rank = rank
+        self.num_replicas = torch.distributed.get_world_size()
+        self.rank = torch.distributed.get_rank()
         self.epoch = 0
         self.shuffle = shuffle
-        self.seed = seed
-        if self.generator is None:
-            generator = torch.Generator()
-            generator.manual_seed(
-                int(torch.empty((), dtype=torch.int64).random_().item())
-            )
+        self.shuffle_seed = shuffle_seed
 
         if self.total_size <= 0:
             raise ValueError(
@@ -114,7 +102,7 @@ class DistributedPoissonBatchSampler(Sampler):
         if self.shuffle:
             # deterministically shuffle based on epoch and seed
             g = torch.Generator()
-            g.manual_seed(self.seed + self.epoch)
+            g.manual_seed(self.shuffle_seed + self.epoch)
             indices = torch.randperm(self.total_size, generator=g)  # type: ignore
         else:
             indices = torch.arange(self.total_size)  # type: ignore

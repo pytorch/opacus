@@ -1,8 +1,11 @@
 from typing import Optional, Sequence
 
 import torch
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler
-from torch.utils.data import DataLoader, Dataset
+from opacus.utils.uniform_sampler import (
+    DistributedUniformWithReplacementSampler,
+    UniformWithReplacementSampler,
+)
+from torch.utils.data import BatchSampler, DataLoader, Dataset, Sampler
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
@@ -42,15 +45,25 @@ class DPDataLoader(DataLoader):
         generator=None,
         *,
         prefetch_factor: int = 2,
-        persistent_workers: bool = False
+        persistent_workers: bool = False,
+        distributed: bool = False,
     ):
 
         self.sample_rate = sample_rate
-        batch_sampler = UniformWithReplacementSampler(
-            num_samples=len(dataset),  # type: ignore[assignment, arg-type]
-            sample_rate=sample_rate,
-            generator=generator,
-        )
+        self.distributed = distributed
+
+        if distributed:
+            batch_sampler = DistributedUniformWithReplacementSampler(
+                total_size=len(dataset),  # type: ignore[assignment, arg-type]
+                sample_rate=sample_rate,
+                generator=generator,
+            )
+        else:
+            batch_sampler = UniformWithReplacementSampler(
+                num_samples=len(dataset),  # type: ignore[assignment, arg-type]
+                sample_rate=sample_rate,
+                generator=generator,
+            )
         sample_empty_shapes = [[0, *shape_safe(x)] for x in dataset[0]]
         if collate_fn is None:
             collate_fn = default_collate
@@ -71,9 +84,15 @@ class DPDataLoader(DataLoader):
         )
 
     @classmethod
-    def from_data_loader(cls, data_loader: DataLoader):
+    def from_data_loader(
+        cls, data_loader: DataLoader, distributed: bool = False, generator=None
+    ):
         if isinstance(data_loader, cls):
+            # TODO: this should be exception, not assert
+            assert data_loader.distributed == distributed
             return data_loader
+
+        # TODO: check not iterabledataset
 
         return cls(
             dataset=data_loader.dataset,
@@ -85,7 +104,50 @@ class DPDataLoader(DataLoader):
             timeout=data_loader.timeout,
             worker_init_fn=data_loader.worker_init_fn,
             multiprocessing_context=data_loader.multiprocessing_context,
-            generator=data_loader.generator,
+            generator=generator if generator else data_loader.generator,
             prefetch_factor=data_loader.prefetch_factor,
             persistent_workers=data_loader.persistent_workers,
+            distributed=distributed,
         )
+
+
+def _is_supported_batch_sampler(sampler: Sampler):
+    return (
+        isinstance(sampler, BatchSampler)
+        or isinstance(sampler, UniformWithReplacementSampler)
+        or isinstance(sampler, DistributedUniformWithReplacementSampler)
+    )
+
+
+def switch_generator(data_loader: DataLoader, generator):
+    batch_sampler = data_loader.batch_sampler
+
+    if batch_sampler is None or not _is_supported_batch_sampler(batch_sampler):
+        raise ValueError(
+            "Non-batch processing is not supported: Opacus always assumes one of the input dimensions to be batch dimension."
+        )
+
+    if isinstance(batch_sampler, BatchSampler):
+        if not hasattr(batch_sampler.sampler, "generator"):
+            raise ValueError(
+                "Target sampler doesn't have generator attribute: nothing to switch"
+            )
+
+        batch_sampler.sampler.generator = generator
+    else:
+        batch_sampler.generator = generator
+
+    return DataLoader(
+        dataset=data_loader.dataset,
+        batch_sampler=batch_sampler,
+        num_workers=data_loader.num_workers,
+        collate_fn=data_loader.collate_fn,
+        pin_memory=data_loader.pin_memory,
+        drop_last=data_loader.drop_last,
+        timeout=data_loader.timeout,
+        worker_init_fn=data_loader.worker_init_fn,
+        multiprocessing_context=data_loader.multiprocessing_context,
+        generator=generator,
+        prefetch_factor=data_loader.prefetch_factor,
+        persistent_workers=data_loader.persistent_workers,
+    )

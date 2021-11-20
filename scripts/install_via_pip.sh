@@ -22,7 +22,9 @@ while getopts 'ncdv:' flag; do
 # used by our tests on CircleCI.
 
 
-curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+sudo apt-get update
+sudo apt-get upgrade ca-certificates -y
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get install -y nodejs
 curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
@@ -38,7 +40,7 @@ export TERM=xterm
 pip install --upgrade pip
 
 # install with dev dependencies
-pip install -e .[dev]
+pip install -e .[dev] --user
 
 # install pytorch nightly if asked for
 if [[ $PYTORCH_NIGHTLY == true ]]; then
