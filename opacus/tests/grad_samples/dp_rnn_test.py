@@ -76,5 +76,8 @@ class RNN_test(GradSampleHooks_test):
         if using_packed_sequences:
             x = _gen_packed_data(N, T, D, batch_first, packed_sequences_sorted)
         else:
-            x = torch.randn([N, T, D])
+            if batch_first:
+                x = torch.randn([N, T, D])
+            else:
+                x = torch.randn([T, N, D])
         self.run_test(x, rnn, batch_first=batch_first)
