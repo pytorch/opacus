@@ -18,15 +18,9 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
-import torch.utils.tensorboard as tensorboard
 import torchvision.transforms as transforms
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.utils import stats
-from opacus.utils.uniform_sampler import (
-    DistributedUniformWithReplacementSampler,
-    UniformWithReplacementSampler,
-)
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
@@ -148,7 +142,6 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
 
         losses.append(loss.item())
         top1_acc.append(acc1)
-        stats.update(stats.StatType.TRAIN, acc1=acc1)
 
         # compute gradient and do SGD step
         loss.backward()
@@ -201,7 +194,6 @@ def test(args, model, test_loader, device):
             top1_acc.append(acc1)
 
     top1_avg = np.mean(top1_acc)
-    stats.update(stats.StatType.TEST, acc1=top1_avg)
 
     print(f"\tTest set:" f"Loss: {np.mean(losses):.6f} " f"Acc@1: {top1_avg :.6f} ")
     return np.mean(top1_acc)
@@ -222,30 +214,6 @@ def main():
         device = "cpu"
         rank = 0
         world_size = 1
-
-    # The following few lines, enable stats gathering about the run
-    # 1. where the stats should be logged
-    stats.set_global_summary_writer(tensorboard.SummaryWriter(args.log_dir))
-    # 2. enable stats
-    stats.add(
-        # stats about gradient norms aggregated for all layers
-        stats.Stat(stats.StatType.GRAD, "AllLayers", frequency=0.1),
-        # stats about gradient norms per layer
-        stats.Stat(stats.StatType.GRAD, "PerLayer", frequency=0.1),
-        # stats about clipping
-        stats.Stat(stats.StatType.GRAD, "ClippingStats", frequency=0.1),
-        # stats on training accuracy
-        stats.Stat(stats.StatType.TRAIN, "accuracy", frequency=0.01),
-        # stats on validation accuracy
-        stats.Stat(stats.StatType.TEST, "accuracy"),
-    )
-
-    # The following lines enable stat gathering for the clipping process
-    # and set a default of per layer clipping for the Privacy Engine
-    # clipping = {
-    #     "clip_per_layer": args.clip_per_layer,
-    #     "enable_stat": (rank == 0),
-    # }
 
     if args.secure_rng:
         try:
