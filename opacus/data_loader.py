@@ -1,6 +1,5 @@
 from typing import Optional, Sequence
 
-import collections
 import torch
 from opacus.utils.uniform_sampler import (
     DistributedUniformWithReplacementSampler,
@@ -14,18 +13,21 @@ from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 def wrap_collate_with_empty(
     collate_fn: Optional[_collate_fn_t], sample_empty_shapes: Sequence
 ):
+    # TODO: does it work with packed sequences?
     def collate(batch):
         if len(batch) > 0:
             return collate_fn(batch)
         else:
-            if isinstance(sample_empty_shapes, tuple):
-                return torch.zeros(*sample_empty_shapes)
-            else:
-                return [torch.zeros(x) for x in sample_empty_shapes]
+            return [torch.zeros(x) for x in sample_empty_shapes]
 
     return collate
 
 
+def shape_safe(x):
+    if hasattr(x, "shape"):
+        return x.shape
+    else:
+        return ()
 
 
 class DPDataLoader(DataLoader):
@@ -62,16 +64,9 @@ class DPDataLoader(DataLoader):
                 sample_rate=sample_rate,
                 generator=generator,
             )
-
+        sample_empty_shapes = [[0, *shape_safe(x)] for x in dataset[0]]
         if collate_fn is None:
             collate_fn = default_collate
-        collated_data = collate_fn([dataset[0]])
-
-        # Opacus empty batches work for Tensors and sequences of Tensors
-        if isinstance(collated_data, torch.Tensor):
-            sample_empty_shapes = (0, *collated_data.shape[1:])
-        elif isinstance(collated_data, collections.abc.Sequence) and all([isinstance(x, torch.Tensor) for x in collated_data]):
-            sample_empty_shapes = [(0, *x.shape[1:]) for x in collated_data]
 
         super().__init__(
             dataset=dataset,
