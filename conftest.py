@@ -5,7 +5,7 @@ import torch
 from opacus.utils import stats
 from torch import nn
 from torch.utils.data import TensorDataset, DataLoader
-
+from opacus import PrivacyEngine
 
 class MyCustomModel(nn.Module):
     """Demo module to use in doctests"""
@@ -33,6 +33,23 @@ class MockSummaryWriter:
 
     def add_scalar(self, name, value, iter):
         self.logs[name][iter] = value
+
+
+def _init_private_training():
+    model = MyCustomModel()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
+    data_loader = create_demo_dataloader()
+    privacy_engine = PrivacyEngine()
+
+    model, optimizer, data_loader = privacy_engine.make_private(
+        module=model,
+        optimizer=optimizer,
+        data_loader=data_loader,
+        noise_multiplier=1.0,
+        max_grad_norm=1.0,
+    )
+
+    return model, optimizer, data_loader
 
 
 mock_summary_writer = MockSummaryWriter()
