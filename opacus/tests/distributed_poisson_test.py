@@ -22,7 +22,9 @@ class PoissonSamplingTest(unittest.TestCase):
                 sample_rate=self.batch_size / len(self.dataset),
                 generator=generator,
             )
-            dataloader = torch.utils.data.DataLoader(self.dataset, batch_sampler=sampler)
+            dataloader = torch.utils.data.DataLoader(
+                self.dataset, batch_sampler=sampler
+            )
 
             samplers.append(sampler)
             dataloaders.append(dataloader)
@@ -52,10 +54,15 @@ class PoissonSamplingTest(unittest.TestCase):
                 batch_sizes.append(x.shape[0])
 
             self.assertGreater(len(set(batch_sizes)), 1)
-            self.assertAlmostEqual(np.mean(batch_sizes), self.batch_size // self.world_size, delta=2)
-    
+            self.assertAlmostEqual(
+                np.mean(batch_sizes), self.batch_size // self.world_size, delta=2
+            )
+
     def test_separate_batches(self):
-        indices = {rank: [i.item() for batch in self.samplers[rank] for i in batch] for rank in range(self.world_size)}
+        indices = {
+            rank: [i.item() for batch in self.samplers[rank] for i in batch]
+            for rank in range(self.world_size)
+        }
         for rank1 in range(self.world_size):
             for rank2 in range(rank1 + 1, self.world_size):
                 # Separate workers output separate indices
