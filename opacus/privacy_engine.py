@@ -29,7 +29,7 @@ def forbid_accumulation_hook(module: nn.Module, _):
 
 
 class PrivacyEngine:
-    def __init__(self, accountant: str = "rdp", secure_mode=False):
+    def __init__(self, accountant: str = "rdp", secure_mode=False, debug=False):
         """
         # TODO: Add docstring with doctest
         # - Creating PrivacyEngine and applying make_private (test_privacy_engine_class_example)
@@ -54,6 +54,7 @@ class PrivacyEngine:
         """
         self.accountant = get_accountant(mechanism=accountant)
         self.secure_mode = secure_mode
+        self.debug = debug
         self.secure_rng = None
 
         if self.secure_mode:
@@ -107,6 +108,7 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=self.secure_mode,
+            debug=self.debug,
         )
 
     def _prepare_data_loader(

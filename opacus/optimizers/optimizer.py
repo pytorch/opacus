@@ -97,6 +97,7 @@ class DPOptimizer(Optimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode=False,
+        debug=False,
     ):
         if loss_reduction not in ("mean", "sum"):
             raise ValueError(f"Unexpected value for loss_reduction: {loss_reduction}")
@@ -114,6 +115,9 @@ class DPOptimizer(Optimizer):
         self.step_hook = None
         self.generator = generator
         self.secure_mode = secure_mode
+        self.debug = debug
+        if debug:
+            self.grad_norms = []
 
         self.param_groups = optimizer.param_groups
         self.state = optimizer.state
@@ -172,6 +176,8 @@ class DPOptimizer(Optimizer):
         per_sample_clip_factor = (self.max_grad_norm / (per_sample_norms + 1e-6)).clamp(
             max=1.0
         )
+        if self.debug:
+            self.grad_norms += per_sample_norms.tolist()
 
         for p in self.params:
             grad_sample = _get_flat_grad_sample(p)
