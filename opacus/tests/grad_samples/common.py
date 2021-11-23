@@ -95,7 +95,7 @@ class GradSampleHooks_test(unittest.TestCase):
         loss_reduction="mean",
     ) -> Dict[str, torch.tensor]:
         """
-        Computes per-sample gradients with the microbatch method, ie by computing normal gradients
+        Computes per-sample gradients with the microbatch method, i.e. by computing normal gradients
         with batch_size set to 1, and manually accumulating them. This is our reference for testing
         as this method is obviously correct, but slow.
 

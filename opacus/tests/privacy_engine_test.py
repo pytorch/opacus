@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import abc
+import math
 import unittest
 from abc import ABC
 from typing import Optional, OrderedDict
@@ -114,18 +115,21 @@ class BasePrivacyEngineTest(ABC):
     ):
 
         steps = 0
-        for x, y in dl:
-            if optimizer:
-                optimizer.zero_grad()
-            logits = model(x)
-            loss = self.criterion(logits, y)
-            loss.backward()
-            if optimizer:
-                optimizer.step()
+        epochs = 1 if max_steps is None else math.ceil(max_steps / len(dl))
 
-            steps += 1
-            if max_steps and steps >= max_steps:
-                break
+        for _ in range(epochs):
+            for x, y in dl:
+                if optimizer:
+                    optimizer.zero_grad()
+                logits = model(x)
+                loss = self.criterion(logits, y)
+                loss.backward()
+                if optimizer:
+                    optimizer.step()
+
+                steps += 1
+                if max_steps and steps >= max_steps:
+                    break
 
     def test_basic(self):
         model, optimizer, dl, _ = self._init_private_training(
@@ -174,7 +178,6 @@ class BasePrivacyEngineTest(ABC):
         torch.manual_seed(0)
         v_model, v_optimizer, v_dl = self._init_vanilla_training()
         self._train_steps(v_model, v_optimizer, v_dl, max_steps=4)
-        v_optimizer.step()
         vanilla_params = [
             (name, p) for name, p in v_model.named_parameters() if p.requires_grad
         ]
@@ -186,7 +189,6 @@ class BasePrivacyEngineTest(ABC):
             max_grad_norm=10.0 if do_clip else 9999.0,
         )
         self._train_steps(p_model, p_optimizer, p_dl, max_steps=4)
-        p_optimizer.step()
         private_params = [p for p in p_model.parameters() if p.requires_grad]
 
         for (name, vp), pp in zip(vanilla_params, private_params):
@@ -367,6 +369,28 @@ class BasePrivacyEngineTest(ABC):
             )
         )
 
+    def test_make_private_with_epsilon(self):
+        model, optimizer, dl = self._init_vanilla_training()
+        target_eps = 2.0
+        target_delta = 1e-5
+        epochs = 2
+        total_steps = epochs * len(dl)
+
+        privacy_engine = PrivacyEngine()
+        model, optimizer, poisson_dl = privacy_engine.make_private_with_epsilon(
+            module=model,
+            optimizer=optimizer,
+            data_loader=dl,
+            target_epsilon=target_eps,
+            target_delta=1e-5,
+            epochs=epochs,
+            max_grad_norm=1.0,
+        )
+        self._train_steps(model, optimizer, dl, max_steps=total_steps)
+        self.assertAlmostEqual(
+            target_eps, privacy_engine.get_epsilon(target_delta), places=2
+        )
+
     def test_deterministic_run(self):
         """
         Tests that for 2 different models, secure seed can be fixed
@@ -391,9 +415,12 @@ class BasePrivacyEngineTest(ABC):
     @given(
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
+        secure_mode=st.booleans(),
     )
     @settings(max_examples=20, deadline=None)
-    def test_noise_level(self, noise_multiplier: float, max_steps: int):
+    def test_noise_level(
+        self, noise_multiplier: float, max_steps: int, secure_mode: bool
+    ):
         """
         Tests that the noise level is correctly set
         """
@@ -440,18 +467,11 @@ class BasePrivacyEngineTest(ABC):
 
             self.assertAlmostEqual(real_norm, expected_norm, delta=0.15 * expected_norm)
 
-        with self.subTest(secure_mode=False):
-            helper_test_noise_level(
-                noise_multiplier=noise_multiplier,
-                max_steps=max_steps,
-                secure_mode=False,
-            )
-        with self.subTest(secure_mode=True):
-            helper_test_noise_level(
-                noise_multiplier=noise_multiplier,
-                max_steps=max_steps,
-                secure_mode=True,
-            )
+        helper_test_noise_level(
+            noise_multiplier=noise_multiplier,
+            max_steps=max_steps,
+            secure_mode=secure_mode,
+        )
 
     @patch("torch.normal", MagicMock(return_value=torch.Tensor([0.6])))
     def test_generate_noise_in_secure_mode(self):

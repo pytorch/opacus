@@ -17,6 +17,7 @@ class Linear_test(GradSampleHooks_test):
         W=st.integers(10, 17),
         input_dim=st.integers(2, 4),
         bias=st.booleans(),
+        batch_first=st.booleans(),
     )
     @settings(deadline=10000)
     def test_input_bias(
@@ -27,10 +28,14 @@ class Linear_test(GradSampleHooks_test):
         H: int,
         input_dim: int,
         bias: bool,
+        batch_first: bool,
     ):
 
         if input_dim == 2:
-            x_shape = [N, W]
+            if not batch_first:
+                return  # see https://github.com/pytorch/opacus/pull/265
+            else:
+                x_shape = [N, W]
         if input_dim == 3:
             x_shape = [N, Z, W]
         if input_dim == 4:
@@ -38,4 +43,6 @@ class Linear_test(GradSampleHooks_test):
 
         linear = nn.Linear(W, W + 2, bias=bias)
         x = torch.randn(x_shape)
-        self.run_test(x, linear, batch_first=True)
+        if not batch_first:
+            x = x.transpose(0, 1)
+        self.run_test(x, linear, batch_first=batch_first)
