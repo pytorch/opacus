@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import warnings
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Tuple, Union
 
+import torch
 from opacus.accountants import create_accountant
 from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
@@ -14,14 +15,14 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 
-def forbid_accumulation_hook(module: GradSampleModule, _):
+def forbid_accumulation_hook(module: GradSampleModule, _input: torch.Tensor):
     """
     Model hook, that detects repetitive forward/backward passes between optimizer
     steps.
 
     Args:
         module: input module
-        _:
+        _input: module activations
 
     Raises:
         ValueError
@@ -64,6 +65,7 @@ class PrivacyEngine:
         ... )
         >>> # continue training as normal
     """
+
     def __init__(self, accountant: str = "rdp", secure_mode=False):
         """
 
@@ -72,7 +74,7 @@ class PrivacyEngine:
                 - rdp (:class:`~opacus.accountants.RDPAccountant`)
                 - gdp (:class:`~opacus.accountants.GaussianAccountant`)
             secure_mode: Set to ``True`` if cryptographically strong DP guarantee is
-                requires. ``secure_mode=True`` uses secure random number generator for
+                required. ``secure_mode=True`` uses secure random number generator for
                 noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and
                 prevents certain floating-point arithmetic-based attacks.
                 See :meth:`~opacus.optimizers.optimizer._generate_noise` for details
@@ -196,9 +198,9 @@ class PrivacyEngine:
         Check if task components are compatible with DP.
 
         Args:
-            module:
-            optimizer:
-            data_loader:
+            module: module to be checked
+            optimizer: optimizer to be checked
+            data_loader: data_loader to be checked
 
         Returns:
             ``True`` if compatible, ``False`` otherwise
@@ -216,9 +218,9 @@ class PrivacyEngine:
         Same as ``is_compatible()``, but raises error instead of returning bool.
 
         Args:
-            module:
-            optimizer:
-            data_loader:
+            module: module to be checked
+            optimizer: optimizer to be checked
+            data_loader: data_loader to be checked
 
         Raises:
             UnsupportedModuleError
@@ -233,7 +235,7 @@ class PrivacyEngine:
         running registered fixes.
 
         Args:
-            module:
+            module: module to be modified
 
         Returns:
             Module with some submodules replaced for their deep copies or
@@ -263,7 +265,7 @@ class PrivacyEngine:
         Add privacy-related responsibilites to the main PyTorch training objects:
         model, optimizer and the data loader.
 
-        All of the returned objects act just like treir non-private counterparts
+        All of the returned objects act just like their non-private counterparts
         passed as arguments, but with added DP tasks.
 
         Model is wrapped to also compute per sample gradients.
@@ -271,8 +273,9 @@ class PrivacyEngine:
             gradients
         DataLoader is updated to perform Poisson sampling.
 
-        Note, that using any other models, optimizers or data sources during training
-        will invalidate stated privacy guarantees.
+        Notes:
+            Using any other models, optimizers or data sources during training
+            will invalidate stated privacy guarantees.
 
         Args:
             module: PyTorch module to be used for training
@@ -285,7 +288,8 @@ class PrivacyEngine:
                 higher than this will be clipped to this value.
             batch_first: Flag to indicate if the input tensor to the corresponding module
                 has the first dimension representing the batch. If set to True, dimensions on
-                input tensor will be ``[batch_size, ..., ...]``.
+                input tensor are expected be ``[batch_size, ...]``, otherwise
+                ``[K, batch_size, ...]``
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
             noise_seed: Seed to be used for random noise generation
@@ -304,7 +308,8 @@ class PrivacyEngine:
                 the noise
 
         Returns:
-            Tuple of (model, optimizer, data_loader)
+            Tuple of (model, optimizer, data_loader).
+
             Model is a wrapper around the original model that also computes per sample
                 gradients
             Optimizer is a wrapper around the original optimizer that also does
@@ -402,7 +407,8 @@ class PrivacyEngine:
                 notable performance gains.
 
         Returns:
-            Tuple of (model, optimizer, data_loader)
+            Tuple of (model, optimizer, data_loader).
+
             Model is a wrapper around the original model that also computes per sample
                 gradients
             Optimizer is a wrapper around the original optimizer that also does
@@ -441,8 +447,10 @@ class PrivacyEngine:
     def get_epsilon(self, delta):
         """
         Computes the (epsilon, delta) privacy budget spent so far.
+
         Args:
-            target_delta: The Target delta.
+            delta: The target delta.
+
         Returns:
             Pair of epsilon and optimal order alpha.
         """

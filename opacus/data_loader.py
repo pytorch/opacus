@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Any
+from typing import Any, Optional, Sequence
 
 import torch
 from opacus.utils.uniform_sampler import (
@@ -18,13 +18,15 @@ def wrap_collate_with_empty(
 
     Args:
         collate_fn: collate function to wrap
-        sample_empty_shapes: expected shape for a batch of size 0
+        sample_empty_shapes: expected shape for a batch of size 0. Input is a sequence -
+            one for each tensors in the dataset
 
     Returns:
         New collate function, which is equivalent to input ``collate_fn`` for non-empty
         batches and outputs empty tensors with shapes from ``sample_empty_shapes`` if
         the input batch is of size 0
     """
+
     def collate(batch):
         if len(batch) > 0:
             return collate_fn(batch)
@@ -72,6 +74,7 @@ class DPDataLoader(DataLoader):
     Poisson sampling empty batches become a possibility, we need a DataLoader that
     can handle them.
     """
+
     def __init__(
         self,
         dataset: Dataset,
@@ -149,7 +152,7 @@ class DPDataLoader(DataLoader):
         cls, data_loader: DataLoader, distributed: bool = False, generator=None
     ):
         """
-        Creates new DPDataLoader based on passed ``data_loader`` argument.
+        Creates new ``DPDataLoader`` based on passed ``data_loader`` argument.
 
         Args:
             data_loader: Any DataLoader instance. Must not be over an ``IterableDataset``

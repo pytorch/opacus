@@ -1,7 +1,7 @@
 import pytest
 import torch
 from torch import nn
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 
 
 class MyCustomModel(nn.Module):
@@ -16,10 +16,7 @@ class MyCustomModel(nn.Module):
 
 
 def create_demo_dataloader():
-    dataset = TensorDataset(
-        torch.randn(64, 5),
-        torch.randint(0, 2, (64,))
-    )
+    dataset = TensorDataset(torch.randn(64, 5), torch.randint(0, 2, (64,)))
     dataloader = DataLoader(dataset, batch_size=4)
     return dataloader
 
