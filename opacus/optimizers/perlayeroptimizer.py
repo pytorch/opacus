@@ -44,7 +44,7 @@ class DPPerLayerOptimizer(DPOptimizer):
             )
             grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
 
-            if hasattr(p, "summed_grad"):
+            if p.summed_grad is not None:
                 p.summed_grad += grad
             else:
                 p.summed_grad = grad

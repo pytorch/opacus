@@ -241,6 +241,15 @@ class OptimizerRandomnessTest(unittest.TestCase):
         self.assertTrue(torch.allclose(model1._module.weight, model2._module.weight))
 
 
+def _init_generator(seed: Optional[int] = None):
+    if seed:
+        generator = torch.Generator()
+        generator.manual_seed(seed)
+        return generator
+
+    return None
+
+
 class PrivacyEngineSecureModeTest(unittest.TestCase):
     def setUp(self) -> None:
         self.data = torch.randn(80, 32)
@@ -266,10 +275,8 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
         noise: float = 1.0,
         poisson_sampling: bool = True,
     ):
-        dl_generator = None
-        if dl_seed:
-            dl_generator = torch.Generator()
-            dl_generator.manual_seed(dl_seed)
+        dl_generator = _init_generator(dl_seed)
+        noise_generator = _init_generator(noise_seed)
 
         model, optim, dl = self._init_training(dl_generator=dl_generator)
         privacy_engine = PrivacyEngine(secure_mode=secure_mode)
@@ -280,7 +287,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
             data_loader=dl,
             noise_multiplier=noise,
             max_grad_norm=1.0,
-            noise_seed=noise_seed,
+            noise_generator=noise_generator,
             poisson_sampling=poisson_sampling,
         )
 
