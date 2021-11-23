@@ -13,7 +13,6 @@ from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 def wrap_collate_with_empty(
     collate_fn: Optional[_collate_fn_t], sample_empty_shapes: Sequence
 ):
-    # TODO: does it work with packed sequences?
     def collate(batch):
         if len(batch) > 0:
             return collate_fn(batch)
