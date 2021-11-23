@@ -15,7 +15,7 @@ class Linear_test(GradSampleHooks_test):
         Z=st.integers(1, 4),
         H=st.integers(1, 3),
         W=st.integers(10, 17),
-        input_dim=st.integers(3, 4),
+        input_dim=st.integers(2, 4),
         bias=st.booleans(),
         batch_first=st.booleans(),
     )
