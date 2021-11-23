@@ -4,8 +4,8 @@ import warnings
 from typing import List, Optional, Union
 
 import torch
-from opacus.accountants import get_accountant
-from opacus.accountants.rdp import get_noise_multiplier
+from opacus.accountants import create_accountant
+from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
@@ -21,10 +21,10 @@ def forbid_accumulation_hook(module: nn.Module, _):
 
     for p in module.parameters():
         if hasattr(p, "grad_sample"):
-            # TODO: this correspond to either not calling optimizer.step()
-            # or not calling zero_grad(). Customize message
             raise ValueError(
-                "Poisson sampling is not compatible with grad accumulation"
+                "Poisson sampling is not compatible with grad accumulation. "
+                "You need to call optimizer.step() after every forward/backward pass "
+                "or consider using BatchMemoryManager"
             )
 
 
@@ -52,9 +52,10 @@ class PrivacyEngine:
             ...         optimizer.virtual_step()  # this will call privacy engine's virtual_step()
 
         """
-        self.accountant = get_accountant(mechanism=accountant)
+        self.accountant = create_accountant(mechanism=accountant)
         self.secure_mode = secure_mode
         self.secure_rng = None
+        self.dataset = None  # only used to detect switching to a different dataset
 
         if self.secure_mode:
             try:
@@ -87,8 +88,7 @@ class PrivacyEngine:
         clipping: str = "flat",
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
-            # TODO: lol rename optimizer optimizer optimizer
-            optimizer = optimizer.optimizer
+            optimizer = optimizer.original_optimizer
 
         generator = None
         if self.secure_mode:
@@ -115,6 +115,18 @@ class PrivacyEngine:
         poisson_sampling: bool,
         distributed: bool,
     ) -> DataLoader:
+        if self.dataset is None:
+            self.dataset = data_loader.dataset
+        elif self.dataset != data_loader.dataset:
+            warnings.warn(
+                f"PrivacyEngine detected new dataset object. "
+                f"Was: {self.dataset}, got: {data_loader.dataset}. "
+                f"Privacy accounting works per dataset, please initialize "
+                f"new PrivacyEngine if you're using different dataset. "
+                f"You can ignore this warning if two datasets above "
+                f"represent the same logical dataset"
+            )
+
         if poisson_sampling:
             return DPDataLoader.from_data_loader(
                 data_loader, generator=self.secure_rng, distributed=distributed
@@ -133,6 +145,17 @@ class PrivacyEngine:
 
         # wrap
         if isinstance(module, GradSampleModule):
+            if (
+                module.batch_first != batch_first
+                or module.loss_reduction != loss_reduction
+            ):
+                raise ValueError(
+                    f"Pre-existing GradSampleModule doesn't match new arguments."
+                    f"Got: module.batch_first: {module.batch_first}, module.loss_reduction: {module.loss_reduction}"
+                    f"Requested: batch_first:{batch_first}, loss_reduction: {loss_reduction}. "
+                    f"Please pass vanilla nn.Module instead"
+                )
+
             return module
         else:
             return GradSampleModule(
@@ -195,7 +218,6 @@ class PrivacyEngine:
         if poisson_sampling:
             module.register_forward_pre_hook(forbid_accumulation_hook)
 
-        # TODO: either validate consistent dataset or do per-dataset accounting
         data_loader = self._prepare_data_loader(
             data_loader, distributed=distributed, poisson_sampling=poisson_sampling
         )
@@ -227,7 +249,6 @@ class PrivacyEngine:
 
         return module, optimizer, data_loader
 
-    # TODO: we need a test for that
     def make_private_with_epsilon(
         self,
         module: nn.Module,
@@ -240,25 +261,28 @@ class PrivacyEngine:
         batch_first: bool = True,
         loss_reduction: str = "mean",
         noise_seed: Optional[int] = None,
-        alphas: Optional[List[float]] = None,
-        sigma_min: Optional[float] = None,
-        sigma_max: Optional[float] = None,
+        **kwargs,
     ):
         sample_rate = 1 / len(data_loader)
+
+        if len(self.accountant) > 0:
+            warnings.warn(
+                "You're calling make_private_with_epsilon with non-zero privacy budget "
+                "already spent. Returned noise_multiplier assumes zero starting point, "
+                "so your overall privacy budget will be higher."
+            )
 
         return self.make_private(
             module=module,
             optimizer=optimizer,
             data_loader=data_loader,
-            # TODO: what if the client has selected non-RDP accountant?
             noise_multiplier=get_noise_multiplier(
                 target_epsilon=target_epsilon,
                 target_delta=target_delta,
                 sample_rate=sample_rate,
                 epochs=epochs,
-                alphas=alphas,
-                sigma_min=sigma_min,
-                sigma_max=sigma_max,
+                accountant=self.accountant.mechanism(),
+                **kwargs,
             ),
             max_grad_norm=max_grad_norm,
             batch_first=batch_first,

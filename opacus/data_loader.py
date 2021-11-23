@@ -5,7 +5,7 @@ from opacus.utils.uniform_sampler import (
     DistributedUniformWithReplacementSampler,
     UniformWithReplacementSampler,
 )
-from torch.utils.data import BatchSampler, DataLoader, Dataset, Sampler
+from torch.utils.data import BatchSampler, DataLoader, Dataset, IterableDataset, Sampler
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
@@ -86,12 +86,8 @@ class DPDataLoader(DataLoader):
     def from_data_loader(
         cls, data_loader: DataLoader, distributed: bool = False, generator=None
     ):
-        if isinstance(data_loader, cls):
-            # TODO: this should be exception, not assert
-            assert data_loader.distributed == distributed
-            return data_loader
-
-        # TODO: check not iterabledataset
+        if isinstance(data_loader.dataset, IterableDataset):
+            raise ValueError("Uniform sampling is not supported for IterableDataset")
 
         return cls(
             dataset=data_loader.dataset,

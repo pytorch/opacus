@@ -10,7 +10,7 @@ __all__ = [
 ]
 
 
-def get_accountant(mechanism: str) -> IAccountant:
+def create_accountant(mechanism: str) -> IAccountant:
     if mechanism == "rdp":
         return RDPAccountant()
     elif mechanism == "gdp":

@@ -3,7 +3,6 @@
 
 from . import utils
 from .grad_sample import GradSampleModule
-from .per_sample_gradient_clip import PerSampleGradientClipper
 from .privacy_engine import PrivacyEngine
 from .version import __version__
 
@@ -11,7 +10,6 @@ from .version import __version__
 __all__ = [
     "PrivacyEngine",
     "GradSampleModule",
-    "PerSampleGradientClipper",
     "utils",
     "__version__",
 ]

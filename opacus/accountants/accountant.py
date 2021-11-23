@@ -13,3 +13,12 @@ class IAccountant(abc.ABC):
     @abc.abstractmethod
     def get_epsilon(self, delta: float, *args, **kwargs) -> float:
         pass
+
+    @abc.abstractmethod
+    def __len__(self) -> int:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def mechanism(cls) -> str:
+        pass

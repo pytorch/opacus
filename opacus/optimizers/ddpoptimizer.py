@@ -53,6 +53,6 @@ class DistributedDPOptimizer(DPOptimizer):
     ) -> Optional[torch.Tensor]:
         if self.pre_step():
             self.reduce_gradients()
-            return self.optimizer.step(closure)
+            return self.original_optimizer.step(closure)
         else:
             return None
