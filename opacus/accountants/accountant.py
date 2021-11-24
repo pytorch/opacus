@@ -1,6 +1,8 @@
 import abc
-from opacus.optimizers import DPOptimizer
 from typing import Callable
+
+from opacus.optimizers import DPOptimizer
+
 
 class IAccountant(abc.ABC):
     @abc.abstractmethod
@@ -24,7 +26,9 @@ class IAccountant(abc.ABC):
     def mechanism(cls) -> str:
         pass
 
-    def get_optimizer_hook_fn(self, sample_rate: float) -> Callable[[DPOptimizer], None]:
+    def get_optimizer_hook_fn(
+        self, sample_rate: float
+    ) -> Callable[[DPOptimizer], None]:
         def hook_fn(optim: DPOptimizer):
             # This works for Poisson for both single-node and distributed
             # The reason is that the sample rate is the same in both cases (but in
@@ -33,4 +37,5 @@ class IAccountant(abc.ABC):
                 noise_multiplier=optim.noise_multiplier,
                 sample_rate=sample_rate * optim.accumulated_iterations,
             )
+
         return hook_fn

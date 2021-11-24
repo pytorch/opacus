@@ -346,7 +346,9 @@ class PrivacyEngine:
             clipping=clipping,
         )
 
-        optimizer.attach_step_hook(self.accountant.get_optimizer_hook_fn(sample_rate=sample_rate))
+        optimizer.attach_step_hook(
+            self.accountant.get_optimizer_hook_fn(sample_rate=sample_rate)
+        )
 
         return module, optimizer, data_loader
 
