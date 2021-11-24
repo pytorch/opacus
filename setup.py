@@ -77,5 +77,5 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering",
     ],
-    python_requires=f">={REQUIRED_MAJOR}.{REQUIRED_MINOR}.{REQUIRED_MICRO}",
+    python_requires=f">={REQUIRED_MAJOR}.{REQUIRED_MINOR}",
 )
