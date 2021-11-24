@@ -14,6 +14,7 @@ class _NoiseScheduler(object):
         """Returns the state of the scheduler as a :class:`dict`.
         It contains an entry for every variable in self.__dict__ which
         is not the optimizer.
+
         """
         return {
             key: value for key, value in self.__dict__.items() if key != "optimizer"
@@ -21,6 +22,7 @@ class _NoiseScheduler(object):
 
     def load_state_dict(self, state_dict: Dict):
         """Loads the schedulers state.
+
         Args:
             state_dict (dict): scheduler state. Should be an object returned
                 from a call to :meth:`state_dict`.
@@ -41,7 +43,9 @@ class ExponentialNoise(_NoiseScheduler):
     """
     Decays the noise_multiplier by gamma every epoch.
     When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
+
     """
+
     def __init__(self, optimizer: DPOptimizer, gamma: float, last_epoch: int = -1):
         """
 
@@ -64,7 +68,9 @@ class LambdaNoise(_NoiseScheduler):
     """
     Sets the noise_multiplier to the initial noise_multiplier times a given function.
     When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
+
     """
+
     def __init__(
         self,
         optimizer: DPOptimizer,
@@ -91,7 +97,9 @@ class StepNoise(_NoiseScheduler):
     """
     Decays the noise_multiplier by gamma every step_size epochs.
     When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
+
     """
+
     def __init__(
         self, optimizer: DPOptimizer, step_size: int, gamma: float, last_epoch: int = -1
     ):

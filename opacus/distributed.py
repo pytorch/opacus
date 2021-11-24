@@ -27,7 +27,9 @@ class DifferentiallyPrivateDistributedDataParallel(nn.Module):
     """
     Implements distributed data parallelism that is based on
     ``torch.distributed`` package at the module level.
+
     """
+
     def __init__(self, model: nn.Module):
         super().__init__()
 
