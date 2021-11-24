@@ -49,6 +49,14 @@ class RDPAccountant(IAccountant):
     def get_epsilon(
         self, delta: float, alphas: Optional[List[Union[float, int]]] = None
     ):
+        """
+        Return privacy budget (epsilon) expended so far.
+
+        Args:
+            delta: target delta
+            alphas: List of RDP orders (alphas) used to search for the optimal conversion
+                between RDP and (epd, delta)-DP
+        """
         eps, _ = self.get_privacy_spent(delta, alphas)
         return eps
 

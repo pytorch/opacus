@@ -9,6 +9,22 @@ from torch.optim import Optimizer
 
 
 def _mark_as_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
+    """
+    Marks parameters that's already been used in the optimizer step.
+
+    DP-SGD puts certain restrictions on how gradients can be accumulated. In patricular,
+    no gradient can be used twice - client must call .zero_grad() betwwen
+    optimizer steps, otherwise privacy guarantees are compromised.
+    This method marks tensors that's already been used in optimizer steps to then
+    check if zero_grad has been duly called.
+
+    Notes:
+          This is used to only mark ``p.grad_sample`` and ``p.summed_grad``
+
+    Args:
+        obj: tensor or a list of tensors to be marked
+    """
+
     if isinstance(obj, torch.Tensor):
         obj._processed = True
     elif isinstance(obj, list):
@@ -17,6 +33,21 @@ def _mark_as_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
 
 
 def _check_processed_flag_tensor(x: torch.Tensor):
+    """
+    Checks if this gradient tensor has been previously used in optimization step.
+
+    See Also:
+        :meth:`~opacus.optimizers.optimizer._mark_as_processed`
+
+    Args:
+        x: gradient tensor
+
+    Raises:
+        ValueError
+            If tensor has attribute ``._processed`` previously set by
+            ``_mark_as_processed`` method
+    """
+
     if hasattr(x, "_processed"):
         raise ValueError(
             "Gradients hasn't been cleared since the last optimizer step. "
@@ -26,6 +57,22 @@ def _check_processed_flag_tensor(x: torch.Tensor):
 
 
 def _check_processed_flag(obj: Union[torch.Tensor, List[torch.Tensor]]):
+    """
+    Checks if this gradient tensor (or a list of tensors) has been previously
+    used in optimization step.
+
+    See Also:
+        :meth:`~opacus.optimizers.optimizer._mark_as_processed`
+
+    Args:
+        x: gradient tensor or a list of tensors
+
+    Raises:
+        ValueError
+            If tensor (or at least one tensor from the list) has attribute
+            ``._processed`` previously set by ``_mark_as_processed`` method
+    """
+
     if isinstance(obj, torch.Tensor):
         _check_processed_flag_tensor(obj)
     elif isinstance(obj, list):
