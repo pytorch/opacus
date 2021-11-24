@@ -33,6 +33,7 @@ from opacus.accountants.analysis.rdp import compute_rdp, get_privacy_spent
 
 
 def _apply_dp_sgd_analysis(
+    *,
     sample_rate: float,
     noise_multiplier: float,
     steps: int,
@@ -78,6 +79,7 @@ def _apply_dp_sgd_analysis(
 
 
 def compute_dp_sgd_privacy(
+    *,
     sample_rate: float,
     noise_multiplier: float,
     epochs: int,
@@ -112,7 +114,12 @@ def compute_dp_sgd_privacy(
     steps = epochs * math.ceil(1 / sample_rate)
 
     return _apply_dp_sgd_analysis(
-        sample_rate, noise_multiplier, steps, alphas, delta, verbose
+        sample_rate=sample_rate,
+        noise_multiplier=noise_multiplier,
+        steps=steps,
+        alphas=alphas,
+        delta=delta,
+        verbose=verbose,
     )
 
 

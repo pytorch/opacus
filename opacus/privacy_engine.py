@@ -66,7 +66,7 @@ class PrivacyEngine:
         >>> # continue training as normal
     """
 
-    def __init__(self, accountant: str = "rdp", secure_mode=False):
+    def __init__(self, *, accountant: str = "rdp", secure_mode=False):
         """
 
         Args:
@@ -105,8 +105,8 @@ class PrivacyEngine:
 
     def _prepare_optimizer(
         self,
-        *,
         optimizer: optim.Optimizer,
+        *,
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
         expected_batch_size: int,
@@ -139,6 +139,7 @@ class PrivacyEngine:
     def _prepare_data_loader(
         self,
         data_loader: DataLoader,
+        *,
         poisson_sampling: bool,
         distributed: bool,
     ) -> DataLoader:
@@ -159,12 +160,16 @@ class PrivacyEngine:
                 data_loader, generator=self.secure_rng, distributed=distributed
             )
         elif self.secure_mode:
-            return switch_generator(data_loader, self.secure_rng)
+            return switch_generator(data_loader=data_loader, generator=self.secure_rng)
         else:
             return data_loader
 
     def _prepare_model(
-        self, module: nn.Module, batch_first: bool = True, loss_reduction: str = "mean"
+        self,
+        module: nn.Module,
+        *,
+        batch_first: bool = True,
+        loss_reduction: str = "mean",
     ) -> GradSampleModule:
         # Ideally, validation should have been taken care of by calling
         # `get_compatible_module()`
@@ -191,6 +196,7 @@ class PrivacyEngine:
 
     def is_compatible(
         self,
+        *,
         module: nn.Module,
         optimizer: Optional[optim.Optimizer],
         data_loader: Optional[DataLoader],
@@ -210,6 +216,7 @@ class PrivacyEngine:
 
     def validate(
         self,
+        *,
         module: nn.Module,
         optimizer: Optional[optim.Optimizer],
         data_loader: Optional[DataLoader],
@@ -324,7 +331,9 @@ class PrivacyEngine:
 
         distributed = type(module) is DPDDP
 
-        module = self._prepare_model(module, batch_first, loss_reduction)
+        module = self._prepare_model(
+            module, batch_first=batch_first, loss_reduction=loss_reduction
+        )
         if poisson_sampling:
             module.register_forward_pre_hook(forbid_accumulation_hook)
 
@@ -336,7 +345,7 @@ class PrivacyEngine:
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
         optimizer = self._prepare_optimizer(
-            optimizer=optimizer,
+            optimizer,
             noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
@@ -361,6 +370,7 @@ class PrivacyEngine:
 
     def make_private_with_epsilon(
         self,
+        *,
         module: nn.Module,
         optimizer: optim.Optimizer,
         data_loader: DataLoader,

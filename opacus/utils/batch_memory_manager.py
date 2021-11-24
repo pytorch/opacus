@@ -8,7 +8,11 @@ from torch.utils.data import DataLoader, Sampler
 
 class BatchSplittingSampler(Sampler[List[int]]):
     def __init__(
-        self, sampler: Sampler[List[int]], max_batch_size: int, optimizer: DPOptimizer
+        self,
+        *,
+        sampler: Sampler[List[int]],
+        max_batch_size: int,
+        optimizer: DPOptimizer,
     ):
         self.sampler = sampler
         self.max_batch_size = max_batch_size
@@ -29,11 +33,13 @@ class BatchSplittingSampler(Sampler[List[int]]):
         return len(self.sampler)
 
 
-def wrap_data_loader(data_loader, max_batch_size: int, optimizer: DPOptimizer):
+def wrap_data_loader(*, data_loader, max_batch_size: int, optimizer: DPOptimizer):
     return DataLoader(
         dataset=data_loader.dataset,
         batch_sampler=BatchSplittingSampler(
-            data_loader.batch_sampler, max_batch_size, optimizer
+            sampler=data_loader.batch_sampler,
+            max_batch_size=max_batch_size,
+            optimizer=optimizer,
         ),
         num_workers=data_loader.num_workers,
         collate_fn=data_loader.collate_fn,
@@ -50,6 +56,7 @@ def wrap_data_loader(data_loader, max_batch_size: int, optimizer: DPOptimizer):
 class BatchMemoryManager(object):
     def __init__(
         self,
+        *,
         data_loader: DataLoader,
         max_physical_batch_size: int,
         optimizer: DPOptimizer,
@@ -60,7 +67,9 @@ class BatchMemoryManager(object):
 
     def __enter__(self):
         return wrap_data_loader(
-            self.data_loader, self.max_physical_batch_size, self.optimizer
+            data_loader=self.data_loader,
+            max_batch_size=self.max_physical_batch_size,
+            optimizer=self.optimizer,
         )
 
     def __exit__(self, type, value, traceback):

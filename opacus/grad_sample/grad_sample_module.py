@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_or_accumulate_grad_sample(
-    param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
+    *, param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
 ) -> None:
     """
     Creates a ``_current_grad_sample`` attribute in the given parameter, or adds to it
@@ -146,7 +146,9 @@ class GradSampleModule(nn.Module):
         self._close()
         return self._module
 
-    def add_hooks(self, loss_reduction: str = "mean", batch_first: bool = True) -> None:
+    def add_hooks(
+        self, *, loss_reduction: str = "mean", batch_first: bool = True
+    ) -> None:
         """
         Adds hooks to model to save activations and backprop values.
         The hooks will
@@ -285,12 +287,15 @@ class GradSampleModule(nn.Module):
 
         backprops = forward_output[0].detach()
         activations, backprops = self.rearrange_grad_samples(
-            module, backprops, loss_reduction, batch_first
+            module=module,
+            backprops=backprops,
+            loss_reduction=loss_reduction,
+            batch_first=batch_first,
         )
         grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
         grad_samples = grad_sampler_fn(module, activations, backprops)
         for param, gs in grad_samples.items():
-            create_or_accumulate_grad_sample(param, gs, module)
+            create_or_accumulate_grad_sample(param=param, grad_sample=gs, layer=module)
 
         if len(module.activations) == 0:
             if hasattr(module, "max_batch_len"):
@@ -301,6 +306,7 @@ class GradSampleModule(nn.Module):
 
     def rearrange_grad_samples(
         self,
+        *,
         module: nn.Module,
         backprops: torch.Tensor,
         loss_reduction: str,
@@ -329,7 +335,11 @@ class GradSampleModule(nn.Module):
         if not hasattr(module, "max_batch_len"):
             # For packed sequences, max_batch_len is set in the forward of the model (e.g. the LSTM)
             # Otherwise we infer it here
-            module.max_batch_len = _get_batch_size(module, activations, batch_dim)
+            module.max_batch_len = _get_batch_size(
+                module=module,
+                grad_sample=activations,
+                batch_dim=batch_dim,
+            )
 
         n = module.max_batch_len
         if loss_reduction == "mean":
@@ -361,7 +371,7 @@ class GradSampleModule(nn.Module):
 
     @classmethod
     def validate(
-        cls, module: nn.Module, raise_if_error: bool = False
+        cls, module: nn.Module, *, raise_if_error: bool = False
     ) -> List[NotImplementedError]:
         """Validate support for module being wrapped"""
         errors = []
@@ -380,7 +390,7 @@ class GradSampleModule(nn.Module):
 
 
 def _get_batch_size(
-    module: nn.Module, grad_sample: torch.Tensor, batch_dim: int
+    *, module: nn.Module, grad_sample: torch.Tensor, batch_dim: int
 ) -> int:
     r"""
     Computes and returns the maximum batch size which is the maximum of the dimension values
