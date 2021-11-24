@@ -19,7 +19,7 @@ class MyCustomModel(nn.Module):
 
 def create_demo_dataloader():
     dataset = TensorDataset(torch.randn(64, 5), torch.randint(0, 2, (64,)))
-    dataloader = DataLoader(dataset, batch_size=4)
+    dataloader = DataLoader(dataset, batch_size=8)
     return dataloader
 
 
