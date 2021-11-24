@@ -50,7 +50,7 @@ class ToyModel(nn.Module):
         return self.net2(self.relu(self.net1(x)))
 
 
-def demo_basic(rank, weight, world_size, dp):
+def demo_basic(rank, weight, world_size, dp, clipping):
     torch.manual_seed(world_size)
     batch_size = 32
     withdp = "with" + ("out " if not dp else "")
@@ -67,7 +67,7 @@ def demo_basic(rank, weight, world_size, dp):
     data_loader = DataLoader(TensorDataset(data, labels), batch_size=batch_size)
 
     loss_fn = nn.MSELoss()
-    if dp:
+    if dp and clipping == "flat":
         ddp_model = DPDDP(model)
     else:
         ddp_model = DDP(model, device_ids=[rank])
@@ -75,13 +75,17 @@ def demo_basic(rank, weight, world_size, dp):
     privacy_engine = PrivacyEngine()
 
     if dp:
+        max_grad_norm = 1e8
+        if clipping == 'per_layer':
+            max_grad_norm = [1e8 for p in model.parameters()]
         ddp_model, optimizer, data_loader = privacy_engine.make_private(
             module=ddp_model,
             optimizer=optimizer,
             data_loader=data_loader,
             noise_multiplier=0,
-            max_grad_norm=1e8,
+            max_grad_norm=max_grad_norm,
             poisson_sampling=False,
+            clipping=clipping
         )
 
     optimizer.zero_grad()
@@ -97,8 +101,8 @@ def demo_basic(rank, weight, world_size, dp):
     cleanup()
 
 
-def run_demo(demo_fn, weight, world_size, dp):
-    mp.spawn(demo_fn, args=(weight, world_size, dp), nprocs=world_size, join=True)
+def run_demo(demo_fn, weight, world_size, dp, clipping):
+    mp.spawn(demo_fn, args=(weight, world_size, dp, clipping), nprocs=world_size, join=True)
 
 
 class GradientComputationTest(unittest.TestCase):
@@ -108,8 +112,11 @@ class GradientComputationTest(unittest.TestCase):
         self.assertTrue(
             n_gpus >= 2, f"Need at least 2 gpus but was provided only {n_gpus}."
         )
-        weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
-        run_demo(demo_basic, weight_dp, 2, dp=True)
-        run_demo(demo_basic, weight_nodp, 2, dp=False)
 
-        self.assertTrue(torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3))
+        for clipping in ['flat', 'per_layer']:
+            weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
+
+            run_demo(demo_basic, weight_dp, 2, dp=True, clipping=clipping)
+            run_demo(demo_basic, weight_nodp, 2, dp=False, clipping=clipping)
+
+            self.assertTrue(torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3))
