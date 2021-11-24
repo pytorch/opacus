@@ -5,7 +5,16 @@ import torch
 import torch.nn as nn
 
 
-def average_gradients(model):
+def average_gradients(model: nn.Module) -> None:
+    """
+    For all parameters of a given ``model`` averages gradients over all workers
+
+    Args:
+        model: model
+
+    Returns:
+        None
+    """
     world_size = torch.distributed.get_world_size()
     for param in model.parameters():
         if not param.requires_grad:
@@ -15,7 +24,13 @@ def average_gradients(model):
 
 
 class DifferentiallyPrivateDistributedDataParallel(nn.Module):
-    def __init__(self, model):
+    """
+    Implements distributed data parallelism that is based on
+    ``torch.distributed`` package at the module level.
+
+    """
+
+    def __init__(self, model: nn.Module):
         super().__init__()
 
         # Synchronize the model

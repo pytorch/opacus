@@ -46,7 +46,7 @@ def create_or_accumulate_grad_sample(
 
 def promote_current_grad_sample(p: nn.Parameter) -> None:
     if p.requires_grad:
-        if hasattr(p, "grad_sample"):
+        if p.grad_sample is not None:
             if isinstance(p.grad_sample, list):
                 p.grad_sample.append(p._current_grad_sample)
             else:
@@ -80,56 +80,60 @@ class GradSampleModule(nn.Module):
                 "Using non-strict mode, continuing"
             )
 
-        # TODO: accessing weights via _module is inconveniet, override _getattr_
-        self._module = m  # TODO: it's not 100% certain that this should stay private
+        self._module = m
         self.hooks_enabled = False
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
         self.add_hooks(loss_reduction=loss_reduction, batch_first=batch_first)
 
-        # TODO: Do we want to initialize empty grad_sample attribures here?
-        # e.g. p.grad_sample = torch.zeros([0, p.shape[1:]])
+        for p in self.parameters():
+            p.grad_sample = None
 
-    # TODO: few other common methods needs to be forwarded (e.g. name())
-    # I think there's a way to intercept calls to all unknown attributes and
-    # forward it to the self._module - is it a good idea?
+    def __getattr__(self, item):
+        try:
+            return super().__getattr__(item)
+        except AttributeError as e:
+            submodules = dict(self._module.named_modules())
+            if item and item in submodules:
+                return submodules[item]
+            raise e
 
     def forward(self, x, *args, **kwargs):
-        # TODO: check to forbid double forward
-        # TODO: also check to force zero_grad
         return self._module(x, *args, **kwargs)
 
-    # TODO: match nn.Module signature
-    def zero_grad(self):
-        self.del_grad_sample()
-        super().zero_grad()
+    def zero_grad(self, set_to_none: bool = False):
+        if set_to_none is False:
+            logger.info(
+                "Despite set_to_none is set to False, "
+                "opacus will set p.grad_sample to None due to "
+                "non-trivial gradient accumulation behaviour"
+            )
+        self.set_grad_sample_to_none()
+        super().zero_grad(set_to_none)
 
-    def del_grad_sample(self):
+    def set_grad_sample_to_none(self):
         """
-        Deletes ``.grad_sample`` from this module's parameters.
+        Sets ``.grad_sample`` to None
 
         Why del? Normally, ``zero_grad()`` would do ``p.grad.zero_()`` and keep the allocation.
         Normal grads can do this, because their shape is always the same.
-        Grad samples do not behave like this, because they accumulate over the batch dim.
-        If you have ``batch_size=32`` and size (12, 16) and you backprop twice, you should
-        expect to have grad_samples of size [64, 12, 16]. If you backprop once more,
-        then you'll get size [96, 12, 16] and so on.
-        So when you zero out, you should be left with nothing so you can start over.
+        Grad samples do not behave like this, as we accumulate gradients from different
+        batches in a list
         """
         for p in self.parameters():
-            if hasattr(p, "grad_sample") and p.grad_sample is not None:
-                if isinstance(p.grad_sample, list):
-                    grad_samples = p.grad_sample
-                else:
-                    grad_samples = [p.grad_sample]
+            p.grad_sample = None
 
-                for grad_sample in grad_samples:
-                    if grad_sample.grad_fn is not None:
-                        grad_sample.detach_()
-                    else:
-                        grad_sample.requires_grad_(False)
+    def del_grad_sample(self):
+        """
+        Sets ``.grad_sample`` to None
 
-                del p.grad_sample
+        Why del? Normally, ``zero_grad()`` would do ``p.grad.zero_()`` and keep the allocation.
+        Normal grads can do this, because their shape is always the same.
+        Grad samples do not behave like this, as we accumulate gradients from different
+        batches in a list
+        """
+        for p in self.parameters():
+            del p.grad_sample
 
     def to_standard_module(self) -> nn.Module:
         """
@@ -221,7 +225,7 @@ class GradSampleModule(nn.Module):
         return f"GradSampleModule({self._module.__repr__()})"
 
     def _close(self):
-        self.del_grad_sample()
+        self.set_grad_sample_to_none()
         self.remove_hooks()
 
     def capture_activations_hook(
@@ -318,7 +322,6 @@ class GradSampleModule(nn.Module):
                 " run forward after add_hooks(model)"
             )
 
-        # TODO: that's not right; DPLSTM isn't always batch_first=False
         batch_dim = 0 if batch_first or type(module) is RNNLinear else 1
 
         activations = module.activations.pop()

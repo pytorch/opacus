@@ -74,13 +74,6 @@ commands:
           name: "Check import order with isort"
           command: isort -v -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
 
-  mypy_check:
-    description: "Static type checking with mypy"
-    steps:
-      - run:
-          name: "Mypy checks"
-          command: ./scripts/run_mypy.sh
-
   configure_docusaurus_bot:
     description: "Configure Docusaurus GitHub bot"
     steps:
@@ -141,6 +134,28 @@ commands:
           path: runs/mnist/test-reports
       - store_artifacts:
           path: runs/mnist/test-reports
+
+  mnist_lightning_integration_test:
+    description: "Runs MNIST-Lightning example end to end"
+    parameters:
+      device:
+        default: "cpu"
+        type: string
+    steps:
+      - run:
+          name: MNIST-Lightning example
+          command: |
+            mkdir -p runs/mnist/data
+            mkdir -p runs/mnist/test-reports
+            echo "Using $(python -V) ($(which python))"
+            echo "Using $(pip -V) ($(which pip))"
+            python examples/mnist_lightning.py fit --trainer.accelerator <<parameters.device>> --model.lr 0.25 --model.sigma 0.7 --model.max_per_sample_grad_norm 1.5 --model.sample_rate 0.004 --trainer.max_epochs 1 --data.data_dir runs/mnist/data --data.sample_rate 0.004
+            python -c "import torch; exit(0)"
+          when: always
+      - store_test_results:
+          path: runs/mnist-lightning/test-reports
+      - store_artifacts:
+          path: runs/mnist-lightning/test-reports
 
   cifar10_integration_test:
     description: "Runs CIFAR10 example end to end"
@@ -251,7 +266,6 @@ jobs:
       - lint_flake8
       - lint_black
       - isort
-      # - mypy_check  TODO re-enable
 
   unittest_py37_torch_release:
     docker:

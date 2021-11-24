@@ -3,7 +3,7 @@
 import unittest
 
 from opacus.accountants import GaussianAccountant, RDPAccountant
-from opacus.accountants.rdp import get_noise_multiplier
+from opacus.accountants.utils import get_noise_multiplier
 
 
 class AccountingTest(unittest.TestCase):
