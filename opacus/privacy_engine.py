@@ -3,9 +3,8 @@
 import warnings
 from typing import List, Optional, Union, Tuple
 
-import torch
-from opacus.accountants import get_accountant
-from opacus.accountants.rdp import get_noise_multiplier
+from opacus.accountants import create_accountant
+from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
@@ -33,11 +32,11 @@ def forbid_accumulation_hook(module: GradSampleModule, _):
         return
 
     for p in module.parameters():
-        if hasattr(p, "grad_sample"):
-            # TODO: this correspond to either not calling optimizer.step()
-            # or not calling zero_grad(). Customize message
+        if p.grad_sample is not None:
             raise ValueError(
-                "Poisson sampling is not compatible with grad accumulation"
+                "Poisson sampling is not compatible with grad accumulation. "
+                "You need to call optimizer.step() after every forward/backward pass "
+                "or consider using BatchMemoryManager"
             )
 
 
@@ -78,10 +77,10 @@ class PrivacyEngine:
                 prevents certain floating-point arithmetic-based attacks.
                 See :meth:`~opacus.optimizers.optimizer._generate_noise` for details
         """
-
-        self.accountant = get_accountant(mechanism=accountant)
+        self.accountant = create_accountant(mechanism=accountant)
         self.secure_mode = secure_mode
         self.secure_rng = None
+        self.dataset = None  # only used to detect switching to a different dataset
 
         if self.secure_mode:
             try:
@@ -109,20 +108,18 @@ class PrivacyEngine:
         max_grad_norm: Union[float, List[float]],
         expected_batch_size: int,
         loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
         distributed: bool = False,
         clipping: str = "flat",
+        noise_generator=None,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
-            # TODO: lol rename optimizer optimizer optimizer
-            optimizer = optimizer.optimizer
+            optimizer = optimizer.original_optimizer
 
         generator = None
         if self.secure_mode:
             generator = self.secure_rng
-        elif noise_seed is not None:
-            generator = torch.Generator()
-            generator.manual_seed(noise_seed)
+        elif noise_generator is not None:
+            generator = noise_generator
 
         optim_class = get_optimizer_class(clipping=clipping, distributed=distributed)
 
@@ -142,6 +139,18 @@ class PrivacyEngine:
         poisson_sampling: bool,
         distributed: bool,
     ) -> DataLoader:
+        if self.dataset is None:
+            self.dataset = data_loader.dataset
+        elif self.dataset != data_loader.dataset:
+            warnings.warn(
+                f"PrivacyEngine detected new dataset object. "
+                f"Was: {self.dataset}, got: {data_loader.dataset}. "
+                f"Privacy accounting works per dataset, please initialize "
+                f"new PrivacyEngine if you're using different dataset. "
+                f"You can ignore this warning if two datasets above "
+                f"represent the same logical dataset"
+            )
+
         if poisson_sampling:
             return DPDataLoader.from_data_loader(
                 data_loader, generator=self.secure_rng, distributed=distributed
@@ -160,6 +169,17 @@ class PrivacyEngine:
 
         # wrap
         if isinstance(module, GradSampleModule):
+            if (
+                module.batch_first != batch_first
+                or module.loss_reduction != loss_reduction
+            ):
+                raise ValueError(
+                    f"Pre-existing GradSampleModule doesn't match new arguments."
+                    f"Got: module.batch_first: {module.batch_first}, module.loss_reduction: {module.loss_reduction}"
+                    f"Requested: batch_first:{batch_first}, loss_reduction: {loss_reduction}. "
+                    f"Please pass vanilla nn.Module instead"
+                )
+
             return module
         else:
             return GradSampleModule(
@@ -235,9 +255,9 @@ class PrivacyEngine:
         max_grad_norm: Union[float, List[float]],
         batch_first: bool = True,
         loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
         poisson_sampling: bool = True,
         clipping: str = "flat",
+        noise_generator=None,
     ) -> Tuple[GradSampleModule, DPOptimizer, DataLoader]:
         """
         Add privacy-related responsibilites to the main PyTorch training objects:
@@ -268,7 +288,8 @@ class PrivacyEngine:
                 input tensor will be ``[batch_size, ..., ...]``.
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
-            noise_seed: Seed to be used for random noise generation
+            noise_generator: torch.Generator() used as a source of randomness for
+                gaussian noise generation
             poisson_sampling: ``True`` if you want to use standard sampling required
                 for DP guarantees. Setting ``False`` will leave provided data_loader
                 unchanged. Technically this doesn't fit the assumptions made by
@@ -291,7 +312,7 @@ class PrivacyEngine:
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.
         """
-        if noise_seed and self.secure_mode:
+        if noise_generator and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
 
         distributed = type(module) is DPDDP
@@ -300,7 +321,6 @@ class PrivacyEngine:
         if poisson_sampling:
             module.register_forward_pre_hook(forbid_accumulation_hook)
 
-        # TODO: either validate consistent dataset or do per-dataset accounting
         data_loader = self._prepare_data_loader(
             data_loader, distributed=distributed, poisson_sampling=poisson_sampling
         )
@@ -314,7 +334,7 @@ class PrivacyEngine:
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
-            noise_seed=noise_seed,
+            noise_generator=noise_generator,
             distributed=distributed,
             clipping=clipping,
         )
@@ -332,7 +352,6 @@ class PrivacyEngine:
 
         return module, optimizer, data_loader
 
-    # TODO: we need a test for that
     def make_private_with_epsilon(
         self,
         module: nn.Module,
@@ -344,10 +363,8 @@ class PrivacyEngine:
         max_grad_norm: float,
         batch_first: bool = True,
         loss_reduction: str = "mean",
-        noise_seed: Optional[int] = None,
-        alphas: Optional[List[float]] = None,
-        sigma_min: Optional[float] = None,
-        sigma_max: Optional[float] = None,
+        noise_generator=None,
+        **kwargs,
     ):
         """
         Version of :meth:`~opacus.privacy_engine.PrivacyEngine.make_private`,
@@ -395,24 +412,29 @@ class PrivacyEngine:
         """
         sample_rate = 1 / len(data_loader)
 
+        if len(self.accountant) > 0:
+            warnings.warn(
+                "You're calling make_private_with_epsilon with non-zero privacy budget "
+                "already spent. Returned noise_multiplier assumes zero starting point, "
+                "so your overall privacy budget will be higher."
+            )
+
         return self.make_private(
             module=module,
             optimizer=optimizer,
             data_loader=data_loader,
-            # TODO: what if the client has selected non-RDP accountant?
             noise_multiplier=get_noise_multiplier(
                 target_epsilon=target_epsilon,
                 target_delta=target_delta,
                 sample_rate=sample_rate,
                 epochs=epochs,
-                alphas=alphas,
-                sigma_min=sigma_min,
-                sigma_max=sigma_max,
+                accountant=self.accountant.mechanism(),
+                **kwargs,
             ),
             max_grad_norm=max_grad_norm,
             batch_first=batch_first,
             loss_reduction=loss_reduction,
-            noise_seed=noise_seed,
+            noise_generator=noise_generator,
         )
 
     def get_epsilon(self, delta):

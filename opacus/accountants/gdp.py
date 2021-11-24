@@ -27,9 +27,15 @@ class GaussianAccountant(IAccountant):
                 self.steps, self.noise_multiplier, self.sample_rate, delta
             )
         else:
-            # TODO: this should be different from the call above
-            epsilon = privacy_analysis.compute_eps_poisson(
+            epsilon = privacy_analysis.compute_eps_uniform(
                 self.steps, self.noise_multiplier, self.sample_rate, delta
             )
 
         return epsilon
+
+    def __len__(self):
+        return self.steps
+
+    @classmethod
+    def mechanism(cls) -> str:
+        return "gpd"

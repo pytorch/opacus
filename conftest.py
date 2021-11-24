@@ -1,8 +1,5 @@
-from collections import defaultdict
-
 import pytest
 import torch
-from opacus.utils import stats
 from torch import nn
 from torch.utils.data import TensorDataset, DataLoader
 from opacus import PrivacyEngine
@@ -27,14 +24,6 @@ def create_demo_dataloader():
     return dataloader
 
 
-class MockSummaryWriter:
-    def __init__(self):
-        self.logs = defaultdict(dict)
-
-    def add_scalar(self, name, value, iter):
-        self.logs[name][iter] = value
-
-
 def _init_private_training():
     model = MyCustomModel()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
@@ -50,10 +39,6 @@ def _init_private_training():
     )
 
     return model, optimizer, data_loader
-
-
-mock_summary_writer = MockSummaryWriter()
-stats.set_global_summary_writer(mock_summary_writer)
 
 
 @pytest.fixture(autouse=True)
@@ -74,4 +59,3 @@ def create_namespace(doctest_namespace):
 
     doctest_namespace["MyCustomModel"] = MyCustomModel
     doctest_namespace["demo_dataloader"] = create_demo_dataloader()
-    doctest_namespace["mock_summary_writer"] = mock_summary_writer

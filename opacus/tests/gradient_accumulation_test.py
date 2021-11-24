@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import unittest
+from typing import Iterable, Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus import PrivacyEngine
 from opacus.grad_sample import GradSampleModule
+from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import FakeData
@@ -40,9 +42,9 @@ class SampleConvNet(nn.Module):
         return "SampleConvNet"
 
 
-class GradientAccumulation_test(unittest.TestCase):
+class GradientAccumulationTest(unittest.TestCase):
     def setUp(self):
-        self.DATA_SIZE = 64
+        self.DATA_SIZE = 128
         self.BATCH_SIZE = 16
         self.SAMPLE_RATE = self.BATCH_SIZE / self.DATA_SIZE
         self.LR = 0  # we want to call optimizer.step() without modifying the model
@@ -83,12 +85,25 @@ class GradientAccumulation_test(unittest.TestCase):
 
         self.optimizer.zero_grad()
 
-    def model_forward_backward(self, model, data_iter, num_steps=1):
+    def model_forward_backward(
+        self,
+        model: nn.Module,
+        data_iter: Iterable,
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        num_steps=1,
+        do_zero_grad: bool = True,
+    ):
         for x, y in data_iter:
+            if optimizer and do_zero_grad:
+                optimizer.zero_grad()
+
             num_steps -= 1
             logits = model(x)
             loss = self.criterion(logits, y)
             loss.backward()
+            if optimizer:
+                optimizer.step()
+
             if num_steps == 0:
                 break
 
@@ -99,7 +114,7 @@ class GradientAccumulation_test(unittest.TestCase):
         """
         grad_sample_module = GradSampleModule(self.model)
         data_iter = iter(self.dl)  # 4 batches of size 4 each
-        self.model_forward_backward(grad_sample_module, data_iter, num_steps=4)
+        self.model_forward_backward(grad_sample_module, data_iter, num_steps=8)
         # should accumulate grads in .grad and .grad_sample
 
         for p in self.model.parameters():
@@ -107,7 +122,7 @@ class GradientAccumulation_test(unittest.TestCase):
                 continue
 
             self.assertTrue(isinstance(p.grad_sample, list))
-            self.assertEqual(len(p.grad_sample), 4)
+            self.assertEqual(len(p.grad_sample), 8)
 
             for gs in p.grad_sample:
                 self.assertEqual(gs.shape[0], self.BATCH_SIZE)
@@ -148,17 +163,13 @@ class GradientAccumulation_test(unittest.TestCase):
             noise_multiplier=0.0,
             max_grad_norm=999,
         )
-        data = iter(dl)
-        self.model_forward_backward(model, data, num_steps=1)
+
+        self.model_forward_backward(model, dl, num_steps=1)
 
         with self.assertRaises(ValueError):
-            self.model_forward_backward(model, data, num_steps=1)
+            self.model_forward_backward(model, dl, num_steps=1)
 
     def test_privacy_engine_no_poisson_accumulation(self):
-        """
-        Calling `privacy_engine.make_private` should call optimizer.virtual_step()
-        under the hood.
-        """
         privacy_engine = PrivacyEngine()
         model, optimizer, dl = privacy_engine.make_private(
             module=self.model,
@@ -168,13 +179,12 @@ class GradientAccumulation_test(unittest.TestCase):
             max_grad_norm=999,
             poisson_sampling=False,
         )
-        data = iter(dl)  # 4 batches of size 4 each
 
-        self.model_forward_backward(model, data, num_steps=4)
-        self.assertEqual(optimizer.accumulated_iterations, 4)
+        self.model_forward_backward(model, dl, num_steps=8)
+        self.assertEqual(optimizer.accumulated_iterations, 8)
 
         for grad_sample in optimizer.grad_samples:
-            self.assertEqual(grad_sample.shape[0], 4 * self.BATCH_SIZE)
+            self.assertEqual(grad_sample.shape[0], 8 * self.BATCH_SIZE)
 
         optimizer.step()
 
@@ -191,3 +201,48 @@ class GradientAccumulation_test(unittest.TestCase):
             f"Values are {accumulated_grad} vs {orig_grad}."
             f"MAD is {(orig_grad - accumulated_grad).abs().mean()}",
         )
+
+    def test_privacy_engine_zero_grad(self):
+        privacy_engine = PrivacyEngine()
+        model, optimizer, dl = privacy_engine.make_private(
+            module=self.model,
+            optimizer=self.optimizer,
+            data_loader=self.dl,
+            noise_multiplier=1.0,
+            max_grad_norm=1.0,
+            poisson_sampling=False,
+        )
+
+        # should work fine with zero_grad
+        self.model_forward_backward(
+            model, dl, optimizer, num_steps=2, do_zero_grad=True
+        )
+
+        # should fail if not calling zero_grad
+        with self.assertRaises(ValueError):
+            self.model_forward_backward(
+                model, dl, optimizer, num_steps=2, do_zero_grad=False
+            )
+
+    def test_batch_splitter_zero_grad(self):
+        privacy_engine = PrivacyEngine()
+        model, optimizer, dl = privacy_engine.make_private(
+            module=self.model,
+            optimizer=self.optimizer,
+            data_loader=self.dl,
+            noise_multiplier=1.0,
+            max_grad_norm=1.0,
+            poisson_sampling=False,
+        )
+
+        with BatchMemoryManager(
+            data_loader=dl, max_physical_batch_size=2, optimizer=optimizer
+        ) as new_data_loader:
+            self.model_forward_backward(
+                model, new_data_loader, optimizer, num_steps=3, do_zero_grad=True
+            )
+
+            with self.assertRaises(ValueError):
+                self.model_forward_backward(
+                    model, new_data_loader, optimizer, num_steps=3, do_zero_grad=False
+                )

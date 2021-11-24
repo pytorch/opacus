@@ -38,7 +38,7 @@ class SampleConvNet(nn.Module):
         return "SampleConvNet"
 
 
-class GradSampleModule_test(unittest.TestCase):
+class GradSampleModuleTest(unittest.TestCase):
     def setUp(self):
         self.original_model = SampleConvNet()
         copy_of_original_model = SampleConvNet()
@@ -75,7 +75,6 @@ class GradSampleModule_test(unittest.TestCase):
         Gradients are tested in the various `grad_samples` tests.
         """
         x, _ = next(iter(self.dl))
-        print(f"SHAPE: {x.shape}")
         self.original_model = self.original_model.eval()
         self.grad_sample_module = self.grad_sample_module.eval()
         with torch.no_grad():
@@ -91,7 +90,6 @@ class GradSampleModule_test(unittest.TestCase):
 
     def test_zero_grad(self):
         x, _ = next(iter(self.dl))
-        print(f"SHAPE: {x.shape}")
         self.original_model = self.original_model.train()
         self.grad_sample_module = self.grad_sample_module.train()
         gs_out = self.grad_sample_module(x)
@@ -102,7 +100,7 @@ class GradSampleModule_test(unittest.TestCase):
         params_with_gs = [
             n
             for n, p in self.grad_sample_module.named_parameters()
-            if hasattr(p, "grad_sample")
+            if p.grad_sample is not None
         ]
         msg = (
             "After calling .zero_grad() on the GradSampleModule, the following parameters still "
@@ -210,3 +208,10 @@ class GradSampleModule_test(unittest.TestCase):
 
         # Should not raise exception if strict=False
         GradSampleModule(mobilenet_v3_small(), strict=False)
+
+    def test_submodule_access(self):
+        _ = self.grad_sample_module.fc1
+        _ = self.grad_sample_module.fc2
+
+        with self.assertRaises(AttributeError):
+            _ = self.grad_sample_module.fc3

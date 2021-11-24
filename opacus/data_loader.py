@@ -5,7 +5,7 @@ from opacus.utils.uniform_sampler import (
     DistributedUniformWithReplacementSampler,
     UniformWithReplacementSampler,
 )
-from torch.utils.data import BatchSampler, DataLoader, Dataset, Sampler
+from torch.utils.data import BatchSampler, DataLoader, Dataset, IterableDataset, Sampler
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
@@ -25,7 +25,6 @@ def wrap_collate_with_empty(
         batches and outputs empty tensors with shapes from ``sample_empty_shapes`` if
         the input batch is of size 0
     """
-    # TODO: does it work with packed sequences?
     def collate(batch):
         if len(batch) > 0:
             return collate_fn(batch)
@@ -162,12 +161,8 @@ class DPDataLoader(DataLoader):
             New DPDataLoader instance, with all attributes and parameters inherited
             from the original data loader, except for sampling mechanism.
         """
-        if isinstance(data_loader, cls):
-            # TODO: this should be exception, not assert
-            assert data_loader.distributed == distributed
-            return data_loader
-
-        # TODO: check not iterabledataset
+        if isinstance(data_loader.dataset, IterableDataset):
+            raise ValueError("Uniform sampling is not supported for IterableDataset")
 
         return cls(
             dataset=data_loader.dataset,

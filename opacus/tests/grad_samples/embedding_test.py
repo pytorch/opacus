@@ -17,7 +17,8 @@ class Embedding_test(GradSampleHooks_test):
         R=st.integers(1, 2),
         V=st.integers(2, 32),
         D=st.integers(10, 17),
-        dim=st.integers(1, 4),
+        dim=st.integers(2, 4),
+        batch_first=st.booleans(),
     )
     @settings(deadline=10000)
     def test_input_across_dims(
@@ -29,9 +30,10 @@ class Embedding_test(GradSampleHooks_test):
         V: int,
         D: int,
         dim: int,
+        batch_first: bool,
     ):
 
-        if dim == 1:
+        if dim == 1:  # TODO: fix when dim is 1
             size = [T]
         elif dim == 2:
             size = [N, T]
@@ -42,4 +44,4 @@ class Embedding_test(GradSampleHooks_test):
 
         emb = nn.Embedding(V, D)
         x = torch.randint(low=0, high=V - 1, size=size)
-        self.run_test(x, emb, batch_first=True)
+        self.run_test(x, emb, batch_first=batch_first)

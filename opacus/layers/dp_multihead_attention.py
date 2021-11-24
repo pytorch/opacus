@@ -12,30 +12,31 @@ from torch.nn.parameter import Parameter
 class SequenceBias(nn.Module):
     r"""
     Adds one bias element to the end of the sequence.
-    so if the input has a shape ``(L, N, E)``, where
-    ``L`` is the sequence length, ``N`` is the batch size, and ``E`` is
+    so if the input has a shape ``(L, N, E)``, (``batch_first = False``),
+    where ``L`` is the sequence length, ``N`` is the batch size, and ``E`` is
     the embedding dimension, the output will have a shape
-    ``(L+1, N, E)``.
+    ``(L+1, N, E)``. When ``batch_first = True``, input has a shape ``(N, L, E)``
+    and the output will have a shape ``(N, L+1, E)``
 
     Attributes:
         bias (:class:`torch.nn.parameter.Parameter`): the learnable bias of
             the module of shape ``(E)``, where ``E`` is the embedding dimension.
 
     Example:
-        >>> m = SequenceBias(16)
+        >>> m = SequenceBias(16, batch_first=False)
         >>> input = torch.randn(20, 4, 16)
         >>> output = m(input)
         >>> output.size()
         torch.Size([21, 4, 16])
     """
 
-    def __init__(self, embed_dim: int):
+    def __init__(self, embed_dim: int, batch_first: bool = False):
         r"""
         Args:
             embed_dim: Embedding dimension
         """
         super(SequenceBias, self).__init__()
-
+        self.batch_first = batch_first
         self.bias = Parameter(torch.empty(embed_dim))
         self._reset_parameters()
 
@@ -46,8 +47,12 @@ class SequenceBias(nn.Module):
         nn.init.normal_(self.bias)
 
     def forward(self, x):
-        _, bsz, _ = x.shape
-        return torch.cat([x, self.bias.repeat(1, bsz, 1)])
+        if self.batch_first:
+            bsz, _, _ = x.shape
+            return torch.cat([x, self.bias.repeat(bsz, 1, 1)], 1)
+        else:
+            _, bsz, _ = x.shape
+            return torch.cat([x, self.bias.repeat(1, bsz, 1)])
 
 
 class DPMultiheadAttention(nn.Module):
