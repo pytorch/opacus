@@ -13,7 +13,9 @@ from scipy import optimize
 from scipy.stats import norm
 
 
-def compute_mu_uniform(steps: int, noise_multiplier: float, sample_rate: float) -> float:
+def compute_mu_uniform(
+    steps: int, noise_multiplier: float, sample_rate: float
+) -> float:
     """
     Compute mu from uniform subsampling.
 
@@ -38,7 +40,9 @@ def compute_mu_uniform(steps: int, noise_multiplier: float, sample_rate: float) 
     )
 
 
-def compute_mu_poisson(steps: int, noise_multiplier: float, sample_rate: float) -> float:
+def compute_mu_poisson(
+    steps: int, noise_multiplier: float, sample_rate: float
+) -> float:
     """
     Compute mu from uniform subsampling.
 
@@ -81,7 +85,9 @@ def eps_from_mu(mu: float, delta: float) -> float:
     return optimize.root_scalar(f, bracket=[0, 500], method="brentq").root
 
 
-def compute_eps_uniform(steps: int, noise_multiplier: float, sample_rate: float, delta: float) -> float:
+def compute_eps_uniform(
+    steps: int, noise_multiplier: float, sample_rate: float, delta: float
+) -> float:
     """
     Compute epsilon given delta from inverse dual of uniform subsampling.
 
@@ -98,7 +104,9 @@ def compute_eps_uniform(steps: int, noise_multiplier: float, sample_rate: float,
     return eps_from_mu(compute_mu_uniform(steps, noise_multiplier, sample_rate), delta)
 
 
-def compute_eps_poisson(steps: int, noise_multiplier: float, sample_rate: float, delta: float) -> float:
+def compute_eps_poisson(
+    steps: int, noise_multiplier: float, sample_rate: float, delta: float
+) -> float:
     """
     Compute epsilon given delta from inverse dual of Poisson subsampling
 

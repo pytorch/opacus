@@ -1,7 +1,7 @@
 import pytest
 import torch
-from torch import nn
 from opacus import PrivacyEngine
+from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
 
@@ -14,6 +14,7 @@ class MyCustomModel(nn.Module):
 
     def forward(self, x):
         x = self.f(x)
+        return x
 
 
 def create_demo_dataloader():
@@ -56,4 +57,6 @@ def create_namespace(doctest_namespace):
     doctest_namespace.update(**locals())
 
     doctest_namespace["MyCustomModel"] = MyCustomModel
+    doctest_namespace["TensorDataset"] = TensorDataset
     doctest_namespace["demo_dataloader"] = create_demo_dataloader()
+    doctest_namespace["_init_private_training"] = _init_private_training

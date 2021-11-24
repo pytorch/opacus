@@ -14,6 +14,7 @@ class BatchSplittingSampler(Sampler[List[int]]):
     Used to split large logical batches into physocal batches of a smaller size,
     while coordinating with DPOptimizer when the logical batch has ended.
     """
+
     def __init__(
         self, sampler: Sampler[List[int]], max_batch_size: int, optimizer: DPOptimizer
     ):
@@ -114,6 +115,7 @@ class BatchMemoryManager(object):
         ...         # optimizer won't actually clear gradients unless logical batch is over
         ...         optimizer.zero_grad()
     """
+
     def __init__(
         self,
         data_loader: DataLoader,

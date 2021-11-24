@@ -10,6 +10,11 @@ from .optimizer import DPOptimizer, _check_processed_flag, _mark_as_processed
 
 
 class DPPerLayerOptimizer(DPOptimizer):
+    """
+    :class:`~opacus.optimizers.optimizer.DPOptimizer` that implements
+    per layer clipping strategy
+    """
+
     def __init__(
         self,
         optimizer: Optimizer,

@@ -23,11 +23,11 @@ def create_or_accumulate_grad_sample(
     if the ``_current_grad_sample`` attribute already exists.
 
 
-
     Args:
         param: Parameter to which ``grad_sample`` will be added
         grad_sample: Per-sample gradients tensor. Must be of the same
             shape as ``param`` with extra batch dimension
+        layer: nn.Module parameter belongs to
     """
 
     if hasattr(param, "_current_grad_sample"):
@@ -457,9 +457,6 @@ def _get_batch_size(
 
     Returns:
         Maximum sequence length in a batch
-    """
-    r"""
-
     """
 
     max_batch_len = 0

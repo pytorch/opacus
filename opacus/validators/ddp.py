@@ -6,12 +6,12 @@ from typing import List
 
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from .errors import ShouldReplaceModuleError, UnsupportedError
+from .errors import ShouldReplaceModuleError, UnsupportedModuleError
 from .utils import register_module_fixer, register_module_validator
 
 
 @register_module_validator(DDP)
-def validate(module: DDP) -> List[UnsupportedError]:
+def validate(module: DDP) -> List[UnsupportedModuleError]:
     return [
         ShouldReplaceModuleError(
             "We do not support DistributedDataParallel as we need to perform"

@@ -16,9 +16,9 @@ class UniformWithReplacementSampler(Sampler[List[int]]):
     def __init__(self, num_samples: int, sample_rate: float, generator=None):
         r"""
         Args:
-            num_samples (int): number of samples to draw.
-            sample_rate (float): probability used in sampling.
-            generator (Generator): Generator used in sampling.
+            num_samples: number of samples to draw.
+            sample_rate: probability used in sampling.
+            generator: Generator used in sampling.
         """
         self.num_samples = num_samples
         self.sample_rate = sample_rate
@@ -71,6 +71,17 @@ class DistributedUniformWithReplacementSampler(Sampler):
         shuffle_seed: int = 0,
         generator=None,
     ):
+        """
+
+        Args:
+            total_size: total number of samples to sample from
+            sample_rate: number of samples to draw.
+            shuffle: Flag indicating whether apply shuffle when dividing elements
+                between workers
+            shuffle_seed: Random seed used to shuffle when dividing elements across workers
+            generator: torch.Generator() object used as a source of randomness
+                when selecting items for the next round on a given worker
+        """
         self.total_size = total_size
         self.sample_rate = sample_rate
         self.generator = generator

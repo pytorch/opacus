@@ -23,6 +23,11 @@ def _clip_and_accumulate_parameter(p: nn.Parameter, max_grad_norm: float):
 
 
 class DistributedPerLayerOptimizer(DPOptimizer):
+    """
+    :class:`~opacus.optimizers.optimizer.DPOptimizer` that implements
+    per layer clipping strategy and is compatible with distibured data parallel
+    """
+
     def __init__(
         self,
         optimizer: Optimizer,
@@ -46,7 +51,7 @@ class DistributedPerLayerOptimizer(DPOptimizer):
             generator=generator,
             secure_mode=secure_mode,
         )
-        self.register_hooks()
+        self._register_hooks()
 
     def _add_noise_parameter(self, p):
         """
@@ -97,7 +102,7 @@ class DistributedPerLayerOptimizer(DPOptimizer):
 
         return p.grad
 
-    def register_hooks(self):
+    def _register_hooks(self):
         for p, max_grad_norm in zip(self.params, self.max_grad_norms):
             if not p.requires_grad:
                 continue

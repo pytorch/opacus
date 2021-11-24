@@ -160,6 +160,12 @@ class DPDataLoader(DataLoader):
         Returns:
             New DPDataLoader instance, with all attributes and parameters inherited
             from the original data loader, except for sampling mechanism.
+
+        Examples:
+            >>> x, y = torch.randn(64, 5), torch.randint(0, 2, (64,))
+            >>> dataset = TensorDataset(x,y)
+            >>> data_loader = DataLoader(dataset, batch_size=4)
+            >>> dp_data_loader = DPDataLoader.from_data_loader(data_loader)
         """
 
         if isinstance(data_loader.dataset, IterableDataset):
