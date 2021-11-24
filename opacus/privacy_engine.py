@@ -346,16 +346,7 @@ class PrivacyEngine:
             clipping=clipping,
         )
 
-        def accountant_hook(optim: DPOptimizer):
-            # This works for Poisson for both single-node and distributed
-            # The reason is that the sample rate is the same in both cases (but in
-            # distributed mode, each node samples among a subset of the data)
-            self.accountant.step(
-                noise_multiplier=optim.noise_multiplier,
-                sample_rate=sample_rate * optim.accumulated_iterations,
-            )
-
-        optimizer.attach_step_hook(accountant_hook)
+        optimizer.attach_step_hook(self.accountant.get_optimizer_hook_fn(sample_rate=sample_rate))
 
         return module, optimizer, data_loader
 
