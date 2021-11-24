@@ -73,7 +73,7 @@ class GradSampleModule(nn.Module):
     ):
         super().__init__()
 
-        errors = self.validate(module=m, raise_if_error=strict)
+        errors = self.validate(module=m, strict=strict)
         if errors and not strict:
             logger.info(
                 f"GradSampleModule found the following errors: {errors}."
@@ -361,7 +361,7 @@ class GradSampleModule(nn.Module):
 
     @classmethod
     def validate(
-        cls, module: nn.Module, raise_if_error: bool = False
+        cls, module: nn.Module, strict: bool = False
     ) -> List[NotImplementedError]:
         """Validate support for module being wrapped"""
         errors = []
@@ -373,7 +373,7 @@ class GradSampleModule(nn.Module):
             ]
         )
         # raise or return errors as needed
-        if raise_if_error and len(errors) > 0:
+        if strict and len(errors) > 0:
             raise NotImplementedError(errors)
         else:
             return errors
