@@ -77,7 +77,8 @@ class PrivacyEngine:
                 required. ``secure_mode=True`` uses secure random number generator for
                 noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and
                 prevents certain floating-point arithmetic-based attacks.
-                See :meth:`~opacus.optimizers.optimizer._generate_noise` for details
+                See :meth:`~opacus.optimizers.optimizer._generate_noise` for details.
+                When set to ``True`` requires ``torchcsprng`` to be installed
         """
         self.accountant = create_accountant(mechanism=accountant)
         self.secure_mode = secure_mode
@@ -263,18 +264,18 @@ class PrivacyEngine:
     ) -> Tuple[GradSampleModule, DPOptimizer, DataLoader]:
         """
         Add privacy-related responsibilites to the main PyTorch training objects:
-        model, optimizer and the data loader.
+        model, optimizer, and the data loader.
 
         All of the returned objects act just like their non-private counterparts
         passed as arguments, but with added DP tasks.
 
         Model is wrapped to also compute per sample gradients.
         Optimizer is now responsible for gradient clipping and adding noise to the
-            gradients
+            gradients.
         DataLoader is updated to perform Poisson sampling.
 
         Notes:
-            Using any other models, optimizers or data sources during training
+            Using any other models, optimizers, or data sources during training
             will invalidate stated privacy guarantees.
 
         Args:
@@ -313,7 +314,7 @@ class PrivacyEngine:
             Model is a wrapper around the original model that also computes per sample
                 gradients
             Optimizer is a wrapper around the original optimizer that also does
-             gradient clipping and adding noise to the gradients
+             gradient clipping and noise addition to the gradients
             DataLoader is a brand new DataLoader object, constructed to behave as
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.

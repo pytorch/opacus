@@ -19,7 +19,7 @@ def wrap_collate_with_empty(
     Args:
         collate_fn: collate function to wrap
         sample_empty_shapes: expected shape for a batch of size 0. Input is a sequence -
-            one for each tensors in the dataset
+            one for each tensor in the dataset
 
     Returns:
         New collate function, which is equivalent to input ``collate_fn`` for non-empty
@@ -46,10 +46,7 @@ def shape_safe(x: Any):
     Returns:
         ``x.shape`` if attribute exists, empty tuple otherwise
     """
-    if hasattr(x, "shape"):
-        return x.shape
-    else:
-        return ()
+    return x.shape if hasattr(x, "shape") else ()
 
 
 class DPDataLoader(DataLoader):
