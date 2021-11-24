@@ -20,7 +20,7 @@ class ModuleValidator_test(unittest.TestCase):
 
     def test_validate_invalid_model(self):
         with self.assertRaises(UnsupportedModuleError):
-            ModuleValidator.validate(self.original_model, raise_if_error=True)
+            ModuleValidator.validate(self.original_model, strict=True)
         errors = ModuleValidator.validate(self.original_model)
         self.assertGreater(len(errors), 0)
 
