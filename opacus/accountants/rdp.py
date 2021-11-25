@@ -30,6 +30,9 @@ class RDPAccountant(IAccountant):
     def get_privacy_spent(
         self, delta: float, alphas: Optional[List[Union[float, int]]] = None
     ) -> Tuple[float, float]:
+        if not self.steps:
+            return 0, 0
+
         if alphas is None:
             alphas = self.DEFAULT_ALPHAS
 
