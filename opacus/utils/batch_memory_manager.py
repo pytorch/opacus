@@ -3,8 +3,8 @@ from typing import List
 
 import numpy as np
 from opacus.optimizers import DPOptimizer
-from torch.utils.data import DataLoader, Sampler
-
+from torch.utils.data import DataLoader, Sampler, BatchSampler
+from opacus.utils.uniform_sampler import UniformWithReplacementSampler, DistributedUniformWithReplacementSampler
 
 class BatchSplittingSampler(Sampler[List[int]]):
     def __init__(
@@ -26,8 +26,13 @@ class BatchSplittingSampler(Sampler[List[int]]):
             yield split_idxs[-1]
 
     def __len__(self):
-        return len(self.sampler)
+        if isinstance(self.sampler, BatchSampler):
+            return len(self.sampler) * (self.sampler.batch_size / self.max_batch_size)
+        elif isinstance(self.sampler, UniformWithReplacementSampler) or isinstance(self.sampler, DistributedUniformWithReplacementSampler):
+            expected_batch_size = self.sampler.sample_rate * self.sampler.num_samples
+            return len(self.sampler) * (expected_batch_size / self.max_batch_size)
 
+        return len(self.sampler)
 
 def wrap_data_loader(data_loader, max_batch_size: int, optimizer: DPOptimizer):
     return DataLoader(
