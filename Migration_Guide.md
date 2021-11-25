@@ -17,8 +17,8 @@ required are trivial, but this can vary depending on your exact setup. This guid
     + [Basics](#basics)
     + [Privacy accounting](#privacy-accounting)
     + [Zero grad](#zero-grad)
-  * [Module modifications](#module-modifications)
-  * [Virtual steps](#virtual-steps)
+  * [Your model has BatchNorm](#your-model-has-batchnorm)
+  * [If you're using virtual steps](#if-youre-using-virtual-steps)
   * [When you know privacy budget in advance](#when-you-know-privacy-budget-in-advance)
   * [Distributed](#distributed)
   * [No DataLoader](#no-dataloader)
@@ -75,12 +75,11 @@ optimizer = SGD(model.parameters(), lr=0.05)
 + # in addition to model and optimizer you now need access to a data loader
 + data_loader = torch.utils.data.DataLoader(dataset, batch_size=1024)
 
-+ # PrivacyEngine now can be initalized with no parameters
++ # PrivacyEngine's constructor doesn't accept training artefacts - they're instead passed to make_private
 + privacy_engine = PrivacyEngine()
-- privacy_engine = PrivacyEngine(
 
-# PrivacyEngine now can be initalized with no parameters
 + model, optimizer, data_loader = privacy_engine.make_private(
+- privacy_engine = PrivacyEngine(
 +     module=model, # Parameter names are required
 +     optimizer=optimizer,
 +     data_loader=data_loader,
@@ -97,9 +96,9 @@ optimizer = SGD(model.parameters(), lr=0.05)
 ### Privacy accounting
 
 This part is mostly the same, except that the API is now adapted to a more generic concept of privacy accountant. 
-We've already implemented 2: RDP (default and recommended one) and Gaussian DP accountant.
+We've already implemented two accountants: RDP (default and recommended one) and Gaussian DP accountant.
 
-In most cases here's what you'll need to change:
+In most cases, here's what you'll need to change:
 ```diff
 + eps = privacy_engine.get_epsilon(delta=target_delta)
 - eps, alpha = privacy_engine.get_privacy_spent(delta=target_delta)
@@ -126,9 +125,9 @@ Note, that previous opacus version didn't require you to call `optimizer.zero_gr
 optimization steps regardless. Now we rely on user to call the method (but will still detect and throw and exception
 if it's not done)
 
-## Module modifications
+## Your model has BatchNorm
 
-By default `PrivacyEngine` only does module validation - you have to pass a module that's already meets the expectations.
+By default `PrivacyEngine` only does module validation - you have to pass a module that already meets the expectations.
 We've aggregated all known module fixes, including `BatchNorm -> GroupNorm` replacement into `ModuleValidator.fix()`
 
 Note, that it'll also perform other known remediations like replacing `LSTM` with `DPLSTM`. For the full list
@@ -139,7 +138,7 @@ of actions see `opacus.validators` package docs
 - model = module_modification.convert_batchnorm_modules(model)
 ```
 
-## Virtual steps
+## If you're using virtual steps
 
 Old opacus featured the concept of virtual steps - you could decouple the logical batch size 
 (which defined how often model weights are updated and how much dp noise is added) and physical batch size 
@@ -147,11 +146,11 @@ Old opacus featured the concept of virtual steps - you could decouple the logica
 While the concept is extremely useful, it suffered from some serious flaws:
 - Not compatible with poisson sampling. Two subsequent poisson batches with `sample_rate=x` are not equivalent 
   to a single batch with `sample_rate=2x`. Therefore simulating larger batches by setting lower sampling rate isn't
-  really Poisson anymore
-- It didn't protect from occasional large Poisson batches. When working with poisson sampling, setting batch size 
-  (or rather sampling rate) was quite tricky. For long enough training loops peak batch size (and therefore memory
-  consumpton) could be much larger than the average
-- It required careful manual crafting inside training loop
+  really Poisson anymore.
+- It didn't protect from occasional large Poisson batches. When working with Poisson sampling, setting batch size 
+  (or rather sampling rate) was quite tricky. For long enough training loops, peak batch size (and therefore memory
+  consumpton) could be much larger than the average.
+- It required careful manual crafting inside training loop.
 
 ```python
 BATCH_SIZE = 128 # that's logical batch size. You'll mostly be using this one across your code
