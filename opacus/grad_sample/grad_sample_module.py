@@ -98,8 +98,8 @@ class GradSampleModule(nn.Module):
                 return submodules[item]
             raise e
 
-    def forward(self, x, *args, **kwargs):
-        return self._module(x, *args, **kwargs)
+    def forward(self, *args, **kwargs):
+        return self._module(*args, **kwargs)
 
     def zero_grad(self, set_to_none: bool = False):
         if set_to_none is False:
