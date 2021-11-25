@@ -2,7 +2,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import logging
-import sys
 from typing import List
 
 import torch.nn as nn
@@ -13,7 +12,9 @@ from opacus.validators.errors import (
     UnsupportedModuleError,
 )
 
+
 logger = logging.getLogger(__name__)
+
 
 class ModuleValidator:
     """
@@ -49,7 +50,7 @@ class ModuleValidator:
         # 2. validate that all trainable modules are supported by GradSampleModule.
         errors.extend(GradSampleModule.validate(module=module, raise_if_error=False))
         # 3. perform module specific validations.
-        #TODO: use module name here - it's useful part of error message
+        # TODO: use module name here - it's useful part of error message
         for _, sub_module in module.named_modules():
             if type(sub_module) in ModuleValidator.VALIDATORS:
                 sub_module_validator = ModuleValidator.VALIDATORS[type(sub_module)]

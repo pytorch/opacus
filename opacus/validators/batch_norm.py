@@ -2,13 +2,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import logging
-import sys
 from typing import Union
 
 import torch.nn as nn
 
 from .errors import ShouldReplaceModuleError, UnsupportableModuleError
 from .utils import register_module_fixer, register_module_validator
+
 
 logger = logging.getLogger(__name__)
 
