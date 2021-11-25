@@ -62,10 +62,19 @@ class BatchMemoryManagerTest(unittest.TestCase):
             max_grad_norm=1.0,
             poisson_sampling=False,
         )
+        max_physical_batch_size = 3
         with BatchMemoryManager(
-            data_loader=data_loader, max_physical_batch_size=3, optimizer=optimizer
+            data_loader=data_loader,
+            max_physical_batch_size=max_physical_batch_size,
+            optimizer=optimizer,
         ) as new_data_loader:
-            self.assertEqual(len(data_loader), len(new_data_loader))
+            self.assertEqual(
+                len(data_loader), len(data_loader.dataset) // self.batch_size
+            )
+            self.assertEqual(
+                len(new_data_loader),
+                len(data_loader.dataset) // max_physical_batch_size,
+            )
             weights_before = torch.clone(model._module.fc.weight)
             for i, (x, y) in enumerate(new_data_loader):
                 self.assertTrue(x.shape[0] <= 3)
