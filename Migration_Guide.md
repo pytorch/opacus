@@ -8,7 +8,7 @@ exactly as it's decribed in the papers, with no assumptions or simplicifactions.
 focus on high performance training.
 
 On the downside, however, new API lacks backward compatibility. If you've been using older versions of Opacus and want 
-to continue using Opacus 1.0, you'll need to performs certain manual steps. In the vast majority of cases the changes
+to continue using Opacus 1.0, you'll need to perform certain manual steps. In the vast majority of cases the changes
 required are trivial, but this can vary depending on your exact setup. This guide will help you through this process.
 
 # Table of Contents
@@ -25,13 +25,13 @@ required are trivial, but this can vary depending on your exact setup. This guid
 
 ## New API intro
 
-First, a quick recap how the new API looks like. 
+First, a quick recap on how the new API looks. 
 
 The first difference you'll notice is increased focus on data handling. Batch sampling is an important component of
 DP-SGD (e.g. privacy accounting relies on amplification by sampling) and Poisson sampling is quite tricky to get 
-right, so now Opacus takes control of 3 PyTorch training objects: model, optimizer and data loader.
+right, so now Opacus takes control of 3 PyTorch training objects: model, optimizer, and data loader.
 
-Here's the simple example:
+Here's a simple example:
 
 ```python
 # define your components as usual
@@ -53,8 +53,8 @@ model, optimizer, data_loader = privacy_engine.make_private(
 
 What actually happens in `make_private` method deserves more attention and we'll cover it later in this doc.
 For now all we need to know is that `make_private` takes three fully initialized objects 
-(model, optimizet and data loader), along with privacy configuration parameters, and returns wrappers, each taking 
-some additional privacy-related responsibility (while also going everything the original modules did).
+(model, optimizer and data loader), along with privacy configuration parameters, and returns wrappers, each taking 
+some additional privacy-related responsibility (while also doing everything the original modules did).
 
 - model is wrapped with `GradSampleModule`, which computes per sample gradients
 - optimizer is wrapped with `DPOptimizer`, which does gradient clipping and noise addition
