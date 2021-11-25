@@ -24,7 +24,7 @@ Example:
     >>> orders = range(2, max_order + 1)
     >>> rdp = np.zeros_like(orders, dtype=float)
     >>> for q, sigma, steps in parameters:
-    ...     rdp += compute_rdp(q, sigma, steps, orders)
+    ...     rdp += compute_rdp(q=q, noise_multiplier=sigma, steps=steps, orders=orders)
 
     >>> epsilon, opt_order = get_privacy_spent(orders, rdp, delta=1e-5)
     >>> epsilon, opt_order  # doctest: +NUMBER
