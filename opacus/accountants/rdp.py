@@ -10,7 +10,7 @@ class RDPAccountant(IAccountant):
     def __init__(self):
         self.steps = []
 
-    def step(self, noise_multiplier: float, sample_rate: float):
+    def step(self, *, noise_multiplier: float, sample_rate: float):
         if len(self.steps) >= 1:
             last_noise_multiplier, last_sample_rate, num_steps = self.steps.pop()
             if (
@@ -28,31 +28,33 @@ class RDPAccountant(IAccountant):
             self.steps.append((noise_multiplier, sample_rate, 1))
 
     def get_privacy_spent(
-        self, delta: float, alphas: Optional[List[Union[float, int]]] = None
+        self, *, delta: float, alphas: Optional[List[Union[float, int]]] = None
     ) -> Tuple[float, float]:
         if not self.steps:
             return 0, 0
 
         if alphas is None:
             alphas = self.DEFAULT_ALPHAS
-
         rdp = sum(
             [
                 privacy_analysis.compute_rdp(
-                    sample_rate, noise_multiplier, num_steps, alphas
+                    q=sample_rate,
+                    noise_multiplier=noise_multiplier,
+                    steps=num_steps,
+                    orders=alphas,
                 )
                 for (noise_multiplier, sample_rate, num_steps) in self.steps
             ]
         )
-
-        eps, best_alpha = privacy_analysis.get_privacy_spent(alphas, rdp, delta)
-
+        eps, best_alpha = privacy_analysis.get_privacy_spent(
+            orders=alphas, rdp=rdp, delta=delta
+        )
         return float(eps), float(best_alpha)
 
     def get_epsilon(
         self, delta: float, alphas: Optional[List[Union[float, int]]] = None
     ):
-        eps, _ = self.get_privacy_spent(delta, alphas)
+        eps, _ = self.get_privacy_spent(delta=delta, alphas=alphas)
         return eps
 
     def __len__(self):

@@ -13,7 +13,7 @@ class UniformWithReplacementSampler(Sampler[List[int]]):
     Each sample is selected with a probability equal to ``sample_rate``.
     """
 
-    def __init__(self, num_samples: int, sample_rate: float, generator=None):
+    def __init__(self, *, num_samples: int, sample_rate: float, generator=None):
         r"""
         Args:
             num_samples (int): number of samples to draw.
@@ -65,6 +65,7 @@ class DistributedUniformWithReplacementSampler(Sampler):
 
     def __init__(
         self,
+        *,
         total_size: int,
         sample_rate: float,
         shuffle: bool = True,
