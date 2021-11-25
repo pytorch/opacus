@@ -26,7 +26,7 @@ Example:
     >>> for q, sigma, steps in parameters:
     ...     rdp += compute_rdp(q=q, noise_multiplier=sigma, steps=steps, orders=orders)
 
-    >>> epsilon, opt_order = get_privacy_spent(orders, rdp, delta=1e-5)
+    >>> epsilon, opt_order = get_privacy_spent(orders=orders, rdp=rdp, delta=1e-5)
     >>> epsilon, opt_order  # doctest: +NUMBER
     (0.336, 23)
 
