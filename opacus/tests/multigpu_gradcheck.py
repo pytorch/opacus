@@ -76,7 +76,7 @@ def demo_basic(rank, weight, world_size, dp, clipping):
 
     if dp:
         max_grad_norm = 1e8
-        if clipping == 'per_layer':
+        if clipping == "per_layer":
             max_grad_norm = [1e8 for p in model.parameters()]
         ddp_model, optimizer, data_loader = privacy_engine.make_private(
             module=ddp_model,
@@ -85,7 +85,7 @@ def demo_basic(rank, weight, world_size, dp, clipping):
             noise_multiplier=0,
             max_grad_norm=max_grad_norm,
             poisson_sampling=False,
-            clipping=clipping
+            clipping=clipping,
         )
 
     optimizer.zero_grad()
@@ -102,7 +102,9 @@ def demo_basic(rank, weight, world_size, dp, clipping):
 
 
 def run_demo(demo_fn, weight, world_size, dp, clipping):
-    mp.spawn(demo_fn, args=(weight, world_size, dp, clipping), nprocs=world_size, join=True)
+    mp.spawn(
+        demo_fn, args=(weight, world_size, dp, clipping), nprocs=world_size, join=True
+    )
 
 
 class GradientComputationTest(unittest.TestCase):
@@ -113,10 +115,12 @@ class GradientComputationTest(unittest.TestCase):
             n_gpus >= 2, f"Need at least 2 gpus but was provided only {n_gpus}."
         )
 
-        for clipping in ['flat', 'per_layer']:
+        for clipping in ["flat", "per_layer"]:
             weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
 
             run_demo(demo_basic, weight_dp, 2, dp=True, clipping=clipping)
             run_demo(demo_basic, weight_nodp, 2, dp=False, clipping=clipping)
 
-            self.assertTrue(torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3))
+            self.assertTrue(
+                torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3)
+            )
