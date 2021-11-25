@@ -34,7 +34,7 @@ class ModuleValidator:
 
     @classmethod
     def validate(
-        cls, module: nn.Module, strict: bool = False
+        cls, module: nn.Module, *, strict: bool = False
     ) -> List[UnsupportedModuleError]:
         """
         Validate module and sub_modules by running registered custom validators.
@@ -121,6 +121,7 @@ class ModuleValidator:
     @classmethod
     def _repalce_sub_module(
         cls,
+        *,
         root: nn.Module,
         sub_module_name: str,
         new_sub_module: nn.Module,

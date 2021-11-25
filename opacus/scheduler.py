@@ -4,7 +4,7 @@ from .optimizers import DPOptimizer
 
 
 class _NoiseScheduler(object):
-    def __init__(self, optimizer: DPOptimizer, last_epoch=-1):
+    def __init__(self, optimizer: DPOptimizer, *, last_epoch=-1):
         self.optimizer = optimizer
         self.last_epoch = last_epoch
 
@@ -46,7 +46,7 @@ class ExponentialNoise(_NoiseScheduler):
 
     """
 
-    def __init__(self, optimizer: DPOptimizer, gamma: float, last_epoch: int = -1):
+    def __init__(self, optimizer: DPOptimizer, *, gamma: float, last_epoch: int = -1):
         """
 
         Args:
@@ -55,7 +55,7 @@ class ExponentialNoise(_NoiseScheduler):
             last_epoch: The index of last epoch
         """
         self.gamma = gamma
-        super().__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch=last_epoch)
 
     def get_noise_multiplier(self):
         if self.last_epoch == 0:
@@ -74,6 +74,7 @@ class LambdaNoise(_NoiseScheduler):
     def __init__(
         self,
         optimizer: DPOptimizer,
+        *,
         noise_lambda: Callable[[int], float],
         last_epoch: int = -1,
     ):
@@ -87,7 +88,7 @@ class LambdaNoise(_NoiseScheduler):
         """
         self.noise_lambda = noise_lambda
         self.base_noise_multiplier = optimizer.noise_multiplier
-        super().__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch=last_epoch)
 
     def get_noise_multiplier(self):
         return self.base_noise_multiplier * self.noise_lambda(self.last_epoch)
@@ -101,7 +102,12 @@ class StepNoise(_NoiseScheduler):
     """
 
     def __init__(
-        self, optimizer: DPOptimizer, step_size: int, gamma: float, last_epoch: int = -1
+        self,
+        optimizer: DPOptimizer,
+        *,
+        step_size: int,
+        gamma: float,
+        last_epoch: int = -1,
     ):
         """
 
@@ -113,7 +119,7 @@ class StepNoise(_NoiseScheduler):
         """
         self.step_size = step_size
         self.gamma = gamma
-        super().__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch=last_epoch)
 
     def get_noise_multiplier(self):
         # Only change noise_multiplier when at a 'step'

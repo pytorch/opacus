@@ -29,7 +29,11 @@ def compute_conv_grad_sample(
     # get A and B in shape depending on the Conv layer
     if type(layer) == nn.Conv2d:
         activations = unfold2d(
-            activations, layer.kernel_size, layer.padding, layer.stride, layer.dilation
+            activations,
+            kernel_size=layer.kernel_size,
+            padding=layer.padding,
+            stride=layer.stride,
+            dilation=layer.dilation,
         )
         backprops = backprops.reshape(n, -1, activations.shape[-1])
     elif type(layer) == nn.Conv1d:
@@ -38,7 +42,7 @@ def compute_conv_grad_sample(
         # set arguments to tuples with appropriate second element
         activations = torch.nn.functional.unfold(
             activations,
-            (1, layer.kernel_size[0]),
+            kernel_size=(1, layer.kernel_size[0]),
             padding=(0, layer.padding[0]),
             stride=(1, layer.stride[0]),
             dilation=(1, layer.dilation[0]),

@@ -10,7 +10,7 @@ class IAccountant(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def step(self, noise_multiplier: float, sample_rate: float):
+    def step(self, *, noise_multiplier: float, sample_rate: float):
         pass
 
     @abc.abstractmethod

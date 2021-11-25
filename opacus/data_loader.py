@@ -146,7 +146,7 @@ class DPDataLoader(DataLoader):
 
     @classmethod
     def from_data_loader(
-        cls, data_loader: DataLoader, distributed: bool = False, generator=None
+        cls, data_loader: DataLoader, *, distributed: bool = False, generator=None
     ):
         """
         Creates new ``DPDataLoader`` based on passed ``data_loader`` argument.
@@ -194,7 +194,7 @@ def _is_supported_batch_sampler(sampler: Sampler):
     )
 
 
-def switch_generator(data_loader: DataLoader, generator):
+def switch_generator(*, data_loader: DataLoader, generator):
     """
     Creates new instance of a ``DataLoader``, with the exact same behaviour of the
     provided data loader, except for the source of randomness.
