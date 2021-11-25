@@ -68,30 +68,31 @@ some additional privacy-related responsibility (while also doing everything the 
 Let's take the most simple (and hopefully the most common) migration use case. We assume that we're using 
 standard PyTorch `DataLoader` and take an example we used to demonstrate old API in our readme.
 
-<pre>
+```diff
 model = Net()
 optimizer = SGD(model.parameters(), lr=0.05)
 
-<span style="color: #a6a6a6"># in addition to model and optimizer you now need access to a data loader</span>
-<span style="background-color: #aef2b5">data_loader = torch.utils.data.DataLoader(dataset, batch_size=1024)</span> 
++ # in addition to model and optimizer you now need access to a data loader
++ data_loader = torch.utils.data.DataLoader(dataset, batch_size=1024)
 
-<span style="color: #a6a6a6"># PrivacyEngine now can be initalized with no parameters</span>
-<span style="background-color: #aef2b5">privacy_engine = PrivacyEngine()</span> 
-<s style="background-color: #f2bdbd">privacy_engine = PrivacyEngine( </s>
++ # PrivacyEngine now can be initalized with no parameters
++ privacy_engine = PrivacyEngine()
+- privacy_engine = PrivacyEngine(
 
-<span style="color: #a6a6a6"># PrivacyEngine now can be initalized with no parameters</span>
-<span style="background-color: #aef2b5">model, optimizer, data_loader = privacy_engine.make_private</span>
-    <span style="background-color: #aef2b5">module=</span>model, <span style="color: #a6a6a6"># Parameter names are required</span>
-    <span style="background-color: #aef2b5">optimizer=optimizer,</span>
-    <span style="background-color: #aef2b5">data_loader=data_loader</span>,
-    <s style="background-color: #f2bdbd">sample_rate=0.01,</s> <span style="color: #a6a6a6"># It's automatically inferred from the data loader</span>
-    <s style="background-color: #f2bdbd">alphas=[10, 100],</s> <span style="color: #a6a6a6"># Not required at this stage. You can provide custom alpha when computing epsilon</span>
+# PrivacyEngine now can be initalized with no parameters
++ model, optimizer, data_loader = privacy_engine.make_private(
++     module=model, # Parameter names are required
++     optimizer=optimizer,
++     data_loader=data_loader,
+-     sample_rate=0.01, # It's automatically inferred from the data loader
+-     alphas=[10, 100], # Not required at this stage. You can provide custom alpha when computing epsilon
     noise_multiplier=1.3,
     max_grad_norm=1.0,
 )
-<s style="background-color: #f2bdbd">privacy_engine.attach(optimizer)</s> <span style="color: #a6a6a6"># Just continue training using returned objects</span>
+- privacy_engine.attach(optimizer) # Just continue training using returned objects
+
 # Now it's business as usual
-</pre>
+```
 
 ### Privacy accounting
 
@@ -99,10 +100,10 @@ This part is mostly the same, except that the API is now adapted to a more gener
 We've already implemented 2: RDP (default and recommended one) and Gaussian DP accountant.
 
 In most cases here's what you'll need to change:
-<pre>
-<span style="background-color: #aef2b5">eps = privacy_engine.get_epsilon(delta=target_delta)</span>
-<s style="background-color: #f2bdbd">eps, alpha = privacy_engine.get_privacy_spent(delta=target_delta)</s>
-</pre>
+```diff
++ eps = privacy_engine.get_epsilon(delta=target_delta)
+- eps, alpha = privacy_engine.get_privacy_spent(delta=target_delta)
+```
 
 Note, that you no loger have access to alpha, as it's RDP-specific parameter and isn't applicable to other privacy
 accountants.
@@ -133,10 +134,10 @@ We've aggregated all known module fixes, including `BatchNorm -> GroupNorm` repl
 Note, that it'll also perform other known remediations like replacing `LSTM` with `DPLSTM`. For the full list
 of actions see `opacus.validators` package docs
 
-<pre>
-<span style="background-color: #aef2b5">model = ModuleValidator.fix(model)</span>
-<s style="background-color: #f2bdbd">model = module_modification.convert_batchnorm_modules(model)</s>
-</pre>
+```diff
++ model = ModuleValidator.fix(model)
+- model = module_modification.convert_batchnorm_modules(model)
+```
 
 ## Virtual steps
 
@@ -197,10 +198,10 @@ model, optimizer, data_loader = privacy_engine.make_private_with_epsilon(
 Actually, nothing has changed. The only thing you should know is that `DifferentiallyPrivateDistributedDataParallel` is
 moved to a different module:
 
-<pre>
-<span style="background-color: #aef2b5">from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP</span>
-<s style="background-color: #f2bdbd">from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP</s>
-</pre>
+```diff
++ from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
+- from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
+```
 
 ## No DataLoader
 
