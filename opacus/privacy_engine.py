@@ -227,7 +227,7 @@ class PrivacyEngine:
             UnsupportedModuleError
                 If one or more modules found to be incompatible
         """
-        ModuleValidator.validate(module, raise_if_error=True)
+        ModuleValidator.validate(module, strict=True)
 
     @classmethod
     def get_compatible_module(cls, module: nn.Module) -> nn.Module:
@@ -245,7 +245,7 @@ class PrivacyEngine:
             more details
         """
         module = ModuleValidator.fix(module)
-        ModuleValidator.validate(module, raise_if_error=True)
+        ModuleValidator.validate(module, strict=True)
         return module
 
     def make_private(
