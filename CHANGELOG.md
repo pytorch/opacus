@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.15.0
+### New Features
+* DDP support for faster distributed training (#196)
+* Support of GRU and RNN. Refactored LSTM implementation. (#222)
+* PyTorch Lightning Demo (#244)
+### Bug fixes
+* Improve nn.Linear grad sampler memory consumption (#192)
+* Update Opacus to stop using deprecated torch.set_deterministic (#197)
+* Fix optimizer.step after engine.detach()
+* Test fixes.
+### Miscellaneous
+* Better validation error reporting (#199)
+* grad sampler type checking (#241)
+
 ## v0.14.0
 ### New features
 * Major refactoring - per-sample gradient computation is separated into its own module - GradSampleModule (#175)

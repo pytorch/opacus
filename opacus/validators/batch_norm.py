@@ -2,7 +2,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import logging
-import sys
 from typing import Union
 
 import torch.nn as nn
@@ -11,14 +10,7 @@ from .errors import ShouldReplaceModuleError, UnsupportableModuleError
 from .utils import register_module_fixer, register_module_validator
 
 
-logging.basicConfig(
-    format="%(asctime)s:%(levelname)s:%(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    stream=sys.stderr,
-)
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
-
 
 BATCHNORM = Union[nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.SyncBatchNorm]
 INSTANCENORM = Union[nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d]

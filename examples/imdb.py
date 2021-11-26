@@ -83,7 +83,9 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch):
         accuracies.append(acc.item())
 
     if not args.disable_dp:
-        epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(args.delta)
+        epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
+            delta=args.delta
+        )
         print(
             f"Train Epoch: {epoch} \t"
             f"Train Loss: {np.mean(losses):.6f} "

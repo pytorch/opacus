@@ -14,7 +14,7 @@ class AccountingTest(unittest.TestCase):
 
         accountant = RDPAccountant()
         for _ in range(steps):
-            accountant.step(noise_multiplier, sample_rate)
+            accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
 
         epsilon = accountant.get_epsilon(delta=1e-5)
         self.assertAlmostEqual(epsilon, 7.32911117143)
@@ -26,7 +26,7 @@ class AccountingTest(unittest.TestCase):
 
         accountant = GaussianAccountant()
         for _ in range(steps):
-            accountant.step(noise_multiplier, sample_rate)
+            accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
 
         epsilon = accountant.get_epsilon(delta=1e-5)
         self.assertLess(6.59, epsilon)
@@ -38,6 +38,11 @@ class AccountingTest(unittest.TestCase):
         epsilon = 8
         epochs = 90
 
-        noise_multiplier = get_noise_multiplier(epsilon, delta, sample_rate, epochs)
+        noise_multiplier = get_noise_multiplier(
+            target_epsilon=epsilon,
+            target_delta=delta,
+            sample_rate=sample_rate,
+            epochs=epochs,
+        )
 
         self.assertAlmostEqual(noise_multiplier, 1.425307617)

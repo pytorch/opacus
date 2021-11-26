@@ -321,7 +321,9 @@ for epoch in range(opt.epochs):
         )
 
         if not opt.disable_dp:
-            epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(opt.delta)
+            epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
+                delta=opt.delta
+            )
             print(
                 "(ε = %.2f, δ = %.2f) for α = %.2f" % (epsilon, opt.delta, best_alpha)
             )

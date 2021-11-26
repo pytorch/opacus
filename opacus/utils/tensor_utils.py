@@ -11,7 +11,7 @@ from torch.functional import F
 
 
 def calc_sample_norms(
-    named_params: Iterator[Tuple[str, torch.Tensor]], flat: bool = True
+    named_params: Iterator[Tuple[str, torch.Tensor]], *, flat: bool = True
 ) -> List[torch.Tensor]:
     r"""
     Calculates the norm of the given tensors for each sample.
@@ -103,6 +103,7 @@ def sum_over_all_but_batch_and_last_n(
 
 def unfold2d(
     input,
+    *,
     kernel_size: Tuple[int, int],
     padding: Tuple[int, int],
     stride: Tuple[int, int],
@@ -133,6 +134,7 @@ def unfold2d(
 
 def unfold3d(
     tensor: torch.Tensor,
+    *,
     kernel_size: Union[int, Tuple[int, int, int]],
     padding: Union[int, Tuple[int, int, int]] = 0,
     stride: Union[int, Tuple[int, int, int]] = 1,

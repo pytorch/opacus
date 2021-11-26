@@ -13,6 +13,7 @@ MAX_SIGMA = 2000
 
 
 def get_noise_multiplier(
+    *,
     target_epsilon: float,
     target_delta: float,
     sample_rate: float,

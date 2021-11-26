@@ -105,9 +105,9 @@ def main():  # noqa: C901
             secure_mode=args.secure_mode,
         )
         model, optimizer, train_loader = privacy_engine.make_private(
-            model,
-            optimizer,
-            train_loader,
+            module=model,
+            optimizer=optimizer,
+            data_loader=train_loader,
             noise_multiplier=args.sigma,
             max_grad_norm=max_grad_norm,
             poisson_sampling=False,

@@ -114,7 +114,7 @@ class DataLoaderSwitchRandomnessTest(TensorCompareTestCase):
             shuffle=shuffle,
             generator=orig_generator,
         )
-        dl = switch_generator(dl, new_generator)
+        dl = switch_generator(data_loader=dl, generator=new_generator)
         return _read_all(dl)
 
     def test_consistent(self):
