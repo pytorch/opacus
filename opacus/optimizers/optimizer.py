@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Callable, List, Optional, Union
 
 import torch
@@ -8,7 +9,26 @@ from torch import nn
 from torch.optim import Optimizer
 
 
+logger = logging.getLogger(__name__)
+
+
 def _mark_as_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
+    """
+    Marks parameters that's already been used in the optimizer step.
+
+    DP-SGD puts certain restrictions on how gradients can be accumulated. In patricular,
+    no gradient can be used twice - client must call .zero_grad() betwwen
+    optimizer steps, otherwise privacy guarantees are compromised.
+    This method marks tensors that's already been used in optimizer steps to then
+    check if zero_grad has been duly called.
+
+    Notes:
+          This is used to only mark ``p.grad_sample`` and ``p.summed_grad``
+
+    Args:
+        obj: tensor or a list of tensors to be marked
+    """
+
     if isinstance(obj, torch.Tensor):
         obj._processed = True
     elif isinstance(obj, list):
@@ -17,6 +37,21 @@ def _mark_as_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
 
 
 def _check_processed_flag_tensor(x: torch.Tensor):
+    """
+    Checks if this gradient tensor has been previously used in optimization step.
+
+    See Also:
+        :meth:`~opacus.optimizers.optimizer._mark_as_processed`
+
+    Args:
+        x: gradient tensor
+
+    Raises:
+        ValueError
+            If tensor has attribute ``._processed`` previously set by
+            ``_mark_as_processed`` method
+    """
+
     if hasattr(x, "_processed"):
         raise ValueError(
             "Gradients hasn't been cleared since the last optimizer step. "
@@ -26,6 +61,22 @@ def _check_processed_flag_tensor(x: torch.Tensor):
 
 
 def _check_processed_flag(obj: Union[torch.Tensor, List[torch.Tensor]]):
+    """
+    Checks if this gradient tensor (or a list of tensors) has been previously
+    used in optimization step.
+
+    See Also:
+        :meth:`~opacus.optimizers.optimizer._mark_as_processed`
+
+    Args:
+        x: gradient tensor or a list of tensors
+
+    Raises:
+        ValueError
+            If tensor (or at least one tensor from the list) has attribute
+            ``._processed`` previously set by ``_mark_as_processed`` method
+    """
+
     if isinstance(obj, torch.Tensor):
         _check_processed_flag_tensor(obj)
     elif isinstance(obj, list):
@@ -99,6 +150,30 @@ def _generate_noise(
 
 
 def _get_flat_grad_sample(p: torch.Tensor):
+    """
+    Return parameter's per sample gradients as a single tensor.
+
+    By default, per sample gradients (``p.grad_sample``) are stored as one tensor per
+    batch basis. Therefore, ``p.grad_sample`` is a single tensor if holds results from
+    only one batch, and a list of tensors if gradients are accumulated over multiple
+    steps. This is done to provide visibility into which sample belongs to which batch,
+    and how many batches has been processed.
+
+    This method returns per sample grardients as a single concatenated tensor, regarless
+    of how many batches have been accumulated
+
+    Args:
+        p: Parameter tensor. Must have ``grad_sample`` attribute
+
+    Returns:
+        ``p.grad_sample`` if it's a tensor already, or a single tensor computed by
+        concatenating every tensor in ``p.grad_sample`` if it's a list
+
+    Raises:
+        ValueError
+            If ``p`` is missing ``grad_sample`` attribute
+    """
+
     if not hasattr(p, "grad_sample"):
         raise ValueError(
             "Per sample gradient not found. Are you using GradSampleModule?"
@@ -112,6 +187,33 @@ def _get_flat_grad_sample(p: torch.Tensor):
 
 
 class DPOptimizer(Optimizer):
+    """
+    ``torch.optim.Optimizer`` wrapper that adds additional functionality to clip per
+    sample gradients and add gaissian noise.
+
+    Can be used with any ``torch.optim.Optimizer`` subclass as an underlying optimizer.
+    ``DPOptimzer`` assumes that parameters over which it performs optimization belong
+    to GradSampleModule and therefore have ``grad_sample`` attribute.
+
+    On a high lever ``DPOptimizer``'s step looks like this:
+    1) Aggregate ``p.grad_sample`` over all parameters to calculate per sample norms
+    2) Clip ``p.grad_sample`` so that per sample norm is not above threshold
+    3) Aggregate clipped per sample gradients into ``p.grad``
+    4) Add Gaussian noise to ``p.grad`` calibrated to a given noise multiplier and
+    max grad norm limit (``std = noise_multiplier * max_grad_norm``).
+    5) Call underlying optimizer to perform optimization step
+
+    Examples:
+        >>> module = MyCustomModel()
+        >>> optimizer = torch.optim.SGD(module.parameters(), lr=0.1)
+        >>> dp_optimzer = DPOptimizer(
+        ...     optimizer=optimizer,
+        ...     noise_multiplier=1.0,
+        ...     max_grad_norm=1.0,
+        ...     expected_batch_size=4,
+        ... )
+    """
+
     def __init__(
         self,
         optimizer: Optimizer,
@@ -123,6 +225,24 @@ class DPOptimizer(Optimizer):
         generator=None,
         secure_mode=False,
     ):
+        """
+
+        Args:
+            optimizer: wrapped optimizer.
+            noise_multiplier: noise multiplier
+            max_grad_norm: max grad norm used for gradient clpping
+            expected_batch_size: batch_size used for averaging gradients. When using
+                Poisson sampling averaging denominator can't be inferred from the
+                actual batch size. Required is ``loss_reduction="mean"``, ignored if
+                ``loss_reduction="sum"``
+            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+                is a sum or a mean operation. Can take values "sum" or "mean"
+            generator: torch.Generator() object used as a source of randomness for
+                the noise
+            secure_mode: if ``True`` uses noise generation approach robust to floating
+                point arithmetic attacks.
+                See :meth:`~opacus.optimizers.optimizer._generate_noise` for details
+        """
         if loss_reduction not in ("mean", "sum"):
             raise ValueError(f"Unexpected value for loss_reduction: {loss_reduction}")
 
@@ -149,6 +269,25 @@ class DPOptimizer(Optimizer):
             p.summed_grad = None
 
     def signal_skip_step(self, do_skip=True):
+        """
+        Signals the optimizer to skip an optimization step and only perform clipping and
+        per sample gradient accumulation.
+
+        On every call of ``.step()`` optimizer will check the queue of skipped step
+        signals. If non-empty and the latest flag is ``True``, optimizer will call
+        ``self.clip_and_accumulate``, but won't proceed to adding noise and performing
+        the actual optimization step.
+        It also affects the behaviour of ``zero_grad()``. If the last step was skipped,
+        optimizer will clear per sample gradients accumulated by
+        ``self.clip_and_accumulate`` (``p.grad_sample``), but won't touch aggregated
+        clipped gradients (``p.summed_grad``)
+
+        Used by :class:`~opacus.utils.batch_memory_manager.BatchMemoryManager` to
+        simulate large virtual batches with limited memory footprint.
+
+        Args:
+            do_skip: flag if next step should be skipped
+        """
         self._step_skip_queue.append(do_skip)
 
     def _check_skip_next_step(self):
@@ -159,10 +298,16 @@ class DPOptimizer(Optimizer):
 
     @property
     def params(self) -> List[nn.Parameter]:
+        """
+        Returns a flat list of ``nn.Parameter`` managed by the optimizer
+        """
         return params(self)
 
     @property
     def grad_samples(self) -> List[torch.Tensor]:
+        """
+        Returns a flat list of per sample gradient tensors (one per parameter)
+        """
         ret = []
         for p in self.params:
             ret.append(_get_flat_grad_sample(p))
@@ -170,6 +315,15 @@ class DPOptimizer(Optimizer):
 
     @property
     def accumulated_iterations(self) -> int:
+        """
+        Returns number of batches currently accumulated and not yet processed.
+
+        In other words ``accumulated_iterations`` tracks the number of forward/backward
+        passed done in between two optimizer steps. The value would typically be 1,
+        but there are possible exeptions.
+
+        Used by privacy accountants to calcualte real sampling rate.
+        """
         vals = []
         for p in self.params:
             if not hasattr(p, "grad_sample"):
@@ -190,9 +344,24 @@ class DPOptimizer(Optimizer):
         return vals[0]
 
     def attach_step_hook(self, fn: Callable[[DPOptimizer], None]):
+        """
+        Attaches a hook to be executed after gradient clipping/noising, but before the
+        actual optimzation step.
+
+        Most commonly used for privacy accounting.
+
+        Args:
+            fn: hook function. Expected signature: ``foo(optim: DPOptimizer)``
+        """
+
         self.step_hook = fn
 
     def clip_and_accumulate(self):
+        """
+        Performs gradient clipping.
+        Stores clipped and aggregated gradients into `p.summed_grad```
+        """
+
         per_param_norms = [
             g.view(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
         ]
@@ -215,6 +384,10 @@ class DPOptimizer(Optimizer):
             _mark_as_processed(p.grad_sample)
 
     def add_noise(self):
+        """
+        Adds noise to clipped gradeints. Stores clipped and noised result in ``p.grad``
+        """
+
         for p in self.params:
             _check_processed_flag(p.summed_grad)
 
@@ -229,11 +402,41 @@ class DPOptimizer(Optimizer):
             _mark_as_processed(p.summed_grad)
 
     def scale_grad(self):
+        """
+        Applies given ``loss_reduction`` to ``p.grad``.
+
+        Does nothing if ``loss_reduction="sum"``. Divides gradeints by
+        ``self.expected_batch_size`` if ``loss_reduction="mean"``
+        """
         if self.loss_reduction == "mean":
             for p in self.params:
                 p.grad /= self.expected_batch_size * self.accumulated_iterations
 
     def zero_grad(self, set_to_none: bool = False):
+        """
+        Clear gradients.
+
+        Clears ``p.grad``, ``p.grad_sample`` and ``p.summed_grad`` for all of it's parameters
+
+        Notes:
+            ``set_to_none`` argument only affects ``p.grad``. ``p.grad_sample`` and
+            ``p.summed_grad`` is never zeroed out and always set to None.
+            Normal grads can do this, because their shape is always the same.
+            Grad samples do not behave like this, as we accumulate gradients from different
+            batches in a list
+
+        Args:
+            set_to_none: instead of setting to zero, set the grads to None. (only
+            affects regular gradients. Per sample gradients are always set to None)
+        """
+
+        if set_to_none is False:
+            logger.info(
+                "Despite set_to_none is set to False, "
+                "opacus will set p.grad_sample and p.summed_grad to None due to "
+                "non-trivial gradient accumulation behaviour"
+            )
+
         for p in self.params:
             p.grad_sample = None
 
@@ -245,6 +448,15 @@ class DPOptimizer(Optimizer):
     def pre_step(
         self, closure: Optional[Callable[[], float]] = None
     ) -> Optional[float]:
+        """
+        Perform actions specific to ``DPOptimizer`` before calling
+        underlying  ``optimizer.step()``
+
+        Args:
+            closure: A closure that reevaluates the model and
+                returns the loss. Optional for most optimizers.
+        """
+
         self.clip_and_accumulate()
         if self._check_skip_next_step():
             self._is_last_step_skipped = True

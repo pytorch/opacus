@@ -9,6 +9,11 @@ from .optimizer import DPOptimizer
 
 
 class DistributedDPOptimizer(DPOptimizer):
+    """
+    :class:`~opacus.optimizers.optimizer.DPOptimizer` compatible with
+    distributed data processing
+    """
+
     def __init__(
         self,
         optimizer: Optimizer,

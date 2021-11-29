@@ -1,5 +1,6 @@
 import pytest
 import torch
+from opacus import PrivacyEngine
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -13,12 +14,30 @@ class MyCustomModel(nn.Module):
 
     def forward(self, x):
         x = self.f(x)
+        return x
 
 
 def create_demo_dataloader():
     dataset = TensorDataset(torch.randn(64, 5), torch.randint(0, 2, (64,)))
-    dataloader = DataLoader(dataset, batch_size=4)
+    dataloader = DataLoader(dataset, batch_size=8)
     return dataloader
+
+
+def _init_private_training():
+    model = MyCustomModel()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
+    data_loader = create_demo_dataloader()
+    privacy_engine = PrivacyEngine()
+
+    model, optimizer, data_loader = privacy_engine.make_private(
+        module=model,
+        optimizer=optimizer,
+        data_loader=data_loader,
+        noise_multiplier=1.0,
+        max_grad_norm=1.0,
+    )
+
+    return model, optimizer, data_loader
 
 
 @pytest.fixture(autouse=True)
@@ -38,4 +57,6 @@ def create_namespace(doctest_namespace):
     doctest_namespace.update(**locals())
 
     doctest_namespace["MyCustomModel"] = MyCustomModel
+    doctest_namespace["TensorDataset"] = TensorDataset
     doctest_namespace["demo_dataloader"] = create_demo_dataloader()
+    doctest_namespace["_init_private_training"] = _init_private_training

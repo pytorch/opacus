@@ -29,7 +29,7 @@ def get_noise_multiplier(
         target_delta: the privacy budget's delta
         sample_rate: the sampling rate (usually batch_size / n_data)
         epochs: the number of epochs to run
-        alphas: the list of orders at which to compute RDP
+        accountant: accounting mechanism used to estimate epsilon
     Returns:
         The noise level sigma to ensure privacy budget of (target_epsilon, target_delta)
     """

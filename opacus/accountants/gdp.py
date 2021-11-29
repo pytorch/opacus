@@ -22,6 +22,15 @@ class GaussianAccountant(IAccountant):
         self.steps += 1
 
     def get_epsilon(self, delta: float, poisson: bool = True) -> float:
+        """
+        Return privacy budget (epsilon) expended so far.
+
+        Args:
+            delta: target delta
+            poisson: ``True`` is input batches was sampled via Poisson sampling,
+                ``False`` otherwise
+        """
+
         compute_eps = (
             privacy_analysis.compute_eps_poisson
             if poisson

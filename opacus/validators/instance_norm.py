@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Union
+from typing import List, Union
 
 import torch.nn as nn
 from opacus.utils.module_utils import clone_module
 
-from .errors import IllegalModuleConfigurationError
+from .errors import IllegalModuleConfigurationError, UnsupportedModuleError
 from .utils import register_module_fixer, register_module_validator
 
 
@@ -14,7 +14,7 @@ INSTANCENORM = Union[nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d]
 
 
 @register_module_validator([nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d])
-def validate(module: INSTANCENORM) -> None:
+def validate(module: INSTANCENORM) -> List[UnsupportedModuleError]:
     return (
         [
             IllegalModuleConfigurationError(

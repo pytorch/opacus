@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+from typing import List
+
 import torch.nn as nn
 from opacus.layers import DPMultiheadAttention
 
-from .errors import ShouldReplaceModuleError
+from .errors import ShouldReplaceModuleError, UnsupportedModuleError
 from .utils import register_module_fixer, register_module_validator
 
 
 @register_module_validator(nn.MultiheadAttention)
-def validate(module: nn.MultiheadAttention) -> None:
+def validate(module: nn.MultiheadAttention) -> List[UnsupportedModuleError]:
     return [
         ShouldReplaceModuleError(
             "We do not support nn.MultiheadAttention because its implementation uses special "

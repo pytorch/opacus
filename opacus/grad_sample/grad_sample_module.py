@@ -23,11 +23,11 @@ def create_or_accumulate_grad_sample(
     if the ``_current_grad_sample`` attribute already exists.
 
 
-
     Args:
         param: Parameter to which ``grad_sample`` will be added
         grad_sample: Per-sample gradients tensor. Must be of the same
             shape as ``param`` with extra batch dimension
+        layer: nn.Module parameter belongs to
     """
 
     if hasattr(param, "_current_grad_sample"):
@@ -71,6 +71,30 @@ class GradSampleModule(nn.Module):
         loss_reduction="mean",
         strict: bool = True,
     ):
+        """
+
+        Args:
+            m: nn.Module to be wrapped
+            batch_first: Flag to indicate if the input tensor to the corresponding module
+                has the first dimension representing the batch. If set to True, dimensions on
+                input tensor are expected be ``[batch_size, ...]``, otherwise
+                ``[K, batch_size, ...]``
+            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+                is a sum or a mean operation. Can take values "sum" or "mean"
+            strict: If set to ``True``, the input module will be validater to check that
+                ``GradSampleModule`` has grad sampler functions for all submodules of
+                the input module (i.e. if it knows how to calculate per sample gradients)
+                for all model parameters. If set to ``False``, per sample gradients will
+                be computed on "best effort" basis - they will be available where
+                possible and set to None otherwise. This is not recommended, because
+                some unsupported modules (e.g. BatchNorm) affect other parameters and
+                invalidate the concept of per sample gradients for the entire model.
+
+        Raises:
+            NotImplementedError
+                If ``strict`` is set to ``True`` and module ``m`` (or any of its
+                submodules) doesn't have a registered grad sampler fuction.
+        """
         super().__init__()
 
         errors = self.validate(module=m, strict=strict)
@@ -102,6 +126,22 @@ class GradSampleModule(nn.Module):
         return self._module(*args, **kwargs)
 
     def zero_grad(self, set_to_none: bool = False):
+        """
+        Clear gradients.
+
+        Clears ``p.grad`` and ``p.grad_sample`` for all of it's parameters
+
+        Notes:
+            ``set_to_none`` argument only affects ``p.grad``. ``p.grad_sample`` is
+            never zeroed out and always set to None.
+            Normal grads can do this, because their shape is always the same.
+            Grad samples do not behave like this, as we accumulate gradients from different
+            batches in a list
+
+        Args:
+            set_to_none: instead of setting to zero, set the grads to None. (only
+            affects regular gradients. Per sample gradients are always set to None)
+        """
         if set_to_none is False:
             logger.info(
                 "Despite set_to_none is set to False, "
@@ -114,23 +154,13 @@ class GradSampleModule(nn.Module):
     def set_grad_sample_to_none(self):
         """
         Sets ``.grad_sample`` to None
-
-        Why del? Normally, ``zero_grad()`` would do ``p.grad.zero_()`` and keep the allocation.
-        Normal grads can do this, because their shape is always the same.
-        Grad samples do not behave like this, as we accumulate gradients from different
-        batches in a list
         """
         for p in self.parameters():
             p.grad_sample = None
 
     def del_grad_sample(self):
         """
-        Sets ``.grad_sample`` to None
-
-        Why del? Normally, ``zero_grad()`` would do ``p.grad.zero_()`` and keep the allocation.
-        Normal grads can do this, because their shape is always the same.
-        Grad samples do not behave like this, as we accumulate gradients from different
-        batches in a list
+        Deleted ``.grad_sample`` attribute from all model parameters
         """
         for p in self.parameters():
             del p.grad_sample
@@ -158,9 +188,12 @@ class GradSampleModule(nn.Module):
 
         Args:
             model: the model to which hooks are added
-            loss_type: either "mean" or "sum" depending on whether backpropped
-                loss was averaged or summed over batch (default: "mean")
-            batch_dim: the batch dimension (default: 0)
+            batch_first: Flag to indicate if the input tensor to the corresponding module
+                has the first dimension representing the batch. If set to True, dimensions on
+                input tensor are expected be ``[batch_size, ...]``, otherwise
+                ``[K, batch_size, ...]``
+            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+                is a sum or a mean operation. Can take values "sum" or "mean"
         """
         if hasattr(self._module, "autograd_grad_sample_hooks"):
             raise ValueError("Trying to add hooks twice to the same model")
@@ -364,7 +397,19 @@ class GradSampleModule(nn.Module):
 
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
-        """Check if this individual module is supported"""
+        """
+        Checks if this individual model is supported (i.e. has a registered
+        grad sampler function)
+
+        Notes:
+            Note that this method does not check submodules
+
+        Args:
+            module: nn.Module to be checked
+
+        Returns:
+            ``True`` if grad sampler is found, ``False`` otherwise
+        """
         return type(module) in cls.GRAD_SAMPLERS or isinstance(
             module, (DPRNNBase, DPRNNCellBase)
         )
@@ -373,7 +418,23 @@ class GradSampleModule(nn.Module):
     def validate(
         cls, module: nn.Module, *, strict: bool = False
     ) -> List[NotImplementedError]:
-        """Validate support for module being wrapped"""
+        """
+        Check if per sample gradients can be fully computed for a given model
+
+        Args:
+            module: nn.Module to be checked
+            raise_if_error: Behaviour in case of a negative check result. Will
+            return the list of exceptions if set to ``False``, and throw otherwise
+
+        Returns:
+            Empty list of validation is successful.
+            List of validation errors  if ``raise_if_error=False`` and
+            unsupported modules are found
+
+        Raises:
+            NotImplementedError
+                If ``raise_if_error=True`` and unsupported modules are found
+        """
         errors = []
         errors.extend(
             [
@@ -392,10 +453,20 @@ class GradSampleModule(nn.Module):
 def _get_batch_size(
     *, module: nn.Module, grad_sample: torch.Tensor, batch_dim: int
 ) -> int:
-    r"""
+    """
     Computes and returns the maximum batch size which is the maximum of the dimension values
     along 'batch_dim' axis over module.activations + [grad_sample], where module.activations is
-    a list. If module.activations is a not a list, then return grad_sample.shape[batch_dim].
+    a list.
+
+    If module.activations is a not a list, then return grad_sample.shape[batch_dim].
+
+    Args:
+        module: input module
+        grad_sample: per sample gradient tensor
+        batch_dim: batch dimension
+
+    Returns:
+        Maximum sequence length in a batch
     """
 
     max_batch_len = 0
