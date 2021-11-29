@@ -10,8 +10,9 @@ import torch.multiprocessing as mp
 import torch.nn as nn
 import torch.optim as optim
 from opacus import PrivacyEngine
-from opacus.layers import DifferentiallyPrivateDistributedDataParallel as DPDDP
+from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader, TensorDataset
 
 
 PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
@@ -19,22 +20,12 @@ PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
 def setup(rank, world_size):
     if sys.platform == "win32":
-        # Distributed package only covers collective communications with Gloo
-        # backend and FileStore on Windows platform. Set init_method parameter
-        # in init_process_group to a local file.
-        # Example init_method="file:///f:/libtmp/some_file"
-        init_method = "file:///{your local file path}"
-
-        # initialize the process group
-        dist.init_process_group(
-            "gloo", init_method=init_method, rank=rank, world_size=world_size
-        )
+        raise ValueError("Windows platform is not supported for this test")
     else:
         os.environ["MASTER_ADDR"] = "localhost"
         os.environ["MASTER_PORT"] = "12355"
 
         # initialize the process group
-        # dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
         os.environ["RANK"] = str(rank)
         os.environ["WORLD_SIZE"] = str(world_size)
@@ -59,7 +50,7 @@ class ToyModel(nn.Module):
         return self.net2(self.relu(self.net1(x)))
 
 
-def demo_basic(rank, weight, world_size, dp):
+def demo_basic(rank, weight, world_size, dp, clipping):
     torch.manual_seed(world_size)
     batch_size = 32
     withdp = "with" + ("out " if not dp else "")
@@ -68,41 +59,52 @@ def demo_basic(rank, weight, world_size, dp):
 
     # create model and move it to GPU with id rank
     model = ToyModel().to(rank)
-    if dp:
+    optimizer = optim.SGD(model.parameters(), lr=1)
+
+    labels = torch.randn(batch_size, 5).to(rank)
+    data = torch.randn(batch_size, 10)
+
+    data_loader = DataLoader(TensorDataset(data, labels), batch_size=batch_size)
+
+    loss_fn = nn.MSELoss()
+    if dp and clipping == "flat":
         ddp_model = DPDDP(model)
-        engine = PrivacyEngine(
-            ddp_model,
-            batch_size=batch_size,
-            sample_size=10 * batch_size,
-            alphas=PRIVACY_ALPHAS,
-            noise_multiplier=0,
-            max_grad_norm=1e8,
-        )
     else:
         ddp_model = DDP(model, device_ids=[rank])
 
-    loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(ddp_model.parameters(), lr=1)
-    if dp:
-        engine.attach(optimizer)
+    privacy_engine = PrivacyEngine()
 
-    # if rank == 0:
-    #     print(model.net1.weight)
+    if dp:
+        max_grad_norm = 1e8
+        if clipping == "per_layer":
+            max_grad_norm = [1e8 for p in model.parameters()]
+        ddp_model, optimizer, data_loader = privacy_engine.make_private(
+            module=ddp_model,
+            optimizer=optimizer,
+            data_loader=data_loader,
+            noise_multiplier=0,
+            max_grad_norm=max_grad_norm,
+            poisson_sampling=False,
+            clipping=clipping,
+        )
+
     optimizer.zero_grad()
-    labels = torch.randn(batch_size, 5).to(rank)
-    outputs = ddp_model(torch.randn(batch_size, 10).to(rank))
-    loss_fn(outputs, labels).backward()
-    optimizer.step()
-    # if rank == 0:
-    #     print(model.net1.weight)
+
+    for x, y in data_loader:
+        outputs = ddp_model(x.to(rank))
+        loss = loss_fn(outputs, y)
+        loss.backward()
+        optimizer.step()
+        break
 
     weight.copy_(model.net1.weight.data.cpu())
-
     cleanup()
 
 
-def run_demo(demo_fn, weight, world_size, dp):
-    mp.spawn(demo_fn, args=(weight, world_size, dp), nprocs=world_size, join=True)
+def run_demo(demo_fn, weight, world_size, dp, clipping):
+    mp.spawn(
+        demo_fn, args=(weight, world_size, dp, clipping), nprocs=world_size, join=True
+    )
 
 
 class GradientComputationTest(unittest.TestCase):
@@ -112,8 +114,13 @@ class GradientComputationTest(unittest.TestCase):
         self.assertTrue(
             n_gpus >= 2, f"Need at least 2 gpus but was provided only {n_gpus}."
         )
-        weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
-        run_demo(demo_basic, weight_dp, 2, dp=True)
-        run_demo(demo_basic, weight_nodp, 2, dp=False)
 
-        self.assertTrue(torch.norm(weight_dp - weight_nodp) < 1e-7)
+        for clipping in ["flat", "per_layer"]:
+            weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
+
+            run_demo(demo_basic, weight_dp, 2, dp=True, clipping=clipping)
+            run_demo(demo_basic, weight_nodp, 2, dp=False, clipping=clipping)
+
+            self.assertTrue(
+                torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3)
+            )

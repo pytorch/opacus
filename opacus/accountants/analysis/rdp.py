@@ -17,16 +17,23 @@ Example:
 
     The example code would be:
 
+    >>> parameters = [(1e-5, 1.0, 10), (1e-4, 3.0, 4)]
+    >>> delta = 1e-5
+
     >>> max_order = 32
     >>> orders = range(2, max_order + 1)
     >>> rdp = np.zeros_like(orders, dtype=float)
     >>> for q, sigma, steps in parameters:
-    >>>     rdp += privacy_analysis.compute_rdp(q, sigma, steps, orders)
-    >>> epsilon, opt_order = privacy_analysis.get_privacy_spent(orders, rdp, delta)
+    ...     rdp += compute_rdp(q=q, noise_multiplier=sigma, steps=steps, orders=orders)
+
+    >>> epsilon, opt_order = get_privacy_spent(orders=orders, rdp=rdp, delta=1e-5)
+    >>> epsilon, opt_order  # doctest: +NUMBER
+    (0.336, 23)
 
 """
 
 import math
+import warnings
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -241,7 +248,7 @@ def _compute_rdp(q: float, sigma: float, alpha: float) -> float:
 
 
 def compute_rdp(
-    q: float, noise_multiplier: float, steps: int, orders: Union[List[float], float]
+    *, q: float, noise_multiplier: float, steps: int, orders: Union[List[float], float]
 ) -> Union[List[float], float]:
     r"""Computes Renyi Differential Privacy (RDP) guarantees of the
     Sampled Gaussian Mechanism (SGM) iterated ``steps`` times.
@@ -268,7 +275,7 @@ def compute_rdp(
 
 
 def get_privacy_spent(
-    orders: Union[List[float], float], rdp: Union[List[float], float], delta: float
+    *, orders: Union[List[float], float], rdp: Union[List[float], float], delta: float
 ) -> Tuple[float, float]:
     r"""Computes epsilon given a list of Renyi Differential Privacy (RDP) values at
     multiple RDP orders and target ``delta``.
@@ -308,4 +315,9 @@ def get_privacy_spent(
         return np.inf, np.nan
 
     idx_opt = np.nanargmin(eps)  # Ignore NaNs
+    if idx_opt == 0 or idx_opt == len(eps) - 1:
+        extreme = "smallest" if idx_opt == 0 else "largest"
+        warnings.warn(
+            f"Optimal order is the {extreme} alpha. Please consider expanding the range of alphas to get a tighter privacy bound."
+        )
     return eps[idx_opt], orders_vec[idx_opt]

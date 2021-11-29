@@ -11,33 +11,23 @@ import argparse
 import os
 import random
 
-import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
-import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from opacus import PrivacyEngine
-from opacus.utils.module_modification import convert_batchnorm_modules
-from opacus.utils.uniform_sampler import UniformWithReplacementSampler
 from tqdm import tqdm
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--data-root", required=False, help="path to dataset")
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("--data-root", required=True, help="path to dataset")
 parser.add_argument(
     "--workers", type=int, help="number of data loading workers", default=2
 )
 parser.add_argument("--batch-size", type=int, default=64, help="input batch size")
-parser.add_argument(
-    "--sample-rate",
-    type=float,
-    default=0.018,
-    help="sample rate used for batch construction",
-)
 parser.add_argument(
     "--imageSize",
     type=int,
@@ -133,8 +123,6 @@ torch.manual_seed(opt.manualSeed)
 
 cudnn.benchmark = True
 
-if opt.data_root is None:
-    raise ValueError("`data-root` parameter is required.")
 
 try:
     dataset = dset.MNIST(
@@ -155,30 +143,10 @@ try:
 except ValueError:
     print("Cannot load dataset")
 
-if opt.secure_rng:
-    try:
-        import torchcsprng as prng
-    except ImportError as e:
-        msg = (
-            "To use secure RNG, you must install the torchcsprng package! "
-            "Check out the instructions here: https://github.com/pytorch/csprng#installation"
-        )
-        raise ImportError(msg) from e
-
-    generator = prng.create_random_device_generator("/dev/urandom")
-
-else:
-    generator = None
-
 dataloader = torch.utils.data.DataLoader(
     dataset,
     num_workers=int(opt.workers),
-    generator=generator,
-    batch_sampler=UniformWithReplacementSampler(
-        num_samples=len(dataset),
-        sample_rate=opt.sample_rate,
-        generator=generator,
-    ),
+    batch_size=opt.batch_size,
 )
 
 device = torch.device(opt.device)
@@ -205,19 +173,19 @@ class Generator(nn.Module):
         self.main = nn.Sequential(
             # input is Z, going into a convolution
             nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False),
-            nn.BatchNorm2d(ngf * 8),
+            nn.GroupNorm(min(32, ndf * 8), ndf * 8),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4
             nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf * 4),
+            nn.GroupNorm(min(32, ndf * 4), ndf * 4),
             nn.ReLU(True),
             # state size. (ngf*4) x 8 x 8
             nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
+            nn.GroupNorm(min(32, ndf * 2), ndf * 2),
             nn.ReLU(True),
             # state size. (ngf*2) x 16 x 16
             nn.ConvTranspose2d(ngf * 2, ngf, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf),
+            nn.GroupNorm(min(32, ndf), ndf),
             nn.ReLU(True),
             # state size. (ngf) x 32 x 32
             nn.ConvTranspose2d(ngf, nc, 4, 2, 1, bias=False),
@@ -234,8 +202,6 @@ class Generator(nn.Module):
 
 
 netG = Generator(ngpu)
-if not opt.disable_dp:
-    netG = convert_batchnorm_modules(netG)
 netG = netG.to(device)
 netG.apply(weights_init)
 if opt.netG != "":
@@ -252,15 +218,15 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
             nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 2),
+            nn.GroupNorm(min(32, ndf * 2), ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
             nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 4),
+            nn.GroupNorm(min(32, ndf * 4), ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*4) x 8 x 8
             nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 8),
+            nn.GroupNorm(min(32, ndf * 8), ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
             nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
@@ -277,9 +243,6 @@ class Discriminator(nn.Module):
 
 
 netD = Discriminator(ngpu)
-if not opt.disable_dp:
-    netD = convert_batchnorm_modules(netD)
-    netG = convert_batchnorm_modules(netG)
 netD = netD.to(device)
 netD.apply(weights_init)
 if opt.netD != "":
@@ -294,16 +257,17 @@ FAKE_LABEL = 0.0
 # setup optimizer
 optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
-privacy_engine = PrivacyEngine(
-    netD,
-    sample_rate=opt.sample_rate,
-    alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
-    noise_multiplier=opt.sigma,
-    max_grad_norm=opt.max_per_sample_grad_norm,
-    secure_rng=opt.secure_rng,
-)
 if not opt.disable_dp:
-    privacy_engine.attach(optimizerD)
+    privacy_engine = PrivacyEngine(secure_mode=opt.secure_rng)
+
+    netD, optimizerD, dataloader = privacy_engine.make_private(
+        module=netD,
+        optimizer=optimizerD,
+        data_loader=dataloader,
+        noise_multiplier=opt.sigma,
+        max_grad_norm=opt.max_per_sample_grad_norm,
+    )
+
 optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
 for epoch in range(opt.epochs):
@@ -317,7 +281,6 @@ for epoch in range(opt.epochs):
 
         real_data = data[0].to(device)
         batch_size = real_data.size(0)
-
         # train with fake
         noise = torch.randn(batch_size, nz, 1, 1, device=device)
         fake = netG(noise)
@@ -326,6 +289,7 @@ for epoch in range(opt.epochs):
         errD_fake = criterion(output, label_fake)
         errD_fake.backward()
         optimizerD.step()
+        optimizerD.zero_grad()
 
         # train with real
         label_true = torch.full((batch_size,), REAL_LABEL, device=device)
@@ -342,6 +306,8 @@ for epoch in range(opt.epochs):
         # (2) Update G network: maximize log(D(G(z)))
         ###########################
         optimizerG.zero_grad()
+        optimizerD.zero_grad()
+
         label_g = torch.full((batch_size,), REAL_LABEL, device=device)
         output_g = netD(fake)
         errG = criterion(output_g, label_g)
@@ -355,7 +321,9 @@ for epoch in range(opt.epochs):
         )
 
         if not opt.disable_dp:
-            epsilon, best_alpha = optimizerD.privacy_engine.get_privacy_spent(opt.delta)
+            epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
+                delta=opt.delta
+            )
             print(
                 "(ε = %.2f, δ = %.2f) for α = %.2f" % (epsilon, opt.delta, best_alpha)
             )

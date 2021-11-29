@@ -20,7 +20,7 @@ def filter_out_old_keys(self, state_dict, prefix, local_metadata):
 
 class RenameParamsMixin:
     """
-    This class defines a nn.Module whose parameters are renamed. This is useful when you want to
+    This class defines an nn.Module whose parameters are renamed. This is useful when you want to
     reimplement a layer but make sure its state_dict and list of parameters are exactly the same
     as another reference layer so that you can have a drop-in replacement that does not depend on
     how your layer is actually implemented. In Opacus, this is used for DPLSTM, where our
@@ -28,12 +28,12 @@ class RenameParamsMixin:
 
     Example:
 
-        class DPModel(RenameParamsMixin, nn.Module):
-            def __init__(self, hidden_size):
-                super().__init__()
-                self.w = nn.Parameter(torch.zeros(hidden_size, requires_grad=True))
-                self.set_rename_map({"w": "weights"})
-
+        >>> class DPModel(RenameParamsMixin, nn.Module):
+        ...    def __init__(self, hidden_size):
+        ...        super().__init__()
+        ...        self.w = nn.Parameter(torch.zeros(hidden_size, requires_grad=True))
+        ...        self.set_rename_map({"w": "weights"})
+        ...
         >>> model = DPModel(5)
         >>> model.state_dict()
         {'weights': tensor([0., 0., 0., 0., 0.])}

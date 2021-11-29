@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus.grad_sample import GradSampleModule
+from opacus.grad_sample.linear import compute_linear_grad_sample
+from opacus.grad_sample.utils import register_grad_sampler
 from torch.testing import assert_allclose
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -13,10 +15,33 @@ from torchvision.datasets import FakeData
 from torchvision.models import mobilenet_v3_small
 
 
-class GradSampleModule_test(unittest.TestCase):
+class SampleConvNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 16, 8, 2, padding=3)
+        self.conv2 = nn.Conv2d(16, 32, 4, 2)
+        self.fc1 = nn.Linear(32 * 4 * 4, 32)
+        self.fc2 = nn.Linear(32, 10)
+
+    def forward(self, x):
+        # x of shape [B, 1, 28, 28]
+        x = F.relu(self.conv1(x))  # -> [B, 16, 14, 14]
+        x = F.max_pool2d(x, 2, 1)  # -> [B, 16, 13, 13]
+        x = F.relu(self.conv2(x))  # -> [B, 32, 5, 5]
+        x = F.max_pool2d(x, 2, 1)  # -> [B, 32, 4, 4]
+        x = x.view(-1, 32 * 4 * 4)  # -> [B, 512]
+        x = F.relu(self.fc1(x))  # -> [B, 32]
+        x = self.fc2(x)  # -> [B, 10]
+        return x
+
+    def name(self):
+        return "SampleConvNet"
+
+
+class GradSampleModuleTest(unittest.TestCase):
     def setUp(self):
-        self.original_model = mobilenet_v3_small()
-        copy_of_original_model = mobilenet_v3_small()
+        self.original_model = SampleConvNet()
+        copy_of_original_model = SampleConvNet()
         copy_of_original_model.load_state_dict(
             self.original_model.state_dict(), strict=True
         )
@@ -50,7 +75,6 @@ class GradSampleModule_test(unittest.TestCase):
         Gradients are tested in the various `grad_samples` tests.
         """
         x, _ = next(iter(self.dl))
-        print(f"SHAPE: {x.shape}")
         self.original_model = self.original_model.eval()
         self.grad_sample_module = self.grad_sample_module.eval()
         with torch.no_grad():
@@ -66,7 +90,6 @@ class GradSampleModule_test(unittest.TestCase):
 
     def test_zero_grad(self):
         x, _ = next(iter(self.dl))
-        print(f"SHAPE: {x.shape}")
         self.original_model = self.original_model.train()
         self.grad_sample_module = self.grad_sample_module.train()
         gs_out = self.grad_sample_module(x)
@@ -77,7 +100,7 @@ class GradSampleModule_test(unittest.TestCase):
         params_with_gs = [
             n
             for n, p in self.grad_sample_module.named_parameters()
-            if hasattr(p, "grad_sample")
+            if p.grad_sample is not None
         ]
         msg = (
             "After calling .zero_grad() on the GradSampleModule, the following parameters still "
@@ -86,7 +109,7 @@ class GradSampleModule_test(unittest.TestCase):
         assert len(params_with_gs) == 0, msg
 
     def test_to_standard_module(self):
-        copy_of_original_model = mobilenet_v3_small()
+        copy_of_original_model = SampleConvNet()
         copy_of_original_model.load_state_dict(
             self.original_model.state_dict(),
             strict=True,
@@ -124,7 +147,7 @@ class GradSampleModule_test(unittest.TestCase):
         """
         Test that after calling .remove_hooks() no hooks are left
         """
-        copy_of_original_model = mobilenet_v3_small()
+        copy_of_original_model = SampleConvNet()
         copy_of_original_model.load_state_dict(
             self.original_model.state_dict(),
             strict=True,
@@ -159,3 +182,36 @@ class GradSampleModule_test(unittest.TestCase):
     def test_disable_hooks(self):
         self.grad_sample_module.disable_hooks()
         assert not self.grad_sample_module.hooks_enabled
+
+    def test_standard_module_validation(self):
+        class SimpleLinear(nn.Module):
+            def __init__(self, in_f, out_f):
+                super().__init__()
+                self.p = nn.Parameter(torch.Tensor(in_f, out_f))
+
+            def forward(self, x: torch.Tensor):
+                return F.linear(x, self.p)
+
+        with self.assertRaises(NotImplementedError):
+            GradSampleModule(SimpleLinear(4, 2))
+
+        # Should not raise exception if strict=False
+        GradSampleModule(SimpleLinear(4, 2), strict=False)
+
+        # Should not fail after relevant grad sampler has been registered
+        register_grad_sampler(SimpleLinear)(compute_linear_grad_sample)
+        GradSampleModule(SimpleLinear(4, 2))
+
+    def test_custom_module_validation(self):
+        with self.assertRaises(NotImplementedError):
+            GradSampleModule(mobilenet_v3_small())
+
+        # Should not raise exception if strict=False
+        GradSampleModule(mobilenet_v3_small(), strict=False)
+
+    def test_submodule_access(self):
+        _ = self.grad_sample_module.fc1
+        _ = self.grad_sample_module.fc2
+
+        with self.assertRaises(AttributeError):
+            _ = self.grad_sample_module.fc3

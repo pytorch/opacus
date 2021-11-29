@@ -43,11 +43,7 @@ class DPLSTM_test(DPModules_test):
         bias=st.booleans(),
         batch_first=st.booleans(),
         zero_init=st.booleans(),
-        packed_input_flag=st.integers(
-            0,  # no packed sequence input
-            # 1,  # packed sequence input in sorted order
-            2,  # packed sequence input in unsorted order
-        ),
+        packed_input_flag=st.integers(0, 2),
     )
     @settings(deadline=20000)
     def test_rnn(
@@ -98,16 +94,19 @@ class DPLSTM_test(DPModules_test):
         dp_rnn.load_state_dict(rnn.state_dict())
 
         if packed_input_flag == 0:
+            # no packed sequence input
             x = (
                 torch.randn([batch_size, seq_len, emb_size])
                 if batch_first
                 else torch.randn([seq_len, batch_size, emb_size])
             )
         elif packed_input_flag == 1:
+            # packed sequence input in sorted order
             x = _gen_packed_data(
                 batch_size, seq_len, emb_size, batch_first, sorted_=True
             )
         elif packed_input_flag == 2:
+            # packed sequence input in unsorted order
             x = _gen_packed_data(
                 batch_size, seq_len, emb_size, batch_first, sorted_=False
             )

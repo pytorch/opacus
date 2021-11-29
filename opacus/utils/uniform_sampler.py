@@ -1,33 +1,28 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from typing import Optional
+from typing import List
 
 import torch
 from torch.utils.data import Sampler
 
 
-class UniformWithReplacementSampler(Sampler):
+class UniformWithReplacementSampler(Sampler[List[int]]):
     r"""
     This sampler samples elements according to the Sampled Gaussian Mechanism.
     Each sample is selected with a probability equal to ``sample_rate``.
     """
 
-    def __init__(self, num_samples: int, sample_rate: float, generator=None):
+    def __init__(self, *, num_samples: int, sample_rate: float, generator=None):
         r"""
         Args:
-            num_samples (int): number of samples to draw.
-            sample_rate (float): probability used in sampling.
-            generator (Generator): Generator used in sampling.
+            num_samples: number of samples to draw.
+            sample_rate: probability used in sampling.
+            generator: Generator used in sampling.
         """
         self.num_samples = num_samples
         self.sample_rate = sample_rate
         self.generator = generator
-        if self.generator is None:
-            generator = torch.Generator()
-            generator.manual_seed(
-                int(torch.empty((), dtype=torch.int64).random_().item())
-            )
 
         if self.num_samples <= 0:
             raise ValueError(
@@ -46,14 +41,12 @@ class UniformWithReplacementSampler(Sampler):
                 < self.sample_rate
             )
             indices = mask.nonzero(as_tuple=False).reshape(-1).tolist()
-            if len(indices) != 0:
-                # We only output non-empty list of indices, otherwise the dataloader is unhappy
-                # This is compensated by the privacy engine
-                yield indices
+            yield indices
+
             num_batches -= 1
 
 
-class DistributedPoissonBatchSampler(Sampler):
+class DistributedUniformWithReplacementSampler(Sampler):
     """
     Distributed batch sampler.
 
@@ -72,27 +65,32 @@ class DistributedPoissonBatchSampler(Sampler):
 
     def __init__(
         self,
+        *,
         total_size: int,
         sample_rate: float,
-        num_replicas: Optional[int] = None,
-        rank: Optional[int] = None,
         shuffle: bool = True,
-        seed: int = 0,
+        shuffle_seed: int = 0,
         generator=None,
     ):
+        """
+
+        Args:
+            total_size: total number of samples to sample from
+            sample_rate: number of samples to draw.
+            shuffle: Flag indicating whether apply shuffle when dividing elements
+                between workers
+            shuffle_seed: Random seed used to shuffle when dividing elements across workers
+            generator: torch.Generator() object used as a source of randomness
+                when selecting items for the next round on a given worker
+        """
         self.total_size = total_size
         self.sample_rate = sample_rate
         self.generator = generator
-        self.num_replicas = num_replicas
-        self.rank = rank
+        self.num_replicas = torch.distributed.get_world_size()
+        self.rank = torch.distributed.get_rank()
         self.epoch = 0
         self.shuffle = shuffle
-        self.seed = seed
-        if self.generator is None:
-            generator = torch.Generator()
-            generator.manual_seed(
-                int(torch.empty((), dtype=torch.int64).random_().item())
-            )
+        self.shuffle_seed = shuffle_seed
 
         if self.total_size <= 0:
             raise ValueError(
@@ -109,14 +107,11 @@ class DistributedPoissonBatchSampler(Sampler):
         # Number of batches: same as non-distributed Poisson sampling, but each batch is smaller
         self.num_batches = int(1 / self.sample_rate)
 
-    def __len__(self) -> int:
-        return self.num_batches
-
     def __iter__(self):
         if self.shuffle:
             # deterministically shuffle based on epoch and seed
             g = torch.Generator()
-            g.manual_seed(self.seed + self.epoch)
+            g.manual_seed(self.shuffle_seed + self.epoch)
             indices = torch.randperm(self.total_size, generator=g)  # type: ignore
         else:
             indices = torch.arange(self.total_size)  # type: ignore
