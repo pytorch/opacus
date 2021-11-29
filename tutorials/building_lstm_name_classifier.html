@@ -109,8 +109,12 @@
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">requests</span>
+
 
 <span class="n">NAMES_DATASET_URL</span> <span class="o">=</span> <span class="s2">"https://download.pytorch.org/tutorial/data.zip"</span>
 <span class="n">DATA_DIR</span> <span class="o">=</span> <span class="s2">"names"</span>
@@ -167,7 +171,7 @@ Completed!
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>['Arabic.txt', 'Chinese.txt', 'Czech.txt', 'Dutch.txt', 'English.txt', 'French.txt', 'German.txt', 'Greek.txt', 'Irish.txt', 'Italian.txt', 'Japanese.txt', 'Korean.txt', 'Polish.txt', 'Portuguese.txt', 'Russian.txt', 'Scottish.txt', 'Spanish.txt', 'Vietnamese.txt']
+<pre>['Italian.txt', 'Arabic.txt', 'English.txt', 'German.txt', 'French.txt', 'Spanish.txt', 'Greek.txt', 'Dutch.txt', 'Korean.txt', 'Portuguese.txt', 'Japanese.txt', 'Polish.txt', 'Irish.txt', 'Chinese.txt', 'Russian.txt', 'Czech.txt', 'Vietnamese.txt', 'Scottish.txt']
 </pre>
 </div>
 </div>
@@ -349,7 +353,7 @@ Completed!
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">secure_rng</span> <span class="o">=</span> <span class="kc">False</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">secure_mode</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="n">train_split</span> <span class="o">=</span> <span class="mf">0.8</span>
 <span class="n">test_every</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">800</span>
@@ -360,24 +364,7 @@ Completed!
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">train_len</span><span class="si">}</span><span class="s2"> samples for training, </span><span class="si">{</span><span class="n">test_len</span><span class="si">}</span><span class="s2"> for testing"</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="n">secure_rng</span><span class="p">:</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">import</span> <span class="nn">torchcsprng</span> <span class="k">as</span> <span class="nn">prng</span>
-    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">"To use secure RNG, you must install the torchcsprng package! "</span>
-            <span class="s2">"Check out the instructions here: https://github.com/pytorch/csprng#installation"</span>
-        <span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
-
-    <span class="n">generator</span> <span class="o">=</span> <span class="n">prng</span><span class="o">.</span><span class="n">create_random_device_generator</span><span class="p">(</span><span class="s2">"/dev/urandom"</span><span class="p">)</span>
-
-<span class="k">else</span><span class="p">:</span>
-    <span class="n">generator</span> <span class="o">=</span> <span class="kc">None</span>
-
-<span class="n">train_ds</span><span class="p">,</span> <span class="n">test_ds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">random_split</span><span class="p">(</span>
-    <span class="n">ds</span><span class="p">,</span> <span class="p">[</span><span class="n">train_len</span><span class="p">,</span> <span class="n">test_len</span><span class="p">],</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span>
-<span class="p">)</span>
+<span class="n">train_ds</span><span class="p">,</span> <span class="n">test_ds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">random_split</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="p">[</span><span class="n">train_len</span><span class="p">,</span> <span class="n">test_len</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -400,20 +387,11 @@ Completed!
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
-<span class="kn">from</span> <span class="nn">opacus.utils.uniform_sampler</span> <span class="kn">import</span> <span class="n">UniformWithReplacementSampler</span>
-
-<span class="n">sample_rate</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_ds</span><span class="p">)</span>
 
 <span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
     <span class="n">train_ds</span><span class="p">,</span>
-    <span class="n">num_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
     <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
-    <span class="n">batch_sampler</span><span class="o">=</span><span class="n">UniformWithReplacementSampler</span><span class="p">(</span>
-        <span class="n">num_samples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">train_ds</span><span class="p">),</span>
-        <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
-        <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
-    <span class="p">),</span>
     <span class="n">collate_fn</span><span class="o">=</span><span class="n">padded_collate</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -421,7 +399,6 @@ Completed!
     <span class="n">test_ds</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">batch_size</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">num_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
     <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">collate_fn</span><span class="o">=</span><span class="n">padded_collate</span><span class="p">,</span>
 <span class="p">)</span>
@@ -458,10 +435,10 @@ Completed!
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">statistics</span> <span class="kn">import</span> <span class="n">mean</span>
 
-<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">"cuda:0"</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">privacy_engine</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">"cuda:0"</span><span class="p">):</span>
     <span class="n">accs</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">train_loader</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 
@@ -482,12 +459,10 @@ Completed!
     <span class="n">printstr</span> <span class="o">=</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="s2"> Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s2">. Accuracy: </span><span class="si">{</span><span class="n">mean</span><span class="p">(</span><span class="n">accs</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> | Loss: </span><span class="si">{</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span>
-        <span class="n">epsilon</span><span class="p">,</span> <span class="n">best_alpha</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">()</span>
-        <span class="n">printstr</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" | (ε = </span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, δ = </span><span class="si">{</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">target_delta</span><span class="si">}</span><span class="s2">) for α = </span><span class="si">{</span><span class="n">best_alpha</span><span class="si">}</span><span class="s2">"</span>
-    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-        <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">privacy_engine</span><span class="p">:</span>
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+        <span class="n">printstr</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" | (ε = </span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, δ = </span><span class="si">{</span><span class="n">delta</span><span class="si">}</span><span class="s2">)"</span>
+
     <span class="nb">print</span><span class="p">(</span><span class="n">printstr</span><span class="p">)</span>
     <span class="k">return</span>
 
@@ -495,7 +470,7 @@ Completed!
 <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">,</span> <span class="n">privacy_engine</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">"cuda:0"</span><span class="p">):</span>
     <span class="n">accs</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">test_loader</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">test_loader</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
             <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 
@@ -506,8 +481,8 @@ Completed!
             <span class="n">accs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_accuracy</span><span class="p">)</span>
     <span class="n">printstr</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">----------------------------</span><span class="se">\n</span><span class="s2">"</span> <span class="sa">f</span><span class="s2">"Test Accuracy: </span><span class="si">{</span><span class="n">mean</span><span class="p">(</span><span class="n">accs</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">if</span> <span class="n">privacy_engine</span><span class="p">:</span>
-        <span class="n">epsilon</span><span class="p">,</span> <span class="n">best_alpha</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">()</span>
-        <span class="n">printstr</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" (ε = </span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, δ = </span><span class="si">{</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">target_delta</span><span class="si">}</span><span class="s2">) for α = </span><span class="si">{</span><span class="n">best_alpha</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+        <span class="n">printstr</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" (ε = </span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, δ = </span><span class="si">{</span><span class="n">delta</span><span class="si">}</span><span class="s2">)"</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">printstr</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">----------------------------</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span>
 </pre></div>
@@ -666,30 +641,18 @@ Completed!
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus</span> <span class="kn">import</span> <span class="n">PrivacyEngine</span>
+<span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span><span class="n">secure_mode</span><span class="o">=</span><span class="n">secure_mode</span><span class="p">)</span>
 
-<span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span>
-    <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
+<span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_loader</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">make_private_with_epsilon</span><span class="p">(</span>
+    <span class="n">module</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+    <span class="n">data_loader</span><span class="o">=</span><span class="n">train_loader</span><span class="p">,</span>
     <span class="n">max_grad_norm</span><span class="o">=</span><span class="n">max_per_sample_grad_norm</span><span class="p">,</span>
     <span class="n">target_delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span>
     <span class="n">target_epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">,</span>
     <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
-    <span class="n">secure_rng</span><span class="o">=</span><span class="n">secure_rng</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">privacy_engine</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-<div class="output_wrapper">
-<div class="output">
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/private/home/asablayrolles/code/projects/opacus/opacus/privacy_engine.py:120: UserWarning: Secure RNG turned off. This is perfectly fine for experimentation as it allows for much faster training performance, but remember to turn it on and retrain one last time before production with ``secure_rng`` turned on.
-  "Secure RNG turned off. This is perfectly fine for experimentation as it allows "
-</pre>
-</div>
 </div>
 </div>
 </div>
@@ -713,11 +676,9 @@ Completed!
 <div class="prompt input_prompt">In [14]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Train stats: </span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">)):</span>
-    <span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Train stats: </span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+    <span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">privacy_engine</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">test_every</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="n">test_every</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">,</span> <span class="n">privacy_engine</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
@@ -734,109 +695,109 @@ Completed!
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>Train stats: 
 
-	 Epoch 0. Accuracy: 0.429625 | Loss: 2.185477 | (ε = 2.59, δ = 8e-05) for α = 5.6
+	 Epoch 0. Accuracy: 0.428835 | Loss: 2.220773
 
 ----------------------------
-Test Accuracy: 0.470559 (ε = 2.59, δ = 8e-05) for α = 5.6
+Test Accuracy: 0.469154 (ε = 2.30, δ = 8e-05)
 ----------------------------
 
-	 Epoch 1. Accuracy: 0.468625 | Loss: 1.940962 | (ε = 3.07, δ = 8e-05) for α = 5.2
-	 Epoch 2. Accuracy: 0.468188 | Loss: 1.928116 | (ε = 3.46, δ = 8e-05) for α = 5.0
-	 Epoch 3. Accuracy: 0.468250 | Loss: 1.907378 | (ε = 3.81, δ = 8e-05) for α = 4.8
-	 Epoch 4. Accuracy: 0.477125 | Loss: 1.833195 | (ε = 4.12, δ = 8e-05) for α = 4.6
-	 Epoch 5. Accuracy: 0.538125 | Loss: 1.566213 | (ε = 4.41, δ = 8e-05) for α = 4.5
+	 Epoch 1. Accuracy: 0.472534 | Loss: 1.895850
+	 Epoch 2. Accuracy: 0.471778 | Loss: 1.893783
+	 Epoch 3. Accuracy: 0.459604 | Loss: 1.958717
+	 Epoch 4. Accuracy: 0.491896 | Loss: 1.782331
+	 Epoch 5. Accuracy: 0.540205 | Loss: 1.577036
 
 ----------------------------
-Test Accuracy: 0.552575 (ε = 4.41, δ = 8e-05) for α = 4.5
+Test Accuracy: 0.559490 (ε = 4.16, δ = 8e-05)
 ----------------------------
 
-	 Epoch 6. Accuracy: 0.556937 | Loss: 1.512054 | (ε = 4.67, δ = 8e-05) for α = 4.3
-	 Epoch 7. Accuracy: 0.562937 | Loss: 1.503791 | (ε = 4.93, δ = 8e-05) for α = 4.2
-	 Epoch 8. Accuracy: 0.563813 | Loss: 1.510231 | (ε = 5.17, δ = 8e-05) for α = 4.1
-	 Epoch 9. Accuracy: 0.568250 | Loss: 1.504014 | (ε = 5.41, δ = 8e-05) for α = 4.0
-	 Epoch 10. Accuracy: 0.571063 | Loss: 1.497570 | (ε = 5.63, δ = 8e-05) for α = 3.9
+	 Epoch 6. Accuracy: 0.593796 | Loss: 1.456133
+	 Epoch 7. Accuracy: 0.616827 | Loss: 1.388250
+	 Epoch 8. Accuracy: 0.632560 | Loss: 1.345773
+	 Epoch 9. Accuracy: 0.639074 | Loss: 1.327238
+	 Epoch 10. Accuracy: 0.650502 | Loss: 1.316831
 
 ----------------------------
-Test Accuracy: 0.574104 (ε = 5.63, δ = 8e-05) for α = 3.9
+Test Accuracy: 0.650821 (ε = 5.43, δ = 8e-05)
 ----------------------------
 
-	 Epoch 11. Accuracy: 0.576250 | Loss: 1.489521 | (ε = 5.85, δ = 8e-05) for α = 3.9
-	 Epoch 12. Accuracy: 0.580812 | Loss: 1.485841 | (ε = 6.06, δ = 8e-05) for α = 3.8
-	 Epoch 13. Accuracy: 0.589063 | Loss: 1.482238 | (ε = 6.27, δ = 8e-05) for α = 3.7
-	 Epoch 14. Accuracy: 0.604000 | Loss: 1.459263 | (ε = 6.46, δ = 8e-05) for α = 3.7
-	 Epoch 15. Accuracy: 0.622437 | Loss: 1.423232 | (ε = 6.66, δ = 8e-05) for α = 3.6
+	 Epoch 11. Accuracy: 0.649294 | Loss: 1.315323
+	 Epoch 12. Accuracy: 0.656350 | Loss: 1.288794
+	 Epoch 13. Accuracy: 0.656104 | Loss: 1.285352
+	 Epoch 14. Accuracy: 0.656424 | Loss: 1.283710
+	 Epoch 15. Accuracy: 0.666633 | Loss: 1.273102
 
 ----------------------------
-Test Accuracy: 0.630179 (ε = 6.66, δ = 8e-05) for α = 3.6
+Test Accuracy: 0.667164 (ε = 6.51, δ = 8e-05)
 ----------------------------
 
-	 Epoch 16. Accuracy: 0.633563 | Loss: 1.397400 | (ε = 6.85, δ = 8e-05) for α = 3.6
-	 Epoch 17. Accuracy: 0.647188 | Loss: 1.359415 | (ε = 7.03, δ = 8e-05) for α = 3.5
-	 Epoch 18. Accuracy: 0.659375 | Loss: 1.327021 | (ε = 7.22, δ = 8e-05) for α = 3.5
-	 Epoch 19. Accuracy: 0.668937 | Loss: 1.309529 | (ε = 7.39, δ = 8e-05) for α = 3.4
-	 Epoch 20. Accuracy: 0.668500 | Loss: 1.327612 | (ε = 7.57, δ = 8e-05) for α = 3.4
+	 Epoch 16. Accuracy: 0.672707 | Loss: 1.247125
+	 Epoch 17. Accuracy: 0.680121 | Loss: 1.223817
+	 Epoch 18. Accuracy: 0.686456 | Loss: 1.214923
+	 Epoch 19. Accuracy: 0.694982 | Loss: 1.193048
+	 Epoch 20. Accuracy: 0.694282 | Loss: 1.184953
 
 ----------------------------
-Test Accuracy: 0.649833 (ε = 7.57, δ = 8e-05) for α = 3.4
+Test Accuracy: 0.682519 (ε = 7.46, δ = 8e-05)
 ----------------------------
 
-	 Epoch 21. Accuracy: 0.672687 | Loss: 1.296074 | (ε = 7.74, δ = 8e-05) for α = 3.4
-	 Epoch 22. Accuracy: 0.681250 | Loss: 1.267687 | (ε = 7.91, δ = 8e-05) for α = 3.3
-	 Epoch 23. Accuracy: 0.684500 | Loss: 1.268492 | (ε = 8.07, δ = 8e-05) for α = 3.3
-	 Epoch 24. Accuracy: 0.693063 | Loss: 1.245834 | (ε = 8.24, δ = 8e-05) for α = 3.3
-	 Epoch 25. Accuracy: 0.698000 | Loss: 1.233152 | (ε = 8.40, δ = 8e-05) for α = 3.2
+	 Epoch 21. Accuracy: 0.701802 | Loss: 1.161172
+	 Epoch 22. Accuracy: 0.706358 | Loss: 1.166274
+	 Epoch 23. Accuracy: 0.722667 | Loss: 1.097268
+	 Epoch 24. Accuracy: 0.703950 | Loss: 1.185700
+	 Epoch 25. Accuracy: 0.720196 | Loss: 1.112226
 
 ----------------------------
-Test Accuracy: 0.691701 (ε = 8.40, δ = 8e-05) for α = 3.2
+Test Accuracy: 0.707127 (ε = 8.33, δ = 8e-05)
 ----------------------------
 
-	 Epoch 26. Accuracy: 0.698812 | Loss: 1.231949 | (ε = 8.56, δ = 8e-05) for α = 3.2
-	 Epoch 27. Accuracy: 0.701313 | Loss: 1.222030 | (ε = 8.72, δ = 8e-05) for α = 3.2
-	 Epoch 28. Accuracy: 0.707562 | Loss: 1.209349 | (ε = 8.87, δ = 8e-05) for α = 3.1
-	 Epoch 29. Accuracy: 0.708750 | Loss: 1.213605 | (ε = 9.02, δ = 8e-05) for α = 3.1
-	 Epoch 30. Accuracy: 0.713750 | Loss: 1.192162 | (ε = 9.17, δ = 8e-05) for α = 3.1
+	 Epoch 26. Accuracy: 0.720644 | Loss: 1.115221
+	 Epoch 27. Accuracy: 0.708652 | Loss: 1.158104
+	 Epoch 28. Accuracy: 0.724744 | Loss: 1.119688
+	 Epoch 29. Accuracy: 0.733490 | Loss: 1.088846
+	 Epoch 30. Accuracy: 0.729441 | Loss: 1.089938
 
 ----------------------------
-Test Accuracy: 0.707720 (ε = 9.17, δ = 8e-05) for α = 3.1
+Test Accuracy: 0.701941 (ε = 9.15, δ = 8e-05)
 ----------------------------
 
-	 Epoch 31. Accuracy: 0.719562 | Loss: 1.166927 | (ε = 9.32, δ = 8e-05) for α = 3.1
-	 Epoch 32. Accuracy: 0.718938 | Loss: 1.181886 | (ε = 9.47, δ = 8e-05) for α = 3.0
-	 Epoch 33. Accuracy: 0.724938 | Loss: 1.163102 | (ε = 9.62, δ = 8e-05) for α = 3.0
-	 Epoch 34. Accuracy: 0.724000 | Loss: 1.162879 | (ε = 9.76, δ = 8e-05) for α = 3.0
-	 Epoch 35. Accuracy: 0.726375 | Loss: 1.164932 | (ε = 9.90, δ = 8e-05) for α = 3.0
+	 Epoch 31. Accuracy: 0.731014 | Loss: 1.096586
+	 Epoch 32. Accuracy: 0.736907 | Loss: 1.065786
+	 Epoch 33. Accuracy: 0.733743 | Loss: 1.098627
+	 Epoch 34. Accuracy: 0.741741 | Loss: 1.064197
+	 Epoch 35. Accuracy: 0.742394 | Loss: 1.053995
 
 ----------------------------
-Test Accuracy: 0.702265 (ε = 9.90, δ = 8e-05) for α = 3.0
+Test Accuracy: 0.720777 (ε = 9.93, δ = 8e-05)
 ----------------------------
 
-	 Epoch 36. Accuracy: 0.721313 | Loss: 1.173956 | (ε = 10.05, δ = 8e-05) for α = 3.0
-	 Epoch 37. Accuracy: 0.735437 | Loss: 1.122051 | (ε = 10.19, δ = 8e-05) for α = 2.9
-	 Epoch 38. Accuracy: 0.736687 | Loss: 1.125166 | (ε = 10.32, δ = 8e-05) for α = 2.9
-	 Epoch 39. Accuracy: 0.736500 | Loss: 1.140181 | (ε = 10.46, δ = 8e-05) for α = 2.9
-	 Epoch 40. Accuracy: 0.734750 | Loss: 1.132542 | (ε = 10.60, δ = 8e-05) for α = 2.9
+	 Epoch 36. Accuracy: 0.749420 | Loss: 1.034596
+	 Epoch 37. Accuracy: 0.748662 | Loss: 1.037211
+	 Epoch 38. Accuracy: 0.745869 | Loss: 1.061525
+	 Epoch 39. Accuracy: 0.751734 | Loss: 1.022538
+	 Epoch 40. Accuracy: 0.751194 | Loss: 1.028292
 
 ----------------------------
-Test Accuracy: 0.715653 (ε = 10.60, δ = 8e-05) for α = 2.9
+Test Accuracy: 0.744636 (ε = 10.67, δ = 8e-05)
 ----------------------------
 
-	 Epoch 41. Accuracy: 0.734875 | Loss: 1.125319 | (ε = 10.74, δ = 8e-05) for α = 2.9
-	 Epoch 42. Accuracy: 0.739062 | Loss: 1.114325 | (ε = 10.87, δ = 8e-05) for α = 2.8
-	 Epoch 43. Accuracy: 0.740750 | Loss: 1.111604 | (ε = 11.00, δ = 8e-05) for α = 2.8
-	 Epoch 44. Accuracy: 0.740125 | Loss: 1.099650 | (ε = 11.13, δ = 8e-05) for α = 2.8
-	 Epoch 45. Accuracy: 0.750812 | Loss: 1.062885 | (ε = 11.26, δ = 8e-05) for α = 2.8
+	 Epoch 41. Accuracy: 0.754300 | Loss: 1.032082
+	 Epoch 42. Accuracy: 0.753252 | Loss: 1.017024
+	 Epoch 43. Accuracy: 0.755629 | Loss: 1.035767
+	 Epoch 44. Accuracy: 0.758195 | Loss: 1.029165
+	 Epoch 45. Accuracy: 0.751091 | Loss: 1.028669
 
 ----------------------------
-Test Accuracy: 0.739057 (ε = 11.26, δ = 8e-05) for α = 2.8
+Test Accuracy: 0.739427 (ε = 11.38, δ = 8e-05)
 ----------------------------
 
-	 Epoch 46. Accuracy: 0.749750 | Loss: 1.076617 | (ε = 11.40, δ = 8e-05) for α = 2.8
-	 Epoch 47. Accuracy: 0.749437 | Loss: 1.091281 | (ε = 11.53, δ = 8e-05) for α = 2.8
-	 Epoch 48. Accuracy: 0.751625 | Loss: 1.067713 | (ε = 11.66, δ = 8e-05) for α = 2.8
-	 Epoch 49. Accuracy: 0.752250 | Loss: 1.067498 | (ε = 11.78, δ = 8e-05) for α = 2.7
+	 Epoch 46. Accuracy: 0.760692 | Loss: 0.995788
+	 Epoch 47. Accuracy: 0.763821 | Loss: 0.990309
+	 Epoch 48. Accuracy: 0.763423 | Loss: 0.997126
+	 Epoch 49. Accuracy: 0.767976 | Loss: 0.982944
 
 ----------------------------
-Test Accuracy: 0.732004 (ε = 11.78, δ = 8e-05) for α = 2.7
+Test Accuracy: 0.752090 (ε = 11.93, δ = 8e-05)
 ----------------------------
 
 </pre>
@@ -848,7 +809,7 @@ Test Accuracy: 0.732004 (ε = 11.78, δ = 8e-05) for α = 2.7
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The differentially-private name classification model obtains a test accuracy of 0.73 with an epsilon of just under 12. This shows that we can achieve a good accuracy on this task, with minimal loss of privacy.</p>
+<p>The differentially-private name classification model obtains a test accuracy of 0.75 with an epsilon of just under 12. This shows that we can achieve a good accuracy on this task, with minimal loss of privacy.</p>
 </div>
 </div>
 </div>
@@ -868,7 +829,7 @@ Test Accuracy: 0.732004 (ε = 11.78, δ = 8e-05) for α = 2.7
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [17]:</div>
+<div class="prompt input_prompt">In [15]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">model_nodp</span> <span class="o">=</span> <span class="n">CharNNClassifier</span><span class="p">(</span>
@@ -888,10 +849,10 @@ Test Accuracy: 0.732004 (ε = 11.78, δ = 8e-05) for α = 2.7
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [18]:</div>
+<div class="prompt input_prompt">In [16]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">)):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
     <span class="n">train</span><span class="p">(</span><span class="n">model_nodp</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">optimizer_nodp</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">test_every</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="n">test_every</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -907,118 +868,111 @@ Test Accuracy: 0.732004 (ε = 11.78, δ = 8e-05) for α = 2.7
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>	 Epoch 0. Accuracy: 0.446188 | Loss: 1.975067
+<pre>	 Epoch 0. Accuracy: 0.423231 | Loss: 1.957621
 
 ----------------------------
-Test Accuracy: 0.470559
+Test Accuracy: 0.469154
 ----------------------------
 
-	 Epoch 1. Accuracy: 0.468625 | Loss: 1.851975
-	 Epoch 2. Accuracy: 0.468438 | Loss: 1.851132
-	 Epoch 3. Accuracy: 0.468750 | Loss: 1.860505
-	 Epoch 4. Accuracy: 0.469000 | Loss: 1.852566
-	 Epoch 5. Accuracy: 0.468500 | Loss: 1.851430
+	 Epoch 1. Accuracy: 0.470835 | Loss: 1.850998
+	 Epoch 2. Accuracy: 0.461741 | Loss: 1.845881
+	 Epoch 3. Accuracy: 0.466039 | Loss: 1.848411
+	 Epoch 4. Accuracy: 0.470612 | Loss: 1.857506
+	 Epoch 5. Accuracy: 0.460152 | Loss: 1.845789
 
 ----------------------------
-Test Accuracy: 0.470559
+Test Accuracy: 0.469154
 ----------------------------
 
-	 Epoch 6. Accuracy: 0.467375 | Loss: 1.847835
-	 Epoch 7. Accuracy: 0.498937 | Loss: 1.702268
-	 Epoch 8. Accuracy: 0.540625 | Loss: 1.550873
-	 Epoch 9. Accuracy: 0.551125 | Loss: 1.507487
-	 Epoch 10. Accuracy: 0.556312 | Loss: 1.488815
+	 Epoch 6. Accuracy: 0.477714 | Loss: 1.775618
+	 Epoch 7. Accuracy: 0.518488 | Loss: 1.622382
+	 Epoch 8. Accuracy: 0.535421 | Loss: 1.565642
+	 Epoch 9. Accuracy: 0.545521 | Loss: 1.511846
+	 Epoch 10. Accuracy: 0.543908 | Loss: 1.514014
 
 ----------------------------
-Test Accuracy: 0.558185
+Test Accuracy: 0.575170
 ----------------------------
 
-	 Epoch 11. Accuracy: 0.560312 | Loss: 1.477035
-	 Epoch 12. Accuracy: 0.563562 | Loss: 1.456275
-	 Epoch 13. Accuracy: 0.561875 | Loss: 1.466037
-	 Epoch 14. Accuracy: 0.569187 | Loss: 1.442874
-	 Epoch 15. Accuracy: 0.570063 | Loss: 1.443760
+	 Epoch 11. Accuracy: 0.561950 | Loss: 1.454853
+	 Epoch 12. Accuracy: 0.605502 | Loss: 1.388555
+	 Epoch 13. Accuracy: 0.607155 | Loss: 1.367188
+	 Epoch 14. Accuracy: 0.615066 | Loss: 1.346803
+	 Epoch 15. Accuracy: 0.621913 | Loss: 1.332553
 
 ----------------------------
-Test Accuracy: 0.571025
+Test Accuracy: 0.635465
 ----------------------------
 
-	 Epoch 16. Accuracy: 0.581313 | Loss: 1.416902
-	 Epoch 17. Accuracy: 0.613812 | Loss: 1.352785
-	 Epoch 18. Accuracy: 0.623250 | Loss: 1.322635
-	 Epoch 19. Accuracy: 0.636062 | Loss: 1.275303
-	 Epoch 20. Accuracy: 0.643125 | Loss: 1.246226
+	 Epoch 16. Accuracy: 0.619772 | Loss: 1.314691
+	 Epoch 17. Accuracy: 0.629337 | Loss: 1.302999
+	 Epoch 18. Accuracy: 0.634173 | Loss: 1.277790
+	 Epoch 19. Accuracy: 0.647275 | Loss: 1.226866
+	 Epoch 20. Accuracy: 0.652142 | Loss: 1.226686
 
 ----------------------------
-Test Accuracy: 0.655041
+Test Accuracy: 0.651832
 ----------------------------
 
-	 Epoch 21. Accuracy: 0.655000 | Loss: 1.214294
-	 Epoch 22. Accuracy: 0.658250 | Loss: 1.188098
-	 Epoch 23. Accuracy: 0.667500 | Loss: 1.159147
-	 Epoch 24. Accuracy: 0.679438 | Loss: 1.136272
-	 Epoch 25. Accuracy: 0.687438 | Loss: 1.102815
+	 Epoch 21. Accuracy: 0.646773 | Loss: 1.219855
+	 Epoch 22. Accuracy: 0.663006 | Loss: 1.195204
+	 Epoch 23. Accuracy: 0.670526 | Loss: 1.165726
+	 Epoch 24. Accuracy: 0.676121 | Loss: 1.148621
+	 Epoch 25. Accuracy: 0.687536 | Loss: 1.109896
 
 ----------------------------
-Test Accuracy: 0.695590
+Test Accuracy: 0.690590
 ----------------------------
 
-	 Epoch 26. Accuracy: 0.686562 | Loss: 1.093785
-	 Epoch 27. Accuracy: 0.688063 | Loss: 1.083488
-	 Epoch 28. Accuracy: 0.697000 | Loss: 1.054640
-	 Epoch 29. Accuracy: 0.702250 | Loss: 1.028159
-	 Epoch 30. Accuracy: 0.706187 | Loss: 1.015101
+	 Epoch 26. Accuracy: 0.690961 | Loss: 1.110705
+	 Epoch 27. Accuracy: 0.674958 | Loss: 1.158181
+	 Epoch 28. Accuracy: 0.696233 | Loss: 1.091395
+	 Epoch 29. Accuracy: 0.699146 | Loss: 1.077446
+	 Epoch 30. Accuracy: 0.710076 | Loss: 1.061827
 
 ----------------------------
-Test Accuracy: 0.682311
+Test Accuracy: 0.716664
 ----------------------------
 
-	 Epoch 31. Accuracy: 0.701688 | Loss: 1.024621
-	 Epoch 32. Accuracy: 0.707500 | Loss: 1.002122
-	 Epoch 33. Accuracy: 0.716375 | Loss: 0.976570
-	 Epoch 34. Accuracy: 0.719875 | Loss: 0.966798
-	 Epoch 35. Accuracy: 0.720125 | Loss: 0.964287
+	 Epoch 31. Accuracy: 0.714624 | Loss: 1.040824
+	 Epoch 32. Accuracy: 0.709445 | Loss: 1.044048
+	 Epoch 33. Accuracy: 0.719751 | Loss: 1.021937
+	 Epoch 34. Accuracy: 0.722247 | Loss: 1.002287
+	 Epoch 35. Accuracy: 0.725602 | Loss: 0.985023
 
 ----------------------------
-Test Accuracy: 0.695451
+Test Accuracy: 0.717073
 ----------------------------
 
-	 Epoch 36. Accuracy: 0.719375 | Loss: 0.954905
-	 Epoch 37. Accuracy: 0.728688 | Loss: 0.932315
-	 Epoch 38. Accuracy: 0.731250 | Loss: 0.928614
-	 Epoch 39. Accuracy: 0.741875 | Loss: 0.894388
-	 Epoch 40. Accuracy: 0.737875 | Loss: 0.901502
+	 Epoch 36. Accuracy: 0.721840 | Loss: 0.990956
+	 Epoch 37. Accuracy: 0.726419 | Loss: 0.978770
+	 Epoch 38. Accuracy: 0.730414 | Loss: 0.945205
+	 Epoch 39. Accuracy: 0.733045 | Loss: 0.931660
+	 Epoch 40. Accuracy: 0.743858 | Loss: 0.914782
 
 ----------------------------
-Test Accuracy: 0.744666
+Test Accuracy: 0.724982
 ----------------------------
 
-	 Epoch 41. Accuracy: 0.747875 | Loss: 0.869028
-	 Epoch 42. Accuracy: 0.741750 | Loss: 0.880296
-	 Epoch 43. Accuracy: 0.740563 | Loss: 0.890370
-	 Epoch 44. Accuracy: 0.751375 | Loss: 0.849146
-	 Epoch 45. Accuracy: 0.750125 | Loss: 0.851319
+	 Epoch 41. Accuracy: 0.751916 | Loss: 0.876523
+	 Epoch 42. Accuracy: 0.737594 | Loss: 0.914662
+	 Epoch 43. Accuracy: 0.735986 | Loss: 0.923208
+	 Epoch 44. Accuracy: 0.752869 | Loss: 0.868417
+	 Epoch 45. Accuracy: 0.753095 | Loss: 0.867506
 
 ----------------------------
-Test Accuracy: 0.757715
+Test Accuracy: 0.740716
 ----------------------------
 
-	 Epoch 46. Accuracy: 0.754750 | Loss: 0.838435
-	 Epoch 47. Accuracy: 0.756875 | Loss: 0.828314
-	 Epoch 48. Accuracy: 0.763813 | Loss: 0.809650
-	 Epoch 49. Accuracy: 0.763750 | Loss: 0.806187
+	 Epoch 46. Accuracy: 0.755373 | Loss: 0.851085
+	 Epoch 47. Accuracy: 0.755981 | Loss: 0.842593
+	 Epoch 48. Accuracy: 0.768917 | Loss: 0.813079
+	 Epoch 49. Accuracy: 0.761222 | Loss: 0.829013
 
 ----------------------------
-Test Accuracy: 0.751958
+Test Accuracy: 0.754173
 ----------------------------
 
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>
 </pre>
 </div>
 </div>

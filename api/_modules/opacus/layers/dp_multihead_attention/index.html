@@ -39,30 +39,31 @@
 <div class="viewcode-block" id="SequenceBias"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias">[docs]</a><span class="k">class</span> <span class="nc">SequenceBias</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Adds one bias element to the end of the sequence.</span>
-<span class="sd">    so if the input has a shape ``(L, N, E)``, where</span>
-<span class="sd">    ``L`` is the sequence length, ``N`` is the batch size, and ``E`` is</span>
+<span class="sd">    so if the input has a shape ``(L, N, E)``, (``batch_first = False``),</span>
+<span class="sd">    where ``L`` is the sequence length, ``N`` is the batch size, and ``E`` is</span>
 <span class="sd">    the embedding dimension, the output will have a shape</span>
-<span class="sd">    ``(L+1, N, E)``.</span>
+<span class="sd">    ``(L+1, N, E)``. When ``batch_first = True``, input has a shape ``(N, L, E)``</span>
+<span class="sd">    and the output will have a shape ``(N, L+1, E)``</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        bias (:class:`torch.nn.parameter.Parameter`): the learnable bias of</span>
 <span class="sd">            the module of shape ``(E)``, where ``E`` is the embedding dimension.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; m = SequenceBias(16)</span>
+<span class="sd">        &gt;&gt;&gt; m = SequenceBias(16, batch_first=False)</span>
 <span class="sd">        &gt;&gt;&gt; input = torch.randn(20, 4, 16)</span>
 <span class="sd">        &gt;&gt;&gt; output = m(input)</span>
-<span class="sd">        &gt;&gt;&gt; print(output.size())</span>
+<span class="sd">        &gt;&gt;&gt; output.size()</span>
 <span class="sd">        torch.Size([21, 4, 16])</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            embed_dim: Embedding dimension</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">SequenceBias</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">embed_dim</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_parameters</span><span class="p">()</span>
 
@@ -73,8 +74,12 @@
         <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SequenceBias.forward"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span></div></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>
+            <span class="n">bsz</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span></div></div>
 
 
 <div class="viewcode-block" id="DPMultiheadAttention"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention">[docs]</a><span class="k">class</span> <span class="nc">DPMultiheadAttention</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>

@@ -7,15 +7,15 @@ version: 2.1
 commands:
 
   py_3_7_setup:
-    description: "Install and switch to Python 3.7.10; also install pip and pytest."
+    description: "Install and switch to Python 3.7.4; also install pip and pytest."
     steps:
       - run:
-          name: "Setup Python v3.7.10 environment"
+          name: "Setup Python v3.7.4 environment"
           command: |
             cd /opt/circleci/.pyenv && git pull && cd -
-            pyenv install -s 3.7.10
-            pyenv global 3.7.10
-            pyenv local 3.7.10
+            pyenv install -s 3.7.4
+            pyenv global 3.7.4
+            pyenv local 3.7.4
             pyenv versions
             echo "In venv: $(pyenv local) - $(python -V), $(pip -V)"
             sudo "$(which python)" -m pip install --upgrade pip
@@ -74,13 +74,6 @@ commands:
           name: "Check import order with isort"
           command: isort -v -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
 
-  mypy_check:
-    description: "Static type checking with mypy"
-    steps:
-      - run:
-          name: "Mypy checks"
-          command: ./scripts/run_mypy.sh
-
   configure_docusaurus_bot:
     description: "Configure Docusaurus GitHub bot"
     steps:
@@ -108,11 +101,11 @@ commands:
     description: "Run unit tests"
     steps:
       - run:
-          name: "Unit tests"
+          name: "Unit tests & doctests"
           no_output_timeout: 1h
           command: |
             mkdir unittest-reports
-            python -m pytest --junitxml=unittest-reports/junit.xml
+            python -m pytest --doctest-modules -p conftest --junitxml=unittest-reports/junit.xml opacus
 
       - store_test_results:
           path: unittest-reports
@@ -134,8 +127,8 @@ commands:
             mkdir -p runs/mnist/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
-            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --sample-rate 0.004 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device <<parameters.device>>
-            python -c "import torch; accuracy = torch.load('run_results_SampleConvNet_0.25_0.7_1.5_0.004_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
+            python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 64 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device <<parameters.device>>
+            python -c "import torch; accuracy = torch.load('run_results_mnist_0.25_0.7_1.5_64_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
           when: always
       - store_test_results:
           path: runs/mnist/test-reports
@@ -202,7 +195,7 @@ commands:
             mkdir -p runs/dcgan/test-reports
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
-            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --sample-rate 0.01 --epochs 1 --data-root runs/dcgan/data --device <<parameters.device>>
+            python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root runs/dcgan/data --device <<parameters.device>>
           when: always
       - store_test_results:
           path: runs/dcgan/test-reports
@@ -224,7 +217,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install --user datasets transformers
-            python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --sample-rate 0.00256 --max-sequence-length 256 --epochs 1 --data-root runs/imdb/data --device <<parameters.device>>
+            python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 32 --max-sequence-length 256 --epochs 1 --data-root runs/imdb/data --device <<parameters.device>>
             python -c "import torch; accuracy = torch.load('run_results_imdb_classification.pt'); exit(0) if (accuracy>0.54 and accuracy<0.66) else exit(1)"
           when: always
       - store_test_results:
@@ -250,8 +243,8 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install scikit-learn
-            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --sample-rate=0.05 --n-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="runs/charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
-            python -c "import torch; accuracy = torch.load('run_results_chr_lstm_classification.pt'); exit(0) if (accuracy>0.60 and accuracy<0.74) else exit(1)"
+            python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --batch-size 400 --n-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="runs/charlstm/data/data/names/" --device=<<parameters.device>> --test-every 5
+            python -c "import torch; accuracy = torch.load('run_results_chr_lstm_classification.pt'); exit(0) if (accuracy>0.60 and accuracy<0.80) else exit(1)"
           when: always
       - store_test_results:
           path: runs/charlstm/test-reports
@@ -266,18 +259,17 @@ jobs:
 
   lint_py37_torch_release:
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.7.4
     steps:
       - checkout
       - pip_dev_install
       - lint_flake8
       - lint_black
       - isort
-      # - mypy_check  TODO re-enable
 
   unittest_py37_torch_release:
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.7.4
     steps:
       - checkout
       - pip_dev_install
@@ -310,7 +302,7 @@ jobs:
 
   integrationtest_py37_torch_release_cpu:
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.7.4
     steps:
       - checkout
       - pip_dev_install

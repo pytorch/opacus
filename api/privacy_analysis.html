@@ -24,80 +24,8 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="module-opacus.privacy_analysis">
-<span id="privacy-analysis"></span><h1>Privacy Analysis<a class="headerlink" href="#module-opacus.privacy_analysis" title="Permalink to this headline">¶</a></h1>
-<p><em>Based on Google’s TF Privacy:</em> <a class="reference external" href="https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/rdp_accountant.py">https://github.com/tensorflow/privacy/blob/master/tensorflow_privacy/privacy/analysis/rdp_accountant.py</a>.
-<em>Here, we update this code to Python 3, and optimize dependencies.</em></p>
-<p>Functionality for computing Renyi Differential Privacy (RDP) of an additive
-Sampled Gaussian Mechanism (SGM).</p>
-<p class="rubric">Example</p>
-<p>Suppose that we have run an SGM applied to a function with L2-sensitivity of 1.</p>
-<p>Its parameters are given as a list of tuples
-<code class="docutils literal notranslate"><span class="pre">[(q_1,</span> <span class="pre">sigma_1,</span> <span class="pre">steps_1),</span> <span class="pre">...,</span> <span class="pre">(q_k,</span> <span class="pre">sigma_k,</span> <span class="pre">steps_k)],</span></code>
-and we wish to compute epsilon for a given target delta.</p>
-<p>The example code would be:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">max_order</span> <span class="o">=</span> <span class="mi">32</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">orders</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_order</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">rdp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">orders</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">q</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">steps</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">rdp</span> <span class="o">+=</span> <span class="n">privacy_analysis</span><span class="o">.</span><span class="n">compute_rdp</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">orders</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">epsilon</span><span class="p">,</span> <span class="n">opt_order</span> <span class="o">=</span> <span class="n">privacy_analysis</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="n">orders</span><span class="p">,</span> <span class="n">rdp</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="py function">
-<dt class="sig sig-object py" id="opacus.privacy_analysis.compute_rdp">
-<span class="sig-prename descclassname"><span class="pre">opacus.privacy_analysis.</span></span><span class="sig-name descname"><span class="pre">compute_rdp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orders</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_analysis.html#compute_rdp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_analysis.compute_rdp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes Renyi Differential Privacy (RDP) guarantees of the
-Sampled Gaussian Mechanism (SGM) iterated <code class="docutils literal notranslate"><span class="pre">steps</span></code> times.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Sampling rate of SGM.</p></li>
-<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The ratio of the standard deviation of the
-additive Gaussian noise to the L2-sensitivity of the function
-to which it is added. Note that this is same as the standard
-deviation of the additive Gaussian noise when the L2-sensitivity
-of the function is 1.</p></li>
-<li><p><strong>steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The number of iterations of the mechanism.</p></li>
-<li><p><strong>orders</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – An array (or a scalar) of RDP orders.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The RDP guarantees at all orders; can be <code class="docutils literal notranslate"><span class="pre">np.inf</span></code>.</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="opacus.privacy_analysis.get_privacy_spent">
-<span class="sig-prename descclassname"><span class="pre">opacus.privacy_analysis.</span></span><span class="sig-name descname"><span class="pre">get_privacy_spent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orders</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rdp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_analysis.html#get_privacy_spent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_analysis.get_privacy_spent" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes epsilon given a list of Renyi Differential Privacy (RDP) values at
-multiple RDP orders and target <code class="docutils literal notranslate"><span class="pre">delta</span></code>.
-The computation of epslion, i.e. conversion from RDP to (eps, delta)-DP,
-is based on the theorem presented in the following work:
-Borja Balle et al. “Hypothesis testing interpretations and Renyi differential privacy.”
-International Conference on Artificial Intelligence and Statistics. PMLR, 2020.
-Particullary, Theorem 21 in the arXiv version <a class="reference external" href="https://arxiv.org/abs/1905.09982">https://arxiv.org/abs/1905.09982</a>.
-:type orders: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]
-:param orders: An array (or a scalar) of orders (alphas).
-:type rdp: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]
-:param rdp: A list (or a scalar) of RDP guarantees.
-:type delta: <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>
-:param delta: The target delta.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Pair of epsilon and optimal order alpha.</p>
-</dd>
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – If the lengths of <code class="docutils literal notranslate"><span class="pre">orders</span></code> and <code class="docutils literal notranslate"><span class="pre">rdp</span></code> are not equal.</p>
-</dd>
-</dl>
-</dd></dl>
+<section id="privacy-analysis">
+<h1>Privacy Analysis<a class="headerlink" href="#privacy-analysis" title="Permalink to this headline">¶</a></h1>
 </section>
 </div>
 </div>

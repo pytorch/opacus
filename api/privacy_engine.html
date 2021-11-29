@@ -28,192 +28,234 @@
 <span id="privacy-engine"></span><h1>Privacy Engine<a class="headerlink" href="#module-opacus.privacy_engine" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.privacy_engine.</span></span><span class="sig-name descname"><span class="pre">PrivacyEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alphas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.1,</span> <span class="pre">1.2,</span> <span class="pre">1.3,</span> <span class="pre">1.4,</span> <span class="pre">1.5,</span> <span class="pre">1.6,</span> <span class="pre">1.7,</span> <span class="pre">1.8,</span> <span class="pre">1.9,</span> <span class="pre">2.0,</span> <span class="pre">2.1,</span> <span class="pre">2.2,</span> <span class="pre">2.3,</span> <span class="pre">2.4,</span> <span class="pre">2.5,</span> <span class="pre">2.6,</span> <span class="pre">2.7,</span> <span class="pre">2.8,</span> <span class="pre">2.9,</span> <span class="pre">3.0,</span> <span class="pre">3.1,</span> <span class="pre">3.2,</span> <span class="pre">3.3,</span> <span class="pre">3.4,</span> <span class="pre">3.5,</span> <span class="pre">3.6,</span> <span class="pre">3.7,</span> <span class="pre">3.8,</span> <span class="pre">3.9,</span> <span class="pre">4.0,</span> <span class="pre">4.1,</span> <span class="pre">4.2,</span> <span class="pre">4.3,</span> <span class="pre">4.4,</span> <span class="pre">4.5,</span> <span class="pre">4.6,</span> <span class="pre">4.7,</span> <span class="pre">4.8,</span> <span class="pre">4.9,</span> <span class="pre">5.0,</span> <span class="pre">5.1,</span> <span class="pre">5.2,</span> <span class="pre">5.3,</span> <span class="pre">5.4,</span> <span class="pre">5.5,</span> <span class="pre">5.6,</span> <span class="pre">5.7,</span> <span class="pre">5.8,</span> <span class="pre">5.9,</span> <span class="pre">6.0,</span> <span class="pre">6.1,</span> <span class="pre">6.2,</span> <span class="pre">6.3,</span> <span class="pre">6.4,</span> <span class="pre">6.5,</span> <span class="pre">6.6,</span> <span class="pre">6.7,</span> <span class="pre">6.8,</span> <span class="pre">6.9,</span> <span class="pre">7.0,</span> <span class="pre">7.1,</span> <span class="pre">7.2,</span> <span class="pre">7.3,</span> <span class="pre">7.4,</span> <span class="pre">7.5,</span> <span class="pre">7.6,</span> <span class="pre">7.7,</span> <span class="pre">7.8,</span> <span class="pre">7.9,</span> <span class="pre">8.0,</span> <span class="pre">8.1,</span> <span class="pre">8.2,</span> <span class="pre">8.3,</span> <span class="pre">8.4,</span> <span class="pre">8.5,</span> <span class="pre">8.6,</span> <span class="pre">8.7,</span> <span class="pre">8.8,</span> <span class="pre">8.9,</span> <span class="pre">9.0,</span> <span class="pre">9.1,</span> <span class="pre">9.2,</span> <span class="pre">9.3,</span> <span class="pre">9.4,</span> <span class="pre">9.5,</span> <span class="pre">9.6,</span> <span class="pre">9.7,</span> <span class="pre">9.8,</span> <span class="pre">9.9,</span> <span class="pre">10.0,</span> <span class="pre">10.1,</span> <span class="pre">10.2,</span> <span class="pre">10.3,</span> <span class="pre">10.4,</span> <span class="pre">10.5,</span> <span class="pre">10.6,</span> <span class="pre">10.7,</span> <span class="pre">10.8,</span> <span class="pre">10.9,</span> <span class="pre">12,</span> <span class="pre">13,</span> <span class="pre">14,</span> <span class="pre">15,</span> <span class="pre">16,</span> <span class="pre">17,</span> <span class="pre">18,</span> <span class="pre">19,</span> <span class="pre">20,</span> <span class="pre">21,</span> <span class="pre">22,</span> <span class="pre">23,</span> <span class="pre">24,</span> <span class="pre">25,</span> <span class="pre">26,</span> <span class="pre">27,</span> <span class="pre">28,</span> <span class="pre">29,</span> <span class="pre">30,</span> <span class="pre">31,</span> <span class="pre">32,</span> <span class="pre">33,</span> <span class="pre">34,</span> <span class="pre">35,</span> <span class="pre">36,</span> <span class="pre">37,</span> <span class="pre">38,</span> <span class="pre">39,</span> <span class="pre">40,</span> <span class="pre">41,</span> <span class="pre">42,</span> <span class="pre">43,</span> <span class="pre">44,</span> <span class="pre">45,</span> <span class="pre">46,</span> <span class="pre">47,</span> <span class="pre">48,</span> <span class="pre">49,</span> <span class="pre">50,</span> <span class="pre">51,</span> <span class="pre">52,</span> <span class="pre">53,</span> <span class="pre">54,</span> <span class="pre">55,</span> <span class="pre">56,</span> <span class="pre">57,</span> <span class="pre">58,</span> <span class="pre">59,</span> <span class="pre">60,</span> <span class="pre">61,</span> <span class="pre">62,</span> <span class="pre">63]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure_rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poisson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">misc_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine" title="Permalink to this definition">¶</a></dt>
-<dd><p>The main component of Opacus is the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>.</p>
-<p>To train a model with differential privacy, all you need to do
-is to define a <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> and later attach it to your
-optimizer before running.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.privacy_engine.</span></span><span class="sig-name descname"><span class="pre">PrivacyEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accountant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rdp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main entry point to the Opacus API - use <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>  to enable differential
+privacy for your model training.</p>
+<p><code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> object encapsulates current privacy state (privacy budget +
+method it’s been calculated) and exposes <code class="docutils literal notranslate"><span class="pre">make_private</span></code> method to wrap your
+PyTorch training objects with their private counterparts.</p>
 <p class="rubric">Example</p>
-<p>This example shows how to define a <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> and to attach
-it to your optimizer.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>  <span class="c1"># An example model</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dataloader</span> <span class="o">=</span> <span class="n">demo_dataloader</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">MyCustomModel</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>  <span class="c1"># That's it! Now it's business as usual.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">()</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">dataloader</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">make_private</span><span class="p">(</span>
+<span class="gp">... </span>   <span class="n">module</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+<span class="gp">... </span>   <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+<span class="gp">... </span>   <span class="n">data_loader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+<span class="gp">... </span>   <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="gp">... </span>   <span class="n">max_grad_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># continue training as normal</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The Pytorch module to which we are attaching the privacy engine</p></li>
-<li><p><strong>alphas</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – A list of RDP orders</p></li>
-<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – The ratio of the standard deviation of the Gaussian noise to
-the L2-sensitivity of the function to which the noise is added</p></li>
-<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]) – The maximum norm of the per-sample gradients. Any gradient with norm
-higher than this will be clipped to this value.</p></li>
-<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Training batch size. Used in the privacy accountant.</p></li>
-<li><p><strong>sample_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – The size of the sample (dataset). Used in the privacy accountant.</p></li>
-<li><p><strong>sample_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – Sample rate used to build batches. Used in the privacy accountant.</p></li>
-<li><p><strong>secure_rng</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If on, it will use <code class="docutils literal notranslate"><span class="pre">torchcsprng</span></code> for secure random number generation.
-Comes with a significant performance cost, therefore it’s recommended that you
-turn it off when just experimenting.</p></li>
-<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to indicate if the input tensor to the corresponding module
-has the first dimension representing the batch. If set to True, dimensions on
-input tensor will be <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">...,</span> <span class="pre">...]</span></code>.</p></li>
-<li><p><strong>target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The target delta. If unset, we will set it for you.</p></li>
-<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the gradients)
-is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
-<li><p><strong>**misc_settings</strong> – Other arguments to the init</p></li>
+<li><p><strong>accountant</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Accounting mechanism. Currently supported:
+- rdp (<code class="xref py py-class docutils literal notranslate"><span class="pre">RDPAccountant</span></code>)
+- gdp (<code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianAccountant</span></code>)</p></li>
+<li><p><strong>secure_mode</strong> – Set to <code class="docutils literal notranslate"><span class="pre">True</span></code> if cryptographically strong DP guarantee is
+required. <code class="docutils literal notranslate"><span class="pre">secure_mode=True</span></code> uses secure random number generator for
+noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and
+prevents certain floating-point arithmetic-based attacks.
+See <code class="xref py py-meth docutils literal notranslate"><span class="pre">_generate_noise()</span></code> for details.
+When set to <code class="docutils literal notranslate"><span class="pre">True</span></code> requires <code class="docutils literal notranslate"><span class="pre">torchcsprng</span></code> to be installed</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.attach">
-<span class="sig-name descname"><span class="pre">attach</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.attach"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.attach" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attaches the privacy engine to the optimizer.</p>
-<p>Attaches to the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> an optimizer object,and injects
-itself into the optimizer’s step. To do that it,</p>
-<ol class="arabic simple">
-<li><p>Validates that the model does not have unsupported layers.</p></li>
-<li><p>Adds a pointer to this object (the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>) inside the optimizer.</p></li>
-<li><p>Moves optimizer’s original <code class="docutils literal notranslate"><span class="pre">step()</span></code> function to <code class="docutils literal notranslate"><span class="pre">original_step()</span></code>.</p></li>
-</ol>
-<p>4. Monkeypatches the optimizer’s <code class="docutils literal notranslate"><span class="pre">step()</span></code> function to call <code class="docutils literal notranslate"><span class="pre">step()</span></code> on
-the query engine automatically whenever it would call <code class="docutils literal notranslate"><span class="pre">step()</span></code> for itself.</p>
+<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.get_compatible_module">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_compatible_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.get_compatible_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.get_compatible_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a privacy engine compatible module. Also validates the module after
+running registered fixes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – The optimizer to which the privacy engine will attach</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.detach">
-<span class="sig-name descname"><span class="pre">detach</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.detach"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.detach" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detaches the privacy engine from optimizer.</p>
-<p>To detach the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> from optimizer, this method returns
-the model and the optimizer to their original states (i.e. all
-added attributes/methods will be removed).</p>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.get_privacy_spent">
-<span class="sig-name descname"><span class="pre">get_privacy_spent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.get_privacy_spent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.get_privacy_spent" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes the (epsilon, delta) privacy budget spent so far.</p>
-<p>This method converts from an (alpha, epsilon)-DP guarantee for all alphas that
-the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> was initialized with. It returns the optimal alpha together
-with the best epsilon.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – The Target delta. If None, it will default to the privacy
-engine’s target delta.</p>
+<dd class="field-odd"><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – module to be modified</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Pair of epsilon and optimal order alpha.</p>
+<dd class="field-odd"><p>Module with some submodules replaced for their deep copies or
+close equivalents.
+See <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleValidator</span></code> for
+more details</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.step">
-<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_empty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.step" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes a step for the privacy engine.</p>
+<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.get_epsilon">
+<span class="sig-name descname"><span class="pre">get_epsilon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.get_epsilon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.get_epsilon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the (epsilon, delta) privacy budget spent so far.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>is_empty</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether the step is taken on an empty batch
-In this case, we do not call clip_and_accumulate since there are no
-per sample gradients.</p>
+<dd class="field-odd"><p><strong>delta</strong> – The target delta.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pair of epsilon and optimal order alpha.</p>
 </dd>
 </dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.is_compatible">
+<span class="sig-name descname"><span class="pre">is_compatible</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.is_compatible"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.is_compatible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if task components are compatible with DP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – module to be checked</p></li>
+<li><p><strong>optimizer</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>]) – optimizer to be checked</p></li>
+<li><p><strong>data_loader</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]) – data_loader to be checked</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if compatible, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.make_private">
+<span class="sig-name descname"><span class="pre">make_private</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poisson_sampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clipping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'flat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.make_private"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.make_private" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add privacy-related responsibilites to the main PyTorch training objects:
+model, optimizer, and the data loader.</p>
+<p>All of the returned objects act just like their non-private counterparts
+passed as arguments, but with added DP tasks.</p>
+<p>Model is wrapped to also compute per sample gradients.
+Optimizer is now responsible for gradient clipping and adding noise to the</p>
+<blockquote>
+<div><p>gradients.</p>
+</div></blockquote>
+<p>DataLoader is updated to perform Poisson sampling.</p>
 <p class="rubric">Notes</p>
-<p>You should not call this method directly. Rather, by attaching your
-<code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> to the optimizer, the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code> would have
-the optimizer call this method for you.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – If the last batch of training epoch is greater than others.
-    This ensures the clipper consumed the right amount of gradients.
-    In the last batch of a training epoch, we might get a batch that is
-    smaller than others but we should never get a batch that is too large</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.to">
-<span class="sig-name descname"><span class="pre">to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.to" title="Permalink to this definition">¶</a></dt>
-<dd><p>Moves the privacy engine to the target device.</p>
+<p>Using any other models, optimizers, or data sources during training
+will invalidate stated privacy guarantees.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>device</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code>]) – The device on which Pytorch Tensors are allocated.
-See: <a class="reference external" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device">https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device</a></p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – PyTorch module to be used for training</p></li>
+<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – Optimizer to be used for training</p></li>
+<li><p><strong>data_loader</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>) – DataLoader to be used for training</p></li>
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The ratio of the standard deviation of the Gaussian noise to
+the L2-sensitivity of the function to which the noise is added
+(How much noise to add)</p></li>
+<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]) – The maximum norm of the per-sample gradients. Any gradient with norm
+higher than this will be clipped to this value.</p></li>
+<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to indicate if the input tensor to the corresponding module
+has the first dimension representing the batch. If set to True, dimensions on
+input tensor are expected be <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">...]</span></code>, otherwise
+<code class="docutils literal notranslate"><span class="pre">[K,</span> <span class="pre">batch_size,</span> <span class="pre">...]</span></code></p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the gradients)
+is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
+<li><p><strong>noise_generator</strong> – torch.Generator() used as a source of randomness for
+gaussian noise generation</p></li>
+<li><p><strong>poisson_sampling</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – <code class="docutils literal notranslate"><span class="pre">True</span></code> if you want to use standard sampling required
+for DP guarantees. Setting <code class="docutils literal notranslate"><span class="pre">False</span></code> will leave provided data_loader
+unchanged. Technically this doesn’t fit the assumptions made by
+privacy accounting mechanism, but it can be a good approximation when
+using Poisson sampling is unfeasible.</p></li>
+<li><p><strong>clipping</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Per sample gradient clipping mechanism (“flat” or “per_layer”).
+Flat clipping calculates the norm of the entire gradient over
+all parameters, while per layer clipping sets individual norms for
+every parameter tensor. Flat clipping is usually preferred, but using
+per layer clipping in combination with distributed training can provide
+notable performance gains.</p></li>
+<li><p><strong>noise_generator</strong> – torch.Generator() object used as a source of randomness for
+the noise</p></li>
+</ul>
 </dd>
-</dl>
-<p class="rubric">Example</p>
-<p>This example shows the usage of this method, on how to move the model
-after instantiating the <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>  <span class="c1"># An example model. Default device is CPU</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="s2">"cuda:3"</span>  <span class="c1"># GPU</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># If we move the model to GPU, we should call the to() method of the privacy engine (next line)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="field-list simple">
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]</p>
+</dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The current <code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code></p>
+<dd class="field-odd"><p><p>Tuple of (model, optimizer, data_loader).</p>
+<dl class="simple">
+<dt>Model is a wrapper around the original model that also computes per sample</dt><dd><p>gradients</p>
+</dd>
+<dt>Optimizer is a wrapper around the original optimizer that also does</dt><dd><p>gradient clipping and noise addition to the gradients</p>
+</dd>
+<dt>DataLoader is a brand new DataLoader object, constructed to behave as</dt><dd><p>equivalent to the original data loader, possibly with updated
+sampling mechanism. Points to the same dataset object.</p>
+</dd>
+</dl>
+</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.virtual_step">
-<span class="sig-name descname"><span class="pre">virtual_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.virtual_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.virtual_step" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes a virtual step.</p>
-<p>Virtual batches enable training with arbitrary large batch sizes, while
-keeping the memory consumption constant. This is beneficial, when training
-models with larger batch sizes than standard models.</p>
-<p class="rubric">Example</p>
-<p>Imagine you want to train a model with batch size of 2048, but you can only
-fit batch size of 128 in your GPU. Then, you can do the following:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">16</span> <span class="o">==</span> <span class="mi">15</span><span class="p">:</span>
-<span class="gp">&gt;&gt;&gt; </span>        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>    <span class="c1"># this will call privacy engine's step()</span>
-<span class="gp">&gt;&gt;&gt; </span>        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="k">else</span><span class="p">:</span>
-<span class="gp">&gt;&gt;&gt; </span>        <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span>   <span class="c1"># this will call privacy engine's virtual_step()</span>
-</pre></div>
-</div>
-<p>The rough idea of virtual step is as follows:</p>
-<p>1. Calling <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code> repeatedly stores the per-sample gradients
-for all mini-batches. If we call <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code> <code class="docutils literal notranslate"><span class="pre">N</span></code> times on
-mini-batches of size <code class="docutils literal notranslate"><span class="pre">B</span></code>, then each weight’s <code class="docutils literal notranslate"><span class="pre">.grad_sample</span></code> field will
-contain <code class="docutils literal notranslate"><span class="pre">NxB</span></code> gradients. Then, when calling <code class="docutils literal notranslate"><span class="pre">step()</span></code>, the privacy engine
-clips all <code class="docutils literal notranslate"><span class="pre">NxB</span></code> gradients and computes the average gradient for an effective
-batch of size <code class="docutils literal notranslate"><span class="pre">NxB</span></code>. A call to <code class="docutils literal notranslate"><span class="pre">optimizer.zero_grad()</span></code> erases the
-per-sample gradients.</p>
-<p>2. By calling <code class="docutils literal notranslate"><span class="pre">virtual_step()</span></code> after <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code>,the <code class="docutils literal notranslate"><span class="pre">B</span></code>
-per-sample gradients for this mini-batch are clipped and summed up into a
-gradient accumulator. The per-sample gradients can then be discarded. After
-<code class="docutils literal notranslate"><span class="pre">N</span></code> iterations (alternating calls to <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code> and
-<code class="docutils literal notranslate"><span class="pre">virtual_step()</span></code>), a call to <code class="docutils literal notranslate"><span class="pre">step()</span></code> will compute the average gradient
-for an effective batch of size <code class="docutils literal notranslate"><span class="pre">NxB</span></code>.</p>
-<p>The advantage here is that this is memory-efficient: it discards the per-sample
-gradients after every mini-batch. We can thus handle batches of arbitrary size.</p>
+<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.make_private_with_epsilon">
+<span class="sig-name descname"><span class="pre">make_private_with_epsilon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_epsilon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.make_private_with_epsilon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.make_private_with_epsilon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version of <a class="reference internal" href="#opacus.privacy_engine.PrivacyEngine.make_private" title="opacus.privacy_engine.PrivacyEngine.make_private"><code class="xref py py-meth docutils literal notranslate"><span class="pre">make_private()</span></code></a>,
+that calculates privacy parameters based on a given privacy budget.</p>
+<p>For the full documentation see
+<a class="reference internal" href="#opacus.privacy_engine.PrivacyEngine.make_private" title="opacus.privacy_engine.PrivacyEngine.make_private"><code class="xref py py-meth docutils literal notranslate"><span class="pre">make_private()</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – PyTorch module to be used for training</p></li>
+<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – Optimizer to be used for training</p></li>
+<li><p><strong>data_loader</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>) – DataLoader to be used for training</p></li>
+<li><p><strong>noise_multiplier</strong> – The ratio of the standard deviation of the Gaussian noise to
+the L2-sensitivity of the function to which the noise is added
+(How much noise to add)</p></li>
+<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The maximum norm of the per-sample gradients. Any gradient with norm
+higher than this will be clipped to this value.</p></li>
+<li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to indicate if the input tensor to the corresponding module
+has the first dimension representing the batch. If set to True, dimensions on
+input tensor are expected be <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">...]</span></code>, otherwise
+<code class="docutils literal notranslate"><span class="pre">[K,</span> <span class="pre">batch_size,</span> <span class="pre">...]</span></code></p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the gradients)
+is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
+<li><p><strong>noise_seed</strong> – Seed to be used for random noise generation</p></li>
+<li><p><strong>poisson_sampling</strong> – <code class="docutils literal notranslate"><span class="pre">True</span></code> if you want to use standard sampling required
+for DP guarantees. Setting <code class="docutils literal notranslate"><span class="pre">False</span></code> will leave provided data_loader
+unchanged. Technically this doesn’t fit the assumptions made by
+privacy accounting mechanism, but it can be a good approximation when
+using Poisson sampling is unfeasible.</p></li>
+<li><p><strong>clipping</strong> – Per sample gradient clipping mechanism (“flat” or “per_layer”).
+Flat clipping calculates the norm of the entire gradient over
+all parameters, while per layer clipping sets individual norms for
+every parameter tensor. Flat clipping is usually preferred, but using
+per layer clipping in combination with distributed training can provide
+notable performance gains.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>Tuple of (model, optimizer, data_loader).</p>
+<dl class="simple">
+<dt>Model is a wrapper around the original model that also computes per sample</dt><dd><p>gradients</p>
+</dd>
+<dt>Optimizer is a wrapper around the original optimizer that also does</dt><dd><p>gradient clipping and adding noise to the gradients</p>
+</dd>
+<dt>DataLoader is a brand new DataLoader object, constructed to behave as</dt><dd><p>equivalent to the original data loader, possibly with updated
+sampling mechanism. Points to the same dataset object.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.zero_grad">
-<span class="sig-name descname"><span class="pre">zero_grad</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.zero_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.zero_grad" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resets clippers status.</p>
-<p>Clipper keeps internal gradient per sample in the batch in each
-<code class="docutils literal notranslate"><span class="pre">forward</span></code> call of the module, they need to be cleaned before the
-next round.</p>
-<p>If these variables are not cleaned the per sample gradients keep
-being concatenated accross batches. If accumulating gradients
-is intented behavious, e.g. simulating a large batch, prefer
-using <code class="docutils literal notranslate"><span class="pre">virtual_step()</span></code> function.</p>
+<dt class="sig sig-object py" id="opacus.privacy_engine.PrivacyEngine.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/privacy_engine.html#PrivacyEngine.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.privacy_engine.PrivacyEngine.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate that task components are compatible with DP.
+Same as <code class="docutils literal notranslate"><span class="pre">is_compatible()</span></code>, but raises error instead of returning bool.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – module to be checked</p></li>
+<li><p><strong>optimizer</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>]) – optimizer to be checked</p></li>
+<li><p><strong>data_loader</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]) – data_loader to be checked</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>UnsupportedModuleError</strong> – If one or more modules found to be incompatible</p>
+</dd>
+</dl>
 </dd></dl>
 </dd></dl>
 </section>

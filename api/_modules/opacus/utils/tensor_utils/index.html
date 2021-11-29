@@ -38,7 +38,7 @@
 
 
 <div class="viewcode-block" id="calc_sample_norms"><a class="viewcode-back" href="../../../tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms">[docs]</a><span class="k">def</span> <span class="nf">calc_sample_norms</span><span class="p">(</span>
-    <span class="n">named_params</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">flat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">named_params</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span> <span class="o">*</span><span class="p">,</span> <span class="n">flat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Calculates the norm of the given tensors for each sample.</span>
@@ -53,14 +53,15 @@
 <span class="sd">        flat: A flag, when set to `True` returns a flat norm over all</span>
 <span class="sd">            layers norms</span>
 
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of tensor norms where length of the list is the number of layers</span>
+
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; t1 = torch.rand((2, 5))</span>
 <span class="sd">        &gt;&gt;&gt; t2 = torch.rand((2, 5))</span>
-<span class="sd">        &gt;&gt;&gt; calc_sample_norms([("1", t1), ("2", t2)])</span>
-<span class="sd">            [tensor([1.5117, 1.0618])]</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        A list of tensor norms where length of the list is the number of layers</span>
+<span class="sd">        &gt;&gt;&gt; norms = calc_sample_norms([("1", t1), ("2", t2)])</span>
+<span class="sd">        &gt;&gt;&gt; norms, norms[0].shape</span>
+<span class="sd">        ([tensor([...])], torch.Size([2]))</span>
 <span class="sd">    """</span>
     <span class="n">norms</span> <span class="o">=</span> <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">param</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">named_params</span><span class="p">]</span>
     <span class="c1"># calc norm over all layer norms if flat = True</span>
@@ -85,13 +86,14 @@
 <span class="sd">        param: A tensor of shape ``[B, ...]`` where ``B``</span>
 <span class="sd">            is the size of the batch and is the 0th dimension.</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; t1 = torch.rand((2, 5))</span>
-<span class="sd">        &gt;&gt;&gt; calc_sample_norms_one_layer(t1)</span>
-<span class="sd">            tensor([1.4757, 0.8128])</span>
-
 <span class="sd">    Returns:</span>
 <span class="sd">        A tensor of norms</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; t1 = torch.rand((2, 5))</span>
+<span class="sd">        &gt;&gt;&gt; norms = calc_sample_norms_one_layer(t1)</span>
+<span class="sd">        &gt;&gt;&gt; norms, norms.shape</span>
+<span class="sd">        (tensor([...]), torch.Size([2]))</span>
 <span class="sd">    """</span>
     <span class="n">norms</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">param</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">norms</span></div>
@@ -111,13 +113,13 @@
 <span class="sd">        tensor: An input tensor of shape ``(B, ..., X[n_dims-1])``.</span>
 <span class="sd">        n_dims: Number of dimensions to keep.</span>
 
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of shape ``(B, ..., X[n_dims-1])``</span>
+
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; tensor = torch.ones(1, 2, 3, 4, 5)</span>
 <span class="sd">        &gt;&gt;&gt; sum_over_all_but_batch_and_last_n(tensor, n_dims=2).shape</span>
 <span class="sd">        torch.Size([1, 4, 5])</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        A tensor of shape ``(B, ..., X[n_dims-1])``</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="n">n_dims</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">tensor</span>
@@ -126,8 +128,43 @@
         <span class="k">return</span> <span class="n">tensor</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dims</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="unfold2d"><a class="viewcode-back" href="../../../tensor_utils.html#opacus.utils.tensor_utils.unfold2d">[docs]</a><span class="k">def</span> <span class="nf">unfold2d</span><span class="p">(</span>
+    <span class="nb">input</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">kernel_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">padding</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">stride</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">dilation</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+<span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    See :meth:`~torch.nn.functional.unfold`</span>
+<span class="sd">    """</span>
+    <span class="o">*</span><span class="n">shape</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">H_effective</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">H</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">padding</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">kernel_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">kernel_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dilation</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="p">)</span> <span class="o">//</span> <span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">W_effective</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">W</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">padding</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">kernel_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">kernel_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dilation</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="p">)</span> <span class="o">//</span> <span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="p">(</span><span class="n">padding</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">padding</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">padding</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">padding</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="o">*</span><span class="n">shape_pad</span><span class="p">,</span> <span class="n">H_pad</span><span class="p">,</span> <span class="n">W_pad</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">strides</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">stride</span><span class="p">())</span>
+    <span class="n">strides</span> <span class="o">=</span> <span class="n">strides</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">W_pad</span> <span class="o">*</span> <span class="n">dilation</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">dilation</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">W_pad</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+    <span class="p">]</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">as_strided</span><span class="p">(</span>
+        <span class="n">shape</span> <span class="o">+</span> <span class="p">[</span><span class="n">kernel_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">kernel_size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">H_effective</span><span class="p">,</span> <span class="n">W_effective</span><span class="p">],</span> <span class="n">strides</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">H_effective</span> <span class="o">*</span> <span class="n">W_effective</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="unfold3d"><a class="viewcode-back" href="../../../tensor_utils.html#opacus.utils.tensor_utils.unfold3d">[docs]</a><span class="k">def</span> <span class="nf">unfold3d</span><span class="p">(</span>
     <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
     <span class="n">kernel_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
     <span class="n">padding</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">stride</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -146,15 +183,15 @@
 <span class="sd">        stride: the stride of the sliding blocks in the input spatial dimensions</span>
 <span class="sd">        dilation: the spacing between the kernel points.</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; B, C, D, H, W = 3, 4, 5, 6, 7</span>
-<span class="sd">        &gt;&gt;&gt; tensor = torch.arange(1,B*C*D*H*W+1.).view(B,C,D,H,W)</span>
-<span class="sd">        &gt;&gt;&gt; unfold3d(tensor, kernel_size=2, padding=0, stride=1).shape</span>
-<span class="sd">        torch.Size([3, 32, 120])</span>
-
 <span class="sd">    Returns:</span>
 <span class="sd">        A tensor of shape ``(B, C * np.product(kernel_size), L)``, where L - output spatial dimensions.</span>
 <span class="sd">        See :class:`torch.nn.Unfold` for more details</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; B, C, D, H, W = 3, 4, 5, 6, 7</span>
+<span class="sd">        &gt;&gt;&gt; tensor = torch.arange(1, B*C*D*H*W + 1.).view(B, C, D, H, W)</span>
+<span class="sd">        &gt;&gt;&gt; unfold3d(tensor, kernel_size=2, padding=0, stride=1).shape</span>
+<span class="sd">        torch.Size([3, 32, 120])</span>
 <span class="sd">    """</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">5</span><span class="p">:</span>

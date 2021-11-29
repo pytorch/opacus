@@ -28,12 +28,13 @@
 <span id="dpmultiheadattention"></span><h1>DPMultiheadAttention<a class="headerlink" href="#module-opacus.layers.dp_multihead_attention" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="opacus.layers.dp_multihead_attention.SequenceBias">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_multihead_attention.</span></span><span class="sig-name descname"><span class="pre">SequenceBias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embed_dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_multihead_attention.html#SequenceBias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_multihead_attention.SequenceBias" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_multihead_attention.</span></span><span class="sig-name descname"><span class="pre">SequenceBias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embed_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_multihead_attention.html#SequenceBias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_multihead_attention.SequenceBias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds one bias element to the end of the sequence.
-so if the input has a shape <code class="docutils literal notranslate"><span class="pre">(L,</span> <span class="pre">N,</span> <span class="pre">E)</span></code>, where
-<code class="docutils literal notranslate"><span class="pre">L</span></code> is the sequence length, <code class="docutils literal notranslate"><span class="pre">N</span></code> is the batch size, and <code class="docutils literal notranslate"><span class="pre">E</span></code> is
+so if the input has a shape <code class="docutils literal notranslate"><span class="pre">(L,</span> <span class="pre">N,</span> <span class="pre">E)</span></code>, (<code class="docutils literal notranslate"><span class="pre">batch_first</span> <span class="pre">=</span> <span class="pre">False</span></code>),
+where <code class="docutils literal notranslate"><span class="pre">L</span></code> is the sequence length, <code class="docutils literal notranslate"><span class="pre">N</span></code> is the batch size, and <code class="docutils literal notranslate"><span class="pre">E</span></code> is
 the embedding dimension, the output will have a shape
-<code class="docutils literal notranslate"><span class="pre">(L+1,</span> <span class="pre">N,</span> <span class="pre">E)</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">(L+1,</span> <span class="pre">N,</span> <span class="pre">E)</span></code>. When <code class="docutils literal notranslate"><span class="pre">batch_first</span> <span class="pre">=</span> <span class="pre">True</span></code>, input has a shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">L,</span> <span class="pre">E)</span></code>
+and the output will have a shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">L+1,</span> <span class="pre">E)</span></code></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="opacus.layers.dp_multihead_attention.SequenceBias.bias">
 <span class="sig-name descname"><span class="pre">bias</span></span><a class="headerlink" href="#opacus.layers.dp_multihead_attention.SequenceBias.bias" title="Permalink to this definition">¶</a></dt>
@@ -46,10 +47,10 @@ the module of shape <code class="docutils literal notranslate"><span class="pre"
 </dl>
 </dd></dl>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">SequenceBias</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">SequenceBias</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">m</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
 <span class="go">torch.Size([21, 4, 16])</span>
 </pre></div>
 </div>

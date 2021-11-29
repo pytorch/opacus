@@ -24,68 +24,8 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="module-opacus.dp_model_inspector">
-<span id="model-validation"></span><h1>Model Validation<a class="headerlink" href="#module-opacus.dp_model_inspector" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="opacus.dp_model_inspector.DPModelInspector">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.dp_model_inspector.</span></span><span class="sig-name descname"><span class="pre">DPModelInspector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">should_throw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#DPModelInspector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.dp_model_inspector.DPModelInspector" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Class to validate if a given module meets the requirements for attaching</dt><dd><p><code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code>.</p>
-</dd>
-</dl>
-<p>Active checks are listed in the <code class="docutils literal notranslate"><span class="pre">DPModelInspector.inspectors</span></code> attribute.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>should_throw</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether the inspector should throw an exception or
-return False in case of validation error</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="opacus.dp_model_inspector.DPModelInspector.validate">
-<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#DPModelInspector.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.dp_model_inspector.DPModelInspector.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs the validation on the model and all its submodules.</p>
-<p>Validation comprises a series of individual
-<a class="reference internal" href="module_inspection.html#opacus.utils.module_inspection.ModelInspector" title="opacus.utils.module_inspection.ModelInspector"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelInspectors</span></code></a>,
-each checking one predicate. Depending on <code class="docutils literal notranslate"><span class="pre">should_throw</span></code> flag in
-the constructor, will either return False or throw
-<a class="reference internal" href="#opacus.dp_model_inspector.IncompatibleModuleException" title="opacus.dp_model_inspector.IncompatibleModuleException"><code class="xref py py-class docutils literal notranslate"><span class="pre">IncompatibleModuleException</span></code></a> in case of
-validation failure.</p>
-<p class="rubric">Notes</p>
-<p>This method is called in <a class="reference internal" href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine.attach" title="opacus.privacy_engine.PrivacyEngine.attach"><code class="xref py py-meth docutils literal notranslate"><span class="pre">opacus.privacy_engine.PrivacyEngine.attach()</span></code></a>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The model to validate.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>True if successful. False if validation fails and <code class="docutils literal notranslate"><span class="pre">should_throw</span> <span class="pre">==</span> <span class="pre">False</span></code></p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><a class="reference internal" href="#opacus.dp_model_inspector.IncompatibleModuleException" title="opacus.dp_model_inspector.IncompatibleModuleException"><strong>IncompatibleModuleException</strong></a> – If the validation fails and <code class="docutils literal notranslate"><span class="pre">should_throw</span> <span class="pre">==</span> <span class="pre">True</span></code>. Exception message will
-    contain the details of validation failure reason.</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">inspector</span> <span class="o">=</span> <span class="n">DPModelInspector</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">valid_model</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">is_valid</span> <span class="o">=</span> <span class="n">inspector</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">valid_model</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">is_valid</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">invalid_model</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">is_valid</span> <span class="o">=</span> <span class="n">inspector</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">invalid_model</span><span class="p">)</span>
-<span class="go"># IncompatibleModuleException is thrown.</span>
-</pre></div>
-</div>
-</dd></dl>
-</dd></dl>
-<dl class="py exception">
-<dt class="sig sig-object py" id="opacus.dp_model_inspector.IncompatibleModuleException">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.dp_model_inspector.</span></span><span class="sig-name descname"><span class="pre">IncompatibleModuleException</span></span><a class="reference internal" href="_modules/opacus/dp_model_inspector.html#IncompatibleModuleException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.dp_model_inspector.IncompatibleModuleException" title="Permalink to this definition">¶</a></dt>
-<dd><p>Exception class to be thrown in case
-the given model contains incompatible modules.</p>
-</dd></dl>
+<section id="model-validation">
+<h1>Model Validation<a class="headerlink" href="#model-validation" title="Permalink to this headline">¶</a></h1>
 </section>
 </div>
 </div>

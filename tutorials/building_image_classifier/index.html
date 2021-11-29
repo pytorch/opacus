@@ -128,13 +128,15 @@
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">MAX_GRAD_NORM</span> <span class="o">=</span> <span class="mf">1.2</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+
+<span class="n">MAX_GRAD_NORM</span> <span class="o">=</span> <span class="mf">1.2</span>
 <span class="n">EPSILON</span> <span class="o">=</span> <span class="mf">50.0</span>
 <span class="n">DELTA</span> <span class="o">=</span> <span class="mf">1e-5</span>
 <span class="n">EPOCHS</span> <span class="o">=</span> <span class="mi">20</span>
 
 <span class="n">LR</span> <span class="o">=</span> <span class="mf">1e-3</span>
-<span class="n">NUM_WORKERS</span> <span class="o">=</span> <span class="mi">2</span>
 </pre></div>
 </div>
 </div>
@@ -143,7 +145,8 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>There's another constraint we should be mindful of—memory. To balance peak memory requirement, which is proportional to <code>batch_size^2</code>, and training performance, we use virtual batches. With virtual batches we can separate physical steps (gradient computation) and logical steps (noise addition and parameter updates): use larger batches for training, while keeping memory footprint low. Below we will specify two constants:</p>
+<p>There's another constraint we should be mindful of—memory. To balance peak memory requirement, which is proportional to <code>batch_size^2</code>, and training performance, we will be using BatchMemoryManager. It separates the logical batch size (which defines how often the model is updated and how much DP noise is added), and a physical batch size (which defines how many samples do we process at a time).</p>
+<p>With BatchMemoryManager you will create your DataLoader with a logical batch size, and then provide maximum physical batch size to the memory manager.</p>
 </div>
 </div>
 </div>
@@ -152,10 +155,8 @@
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">128</span>
-<span class="n">VIRTUAL_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">512</span>
-<span class="k">assert</span> <span class="n">VIRTUAL_BATCH_SIZE</span> <span class="o">%</span> <span class="n">BATCH_SIZE</span> <span class="o">==</span> <span class="mi">0</span> <span class="c1"># VIRTUAL_BATCH_SIZE should be divisible by BATCH_SIZE</span>
-<span class="n">N_ACCUMULATION_STEPS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">VIRTUAL_BATCH_SIZE</span> <span class="o">/</span> <span class="n">BATCH_SIZE</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="n">MAX_PHYSICAL_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">128</span>
 </pre></div>
 </div>
 </div>
@@ -207,26 +208,19 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [ ]:</div>
+<div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision.datasets</span> <span class="kn">import</span> <span class="n">CIFAR10</span>
-<span class="kn">from</span> <span class="nn">opacus.utils.uniform_sampler</span> <span class="kn">import</span> <span class="n">UniformWithReplacementSampler</span>
 
 <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="s1">'../cifar10'</span>
 
 <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">CIFAR10</span><span class="p">(</span>
     <span class="n">root</span><span class="o">=</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">)</span>
 
-<span class="n">SAMPLE_RATE</span> <span class="o">=</span> <span class="n">BATCH_SIZE</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">)</span>
-
 <span class="n">train_loader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span>
     <span class="n">train_dataset</span><span class="p">,</span>
-    <span class="n">num_workers</span><span class="o">=</span><span class="n">NUM_WORKERS</span><span class="p">,</span>
-    <span class="n">batch_sampler</span><span class="o">=</span><span class="n">UniformWithReplacementSampler</span><span class="p">(</span>
-        <span class="n">num_samples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">),</span>
-        <span class="n">sample_rate</span><span class="o">=</span><span class="n">SAMPLE_RATE</span><span class="p">,</span>
-    <span class="p">),</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">test_dataset</span> <span class="o">=</span> <span class="n">CIFAR10</span><span class="p">(</span>
@@ -236,9 +230,20 @@
     <span class="n">test_dataset</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">num_workers</span><span class="o">=</span><span class="n">NUM_WORKERS</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Files already downloaded and verified
+Files already downloaded and verified
+</pre>
+</div>
 </div>
 </div>
 </div>
@@ -267,13 +272,7 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Now, let’s check if the model is compatible with Opacus. Opacus does not support all type of Pytorch layers. To check if your model is compatible with the privacy engine, we have provided a util class to validate your model.</p>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>If you run these commands, you will get the following error:</p>
+<p>When you run the code below, you're presented with a list of errors, indicating which modules are inpompatible.</p>
 </div>
 </div>
 </div>
@@ -282,10 +281,10 @@
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.dp_model_inspector</span> <span class="kn">import</span> <span class="n">DPModelInspector</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.validators</span> <span class="kn">import</span> <span class="n">ModuleValidator</span>
 
-<span class="n">inspector</span> <span class="o">=</span> <span class="n">DPModelInspector</span><span class="p">()</span>
-<span class="n">inspector</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">errors</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">raise_if_error</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">errors</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]</span>
 </pre></div>
 </div>
 </div>
@@ -293,25 +292,13 @@
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_text output_error">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">IncompatibleModuleException</span>               Traceback (most recent call last)
-<span class="ansi-green-fg">&lt;ipython-input-11-c3648acc319a&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
-<span class="ansi-green-intense-fg ansi-bold">      2</span> 
-<span class="ansi-green-intense-fg ansi-bold">      3</span> inspector <span class="ansi-blue-fg">=</span> DPModelInspector<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">)</span>
-<span class="ansi-green-fg">----&gt; 4</span><span class="ansi-red-fg"> </span>inspector<span class="ansi-blue-fg">.</span>validate<span class="ansi-blue-fg">(</span>model<span class="ansi-blue-fg">)</span>
-
-<span class="ansi-green-fg">/mnt/xarfuse/uid-179429/a7a74ae2-seed-nspid4026531836-ns-4026531840/opacus/dp_model_inspector.py</span> in <span class="ansi-cyan-fg">validate</span><span class="ansi-blue-fg">(self, model)</span>
-<span class="ansi-green-intense-fg ansi-bold">    115</span>                 <span class="ansi-green-fg">if</span> inspector<span class="ansi-blue-fg">.</span>violators<span class="ansi-blue-fg">:</span>
-<span class="ansi-green-intense-fg ansi-bold">    116</span>                     message <span class="ansi-blue-fg">+=</span> <span class="ansi-blue-fg">f"\n{inspector.message}: {inspector.violators}"</span>
-<span class="ansi-green-fg">--&gt; 117</span><span class="ansi-red-fg">             </span><span class="ansi-green-fg">raise</span> IncompatibleModuleException<span class="ansi-blue-fg">(</span>message<span class="ansi-blue-fg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">    118</span>         <span class="ansi-green-fg">return</span> valid
-<span class="ansi-green-intense-fg ansi-bold">    119</span> 
-
-<span class="ansi-red-fg">IncompatibleModuleException</span>: Model contains incompatible modules.
-Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn2', 'Main.layer1.1.bn1', 'Main.layer1.1.bn2', 'Main.layer2.0.bn1', 'Main.layer2.0.bn2', 'Main.layer2.0.downsample.1', 'Main.layer2.1.bn1', 'Main.layer2.1.bn2', 'Main.layer3.0.bn1', 'Main.layer3.0.bn2', 'Main.layer3.0.downsample.1', 'Main.layer3.1.bn1', 'Main.layer3.1.bn2', 'Main.layer4.0.bn1', 'Main.layer4.0.bn2', 'Main.layer4.0.downsample.1', 'Main.layer4.1.bn1', 'Main.layer4.1.bn2']</pre>
+<div class="prompt output_prompt">Out[6]:</div>
+<div class="output_text output_subarea output_execute_result">
+<pre>[opacus.validators.errors.ShouldReplaceModuleError("BatchNorm cannot support training with differential privacy. The reason for it is that BatchNorm makes each sample's normalized value depend on its peers in a batch, ie the same sample x will get normalized to a different value depending on who else is on its batch. Privacy-wise, this means that we would have to put a privacy mechanism there too. While it can in principle be done, there are now multiple normalization layers that do not have this issue: LayerNorm, InstanceNorm and their generalization GroupNorm are all privacy-safe since they don't have this property.We offer utilities to automatically replace BatchNorms to GroupNorms and we will release pretrained models to help transition, such as GN-ResNet ie a ResNet using GroupNorm, pretrained on ImageNet"),
+ opacus.validators.errors.ShouldReplaceModuleError("BatchNorm cannot support training with differential privacy. The reason for it is that BatchNorm makes each sample's normalized value depend on its peers in a batch, ie the same sample x will get normalized to a different value depending on who else is on its batch. Privacy-wise, this means that we would have to put a privacy mechanism there too. While it can in principle be done, there are now multiple normalization layers that do not have this issue: LayerNorm, InstanceNorm and their generalization GroupNorm are all privacy-safe since they don't have this property.We offer utilities to automatically replace BatchNorms to GroupNorms and we will release pretrained models to help transition, such as GN-ResNet ie a ResNet using GroupNorm, pretrained on ImageNet"),
+ opacus.validators.errors.ShouldReplaceModuleError("BatchNorm cannot support training with differential privacy. The reason for it is that BatchNorm makes each sample's normalized value depend on its peers in a batch, ie the same sample x will get normalized to a different value depending on who else is on its batch. Privacy-wise, this means that we would have to put a privacy mechanism there too. While it can in principle be done, there are now multiple normalization layers that do not have this issue: LayerNorm, InstanceNorm and their generalization GroupNorm are all privacy-safe since they don't have this property.We offer utilities to automatically replace BatchNorms to GroupNorms and we will release pretrained models to help transition, such as GN-ResNet ie a ResNet using GroupNorm, pretrained on ImageNet"),
+ opacus.validators.errors.ShouldReplaceModuleError("BatchNorm cannot support training with differential privacy. The reason for it is that BatchNorm makes each sample's normalized value depend on its peers in a batch, ie the same sample x will get normalized to a different value depending on who else is on its batch. Privacy-wise, this means that we would have to put a privacy mechanism there too. While it can in principle be done, there are now multiple normalization layers that do not have this issue: LayerNorm, InstanceNorm and their generalization GroupNorm are all privacy-safe since they don't have this property.We offer utilities to automatically replace BatchNorms to GroupNorms and we will release pretrained models to help transition, such as GN-ResNet ie a ResNet using GroupNorm, pretrained on ImageNet"),
+ opacus.validators.errors.ShouldReplaceModuleError("BatchNorm cannot support training with differential privacy. The reason for it is that BatchNorm makes each sample's normalized value depend on its peers in a batch, ie the same sample x will get normalized to a different value depending on who else is on its batch. Privacy-wise, this means that we would have to put a privacy mechanism there too. While it can in principle be done, there are now multiple normalization layers that do not have this issue: LayerNorm, InstanceNorm and their generalization GroupNorm are all privacy-safe since they don't have this property.We offer utilities to automatically replace BatchNorms to GroupNorms and we will release pretrained models to help transition, such as GN-ResNet ie a ResNet using GroupNorm, pretrained on ImageNet")]</pre>
 </div>
 </div>
 </div>
@@ -320,7 +307,9 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Let us modify the model to work with Opacus. From the output above, you can see that the BatchNorm layers are not supported because they compute the mean and variance across the batch, creating a dependency between samples in a batch, a privacy violation. One way to modify our model is to replace all the BatchNorm layers with <a href="https://arxiv.org/pdf/1803.08494.pdf">GroupNorm</a> using the <code>convert_batchnorm_modules</code> util function.</p>
+<p>Let us modify the model to work with Opacus. From the output above, you can see that the BatchNorm layers are not supported because they compute the mean and variance across the batch, creating a dependency between samples in a batch, a privacy violation.</p>
+<p>Recommended approach to deal with it is calling <code>ModuleValidator.fix(model)</code> - it tries to find the best replacement for incompatible modules. For example, for BatchNorm modules, it replaces them with GroupNorm.
+You can see, that after this, no expection is raised</p>
 </div>
 </div>
 </div>
@@ -329,12 +318,8 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.dp_model_inspector</span> <span class="kn">import</span> <span class="n">DPModelInspector</span>
-<span class="kn">from</span> <span class="nn">opacus.utils</span> <span class="kn">import</span> <span class="n">module_modification</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">module_modification</span><span class="o">.</span><span class="n">convert_batchnorm_modules</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-<span class="n">inspector</span> <span class="o">=</span> <span class="n">DPModelInspector</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Is the model valid? </span><span class="si">{</span><span class="n">inspector</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">raise_if_error</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -342,10 +327,9 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Is the model valid? True
-</pre>
+<div class="prompt output_prompt">Out[7]:</div>
+<div class="output_text output_subarea output_execute_result">
+<pre>[]</pre>
 </div>
 </div>
 </div>
@@ -380,7 +364,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [36]:</div>
+<div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
@@ -433,17 +417,19 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus</span> <span class="kn">import</span> <span class="n">PrivacyEngine</span>
 
-<span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span>
-    <span class="n">sample_rate</span><span class="o">=</span><span class="n">SAMPLE_RATE</span> <span class="o">*</span> <span class="n">N_ACCUMULATION_STEPS</span><span class="p">,</span>
-    <span class="n">epochs</span> <span class="o">=</span> <span class="n">EPOCHS</span><span class="p">,</span>
-    <span class="n">target_epsilon</span> <span class="o">=</span> <span class="n">EPSILON</span><span class="p">,</span>
-    <span class="n">target_delta</span> <span class="o">=</span> <span class="n">DELTA</span><span class="p">,</span>
+<span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">()</span>
+
+<span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">make_private_with_epsilon</span><span class="p">(</span>
+    <span class="n">module</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+    <span class="n">data_loader</span><span class="o">=</span><span class="n">train_loader</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="n">EPOCHS</span><span class="p">,</span>
+    <span class="n">target_epsilon</span><span class="o">=</span><span class="n">EPSILON</span><span class="p">,</span>
+    <span class="n">target_delta</span><span class="o">=</span><span class="n">DELTA</span><span class="p">,</span>
     <span class="n">max_grad_norm</span><span class="o">=</span><span class="n">MAX_GRAD_NORM</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">privacy_engine</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using sigma=</span><span class="si">{</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="si">}</span><span class="s2"> and C=</span><span class="si">{</span><span class="n">MAX_GRAD_NORM</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using sigma=</span><span class="si">{</span><span class="n">optimizer</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="si">}</span><span class="s2"> and C=</span><span class="si">{</span><span class="n">MAX_GRAD_NORM</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -473,6 +459,8 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.batch_memory_manager</span> <span class="kn">import</span> <span class="n">BatchMemoryManager</span>
+
 
 <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
     <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
@@ -480,40 +468,42 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 
     <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">top1_acc</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">with</span> <span class="n">BatchMemoryManager</span><span class="p">(</span>
+        <span class="n">data_loader</span><span class="o">=</span><span class="n">train_loader</span><span class="p">,</span> 
+        <span class="n">max_physical_batch_size</span><span class="o">=</span><span class="n">MAX_PHYSICAL_BATCH_SIZE</span><span class="p">,</span> 
+        <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">memory_safe_data_loader</span><span class="p">:</span>
 
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>        
-        <span class="n">images</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">memory_safe_data_loader</span><span class="p">):</span>   
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">images</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 
-        <span class="c1"># compute output</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-        
-        <span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">labels</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
-        
-        <span class="c1"># measure accuracy and record loss</span>
-        <span class="n">acc</span> <span class="o">=</span> <span class="n">accuracy</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+            <span class="c1"># compute output</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
-        <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-        <span class="n">top1_acc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acc</span><span class="p">)</span>
-        
-        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-        	
-        <span class="c1"># take a real optimizer step after N_VIRTUAL_STEP steps t</span>
-        <span class="k">if</span> <span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">N_ACCUMULATION_STEPS</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="p">)):</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+            <span class="c1"># measure accuracy and record loss</span>
+            <span class="n">acc</span> <span class="o">=</span> <span class="n">accuracy</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+            <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">top1_acc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acc</span><span class="p">)</span>
+
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
             <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">optimizer</span><span class="o">.</span><span class="n">virtual_step</span><span class="p">()</span> <span class="c1"># take a virtual step</span>
 
-        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">200</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">epsilon</span><span class="p">,</span> <span class="n">best_alpha</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="n">DELTA</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="s2">Train Epoch: </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s2"> </span><span class="se">\t</span><span class="s2">"</span>
-                <span class="sa">f</span><span class="s2">"Loss: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="sa">f</span><span class="s2">"Acc@1: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">top1_acc</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="sa">f</span><span class="s2">"(ε = </span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, δ = </span><span class="si">{</span><span class="n">DELTA</span><span class="si">}</span><span class="s2">)"</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">200</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">epsilon</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">DELTA</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="s2">Train Epoch: </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s2"> </span><span class="se">\t</span><span class="s2">"</span>
+                    <span class="sa">f</span><span class="s2">"Loss: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"Acc@1: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">top1_acc</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"(ε = </span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, δ = </span><span class="si">{</span><span class="n">DELTA</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -528,7 +518,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [14]:</div>
+<div class="prompt input_prompt">In [13]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
@@ -573,10 +563,10 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [ ]:</div>
+<div class="prompt input_prompt">In [14]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">EPOCHS</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Epoch"</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">"epoch"</span><span class="p">):</span>
     <span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
@@ -589,53 +579,32 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_text output_subarea">
-<pre>HBox(children=(FloatProgress(value=0.0, description='Epoch', max=20.0, style=ProgressStyle(description_width='…</pre>
+<pre>Epoch:   0%|          | 0/20 [00:00&lt;?, ?epoch/s]</pre>
 </div>
 </div>
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>	Train Epoch: 1 	Loss: 2.466799 Acc@1: 6.015038 (ε = 0.19, δ = 1e-05)
-	Train Epoch: 1 	Loss: 2.756456 Acc@1: 15.440945 (ε = 15.05, δ = 1e-05)
-	Train Epoch: 2 	Loss: 1.833895 Acc@1: 32.743363 (ε = 17.42, δ = 1e-05)
-	Train Epoch: 2 	Loss: 1.761252 Acc@1: 39.067485 (ε = 19.25, δ = 1e-05)
-	Train Epoch: 3 	Loss: 1.695080 Acc@1: 39.837398 (ε = 20.83, δ = 1e-05)
-	Train Epoch: 3 	Loss: 1.720105 Acc@1: 45.711227 (ε = 22.30, δ = 1e-05)
-	Train Epoch: 4 	Loss: 1.819673 Acc@1: 47.500000 (ε = 23.44, δ = 1e-05)
-	Train Epoch: 4 	Loss: 1.718392 Acc@1: 49.307456 (ε = 24.63, δ = 1e-05)
-	Train Epoch: 5 	Loss: 1.500666 Acc@1: 54.263566 (ε = 25.77, δ = 1e-05)
-	Train Epoch: 5 	Loss: 1.696978 Acc@1: 51.634321 (ε = 26.96, δ = 1e-05)
-	Train Epoch: 6 	Loss: 1.613977 Acc@1: 55.102041 (ε = 27.92, δ = 1e-05)
-	Train Epoch: 6 	Loss: 1.673508 Acc@1: 53.700716 (ε = 28.81, δ = 1e-05)
-	Train Epoch: 7 	Loss: 1.732500 Acc@1: 54.961832 (ε = 29.67, δ = 1e-05)
-	Train Epoch: 7 	Loss: 1.653139 Acc@1: 55.314249 (ε = 30.56, δ = 1e-05)
-	Train Epoch: 8 	Loss: 2.000197 Acc@1: 45.378151 (ε = 31.42, δ = 1e-05)
-	Train Epoch: 8 	Loss: 1.660172 Acc@1: 56.365417 (ε = 32.31, δ = 1e-05)
-	Train Epoch: 9 	Loss: 1.739170 Acc@1: 53.435115 (ε = 33.16, δ = 1e-05)
-	Train Epoch: 9 	Loss: 1.660854 Acc@1: 57.160337 (ε = 34.05, δ = 1e-05)
-	Train Epoch: 10 	Loss: 1.821048 Acc@1: 61.538462 (ε = 34.91, δ = 1e-05)
-	Train Epoch: 10 	Loss: 1.671403 Acc@1: 57.878141 (ε = 35.80, δ = 1e-05)
-	Train Epoch: 11 	Loss: 1.829778 Acc@1: 56.363636 (ε = 36.48, δ = 1e-05)
-	Train Epoch: 11 	Loss: 1.653203 Acc@1: 59.206898 (ε = 37.16, δ = 1e-05)
-	Train Epoch: 12 	Loss: 1.198817 Acc@1: 69.285714 (ε = 37.82, δ = 1e-05)
-	Train Epoch: 12 	Loss: 1.612061 Acc@1: 60.019966 (ε = 38.51, δ = 1e-05)
-	Train Epoch: 13 	Loss: 1.815248 Acc@1: 59.440559 (ε = 39.17, δ = 1e-05)
-	Train Epoch: 13 	Loss: 1.624833 Acc@1: 60.071468 (ε = 39.85, δ = 1e-05)
-	Train Epoch: 14 	Loss: 1.390235 Acc@1: 64.925373 (ε = 40.51, δ = 1e-05)
-	Train Epoch: 14 	Loss: 1.608195 Acc@1: 60.789435 (ε = 41.20, δ = 1e-05)
-	Train Epoch: 15 	Loss: 1.818439 Acc@1: 59.854015 (ε = 41.86, δ = 1e-05)
-	Train Epoch: 15 	Loss: 1.573655 Acc@1: 61.606028 (ε = 42.55, δ = 1e-05)
-	Train Epoch: 16 	Loss: 2.107299 Acc@1: 50.393701 (ε = 43.20, δ = 1e-05)
-	Train Epoch: 16 	Loss: 1.567964 Acc@1: 62.248880 (ε = 43.89, δ = 1e-05)
-	Train Epoch: 17 	Loss: 1.558405 Acc@1: 67.832168 (ε = 44.55, δ = 1e-05)
-	Train Epoch: 17 	Loss: 1.582644 Acc@1: 62.352727 (ε = 45.24, δ = 1e-05)
-	Train Epoch: 18 	Loss: 1.352990 Acc@1: 65.693431 (ε = 45.89, δ = 1e-05)
-	Train Epoch: 18 	Loss: 1.566869 Acc@1: 62.675304 (ε = 46.58, δ = 1e-05)
-	Train Epoch: 19 	Loss: 1.534263 Acc@1: 62.295082 (ε = 47.24, δ = 1e-05)
-	Train Epoch: 19 	Loss: 1.555477 Acc@1: 63.490872 (ε = 47.93, δ = 1e-05)
-	Train Epoch: 20 	Loss: 1.671935 Acc@1: 57.142857 (ε = 48.58, δ = 1e-05)
-	Train Epoch: 20 	Loss: 1.552867 Acc@1: 63.719261 (ε = 49.27, δ = 1e-05)
-
+<pre>	Train Epoch: 1 	Loss: 2.771490 Acc@1: 15.429688 (ε = 13.64, δ = 1e-05)
+	Train Epoch: 2 	Loss: 1.755194 Acc@1: 38.804688 (ε = 17.68, δ = 1e-05)
+	Train Epoch: 3 	Loss: 1.724797 Acc@1: 45.769531 (ε = 20.62, δ = 1e-05)
+	Train Epoch: 4 	Loss: 1.706076 Acc@1: 48.921875 (ε = 22.94, δ = 1e-05)
+	Train Epoch: 5 	Loss: 1.682414 Acc@1: 51.664062 (ε = 25.25, δ = 1e-05)
+	Train Epoch: 6 	Loss: 1.671187 Acc@1: 53.234375 (ε = 26.99, δ = 1e-05)
+	Train Epoch: 7 	Loss: 1.657112 Acc@1: 55.324219 (ε = 28.73, δ = 1e-05)
+	Train Epoch: 8 	Loss: 1.633768 Acc@1: 56.277344 (ε = 30.46, δ = 1e-05)
+	Train Epoch: 9 	Loss: 1.647288 Acc@1: 57.203125 (ε = 32.20, δ = 1e-05)
+	Train Epoch: 10 	Loss: 1.639933 Acc@1: 58.191406 (ε = 33.83, δ = 1e-05)
+	Train Epoch: 11 	Loss: 1.639214 Acc@1: 59.140625 (ε = 35.17, δ = 1e-05)
+	Train Epoch: 12 	Loss: 1.629374 Acc@1: 59.613281 (ε = 36.51, δ = 1e-05)
+	Train Epoch: 13 	Loss: 1.636143 Acc@1: 60.246094 (ε = 37.85, δ = 1e-05)
+	Train Epoch: 14 	Loss: 1.634575 Acc@1: 60.550781 (ε = 39.18, δ = 1e-05)
+	Train Epoch: 15 	Loss: 1.611133 Acc@1: 61.378906 (ε = 40.52, δ = 1e-05)
+	Train Epoch: 16 	Loss: 1.604075 Acc@1: 62.015625 (ε = 41.86, δ = 1e-05)
+	Train Epoch: 17 	Loss: 1.601270 Acc@1: 62.140625 (ε = 43.20, δ = 1e-05)
+	Train Epoch: 18 	Loss: 1.599596 Acc@1: 62.437500 (ε = 44.53, δ = 1e-05)
+	Train Epoch: 19 	Loss: 1.587946 Acc@1: 63.097656 (ε = 45.87, δ = 1e-05)
+	Train Epoch: 20 	Loss: 1.583897 Acc@1: 63.250000 (ε = 47.21, δ = 1e-05)
 </pre>
 </div>
 </div>
@@ -651,7 +620,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [41]:</div>
+<div class="prompt input_prompt">In [15]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">top1_acc</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
@@ -664,7 +633,7 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>	Test set:Loss: 1.804842 Acc: 59.246440 
+<pre>	Test set:Loss: 1.711833 Acc: 60.753676 
 </pre>
 </div>
 </div>
@@ -722,8 +691,8 @@ Some modules are not valid.: ['Main.bn1', 'Main.layer1.0.bn1', 'Main.layer1.0.bn
 </tr>
 <tr>
 <td>Private ResNet</td>
-<td>56.61</td>
-<td>53.54</td>
+<td>61</td>
+<td>47.21</td>
 </tr>
 </tbody>
 </table>
