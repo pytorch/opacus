@@ -109,6 +109,9 @@ def unfold2d(
     stride: Tuple[int, int],
     dilation: Tuple[int, int],
 ):
+    """
+    See :meth:`~torch.nn.functional.unfold`
+    """
     *shape, H, W = input.shape
     H_effective = (
         H + 2 * padding[0] - (kernel_size[0] + (kernel_size[0] - 1) * (dilation[0] - 1))

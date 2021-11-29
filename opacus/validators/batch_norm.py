@@ -2,11 +2,15 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import logging
-from typing import Union
+from typing import List, Union
 
 import torch.nn as nn
 
-from .errors import ShouldReplaceModuleError, UnsupportableModuleError
+from .errors import (
+    ShouldReplaceModuleError,
+    UnsupportableModuleError,
+    UnsupportedModuleError,
+)
 from .utils import register_module_fixer, register_module_validator
 
 
@@ -19,7 +23,7 @@ INSTANCENORM = Union[nn.InstanceNorm1d, nn.InstanceNorm2d, nn.InstanceNorm3d]
 @register_module_validator(
     [nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.SyncBatchNorm]
 )
-def validate(module: BATCHNORM) -> None:
+def validate(module: BATCHNORM) -> List[UnsupportedModuleError]:
     return [
         ShouldReplaceModuleError(
             "BatchNorm cannot support training with differential privacy. "

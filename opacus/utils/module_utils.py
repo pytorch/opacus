@@ -86,7 +86,19 @@ def get_submodule(module: nn.Module, target: str) -> nn.Module:
     of ``module.get_submodule()`` once Opacus abandons support for torch 1.8.
 
     See more details at https://pytorch.org/docs/stable/generated/torch.nn.Module.html?highlight=get_submodule#torch.nn.Module.get_submodule
+
+    Args:
+        module: module
+        target: submodule string
+
+    Returns:
+        The submodule given by target if it exists
+
+    Raises:
+        AttributeError
+            If submodule doesn't exist
     """
+
     if target == "":
         return module
 
@@ -105,6 +117,9 @@ def get_submodule(module: nn.Module, target: str) -> nn.Module:
 
 
 def are_state_dict_equal(sd1: OrderedDict, sd2: OrderedDict):
+    """
+    Compares two state dicts, while logging discrepancies
+    """
     if len(sd1) != len(sd2):
         logger.error(f"Length mismatch: {len(sd1)} vs {len(sd2)}")
         return False
