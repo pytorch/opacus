@@ -50,7 +50,7 @@ class PoissonSamplingTest(unittest.TestCase):
     def test_batch_sizes(self):
         for dataloader in self.dataloaders:
             batch_sizes = []
-            for x, y in dataloader:
+            for x, _y in dataloader:
                 batch_sizes.append(x.shape[0])
 
             self.assertGreater(len(set(batch_sizes)), 1)
