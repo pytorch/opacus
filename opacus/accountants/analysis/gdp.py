@@ -14,7 +14,7 @@ from scipy.stats import norm
 
 
 def compute_mu_uniform(
-    steps: int, noise_multiplier: float, sample_rate: float
+    *, steps: int, noise_multiplier: float, sample_rate: float
 ) -> float:
     """
     Compute mu from uniform subsampling.
@@ -41,7 +41,7 @@ def compute_mu_uniform(
 
 
 def compute_mu_poisson(
-    steps: int, noise_multiplier: float, sample_rate: float
+    *, steps: int, noise_multiplier: float, sample_rate: float
 ) -> float:
     """
     Compute mu from uniform subsampling.
@@ -58,7 +58,7 @@ def compute_mu_poisson(
     return np.sqrt(np.exp(noise_multiplier ** (-2)) - 1) * np.sqrt(steps) * sample_rate
 
 
-def delta_eps_mu(eps: float, mu: float) -> float:
+def delta_eps_mu(*, eps: float, mu: float) -> float:
     """
     Compute dual between mu-GDP and (epsilon, delta)-DP.
 
@@ -69,7 +69,7 @@ def delta_eps_mu(eps: float, mu: float) -> float:
     return norm.cdf(-eps / mu + mu / 2) - np.exp(eps) * norm.cdf(-eps / mu - mu / 2)
 
 
-def eps_from_mu(mu: float, delta: float) -> float:
+def eps_from_mu(*, mu: float, delta: float) -> float:
     """
     Compute epsilon from mu given delta via inverse dual.
 
@@ -80,13 +80,13 @@ def eps_from_mu(mu: float, delta: float) -> float:
 
     def f(x):
         """Reversely solve dual by matching delta."""
-        return delta_eps_mu(x, mu) - delta
+        return delta_eps_mu(eps=x, mu=mu) - delta
 
     return optimize.root_scalar(f, bracket=[0, 500], method="brentq").root
 
 
 def compute_eps_uniform(
-    steps: int, noise_multiplier: float, sample_rate: float, delta: float
+    *, steps: int, noise_multiplier: float, sample_rate: float, delta: float
 ) -> float:
     """
     Compute epsilon given delta from inverse dual of uniform subsampling.
@@ -101,11 +101,16 @@ def compute_eps_uniform(
         eps
     """
 
-    return eps_from_mu(compute_mu_uniform(steps, noise_multiplier, sample_rate), delta)
+    return eps_from_mu(
+        mu=compute_mu_uniform(
+            steps=steps, noise_multiplier=noise_multiplier, sample_rate=sample_rate
+        ),
+        delta=delta,
+    )
 
 
 def compute_eps_poisson(
-    steps: int, noise_multiplier: float, sample_rate: float, delta: float
+    *, steps: int, noise_multiplier: float, sample_rate: float, delta: float
 ) -> float:
     """
     Compute epsilon given delta from inverse dual of Poisson subsampling
@@ -120,4 +125,9 @@ def compute_eps_poisson(
         eps
     """
 
-    return eps_from_mu(compute_mu_poisson(steps, noise_multiplier, sample_rate), delta)
+    return eps_from_mu(
+        mu=compute_mu_poisson(
+            steps=steps, noise_multiplier=noise_multiplier, sample_rate=sample_rate
+        ),
+        delta=delta,
+    )

@@ -8,7 +8,7 @@ class GaussianAccountant(IAccountant):
         self.sample_rate = None
         self.steps = 0
 
-    def step(self, noise_multiplier: float, sample_rate: float):
+    def step(self, *, noise_multiplier: float, sample_rate: float):
         if self.noise_multiplier is None:
             self.noise_multiplier = noise_multiplier
 
@@ -30,16 +30,18 @@ class GaussianAccountant(IAccountant):
             poisson: ``True`` is input batches was sampled via Poisson sampling,
                 ``False`` otherwise
         """
-        if poisson:
-            epsilon = privacy_analysis.compute_eps_poisson(
-                self.steps, self.noise_multiplier, self.sample_rate, delta
-            )
-        else:
-            epsilon = privacy_analysis.compute_eps_uniform(
-                self.steps, self.noise_multiplier, self.sample_rate, delta
-            )
 
-        return epsilon
+        compute_eps = (
+            privacy_analysis.compute_eps_poisson
+            if poisson
+            else privacy_analysis.compute_eps_uniform
+        )
+        return compute_eps(
+            steps=self.steps,
+            noise_multiplier=self.noise_multiplier,
+            sample_rate=self.sample_rate,
+            delta=delta,
+        )
 
     def __len__(self):
         return self.steps

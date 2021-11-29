@@ -3,7 +3,11 @@ from typing import List
 
 import numpy as np
 from opacus.optimizers import DPOptimizer
-from torch.utils.data import DataLoader, Sampler
+from opacus.utils.uniform_sampler import (
+    DistributedUniformWithReplacementSampler,
+    UniformWithReplacementSampler,
+)
+from torch.utils.data import BatchSampler, DataLoader, Sampler
 
 
 class BatchSplittingSampler(Sampler[List[int]]):
@@ -16,7 +20,11 @@ class BatchSplittingSampler(Sampler[List[int]]):
     """
 
     def __init__(
-        self, sampler: Sampler[List[int]], max_batch_size: int, optimizer: DPOptimizer
+        self,
+        *,
+        sampler: Sampler[List[int]],
+        max_batch_size: int,
+        optimizer: DPOptimizer,
     ):
         """
 
@@ -41,10 +49,22 @@ class BatchSplittingSampler(Sampler[List[int]]):
             yield split_idxs[-1]
 
     def __len__(self):
+        if isinstance(self.sampler, BatchSampler):
+            return int(
+                len(self.sampler) * (self.sampler.batch_size / self.max_batch_size)
+            )
+        elif isinstance(self.sampler, UniformWithReplacementSampler) or isinstance(
+            self.sampler, DistributedUniformWithReplacementSampler
+        ):
+            expected_batch_size = self.sampler.sample_rate * self.sampler.num_samples
+            return int(len(self.sampler) * (expected_batch_size / self.max_batch_size))
+
         return len(self.sampler)
 
 
-def wrap_data_loader(data_loader, max_batch_size: int, optimizer: DPOptimizer):
+def wrap_data_loader(
+    *, data_loader: DataLoader, max_batch_size: int, optimizer: DPOptimizer
+):
     """
     Replaces batch_sampler in the input data loader with ``BatchSplittingSampler``
 
@@ -56,10 +76,13 @@ def wrap_data_loader(data_loader, max_batch_size: int, optimizer: DPOptimizer):
     Returns:
         New DataLoader instance with batch_sampler wrapped in ``BatchSplittingSampler``
     """
+
     return DataLoader(
         dataset=data_loader.dataset,
         batch_sampler=BatchSplittingSampler(
-            data_loader.batch_sampler, max_batch_size, optimizer
+            sampler=data_loader.batch_sampler,
+            max_batch_size=max_batch_size,
+            optimizer=optimizer,
         ),
         num_workers=data_loader.num_workers,
         collate_fn=data_loader.collate_fn,
@@ -118,6 +141,7 @@ class BatchMemoryManager(object):
 
     def __init__(
         self,
+        *,
         data_loader: DataLoader,
         max_physical_batch_size: int,
         optimizer: DPOptimizer,
@@ -128,7 +152,9 @@ class BatchMemoryManager(object):
 
     def __enter__(self):
         return wrap_data_loader(
-            self.data_loader, self.max_physical_batch_size, self.optimizer
+            data_loader=self.data_loader,
+            max_batch_size=self.max_physical_batch_size,
+            optimizer=self.optimizer,
         )
 
     def __exit__(self, type, value, traceback):

@@ -2,7 +2,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import logging
-import sys
 from typing import List
 
 import torch.nn as nn
@@ -14,13 +13,7 @@ from opacus.validators.errors import (
 )
 
 
-logging.basicConfig(
-    format="%(asctime)s:%(levelname)s:%(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    stream=sys.stderr,
-)
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
 
 
 class ModuleValidator:
@@ -34,15 +27,15 @@ class ModuleValidator:
 
     @classmethod
     def validate(
-        cls, module: nn.Module, raise_if_error: bool = False
+        cls, module: nn.Module, *, strict: bool = False
     ) -> List[UnsupportedModuleError]:
         """
         Validate module and sub_modules by running registered custom validators.
-        Returns or raises excpetions depending on ``raise_if_error`` flag.
+        Returns or raises excpetions depending on ``strict`` flag.
 
         Args:
             module: The root module to validate.
-            raise_if_error: Boolean to indicate whether to raise errors or return
+            strict: Boolean to indicate whether to raise errors or return
             the list of errors.
 
         Raises:
@@ -55,14 +48,15 @@ class ModuleValidator:
                 IllegalModuleConfigurationError("Model needs to be in training mode")
             )
         # 2. validate that all trainable modules are supported by GradSampleModule.
-        errors.extend(GradSampleModule.validate(module=module, raise_if_error=False))
+        errors.extend(GradSampleModule.validate(module=module, strict=False))
         # 3. perform module specific validations.
+        # TODO: use module name here - it's useful part of error message
         for _, sub_module in module.named_modules():
             if type(sub_module) in ModuleValidator.VALIDATORS:
                 sub_module_validator = ModuleValidator.VALIDATORS[type(sub_module)]
                 errors.extend(sub_module_validator(sub_module))
         # raise/return as needed
-        if raise_if_error and len(errors) > 0:
+        if strict and len(errors) > 0:
             raise UnsupportedModuleError(errors)
         else:
             return errors
@@ -78,7 +72,7 @@ class ModuleValidator:
         Returns:
             bool
         """
-        return len(cls.validate(module, raise_if_error=False)) == 0
+        return len(cls.validate(module, strict=False)) == 0
 
     @classmethod
     def fix(cls, module: nn.Module) -> nn.Module:
@@ -121,6 +115,7 @@ class ModuleValidator:
     @classmethod
     def _repalce_sub_module(
         cls,
+        *,
         root: nn.Module,
         sub_module_name: str,
         new_sub_module: nn.Module,
@@ -154,6 +149,6 @@ class ModuleValidator:
         # 1. replace any fixable modules
         fixed_module = cls.fix(module)
         # 2. perform module specific validations.
-        cls.validate(fixed_module, raise_if_error=True)
+        cls.validate(fixed_module, strict=True)
         # return fixed module
         return fixed_module

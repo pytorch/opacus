@@ -43,7 +43,7 @@ def trainable_modules(module: nn.Module) -> Iterable[nn.Module]:
     )
 
 
-def requires_grad(module: nn.Module, recurse: bool = False) -> bool:
+def requires_grad(module: nn.Module, *, recurse: bool = False) -> bool:
     """
     Checks if any parameters in a specified module require gradients.
 

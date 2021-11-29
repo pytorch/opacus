@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_or_accumulate_grad_sample(
-    param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
+    *, param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
 ) -> None:
     """
     Creates a ``_current_grad_sample`` attribute in the given parameter, or adds to it
@@ -97,7 +97,7 @@ class GradSampleModule(nn.Module):
         """
         super().__init__()
 
-        errors = self.validate(module=m, raise_if_error=strict)
+        errors = self.validate(module=m, strict=strict)
         if errors and not strict:
             logger.info(
                 f"GradSampleModule found the following errors: {errors}."
@@ -122,8 +122,8 @@ class GradSampleModule(nn.Module):
                 return submodules[item]
             raise e
 
-    def forward(self, x, *args, **kwargs):
-        return self._module(x, *args, **kwargs)
+    def forward(self, *args, **kwargs):
+        return self._module(*args, **kwargs)
 
     def zero_grad(self, set_to_none: bool = False):
         """
@@ -176,7 +176,9 @@ class GradSampleModule(nn.Module):
         self._close()
         return self._module
 
-    def add_hooks(self, loss_reduction: str = "mean", batch_first: bool = True) -> None:
+    def add_hooks(
+        self, *, loss_reduction: str = "mean", batch_first: bool = True
+    ) -> None:
         """
         Adds hooks to model to save activations and backprop values.
         The hooks will
@@ -318,12 +320,15 @@ class GradSampleModule(nn.Module):
 
         backprops = forward_output[0].detach()
         activations, backprops = self.rearrange_grad_samples(
-            module, backprops, loss_reduction, batch_first
+            module=module,
+            backprops=backprops,
+            loss_reduction=loss_reduction,
+            batch_first=batch_first,
         )
         grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
         grad_samples = grad_sampler_fn(module, activations, backprops)
         for param, gs in grad_samples.items():
-            create_or_accumulate_grad_sample(param, gs, module)
+            create_or_accumulate_grad_sample(param=param, grad_sample=gs, layer=module)
 
         if len(module.activations) == 0:
             if hasattr(module, "max_batch_len"):
@@ -334,6 +339,7 @@ class GradSampleModule(nn.Module):
 
     def rearrange_grad_samples(
         self,
+        *,
         module: nn.Module,
         backprops: torch.Tensor,
         loss_reduction: str,
@@ -362,7 +368,11 @@ class GradSampleModule(nn.Module):
         if not hasattr(module, "max_batch_len"):
             # For packed sequences, max_batch_len is set in the forward of the model (e.g. the LSTM)
             # Otherwise we infer it here
-            module.max_batch_len = _get_batch_size(module, activations, batch_dim)
+            module.max_batch_len = _get_batch_size(
+                module=module,
+                grad_sample=activations,
+                batch_dim=batch_dim,
+            )
 
         n = module.max_batch_len
         if loss_reduction == "mean":
@@ -406,7 +416,7 @@ class GradSampleModule(nn.Module):
 
     @classmethod
     def validate(
-        cls, module: nn.Module, raise_if_error: bool = False
+        cls, module: nn.Module, *, strict: bool = False
     ) -> List[NotImplementedError]:
         """
         Check if per sample gradients can be fully computed for a given model
@@ -434,14 +444,14 @@ class GradSampleModule(nn.Module):
             ]
         )
         # raise or return errors as needed
-        if raise_if_error and len(errors) > 0:
+        if strict and len(errors) > 0:
             raise NotImplementedError(errors)
         else:
             return errors
 
 
 def _get_batch_size(
-    module: nn.Module, grad_sample: torch.Tensor, batch_dim: int
+    *, module: nn.Module, grad_sample: torch.Tensor, batch_dim: int
 ) -> int:
     """
     Computes and returns the maximum batch size which is the maximum of the dimension values
