@@ -130,7 +130,7 @@ def _generate_noise(
             generator=generator,
         )  # generate, but throw away first generated Gaussian sample
         sum = zeros
-        for i in range(4):
+        for _ in range(4):
             sum += torch.normal(
                 mean=0,
                 std=std,
