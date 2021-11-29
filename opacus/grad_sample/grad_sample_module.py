@@ -93,7 +93,7 @@ class GradSampleModule(nn.Module):
         Raises:
             NotImplementedError
                 If ``strict`` is set to ``True`` and module ``m`` (or any of its
-                submodules) doesn't have a registered grad sampler fuction.
+                submodules) doesn't have a registered grad sampler function.
         """
         super().__init__()
 

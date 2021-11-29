@@ -107,9 +107,6 @@ class DistributedUniformWithReplacementSampler(Sampler):
         # Number of batches: same as non-distributed Poisson sampling, but each batch is smaller
         self.num_batches = int(1 / self.sample_rate)
 
-    def __len__(self) -> int:
-        return self.num_batches
-
     def __iter__(self):
         if self.shuffle:
             # deterministically shuffle based on epoch and seed

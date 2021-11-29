@@ -440,7 +440,7 @@ class BasePrivacyEngineTest(ABC):
             # Do max_steps steps of DP-SGD
             n_params = sum([p.numel() for p in model.parameters() if p.requires_grad])
             steps = 0
-            for x, y in dl:
+            for x, _y in dl:
                 optimizer.zero_grad()
                 logits = model(x)
                 loss = logits.view(logits.size(0), -1).sum(dim=1)
