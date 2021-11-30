@@ -7,15 +7,15 @@ version: 2.1
 commands:
 
   py_3_7_setup:
-    description: "Install and switch to Python 3.7.4; also install pip and pytest."
+    description: "Install and switch to Python 3.7.5; also install pip and pytest."
     steps:
       - run:
-          name: "Setup Python v3.7.4 environment"
+          name: "Setup Python v3.7.5 environment"
           command: |
             cd /opt/circleci/.pyenv && git pull && cd -
-            pyenv install -s 3.7.4
-            pyenv global 3.7.4
-            pyenv local 3.7.4
+            pyenv install -s 3.7.5
+            pyenv global 3.7.5
+            pyenv local 3.7.5
             pyenv versions
             echo "In venv: $(pyenv local) - $(python -V), $(pip -V)"
             sudo "$(which python)" -m pip install --upgrade pip
@@ -259,7 +259,7 @@ jobs:
 
   lint_py37_torch_release:
     docker:
-      - image: cimg/python:3.7.4
+      - image: cimg/python:3.7.5
     steps:
       - checkout
       - pip_dev_install
@@ -269,7 +269,7 @@ jobs:
 
   unittest_py37_torch_release:
     docker:
-      - image: cimg/python:3.7.4
+      - image: cimg/python:3.7.5
     steps:
       - checkout
       - pip_dev_install
@@ -302,7 +302,7 @@ jobs:
 
   integrationtest_py37_torch_release_cpu:
     docker:
-      - image: cimg/python:3.7.4
+      - image: cimg/python:3.7.5
     steps:
       - checkout
       - pip_dev_install
