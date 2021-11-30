@@ -49,6 +49,13 @@ html body {
   background-image: linear-gradient(to top left, #E6E6E6, white);
 }
 
+.announcement {
+  background-color: #F7B73F;
+  padding-top: 10px;
+  padding-bottom: 1px;
+}
+
+
 .productTitle {
   color: #ffffff;
   font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif;

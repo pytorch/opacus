@@ -25,8 +25,17 @@ class HomeSplash extends React.Component {
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
 
+    const Announcement = () => (
+      <div className="announcement">
+        <p>We are excited to announce the release of Opacus 1.0.</p>
+        <p>This release packs in lot of new features and bug fixes, but most importantly, also brings forth new APIs that are simpler, more modular, and easily extensible.</p>
+        <p>See our <a href="https://github.com/pytorch/opacus/releases/tag/v1.0.0">Release Notes</a> for more details</p>
+      </div>
+    );
+
     const SplashContainer = props => (
       <div className="homeContainer">
+        <Announcement />
         <div className="homeSplashFade">
           <div className="wrapper homeWrapper">{props.children}</div>
         </div>
