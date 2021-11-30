@@ -183,7 +183,7 @@ Now, if you're using something else as your data source, things get interesting.
 `PrivacyEngine` is intentionally designed to expect and amend `DataLoader`, as this is the right thing to in the majority of cases. However, the good news is that `PrivacyEngine` itself is not absolutely necessary - if you know what you're doing, and are happy with whatever data source you have, here's how to plug in opacus.
 
 NB: This is only a brief example of using Opacus components independently of `PrivacyEngine`.
-See [this tutorial](#TODO) for extended guide.
+See [this tutorial](https://github.com/pytorch/opacus/blob/main/tutorials/intro_to_advanced_features.ipynb) for extended guide.
 
 ```python
 # business as usual
