@@ -31,10 +31,6 @@ from pytorch_lightning.utilities.cli import LightningCLI
 
 warnings.filterwarnings("ignore")
 
-# TODO: Check the number of epochs + poisson sampling
-# TODO: Why it needs to run configure_optimizers twice?
-# TODO: Fix running configure_optimizers twice. Store dp_model in the LightningModule
-# TODO: Several optimizers example
 
 class LitSampleConvNetClassifier(pl.LightningModule):
     def __init__(
@@ -91,15 +87,15 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         optimizer = optim.SGD(self.parameters(), lr=self.lr, momentum=0)
 
         if self.enable_dp:
-            # transform (model, optimizer, dataloader) to DP-versions
-            if hasattr(self, "dp_model"):
-                self.dp_model._close()
-                del self.dp_model
             data_loader = (
                 # soon there will be a fancy way to access train dataloader,
                 # see https://github.com/PyTorchLightning/pytorch-lightning/issues/10430
                 self.trainer._data_connector._train_dataloader_source.dataloader()
             )
+
+            # transform (model, optimizer, dataloader) to DP-versions
+            if hasattr(self, "dp"):
+               self.dp["model"].remove_hooks()
             dp_model, optimizer, dataloader = self.privacy_engine.make_private(
                 module=self,
                 optimizer=optimizer,
@@ -108,7 +104,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
                 max_grad_norm=self.max_grad_norm,
                 poisson_sampling=isinstance(data_loader, DPDataLoader),
             )
-            self.dp_model = dp_model
+            self.dp = {"model": dp_model}
 
         return optimizer
 
@@ -157,6 +153,7 @@ def cli_main():
     """
     Using LightningCLI to automatically setup argparse
     """
+    from functools import partial
     cli = LightningCLI(
         LitSampleConvNetClassifier,
         MNISTDataModule,
