@@ -25,8 +25,17 @@ class HomeSplash extends React.Component {
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
 
+    const Announcement = () => (
+      <div className="announcement">
+        <p>We are excited to announce the release of Opacus 1.0.</p>
+        <p>This release packs in lot of new features and bug fixes, and most importantly, also brings forth new APIs that are simpler, more modular, and easily extensible.</p>
+        <p>See our <a href="https://github.com/pytorch/opacus/releases/tag/v1.0.0">Release Notes</a> for more details</p>
+      </div>
+    );
+
     const SplashContainer = props => (
       <div className="homeContainer">
+        <Announcement />
         <div className="homeSplashFade">
           <div className="wrapper homeWrapper">{props.children}</div>
         </div>
@@ -102,16 +111,20 @@ class Index extends React.Component {
     const pre = '```';
     // Example for model fitting
     const createModelExample = `${pre}python
+# define your components as usual
 model = Net()
 optimizer = SGD(model.parameters(), lr=0.05)
-privacy_engine = PrivacyEngine(
-    model,
-    sample_rate=0.01,
-    alphas=[1, 10, 100],
-    noise_multiplier=1.3,
+data_loader = torch.utils.data.DataLoader(dataset, batch_size=1024)
+
+# enter PrivacyEngine
+privacy_engine = PrivacyEngine()
+model, optimizer, data_loader = privacy_engine.make_private(
+    module=model,
+    optimizer=optimizer,
+    data_loader=data_loader,
+    noise_multiplier=1.1,
     max_grad_norm=1.0,
 )
-privacy_engine.attach(optimizer)
 # Now it's business as usual
     `;
 

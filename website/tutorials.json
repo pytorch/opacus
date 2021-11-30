@@ -11,6 +11,18 @@
     {
       "id": "building_lstm_name_classifier",
       "title": "Training a differentially private LSTM model for name classification"
+    },
+    {
+      "id": "intro_to_advanced_features",
+      "title": "Opacus Guide: Introduction to advanced features"
+    },
+    {
+      "id": "guide_module_validator",
+      "title": "Opacus Guide: Module Validator and Fixer"
+    },
+    {
+      "id": "guide_to_grad_sampler",
+      "title": "Opacus Guide: Grad samplers"
     }
   ]
 }
