@@ -297,10 +297,10 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         state_init: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None,
     ) -> Tuple[Union[Tensor, PackedSequence], Union[Tensor, Tuple[Tensor, Tensor]]]:
         """
-        Forward pass of a full RNN, containing one or many single- or bi-directional layers. 
+        Forward pass of a full RNN, containing one or many single- or bi-directional layers.
         Implemented for an abstract cell type.
 
-        Note: ``proj_size > 0`` is not supported here. 
+        Note: ``proj_size > 0`` is not supported here.
         Cell state size is always equal to hidden state size.
 
         Inputs: input, h_0/(h_0, c_0)
