@@ -37,7 +37,7 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
         generator=None,
-        secure_mode=False,
+        secure_mode: bool = False,
     ):
         self.rank = torch.distributed.get_rank()
         self.max_grad_norms = max_grad_norms
@@ -53,7 +53,7 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         )
         self._register_hooks()
 
-    def _add_noise_parameter(self, p):
+    def _add_noise_parameter(self, p: nn.Parameter):
         """
         The reason why we need self is because of generator for secure_mode
         """

@@ -60,7 +60,7 @@ class DistributedUniformWithReplacementSampler(Sampler):
 
     The sum of the lengths of the local batches follows a Poisson distribution.
     In particular, the expected length of each local batch is:
-        `sample_rate * total_size / num_replicas`
+    `sample_rate * total_size / num_replicas`
     """
 
     def __init__(

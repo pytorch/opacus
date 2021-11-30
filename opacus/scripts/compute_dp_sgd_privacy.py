@@ -17,12 +17,14 @@ Example:
     $ python -m opacus.scripts.compute_dp_sgd_privacy --epochs=3 --delta=1e-5 --sample-rate 0.01 --noise-multiplier 1.0 --alphas 2 5 10 20 100
 
     DP-SGD with
-        sampling rate = 1%,
-        noise_multiplier = 1.0,
-        iterated over 300 steps,
+    - sampling rate = 1%,
+    - noise_multiplier = 1.0,
+    - iterated over 300 steps
+
     satisfies differential privacy with
-        epsilon = 2.39,
-        delta = 1e-05.
+    - epsilon = 2.39,
+    - delta = 1e-05.
+
     The optimal alpha is 5.0.
 """
 import argparse

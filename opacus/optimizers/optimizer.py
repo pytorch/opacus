@@ -223,7 +223,7 @@ class DPOptimizer(Optimizer):
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
         generator=None,
-        secure_mode=False,
+        secure_mode: bool = False,
     ):
         """
 

@@ -51,9 +51,7 @@ def calc_sample_norms_one_layer(param: torch.Tensor) -> torch.Tensor:
     assuming the each batch's dim is zero.
 
     It is equivalent to:
-    ```
-        calc_sample_norms(named_params=((None, param),))[0]
-    ```
+    `calc_sample_norms(named_params=((None, param),))[0]`
 
     Args:
         param: A tensor of shape ``[B, ...]`` where ``B``

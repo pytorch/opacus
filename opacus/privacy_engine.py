@@ -66,7 +66,7 @@ class PrivacyEngine:
         >>> # continue training as normal
     """
 
-    def __init__(self, *, accountant: str = "rdp", secure_mode=False):
+    def __init__(self, *, accountant: str = "rdp", secure_mode: bool = False):
         """
 
         Args:
@@ -276,10 +276,9 @@ class PrivacyEngine:
         All of the returned objects act just like their non-private counterparts
         passed as arguments, but with added DP tasks.
 
-        Model is wrapped to also compute per sample gradients.
-        Optimizer is now responsible for gradient clipping and adding noise to the
-            gradients.
-        DataLoader is updated to perform Poisson sampling.
+        - Model is wrapped to also compute per sample gradients.
+        - Optimizer is now responsible for gradient clipping and adding noise to the gradients.
+        - DataLoader is updated to perform Poisson sampling.
 
         Notes:
             Using any other models, optimizers, or data sources during training

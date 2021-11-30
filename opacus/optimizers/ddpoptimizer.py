@@ -23,7 +23,7 @@ class DistributedDPOptimizer(DPOptimizer):
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
         generator=None,
-        secure_mode=False,
+        secure_mode: bool = False,
     ):
         super().__init__(
             optimizer,

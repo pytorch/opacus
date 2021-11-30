@@ -92,19 +92,19 @@ class DPDataLoader(DataLoader):
         """
 
         Args:
-            dataset: See :attr:`~torch.utils.data.DataLoader.dataset`
+            dataset: See :class:`torch.utils.data.DataLoader`
             sample_rate: probability with which each element of the dataset is included
                 in the next batch.
-            num_workers: See :attr:`~torch.utils.data.DataLoader.num_workers`
-            collate_fn: See :attr:`~torch.utils.data.DataLoader.collate_fn`
-            pin_memory: See :attr:`~torch.utils.data.DataLoader.pin_memory`
-            drop_last: See :attr:`~torch.utils.data.DataLoader.drop_last`
-            timeout: See :attr:`~torch.utils.data.DataLoader.timeout`
-            worker_init_fn: See :attr:`~torch.utils.data.DataLoader.worker_init_fn`
-            multiprocessing_context: See :attr:`~torch.utils.data.DataLoader.multiprocessing_context`
+            num_workers: See :class:`torch.utils.data.DataLoader`
+            collate_fn: See :class:`torch.utils.data.DataLoader`
+            pin_memory: See :class:`torch.utils.data.DataLoader`
+            drop_last: See :class:`torch.utils.data.DataLoader`
+            timeout: See :class:`torch.utils.data.DataLoader`
+            worker_init_fn: See :class:`torch.utils.data.DataLoader`
+            multiprocessing_context: See :class:`torch.utils.data.DataLoader`
             generator: Random number generator used to sample elements
-            prefetch_factor: See :attr:`~torch.utils.data.DataLoader.prefetch_factor`
-            persistent_workers: See :attr:`~torch.utils.data.DataLoader.persistent_workers`
+            prefetch_factor: See :class:`torch.utils.data.DataLoader`
+            persistent_workers: See :class:`torch.utils.data.DataLoader`
             distributed: set ``True`` if you'll be using DPDataLoader in a DDP environment
                 Selects between ``DistributedUniformWithReplacementSampler`` and
                 ``UniformWithReplacementSampler`` sampler implementations
