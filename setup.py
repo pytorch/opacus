@@ -9,7 +9,7 @@ from setuptools import find_packages, setup
 
 REQUIRED_MAJOR = 3
 REQUIRED_MINOR = 7
-REQUIRED_MICRO = 4
+REQUIRED_MICRO = 5
 
 version = {}
 with open("opacus/version.py") as fp:
