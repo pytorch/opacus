@@ -21,12 +21,11 @@ def forbid_accumulation_hook(module: nn.Module, _):
 
     for p in module.parameters():
         if hasattr(p, "grad_sample"):
-            pass
             # TODO: this correspond to either not calling optimizer.step()
             # or not calling zero_grad(). Customize message
-            # raise ValueError(
-            #     "Poisson sampling is not compatible with grad accumulation"
-            # )
+            raise ValueError(
+                "Poisson sampling is not compatible with grad accumulation"
+            )
 
 
 class PrivacyEngine:
