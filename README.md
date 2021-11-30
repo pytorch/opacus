@@ -67,6 +67,7 @@ with privacy and using various Opacus features.
 - [Training a differentially private LSTM model for name classification](https://github.com/pytorch/opacus/blob/main/tutorials/building_lstm_name_classifier.ipynb)
 - [Building text classifier with Differential Privacy on BERT](https://github.com/pytorch/opacus/blob/main/tutorials/building_text_classifier.ipynb)
 - [Opacus Guide: Introduction to advanced features](https://github.com/pytorch/opacus/blob/main/tutorials/intro_to_advanced_features.ipynb)
+- [Opacus Guide: Grad samplers](https://github.com/pytorch/opacus/blob/main/tutorials/guide_to_grad_sampler.ipynb)
 - [Opacus Guide: Module Validator and Fixer](https://github.com/pytorch/opacus/blob/main/tutorials/guide_module_validator.ipynb)
 
 ### Blogposts and talks
