@@ -471,10 +471,9 @@ class DPOptimizer(Optimizer):
         return True
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        loss = None
         if closure is not None:
             with torch.enable_grad():
-                loss = closure()
+                closure()
 
         if self.pre_step():
             return self.original_optimizer.step(closure)
