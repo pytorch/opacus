@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://opacus.ai/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://opacus.ai/img/opacus_logo.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://opacus.ai/img/opacus_logo.svg"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-117752657-3', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.svg" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Introduction</a></li><li class=""><a href="/docs/faq" target="_self">FAQ</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<section id="module-opacus.validators.module_validator">
+<span id="modulevalidator"></span><h1>ModuleValidator<a class="headerlink" href="#module-opacus.validators.module_validator" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.validators.module_validator.</span></span><span class="sig-name descname"><span class="pre">ModuleValidator</span></span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encapsulates all the validation logic required by Opacus.
+Also works as a namespace to hold registered validators and fixers.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator.fix">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator.fix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator.fix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make the module and sub_modules DP compatible by running registered custom fixers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The root module to be made compatible.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Fixed module.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator.fix_and_validate">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fix_and_validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator.fix_and_validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator.fix_and_validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fix the module and sub_modules first, and then run validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The root module to be fixed and validted</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Fixed module.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>UnsupportedModuleError in case of validation failures.</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator.is_valid">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator.is_valid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator.is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if module and sub_modules are valid by running registered custom validators.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The root module to validate.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator.validate">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate module and sub_modules by running registered custom validators.
+Returns or raises excpetions depending on <code class="docutils literal notranslate"><span class="pre">strict</span></code> flag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The root module to validate.</p></li>
+<li><p><strong>strict</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Boolean to indicate whether to raise errors or return</p></li>
+<li><p><strong>errors.</strong> (<em>the list of</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>UnsupportedModuleError in case of validation failures.</strong> – </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">UnsupportedModuleError</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<span class="target" id="module-opacus.validators.utils"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.validators.utils.register_module_fixer">
+<span class="sig-prename descclassname"><span class="pre">opacus.validators.utils.</span></span><span class="sig-name descname"><span class="pre">register_module_fixer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_class_or_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validator_class=&lt;class</span> <span class="pre">'opacus.validators.module_validator.ModuleValidator'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/utils.html#register_module_fixer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.utils.register_module_fixer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers the decorated function as the <code class="docutils literal notranslate"><span class="pre">fixer</span></code> of <code class="docutils literal notranslate"><span class="pre">target_class_or_classes</span></code>, which is
+the function that will be invoked every time you want to fix an incompatoble module to make
+it work for training with Opacus.
+You may supply your own validator_class that holds the registry of FIXERS.
+The signature of every fixer is always the same:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_module_fixer</span><span class="p">(</span><span class="n">MyCustomModel</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+<span class="gp">... </span>   <span class="k">pass</span>
+</pre></div>
+</div>
+<p>It may help you to take a look at the existing fixers inside Opacus, under <code class="docutils literal notranslate"><span class="pre">opacus.validators.</span></code></p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.validators.utils.register_module_validator">
+<span class="sig-prename descclassname"><span class="pre">opacus.validators.utils.</span></span><span class="sig-name descname"><span class="pre">register_module_validator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_class_or_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validator_class=&lt;class</span> <span class="pre">'opacus.validators.module_validator.ModuleValidator'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/utils.html#register_module_validator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.utils.register_module_validator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers the decorated function as the <code class="docutils literal notranslate"><span class="pre">validator</span></code> of <code class="docutils literal notranslate"><span class="pre">target_class_or_classes</span></code>, which is
+the function that will be invoked every time you want to validate that a module is compatible
+for training with Opacus.
+You may supply your own validator_class that holds the registry of VALIDATORS.
+The signature of every validator is always the same:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_module_validator</span><span class="p">(</span><span class="n">MyCustomModel</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">opacus</span><span class="o">.</span><span class="n">validators</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">UnsupportedError</span><span class="p">]:</span>
+<span class="gp">... </span>   <span class="k">pass</span>
+</pre></div>
+</div>
+<p>It may help you to take a look at the existing validator inside Opacus, under <code class="docutils literal notranslate"><span class="pre">opacus.validators.</span></code></p>
+</dd></dl>
+</section>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Opacus</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">Privacy Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grad_sample_module.html">GradSampleModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optim/optimizers.html">Optimizers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_loader.html">DP Data Loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="accounting/accounting.html">Privacy Accounting</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ModuleValidator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distributed.html">Distributed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="noise_scheduler.html">Noise Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch_memory_manager.html">Batch Memory Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">DP Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils/utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+<li>Previous: <a href="accounting/utils.html" title="previous chapter">Utils</a></li>
+<li>Next: <a href="distributed.html" title="next chapter">Distributed</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'opacus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

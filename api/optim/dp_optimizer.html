@@ -1,0 +1,320 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://opacus.ai/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://opacus.ai/img/opacus_logo.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://opacus.ai/img/opacus_logo.svg"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-117752657-3', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.svg" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Introduction</a></li><li class=""><a href="/docs/faq" target="_self">FAQ</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<section id="module-opacus.optimizers.optimizer">
+<span id="dpoptimizer"></span><h1>DPOptimizer<a class="headerlink" href="#module-opacus.optimizers.optimizer" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.optimizers.optimizer.</span></span><span class="sig-name descname"><span class="pre">DPOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">torch.optim.Optimizer</span></code> wrapper that adds additional functionality to clip per
+sample gradients and add gaissian noise.</p>
+<p>Can be used with any <code class="docutils literal notranslate"><span class="pre">torch.optim.Optimizer</span></code> subclass as an underlying optimizer.
+<code class="docutils literal notranslate"><span class="pre">DPOptimzer</span></code> assumes that parameters over which it performs optimization belong
+to GradSampleModule and therefore have <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> attribute.</p>
+<p>On a high lever <code class="docutils literal notranslate"><span class="pre">DPOptimizer</span></code>’s step looks like this:
+1) Aggregate <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code> over all parameters to calculate per sample norms
+2) Clip <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code> so that per sample norm is not above threshold
+3) Aggregate clipped per sample gradients into <code class="docutils literal notranslate"><span class="pre">p.grad</span></code>
+4) Add Gaussian noise to <code class="docutils literal notranslate"><span class="pre">p.grad</span></code> calibrated to a given noise multiplier and
+max grad norm limit (<code class="docutils literal notranslate"><span class="pre">std</span> <span class="pre">=</span> <span class="pre">noise_multiplier</span> <span class="pre">*</span> <span class="pre">max_grad_norm</span></code>).
+5) Call underlying optimizer to perform optimization step</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">module</span> <span class="o">=</span> <span class="n">MyCustomModel</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dp_optimzer</span> <span class="o">=</span> <span class="n">DPOptimizer</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">max_grad_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">expected_batch_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – wrapped optimizer.</p></li>
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – noise multiplier</p></li>
+<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – max grad norm used for gradient clpping</p></li>
+<li><p><strong>expected_batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – batch_size used for averaging gradients. When using
+Poisson sampling averaging denominator can’t be inferred from the
+actual batch size. Required is <code class="docutils literal notranslate"><span class="pre">loss_reduction="mean"</span></code>, ignored if
+<code class="docutils literal notranslate"><span class="pre">loss_reduction="sum"</span></code></p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the gradients)
+is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
+<li><p><strong>generator</strong> – torch.Generator() object used as a source of randomness for
+the noise</p></li>
+<li><p><strong>secure_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – if <code class="docutils literal notranslate"><span class="pre">True</span></code> uses noise generation approach robust to floating
+point arithmetic attacks.
+See <code class="xref py py-meth docutils literal notranslate"><span class="pre">_generate_noise()</span></code> for details</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.accumulated_iterations">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">accumulated_iterations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></em><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.accumulated_iterations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns number of batches currently accumulated and not yet processed.</p>
+<p>In other words <code class="docutils literal notranslate"><span class="pre">accumulated_iterations</span></code> tracks the number of forward/backward
+passed done in between two optimizer steps. The value would typically be 1,
+but there are possible exeptions.</p>
+<p>Used by privacy accountants to calcualte real sampling rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.add_noise">
+<span class="sig-name descname"><span class="pre">add_noise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.add_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.add_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds noise to clipped gradeints. Stores clipped and noised result in <code class="docutils literal notranslate"><span class="pre">p.grad</span></code></p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.attach_step_hook">
+<span class="sig-name descname"><span class="pre">attach_step_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.attach_step_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.attach_step_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attaches a hook to be executed after gradient clipping/noising, but before the
+actual optimzation step.</p>
+<p>Most commonly used for privacy accounting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]) – hook function. Expected signature: <code class="docutils literal notranslate"><span class="pre">foo(optim:</span> <span class="pre">DPOptimizer)</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.clip_and_accumulate">
+<span class="sig-name descname"><span class="pre">clip_and_accumulate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.clip_and_accumulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.clip_and_accumulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs gradient clipping.
+Stores clipped and aggregated gradients into <cite>p.summed_grad``</cite></p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.grad_samples">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">grad_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.10.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.grad_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a flat list of per sample gradient tensors (one per parameter)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.10.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.load_state_dict">
+<span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.load_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads the optimizer state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>state_dict</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) – optimizer state. Should be an object returned
+from a call to <a class="reference internal" href="#opacus.optimizers.optimizer.DPOptimizer.state_dict" title="opacus.optimizers.optimizer.DPOptimizer.state_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch v1.10.0)"><span class="pre">torch.nn.parameter.Parameter</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a flat list of <code class="docutils literal notranslate"><span class="pre">nn.Parameter</span></code> managed by the optimizer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch v1.10.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.pre_step">
+<span class="sig-name descname"><span class="pre">pre_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.pre_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.pre_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform actions specific to <code class="docutils literal notranslate"><span class="pre">DPOptimizer</span></code> before calling
+underlying  <code class="docutils literal notranslate"><span class="pre">optimizer.step()</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>closure</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]) – A closure that reevaluates the model and
+returns the loss. Optional for most optimizers.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.scale_grad">
+<span class="sig-name descname"><span class="pre">scale_grad</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.scale_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.scale_grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies given <code class="docutils literal notranslate"><span class="pre">loss_reduction</span></code> to <code class="docutils literal notranslate"><span class="pre">p.grad</span></code>.</p>
+<p>Does nothing if <code class="docutils literal notranslate"><span class="pre">loss_reduction="sum"</span></code>. Divides gradeints by
+<code class="docutils literal notranslate"><span class="pre">self.expected_batch_size</span></code> if <code class="docutils literal notranslate"><span class="pre">loss_reduction="mean"</span></code></p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.signal_skip_step">
+<span class="sig-name descname"><span class="pre">signal_skip_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">do_skip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.signal_skip_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.signal_skip_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Signals the optimizer to skip an optimization step and only perform clipping and
+per sample gradient accumulation.</p>
+<p>On every call of <code class="docutils literal notranslate"><span class="pre">.step()</span></code> optimizer will check the queue of skipped step
+signals. If non-empty and the latest flag is <code class="docutils literal notranslate"><span class="pre">True</span></code>, optimizer will call
+<code class="docutils literal notranslate"><span class="pre">self.clip_and_accumulate</span></code>, but won’t proceed to adding noise and performing
+the actual optimization step.
+It also affects the behaviour of <code class="docutils literal notranslate"><span class="pre">zero_grad()</span></code>. If the last step was skipped,
+optimizer will clear per sample gradients accumulated by
+<code class="docutils literal notranslate"><span class="pre">self.clip_and_accumulate</span></code> (<code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code>), but won’t touch aggregated
+clipped gradients (<code class="docutils literal notranslate"><span class="pre">p.summed_grad</span></code>)</p>
+<p>Used by <a class="reference internal" href="../batch_memory_manager.html#opacus.utils.batch_memory_manager.BatchMemoryManager" title="opacus.utils.batch_memory_manager.BatchMemoryManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchMemoryManager</span></code></a> to
+simulate large virtual batches with limited memory footprint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>do_skip</strong> – flag if next step should be skipped</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.state_dict">
+<span class="sig-name descname"><span class="pre">state_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the state of the optimizer as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>.</p>
+<p>It contains two entries:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>state - a dict holding current optimization state. Its content</dt><dd><p>differs between optimizer classes.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>param_groups - a list containing all parameter groups where each</dt><dd><p>parameter group is a dict</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a single optimization step (parameter update).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>closure</strong> (<em>callable</em>) – A closure that reevaluates the model and
+returns the loss. Optional for most optimizers.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Unless otherwise specified, this function should not modify the
+<code class="docutils literal notranslate"><span class="pre">.grad</span></code> field of the parameters.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.zero_grad">
+<span class="sig-name descname"><span class="pre">zero_grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set_to_none</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.zero_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.zero_grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear gradients.</p>
+<p>Clears <code class="docutils literal notranslate"><span class="pre">p.grad</span></code>, <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code> and <code class="docutils literal notranslate"><span class="pre">p.summed_grad</span></code> for all of it’s parameters</p>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal notranslate"><span class="pre">set_to_none</span></code> argument only affects <code class="docutils literal notranslate"><span class="pre">p.grad</span></code>. <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code> and
+<code class="docutils literal notranslate"><span class="pre">p.summed_grad</span></code> is never zeroed out and always set to None.
+Normal grads can do this, because their shape is always the same.
+Grad samples do not behave like this, as we accumulate gradients from different
+batches in a list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>set_to_none</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – instead of setting to zero, set the grads to None. (only</p></li>
+<li><p><strong>None</strong><strong>)</strong> (<em>affects regular gradients. Per sample gradients are always set to</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</section>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Opacus</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../privacy_engine.html">Privacy Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grad_sample_module.html">GradSampleModule</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="optimizers.html">Optimizers</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">DPOptimizer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dp_per_layer_optimizer.html">DPPerLayerOptimizer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dp_ddp_optimizer.html">DistributedDPOptimizer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html">DistributedPerLayerOptimizer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../data_loader.html">DP Data Loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/accounting.html">Privacy Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../validator.html">ModuleValidator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../distributed.html">Distributed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../noise_scheduler.html">Noise Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../batch_memory_manager.html">Batch Memory Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../layers.html">DP Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../index.html">Documentation overview</a><ul>
+<li><a href="optimizers.html">Optimizers</a><ul>
+<li>Previous: <a href="optimizers.html" title="previous chapter">Optimizers</a></li>
+<li>Next: <a href="dp_per_layer_optimizer.html" title="next chapter">DPPerLayerOptimizer</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'opacus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

@@ -109,18 +109,22 @@ Refer to <code class="docutils literal notranslate"><span class="pre">torch.nn.R
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPRNNBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proj_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNBase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for all RNN-like sequence models.</p>
 <p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.RNNBase</span></code> module.
-After training this module can be exported and loaded by the original <code class="docutils literal notranslate"><span class="pre">torch.nn</span></code> implementation for inference.</p>
-<p>This module implements multi-layer (Type-2, see [this issue](<a class="reference external" href="https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298">https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298</a>))
-bi-directional sequential model based on abstract cell. Cell should be a subclass of <code class="docutils literal notranslate"><span class="pre">DPRNNCellBase</span></code>.</p>
+After training this module can be exported and loaded by the original <code class="docutils literal notranslate"><span class="pre">torch.nn</span></code>
+implementation for inference.</p>
+<p>This module implements multi-layer (Type-2, see
+[this issue](<a class="reference external" href="https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298">https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298</a>))
+bi-directional sequential model based on abstract cell.
+Cell should be a subclass of <code class="docutils literal notranslate"><span class="pre">DPRNNCellBase</span></code>.</p>
 <p>Limitations:
 - proj_size &gt; 0 is not implemented
 - this implementation doesn’t use cuDNN</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNNBase.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNBase.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNBase.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Forward pass of a full RNN, containing one or many single- or bi-directional layers. Implemented for
-an abstract cell type.</p>
-<p>Note: <code class="docutils literal notranslate"><span class="pre">proj_size</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> is not supported here. Cell state size is always equal to hidden state size.</p>
+<dd><p>Forward pass of a full RNN, containing one or many single- or bi-directional layers.
+Implemented for an abstract cell type.</p>
+<p>Note: <code class="docutils literal notranslate"><span class="pre">proj_size</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> is not supported here.
+Cell state size is always equal to hidden state size.</p>
 <dl>
 <dt>Inputs: input, h_0/(h_0, c_0)</dt><dd><dl class="simple">
 <dt>input: Input sequence. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">D]</span></code> (<code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">T,</span> <span class="pre">D]</span></code> if <code class="docutils literal notranslate"><span class="pre">batch_first=True</span></code>)</dt><dd><p>or PackedSequence.</p>
@@ -277,16 +281,20 @@ the size of per-sample grad tensor.</p>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">Privacy Engine</a></li>
-<li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
-<li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">Gradient Clipping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="per_sample_gradients.html">Gradient Sample Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dp_model_inspector.html">Model Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grad_sample_module.html">GradSampleModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optim/optimizers.html">Optimizers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_loader.html">DP Data Loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="accounting/accounting.html">Privacy Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validator.html">ModuleValidator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distributed.html">Distributed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="noise_scheduler.html">Noise Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch_memory_manager.html">Batch Memory Manager</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="layers.html">DP Layers</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="dp_multihead_attention.html">DPMultiheadAttention</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">DPRNN</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils/utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
 </ul>
 <div class="relations">
@@ -295,7 +303,7 @@ the size of per-sample grad tensor.</p>
 <li><a href="index.html">Documentation overview</a><ul>
 <li><a href="layers.html">DP Layers</a><ul>
 <li>Previous: <a href="dp_multihead_attention.html" title="previous chapter">DPMultiheadAttention</a></li>
-<li>Next: <a href="utils.html" title="next chapter">Utils</a></li>
+<li>Next: <a href="utils/utils.html" title="next chapter">Utils</a></li>
 </ul></li>
 </ul></li>
 </ul>

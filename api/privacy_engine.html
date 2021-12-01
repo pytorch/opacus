@@ -56,7 +56,7 @@ PyTorch training objects with their private counterparts.</p>
 <li><p><strong>accountant</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Accounting mechanism. Currently supported:
 - rdp (<code class="xref py py-class docutils literal notranslate"><span class="pre">RDPAccountant</span></code>)
 - gdp (<code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianAccountant</span></code>)</p></li>
-<li><p><strong>secure_mode</strong> – Set to <code class="docutils literal notranslate"><span class="pre">True</span></code> if cryptographically strong DP guarantee is
+<li><p><strong>secure_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Set to <code class="docutils literal notranslate"><span class="pre">True</span></code> if cryptographically strong DP guarantee is
 required. <code class="docutils literal notranslate"><span class="pre">secure_mode=True</span></code> uses secure random number generator for
 noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and
 prevents certain floating-point arithmetic-based attacks.
@@ -80,7 +80,7 @@ running registered fixes.</p>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>Module with some submodules replaced for their deep copies or
 close equivalents.
-See <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleValidator</span></code> for
+See <a class="reference internal" href="validator.html#opacus.validators.module_validator.ModuleValidator" title="opacus.validators.module_validator.ModuleValidator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleValidator</span></code></a> for
 more details</p>
 </dd>
 </dl>
@@ -125,12 +125,11 @@ more details</p>
 model, optimizer, and the data loader.</p>
 <p>All of the returned objects act just like their non-private counterparts
 passed as arguments, but with added DP tasks.</p>
-<p>Model is wrapped to also compute per sample gradients.
-Optimizer is now responsible for gradient clipping and adding noise to the</p>
-<blockquote>
-<div><p>gradients.</p>
-</div></blockquote>
-<p>DataLoader is updated to perform Poisson sampling.</p>
+<ul class="simple">
+<li><p>Model is wrapped to also compute per sample gradients.</p></li>
+<li><p>Optimizer is now responsible for gradient clipping and adding noise to the gradients.</p></li>
+<li><p>DataLoader is updated to perform Poisson sampling.</p></li>
+</ul>
 <p class="rubric">Notes</p>
 <p>Using any other models, optimizers, or data sources during training
 will invalidate stated privacy guarantees.</p>
@@ -169,7 +168,7 @@ the noise</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><p>Tuple of (model, optimizer, data_loader).</p>
@@ -269,12 +268,16 @@ Same as <code class="docutils literal notranslate"><span class="pre">is_compatib
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Privacy Engine</a></li>
-<li class="toctree-l1"><a class="reference internal" href="privacy_analysis.html">Privacy Analysis</a></li>
-<li class="toctree-l1"><a class="reference internal" href="per_sample_gradient_clip.html">Gradient Clipping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="per_sample_gradients.html">Gradient Sample Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dp_model_inspector.html">Model Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grad_sample_module.html">GradSampleModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optim/optimizers.html">Optimizers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_loader.html">DP Data Loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="accounting/accounting.html">Privacy Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validator.html">ModuleValidator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distributed.html">Distributed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="noise_scheduler.html">Noise Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch_memory_manager.html">Batch Memory Manager</a></li>
 <li class="toctree-l1"><a class="reference internal" href="layers.html">DP Layers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils/utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
 </ul>
 <div class="relations">
@@ -282,7 +285,7 @@ Same as <code class="docutils literal notranslate"><span class="pre">is_compatib
 <ul>
 <li><a href="index.html">Documentation overview</a><ul>
 <li>Previous: <a href="index.html" title="previous chapter">Opacus API Reference</a></li>
-<li>Next: <a href="privacy_analysis.html" title="next chapter">Privacy Analysis</a></li>
+<li>Next: <a href="grad_sample_module.html" title="next chapter">GradSampleModule</a></li>
 </ul></li>
 </ul>
 </div>

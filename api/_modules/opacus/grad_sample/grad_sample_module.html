@@ -42,7 +42,7 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="create_or_accumulate_grad_sample"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.create_or_accumulate_grad_sample">[docs]</a><span class="k">def</span> <span class="nf">create_or_accumulate_grad_sample</span><span class="p">(</span>
+<div class="viewcode-block" id="create_or_accumulate_grad_sample"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.create_or_accumulate_grad_sample">[docs]</a><span class="k">def</span> <span class="nf">create_or_accumulate_grad_sample</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">grad_sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">"""</span>
@@ -84,7 +84,7 @@
         <span class="k">del</span> <span class="n">p</span><span class="o">.</span><span class="n">_current_grad_sample</span>
 
 
-<div class="viewcode-block" id="GradSampleModule"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule">[docs]</a><span class="k">class</span> <span class="nc">GradSampleModule</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="GradSampleModule"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule">[docs]</a><span class="k">class</span> <span class="nc">GradSampleModule</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Extends nn.Module so that its parameter tensors have an extra field called .grad_sample.</span>
 <span class="sd">    """</span>
@@ -149,10 +149,10 @@
                 <span class="k">return</span> <span class="n">submodules</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
             <span class="k">raise</span> <span class="n">e</span>
 
-<div class="viewcode-block" id="GradSampleModule.forward"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="GradSampleModule.forward"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.zero_grad"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.zero_grad">[docs]</a>    <span class="k">def</span> <span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_to_none</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="GradSampleModule.zero_grad"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.zero_grad">[docs]</a>    <span class="k">def</span> <span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_to_none</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        Clear gradients.</span>
 
@@ -178,21 +178,21 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">set_grad_sample_to_none</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">(</span><span class="n">set_to_none</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.set_grad_sample_to_none"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.set_grad_sample_to_none">[docs]</a>    <span class="k">def</span> <span class="nf">set_grad_sample_to_none</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="GradSampleModule.set_grad_sample_to_none"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.set_grad_sample_to_none">[docs]</a>    <span class="k">def</span> <span class="nf">set_grad_sample_to_none</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        Sets ``.grad_sample`` to None</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
             <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span> <span class="o">=</span> <span class="kc">None</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.del_grad_sample"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.del_grad_sample">[docs]</a>    <span class="k">def</span> <span class="nf">del_grad_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="GradSampleModule.del_grad_sample"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.del_grad_sample">[docs]</a>    <span class="k">def</span> <span class="nf">del_grad_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        Deleted ``.grad_sample`` attribute from all model parameters</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
             <span class="k">del</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.to_standard_module"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.to_standard_module">[docs]</a>    <span class="k">def</span> <span class="nf">to_standard_module</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+<div class="viewcode-block" id="GradSampleModule.to_standard_module"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.to_standard_module">[docs]</a>    <span class="k">def</span> <span class="nf">to_standard_module</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
         <span class="sd">"""</span>
 <span class="sd">        Returns the standard nn.Module wrapped by this, eliminating all traces</span>
 <span class="sd">        of grad samples and hooks</span>
@@ -203,7 +203,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_close</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.add_hooks"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.add_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">add_hooks</span><span class="p">(</span>
+<div class="viewcode-block" id="GradSampleModule.add_hooks"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.add_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">add_hooks</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span> <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">"""</span>
@@ -245,7 +245,7 @@
                 <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">enable_hooks</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.remove_hooks"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.remove_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">remove_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="GradSampleModule.remove_hooks"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.remove_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">remove_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">"""</span>
 <span class="sd">        Removes hooks added by ``add_hooks()``</span>
 <span class="sd">        """</span>
@@ -267,7 +267,7 @@
             <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">)</span>
             <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.disable_hooks"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.disable_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">disable_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="GradSampleModule.disable_hooks"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.disable_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">disable_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Globally disable all hooks installed by this library.</span>
 <span class="sd">        Why is this needed? As per https://github.com/pytorch/pytorch/issues/25723, there is</span>
@@ -276,7 +276,7 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hooks_enabled</span> <span class="o">=</span> <span class="kc">False</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.enable_hooks"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.enable_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">enable_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="GradSampleModule.enable_hooks"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.enable_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">enable_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The opposite of ``disable_hooks()``. Hooks are always enabled unless you explicitly</span>
 <span class="sd">        disable them so you don't need to call this unless you want to re-enable them.</span>
@@ -310,7 +310,7 @@
             <span class="n">module</span><span class="o">.</span><span class="n">activations</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">module</span><span class="o">.</span><span class="n">activations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">forward_input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>  <span class="c1"># pyre-ignore</span>
 
-<div class="viewcode-block" id="GradSampleModule.capture_backprops_hook"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.capture_backprops_hook">[docs]</a>    <span class="k">def</span> <span class="nf">capture_backprops_hook</span><span class="p">(</span>
+<div class="viewcode-block" id="GradSampleModule.capture_backprops_hook"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.capture_backprops_hook">[docs]</a>    <span class="k">def</span> <span class="nf">capture_backprops_hook</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
         <span class="n">_forward_input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
@@ -364,7 +364,7 @@
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
                 <span class="n">promote_current_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.rearrange_grad_samples"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.rearrange_grad_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rearrange_grad_samples</span><span class="p">(</span>
+<div class="viewcode-block" id="GradSampleModule.rearrange_grad_samples"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.rearrange_grad_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rearrange_grad_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -422,7 +422,7 @@
 
         <span class="k">return</span> <span class="n">activations</span><span class="p">,</span> <span class="n">backprops</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.is_supported"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.is_supported">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="GradSampleModule.is_supported"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.is_supported">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_supported</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sd">"""</span>
 <span class="sd">        Checks if this individual model is supported (i.e. has a registered</span>
@@ -441,7 +441,7 @@
             <span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">DPRNNBase</span><span class="p">,</span> <span class="n">DPRNNCellBase</span><span class="p">)</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="GradSampleModule.validate"><a class="viewcode-back" href="../../../per_sample_gradients.html#opacus.grad_sample.grad_sample_module.GradSampleModule.validate">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="GradSampleModule.validate"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.validate">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="ne">NotImplementedError</span><span class="p">]:</span>
@@ -514,12 +514,16 @@
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../privacy_engine.html">Privacy Engine</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../privacy_analysis.html">Privacy Analysis</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../per_sample_gradient_clip.html">Gradient Clipping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../per_sample_gradients.html">Gradient Sample Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../dp_model_inspector.html">Model Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../grad_sample_module.html">GradSampleModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim/optimizers.html">Optimizers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_loader.html">DP Data Loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../accounting/accounting.html">Privacy Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../validator.html">ModuleValidator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../distributed.html">Distributed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../noise_scheduler.html">Noise Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../batch_memory_manager.html">Batch Memory Manager</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../layers.html">DP Layers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a></li>
 </ul>
 <div class="relations">
