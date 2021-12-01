@@ -154,8 +154,6 @@ def cli_main():
     """
     Using LightningCLI to automatically setup argparse
     """
-    from functools import partial
-
     cli = LightningCLI(
         LitSampleConvNetClassifier,
         MNISTDataModule,
