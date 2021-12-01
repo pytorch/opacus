@@ -456,7 +456,6 @@ class DPOptimizer(Optimizer):
             closure: A closure that reevaluates the model and
                 returns the loss. Optional for most optimizers.
         """
-
         self.clip_and_accumulate()
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
@@ -472,7 +471,11 @@ class DPOptimizer(Optimizer):
         return True
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        # TODO: handle closure call - we should do it before pre_step()
+        loss = None
+        if closure is not None:
+            with torch.enable_grad():
+                loss = closure()
+
         if self.pre_step():
             return self.original_optimizer.step(closure)
         else:
