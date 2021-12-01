@@ -1,15 +1,21 @@
 # Changelog
 
+## v1.0.0
+* This release packs in lot of new features and bug fixes, and most importantly, also brings forth new APIs that are simpler, more modular, and easily extensible.
+* We have bumped up the major version number from 0 to 1 and have introduced breaking changes. However, the major version bump also indicates a step-function upgrade in the capabilities.
+* See [Release notes](https://github.com/pytorch/opacus/releases/tag/v1.0.0] and [Migration Guide](https://github.com/pytorch/opacus/blob/main/Migration_Guide.md) for more details about the changes.
+* PR #273 contains the pointers to all the commits and PRs that went into this release.
+
 ## v0.15.0
 ### New Features
 * DDP support for faster distributed training (#196)
-* Support of GRU and RNN. Refactored LSTM implementation. (#222)
+* Support of GRU and RNN; refactored LSTM implementation (#222)
 * PyTorch Lightning Demo (#244)
 ### Bug fixes
 * Improve nn.Linear grad sampler memory consumption (#192)
 * Update Opacus to stop using deprecated torch.set_deterministic (#197)
 * Fix optimizer.step after engine.detach()
-* Test fixes.
+* Test fixes
 ### Miscellaneous
 * Better validation error reporting (#199)
 * grad sampler type checking (#241)
