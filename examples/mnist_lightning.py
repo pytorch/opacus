@@ -29,6 +29,7 @@ from opacus.lightning import DPLightningDataModule
 from pl_bolts.datamodules import MNISTDataModule
 from pytorch_lightning.utilities.cli import LightningCLI
 
+
 warnings.filterwarnings("ignore")
 
 
@@ -95,7 +96,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
 
             # transform (model, optimizer, dataloader) to DP-versions
             if hasattr(self, "dp"):
-               self.dp["model"].remove_hooks()
+                self.dp["model"].remove_hooks()
             dp_model, optimizer, dataloader = self.privacy_engine.make_private(
                 module=self,
                 optimizer=optimizer,
@@ -140,7 +141,7 @@ def main():
     dp_data = DPLightningDataModule(data)
 
     trainer = pl.Trainer(
-        max_epochs=2,
+        max_epochs=10,
         enable_model_summary=False,
     )
     trainer.fit(model, dp_data)
@@ -154,6 +155,7 @@ def cli_main():
     Using LightningCLI to automatically setup argparse
     """
     from functools import partial
+
     cli = LightningCLI(
         LitSampleConvNetClassifier,
         MNISTDataModule,
