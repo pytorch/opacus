@@ -24,6 +24,7 @@ def get_noise_multiplier(
     r"""
     Computes the noise level sigma to reach a total budget of (target_epsilon, target_delta)
     at the end of epochs, with a given sample_rate
+
     Args:
         target_epsilon: the privacy budget's epsilon
         target_delta: the privacy budget's delta

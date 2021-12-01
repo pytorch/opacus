@@ -12,12 +12,16 @@ Opacus API Reference
    :caption: API Reference
 
    privacy_engine
-   privacy_analysis
-   per_sample_gradient_clip
-   per_sample_gradients
-   dp_model_inspector
+   grad_sample_module
+   optim/optimizers
+   data_loader
+   accounting/accounting
+   validator
+   distributed
+   noise_scheduler
+   batch_memory_manager
    layers
-   utils
+   utils/utils
    scripts
 
 Indices and Tables

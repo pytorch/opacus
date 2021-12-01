@@ -207,14 +207,18 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
     """Base class for all RNN-like sequence models.
 
     DP-friendly drop-in replacement of the ``torch.nn.RNNBase`` module.
-    After training this module can be exported and loaded by the original ``torch.nn`` implementation for inference.
+    After training this module can be exported and loaded by the original ``torch.nn``
+    implementation for inference.
 
-    This module implements multi-layer (Type-2, see [this issue](https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298))
-    bi-directional sequential model based on abstract cell. Cell should be a subclass of ``DPRNNCellBase``.
+    This module implements multi-layer (Type-2, see
+    [this issue](https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298))
+    bi-directional sequential model based on abstract cell.
+    Cell should be a subclass of ``DPRNNCellBase``.
 
     Limitations:
     - proj_size > 0 is not implemented
     - this implementation doesn't use cuDNN
+
     """
 
     def __init__(
@@ -293,10 +297,11 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
         state_init: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None,
     ) -> Tuple[Union[Tensor, PackedSequence], Union[Tensor, Tuple[Tensor, Tensor]]]:
         """
-        Forward pass of a full RNN, containing one or many single- or bi-directional layers. Implemented for
-        an abstract cell type.
+        Forward pass of a full RNN, containing one or many single- or bi-directional layers.
+        Implemented for an abstract cell type.
 
-        Note: ``proj_size > 0`` is not supported here. Cell state size is always equal to hidden state size.
+        Note: ``proj_size > 0`` is not supported here.
+        Cell state size is always equal to hidden state size.
 
         Inputs: input, h_0/(h_0, c_0)
             input: Input sequence. Tensor of shape ``[T, B, D]`` (``[B, T, D]`` if ``batch_first=True``)
@@ -307,7 +312,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
 
         Outputs: output, h_n/(h_n, c_n)
             output: Output features (``h_t``) from the last layer of the model for each ``t``. Tensor of
-                    shape ``[T, B, P*H]`` (``[B, T, P*H]`` if ``batch_first=True``), or PackedSequence.
+                shape ``[T, B, P*H]`` (``[B, T, P*H]`` if ``batch_first=True``), or PackedSequence.
             h_n: Final hidden state for each element in the batch. Tensor of shape ``[L*P, B, H]``.
             c_n: Final cell state for each element in the batch. Tensor of shape ``[L*P, B, H]``.
 
@@ -474,6 +479,7 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             seq_length: sequence length
             is_packed: whether PackedSequence is used as input
             reverse_layer: if True, it will run forward pass for a reversed layer
+
         """
         if is_packed:
             if reverse_layer:

@@ -67,6 +67,11 @@ To get coverage reports we recommend using the `pytest-cov` plugin:
 pytest -ra --cov=. --cov-report term-missing
 ```
 
+Opacus uses `doctest` to ensure our docstrings stay up-to-date. To run all unit tests, including the doctests, run:
+```bash
+python -m pytest --doctest-modules -p conftest opacus
+```
+
 
 #### Documentation
 Opacus's website is also open source, and is part of this very repository (the
@@ -85,9 +90,9 @@ main elements:
 To build the documentation you will need [Node](https://nodejs.org/en/) >= 8.x
 and [Yarn](https://yarnpkg.com/en/) >= 1.5.
 
-The following command will both build the docs and serve the site locally:
+Run following command from `website` folder. It will build the docs and serve the site locally:
 ```bash
-./scripts/build_docs.sh
+./scripts/build_website.sh
 ```
 
 ## Pull Requests
