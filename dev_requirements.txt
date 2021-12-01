@@ -16,4 +16,5 @@ datasets
 transformers
 scikit-learn
 pytorch-lightning
+lightning-bolts
 jsonargparse[signatures]>=3.19.3 # required for Lightning CLI
