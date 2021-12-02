@@ -457,6 +457,6 @@ class PrivacyEngine:
             delta: The target delta.
 
         Returns:
-            Pair of epsilon and optimal order alpha.
+            Privacy budget (epsilon) expended so far.
         """
         return self.accountant.get_epsilon(delta)
