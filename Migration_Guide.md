@@ -2,7 +2,7 @@
 
 This guide will help you update your code from `opacus==0.x` to `opacus==1.x`.
 
-With the new release we're introducing a slightly different approach to the user-facing library API. While heavily based on the old API, updated API better represents abstractions and algorithms used in DP in ML, enabling private training exactly as it's decribed in the papers, with no assumptions or simplicifactions. And in doing so we maintain our focus on high performance training.
+With the new release we're introducing a slightly different approach to the user-facing library API. While heavily based on the old API, updated API better represents abstractions and algorithms used in DP in ML, enabling private training exactly as it's described in the papers, with no assumptions or simplifications. And in doing so we maintain our focus on high performance training.
 
 On the downside, however, new API lacks backward compatibility. If you've been using older versions of Opacus and want to continue using Opacus 1.0, you'll need to perform certain manual steps. In the vast majority of cases the changes required are trivial, but this can vary depending on your exact setup. This guide will help you through this process.
 
@@ -92,7 +92,7 @@ In most cases, here's what you'll need to change:
 - eps, alpha = privacy_engine.get_privacy_spent(delta=target_delta)
 ```
 
-Note, that you no loger have access to alpha, as it's RDP-specific parameter and isn't applicable to other privacy accountants. If you need to provide custom alphas, you can pass it as an argument to `get_epsilon`:
+Note, that you no longer have access to alpha, as it's RDP-specific parameter and isn't applicable to other privacy accountants. If you need to provide custom alphas, you can pass it as an argument to `get_epsilon`:
 ```python
 eps = privacy_engine.get_epsilon(delta=target_delta, alphas=alphas)
 ```
@@ -127,7 +127,7 @@ While the concept is extremely useful, it suffers from some serious flaws:
   really Poisson anymore.
 - It didn't protect from occasional large Poisson batches. When working with Poisson sampling, setting batch size
   (or rather sampling rate) was quite tricky. For long enough training loops, peak batch size (and therefore memory
-  consumpton) could be much larger than the average.
+  consumption) could be much larger than the average.
 - It required careful manual crafting inside training loop.
 
 ```python
@@ -149,7 +149,7 @@ with BatchMemoryManager(
       # continue training as normal
 ```
 
-This approach addressed all of the issues above: it simulated proper poisson batches, can be used as a safeguard agains occasional large batches even if you don't want to use virtual batches (just set `max_physical_batch_size=batch_size`) and is easy to use.
+This approach addressed all of the issues above: it simulated proper poisson batches, can be used as a safeguard against occasional large batches even if you don't want to use virtual batches (just set `max_physical_batch_size=batch_size`) and is easy to use.
 
 ## When you know privacy budget in advance
 
