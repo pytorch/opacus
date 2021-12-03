@@ -296,7 +296,7 @@ Completed!
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>BERT (Bidirectional Encoder Representations from Transformers) is state of the art approach to various NLP tasks. It uses a Transformer architecture and relies heavily on the concept of pre-training.</p>
+<p>BERT (Bidirectional Encoder Representations from Transformers) is a state of the art approach to various NLP tasks. It uses a Transformer architecture and relies heavily on the concept of pre-training.</p>
 <p>We'll use a pre-trained BERT-base model, provided in huggingface <a href="https://github.com/huggingface/transformers">transformers</a> repo.
 It gives us a pytorch implementation for the classic BERT architecture, as well as a tokenizer and weights pre-trained on a public English corpus (Wikipedia).</p>
 <p>Please follow these <a href="https://github.com/huggingface/transformers#installation">installation instrucitons</a> before proceeding.</p>
@@ -346,7 +346,7 @@ It gives us a pytorch implementation for the classic BERT architecture, as well 
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>The model has the following structure. It uses a combination of word, positional and token <em>embeddings</em> to create a sequence representation, then passes the data through 12 <em>transformer encoders</em> and finally uses a <em>linear classifier</em> to produce the final label.
-As the model is already pre-trained and we only plan to fine-tune few upper layers, we want to freeze all layers, except for the last encoder and above (<code>BertPooler</code> and <code>Classifier</code>).</p>
+As the model is already pre-trained and we only plan to fine-tune a few upper layers, we want to freeze all layers, except for the last encoder and above (<code>BertPooler</code> and <code>Classifier</code>).</p>
 </div>
 </div>
 </div>
@@ -413,7 +413,7 @@ Trainable parameters count: 7680771
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Thus, by using pre-trained model we reduce the number of trainable params from over 100 millions to just above 7.5 millions. This will help both performance and convergence with added noise.</p>
+<p>Thus, by using a pre-trained model we reduce the number of trainable params from over 100 millions to just above 7.5 millions. This will help both performance and convergence with added noise.</p>
 </div>
 </div>
 </div>
@@ -529,8 +529,8 @@ Trainable parameters count: 7680771
 <p>In addition to all the considerations you normally take into account when choosing batch size, training model with DP adds another one - privacy cost.</p>
 <p>Because of the threat model we assume and the way we add noise to the gradients, larger batch sizes (to a certain extent) generally help convergence. We add the same amount of noise to each gradient update (scaled to the norm of one sample in the batch) regardless of the batch size. What this means is that as the batch size increases, the relative amount of noise added decreases. while preserving the same epsilon guarantee.</p>
 <p>You should, however, keep in mind that increasing batch size has its price in terms of epsilon, which grows at <code>O(sqrt(batch_size))</code> as we train (therefore larger batches make it grow faster). The good strategy here is to experiment with multiple combinations of <code>batch_size</code> and <code>noise_multiplier</code> to find the one that provides best possible quality at acceptable privacy guarantee.</p>
-<p>There's another side to this - memory. Opacus computes and stores <em>per sample</em> gradients, so for every normal gradient, Opacus will store <code>n=batch_size</code> per-sample gradients on each step, thus increasing the memory footprint by at least <code>O(batch_size)</code>. In reality, however, the peak memory requirement is <code>O(batch_size^2)</code> compared to non-private model. This is because some intermediate steps in per sample gradient computation involve operations on two matrices, each with batch_size as one of the dimensions.</p>
-<p>The good news is, we can pick the most appropriate batch size, regardless of memory constrains. Opacus has built-in support for <em>virtual</em> batches. Using it we can separate physical steps (gradient computation) and logical steps (noise addition and parameter updates): use larger batches for training, while keeping memory footprint low. Below we will specify two constants:</p>
+<p>There's another side to this - memory. Opacus computes and stores <em>per sample</em> gradients, so for every normal gradient, Opacus will store <code>n=batch_size</code> per-sample gradients on each step, thus increasing the memory footprint by at least <code>O(batch_size)</code>. In reality, however, the peak memory requirement is <code>O(batch_size^2)</code> compared to a non-private model. This is because some intermediate steps in per sample gradient computation involve operations on two matrices, each with batch_size as one of the dimensions.</p>
+<p>The good news is, we can pick the most appropriate batch size, regardless of memory constraints. Opacus has built-in support for <em>virtual</em> batches. Using it we can separate physical steps (gradient computation) and logical steps (noise addition and parameter updates): use larger batches for training, while keeping memory footprint low. Below we will specify two constants:</p>
 <ul>
 <li><code>MAX_PHYSICAL_BATCH_SIZE</code> defines the maximum batch size we can afford from a memory standpoint, and only affects computation speed</li>
 <li><code>BATCH_SIZE</code>, on the other hand, will affect only convergence and privacy guarantee.</li>

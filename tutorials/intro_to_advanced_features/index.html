@@ -253,7 +253,7 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 <ul>
 <li><code>GradSampleModule</code> acts like an underlying <code>nn.Module</code>, and additionally computes per sample gradient tensor (<code>p.grad_sample</code>) for its parameters</li>
 <li><code>DPOptimizer</code> takes parameters with <code>p.grad_sample</code> computed and performs clipping and noise addition</li>
-<li><code>DPDataLoader</code> takes a vanilla DataLoader and switches sampling mechanism to Poisson sampling.</li>
+<li><code>DPDataLoader</code> takes a vanilla DataLoader and switches the sampling mechanism to Poisson sampling.</li>
 </ul>
 </div>
 </div>
@@ -304,7 +304,7 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We start by wrapping the model with <code>GradSampleModule</code> - very straighforward.</p>
+<p>We start by wrapping the model with <code>GradSampleModule</code> - very straightforward.</p>
 </div>
 </div>
 </div>
@@ -384,7 +384,7 @@ Average grad_sample over 1st dimension. Equal to original:  True
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We now continue with re-implementing <code>make_private()</code></p>
-<p>One tricky thing about Poisson sampling is that concatenating two small Poisson batches does not result in a large Poisson batch. With sequential sampling you can easily simulate large batches by setting smaller batch size and executing optimization step every N steps. This trick, however, doesn't work with Poisson sampling.</p>
+<p>One tricky thing about Poisson sampling is that concatenating two small Poisson batches does not result in a large Poisson batch. With sequential sampling you can easily simulate large batches by setting a smaller batch size and executing the optimization step every N steps. This trick, however, doesn't work with Poisson sampling.</p>
 <p>Therefore, if we're using Poisson sampling, we have to forbid gradient accumulation: you'd have to call <code>optimizer.step()</code> and <code>zero_grad()</code> after every forward/backward pass.</p>
 </div>
 </div>
@@ -462,7 +462,7 @@ Average grad_sample over 1st dimension. Equal to original:  True
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We now got to the data loader. Note, that DPDataLoader returns brand new DataLoader, which is backed by the same dataset.</p>
+<p>We now got to the data loader. Note, that DPDataLoader returns a brand new DataLoader, which is backed by the same dataset.</p>
 </div>
 </div>
 </div>
@@ -602,7 +602,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Let's unpack what's happened here.</p>
-<p>First, DPOptimizer exposes a hook for functions to be executed during <code>.step()</code> method. It's called after clipping and noise addition part, but before the parameters are updated.</p>
+<p>First, DPOptimizer exposes a hook for functions to be executed during the <code>.step()</code> method. It's called after clipping and noise addition part, but before the parameters are updated.</p>
 <p>Accountant, on the other hand, provides a method to build hook function, given the sample rate (noise multiplier is stored in the optimizer, but the sample rate isn't)</p>
 <div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">hook_fn</span><span class="p">(</span><span class="n">optim</span><span class="p">:</span> <span class="n">DPOptimizer</span><span class="p">):</span>
     <span class="n">accountant</span><span class="o">.</span><span class="n">step</span><span class="p">(</span>
@@ -630,7 +630,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Many non-standard use cases will involve customizing the befaviour of <code>DPOptimizer</code>. In fact, we do thins already with per layer clipping (<code>DPPerLayerOptimizer</code>) and (<code>DistributedDPOptimizer</code>). If you're interested in building custon DPOptmizer yourself, definitely do study these implementations.</p>
+<p>Many non-standard use cases will involve customizing the behaviour of <code>DPOptimizer</code>. In fact, we do this already with per layer clipping (<code>DPPerLayerOptimizer</code>) and (<code>DistributedDPOptimizer</code>). If you're interested in building custom DPOptmizer yourself, definitely do study these implementations.</p>
 <p>Below we'll take a closer look at the DPOptimizer implementation and look at how to write subclasses for it.</p>
 </div>
 </div>
@@ -665,7 +665,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 <ul>
 <li><code>grad_sample</code> is raw per sample gradients, output from <code>GradSampleModule</code></li>
 <li><code>summed_grad</code> is the sum of clipped gradients (no noise yet)</li>
-<li><code>grad</code> are the final gradients. <code>add_noise()</code> method is responsible for overriging <code>grad</code> attribute set by standard PyTorch autograd with the ones calculated by Opacus</li>
+<li><code>grad</code> are the final gradients. <code>add_noise()</code> method is responsible for overriding <code>grad</code> attribute set by standard PyTorch autograd with the ones calculated by Opacus</li>
 </ul>
 <p>Custom behaviour can be implemented in subclasses by overriding methods above.
 For example, <code>DPPerLayerOptimizer</code> overrides <code>clip_and_accumulate</code> to adjust the way clipping coefficients are computed.</p>

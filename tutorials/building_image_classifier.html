@@ -271,8 +271,8 @@ Files already downloaded and verified
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Now, let’s check if the model is compatible with Opacus. Opacus does not support all type of Pytorch layers. To check if your model is compatible with the privacy engine, we have provided a util class to validate your model.</p>
-<p>When you run the code below, you're presented with a list of errors, indicating which modules are inpompatible.</p>
+<p>Now, let’s check if the model is compatible with Opacus. Opacus does not support all types of Pytorch layers. To check if your model is compatible with the privacy engine, we have provided a util class to validate your model.</p>
+<p>When you run the code below, you're presented with a list of errors, indicating which modules are incompatible.</p>
 </div>
 </div>
 </div>
@@ -309,7 +309,7 @@ Files already downloaded and verified
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Let us modify the model to work with Opacus. From the output above, you can see that the BatchNorm layers are not supported because they compute the mean and variance across the batch, creating a dependency between samples in a batch, a privacy violation.</p>
 <p>Recommended approach to deal with it is calling <code>ModuleValidator.fix(model)</code> - it tries to find the best replacement for incompatible modules. For example, for BatchNorm modules, it replaces them with GroupNorm.
-You can see, that after this, no expection is raised</p>
+You can see, that after this, no exception is raised</p>
 </div>
 </div>
 </div>
