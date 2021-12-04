@@ -12,6 +12,22 @@ SIGMA_PRECISION = 0.01
 MAX_SIGMA = 2000
 
 
+def get_epsilon(
+    *,
+    delta: float,
+    noise_multiplier: float,
+    sample_rate: float,
+    num_steps: int,
+    accountant: str,
+    **kwargs,
+):
+    """Get epsilon given all parameters."""
+    accountant = create_accountant(mechanism=accountant)
+    for _ in range(num_steps):
+        accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
+    return accountant.get_epsilon(delta=delta, **kwargs)
+
+
 def get_noise_multiplier(
     *,
     target_epsilon: float,
@@ -34,28 +50,31 @@ def get_noise_multiplier(
     Returns:
         The noise level sigma to ensure privacy budget of (target_epsilon, target_delta)
     """
-    if accountant != "rdp":
-        # TODO: rewrite method to accept GDP
-        raise NotImplementedError(
-            "get_noise_multiplier is currently only supports RDP accountant"
-        )
-
     eps = float("inf")
     sigma_min = DEFAULT_SIGMA_MIN_BOUND
     sigma_max = DEFAULT_SIGMA_MAX_BOUND
-    accountant = create_accountant(mechanism=accountant)
 
     while eps > target_epsilon:
         sigma_max = 2 * sigma_max
-        accountant.steps = [(sigma_max, sample_rate, int(epochs / sample_rate))]
-        eps = accountant.get_epsilon(delta=target_delta, **kwargs)
+        eps = get_epsilon(
+            accountant=accountant,
+            delta=target_delta,
+            noise_multiplier=sigma_max,
+            sample_rate=sample_rate,
+            num_steps=int(epochs / sample_rate),
+        )
         if sigma_max > MAX_SIGMA:
             raise ValueError("The privacy budget is too low.")
 
     while sigma_max - sigma_min > SIGMA_PRECISION:
         sigma = (sigma_min + sigma_max) / 2
-        accountant.steps = [(sigma, sample_rate, int(epochs / sample_rate))]
-        eps = accountant.get_epsilon(delta=target_delta, **kwargs)
+        eps = get_epsilon(
+            accountant=accountant,
+            delta=target_delta,
+            noise_multiplier=sigma,
+            sample_rate=sample_rate,
+            num_steps=int(epochs / sample_rate),
+        )
 
         if eps < target_epsilon:
             sigma_max = sigma
