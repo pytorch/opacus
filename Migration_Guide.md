@@ -208,7 +208,7 @@ dp_optimizer = DPOptimizer(
 )
 
 # attack accountant to track privacy for an optimizer
-optimizer.attach_step_hook(
+dp_optimizer.attach_step_hook(
     accountant.get_optimizer_hook_fn(
       # this is an important parameter for privacy accounting. Should be equal to batch_size / len(dataset)
       sample_rate=sample_rate
