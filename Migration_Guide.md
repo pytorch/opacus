@@ -4,7 +4,7 @@ This guide will help you update your code from `opacus==0.x` to `opacus==1.x`.
 
 With the new release we're introducing a slightly different approach to the user-facing library API. While heavily based on the old API, updated API better represents abstractions and algorithms used in DP in ML, enabling private training exactly as it's described in the papers, with no assumptions or simplifications. And in doing so we maintain our focus on high performance training.
 
-On the downside, however, new API lacks backward compatibility. If you've been using older versions of Opacus and want to continue using Opacus 1.0, you'll need to perform certain manual steps. In the vast majority of cases the changes required are trivial, but this can vary depending on your exact setup. This guide will help you through this process.
+On the downside, however, the new API lacks backward compatibility. If you've been using older versions of Opacus and want to continue using Opacus 1.0, you'll need to perform certain manual steps. In the vast majority of cases the changes required are trivial, but this can vary depending on your exact setup. This guide will help you through this process.
 
 # Table of Contents
   * [New API intro](#new-api-intro)
@@ -44,7 +44,7 @@ model, optimizer, data_loader = privacy_engine.make_private(
 # Now it's business as usual
 ```
 
-What actually happens in `make_private` method deserves more attention and we'll cover it later in this doc. For now all we need to know is that `make_private` takes three fully initialized objects (model, optimizer and data loader), along with privacy configuration parameters, and returns wrappers, each taking some additional privacy-related responsibility (while also doing everything the original modules did).
+What actually happens in the `make_private` method deserves more attention and we'll cover it later in this doc. For now all we need to know is that `make_private` takes three fully initialized objects (model, optimizer and data loader), along with privacy configuration parameters, and returns wrappers, each taking some additional privacy-related responsibility (while also doing everything the original modules did).
 
 - model is wrapped with `GradSampleModule`, which computes per sample gradients
 - optimizer is wrapped with `DPOptimizer`, which does gradient clipping and noise addition
@@ -55,7 +55,7 @@ What actually happens in `make_private` method deserves more attention and we'll
 
 ### Basics
 
-Let's take the most simple (and hopefully the most common) migration use case. We assume that we're using standard PyTorch `DataLoader` and take an example we used to demonstrate old API in our readme.
+Let's take the most simple (and hopefully the most common) migration use case. We assume that we're using standard PyTorch `DataLoader` and take an example we used to demonstrate the old API in our readme.
 
 ```diff
 model = Net()
@@ -64,7 +64,7 @@ optimizer = SGD(model.parameters(), lr=0.05)
 + # in addition to model and optimizer you now need access to a data loader
 + data_loader = torch.utils.data.DataLoader(dataset, batch_size=1024)
 
-+ # PrivacyEngine's constructor doesn't accept training artefacts - they're instead passed to make_private
++ # PrivacyEngine's constructor doesn't accept training artifacts - they're instead passed to make_private
 + privacy_engine = PrivacyEngine()
 
 + model, optimizer, data_loader = privacy_engine.make_private(
@@ -128,10 +128,10 @@ While the concept is extremely useful, it suffers from some serious flaws:
 - It didn't protect from occasional large Poisson batches. When working with Poisson sampling, setting batch size
   (or rather sampling rate) was quite tricky. For long enough training loops, peak batch size (and therefore memory
   consumption) could be much larger than the average.
-- It required careful manual crafting inside training loop.
+- It required careful manual crafting inside the training loop.
 
 ```python
-BATCH_SIZE = 128 # that's logical batch size. You'll mostly be using this one across your code
+BATCH_SIZE = 128 # that's the logical batch size. You'll mostly be using this one across your code
 MAX_PHYSICAL_BATCH_SIZE = 32 # physical limit on batch size. You'll use this once
 
 model = Net()
@@ -178,9 +178,9 @@ Actually, nothing has changed. The only thing you should know is that `Different
 
 ## No DataLoader
 
-Now, if you're using something else as your data source, things get interesting. You're still be able to use Opacus, but will need to do a little more.
+Now, if you're using something else as your data source, things get interesting. You'll still be able to use Opacus, but will need to do a little more.
 
-`PrivacyEngine` is intentionally designed to expect and amend `DataLoader`, as this is the right thing to in the majority of cases. However, the good news is that `PrivacyEngine` itself is not absolutely necessary - if you know what you're doing, and are happy with whatever data source you have, here's how to plug in opacus.
+`PrivacyEngine` is intentionally designed to expect and amend `DataLoader`, as this is the right thing to do in the majority of cases. However, the good news is that `PrivacyEngine` itself is not absolutely necessary - if you know what you're doing, and are happy with whatever data source you have, here's how to plug in opacus.
 
 NB: This is only a brief example of using Opacus components independently of `PrivacyEngine`.
 See [this tutorial](https://github.com/pytorch/opacus/blob/main/tutorials/intro_to_advanced_features.ipynb) for extended guide.
@@ -198,7 +198,7 @@ accountant = RDPAccountant()
 from opacus import GradSampleModule
 dp_model = GradSampleModule(model)
 
-#wrap optimizer
+# wrap optimizer
 from opacus.optimizers import DPOptimizer
 dp_optimizer = DPOptimizer(
   optimizer=optimizer,
@@ -207,7 +207,7 @@ dp_optimizer = DPOptimizer(
   expected_batch_size=batch_size # if you're averaging your gradients, you need to know the denominator
 )
 
-# attack accountant to track privacy for an optimizer
+# attach accountant to track privacy for an optimizer
 dp_optimizer.attach_step_hook(
     accountant.get_optimizer_hook_fn(
       # this is an important parameter for privacy accounting. Should be equal to batch_size / len(dataset)
