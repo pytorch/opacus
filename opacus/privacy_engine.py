@@ -299,8 +299,6 @@ class PrivacyEngine:
                 ``[K, batch_size, ...]``
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
-            noise_generator: torch.Generator() used as a source of randomness for
-                gaussian noise generation
             poisson_sampling: ``True`` if you want to use standard sampling required
                 for DP guarantees. Setting ``False`` will leave provided data_loader
                 unchanged. Technically this doesn't fit the assumptions made by
