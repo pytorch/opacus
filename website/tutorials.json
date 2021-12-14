@@ -14,15 +14,15 @@
     },
     {
       "id": "intro_to_advanced_features",
-      "title": "Opacus Guide: Introduction to advanced features"
+      "title": "Deep dive into advanced features of Opacus"
     },
     {
       "id": "guide_to_module_validator",
-      "title": "Opacus Guide: Module Validator and Fixer"
+      "title": "Guide to Module Validator and Fixer"
     },
     {
       "id": "guide_to_grad_sampler",
-      "title": "Opacus Guide: Grad samplers"
+      "title": "Guide to grad samplers"
     }
   ]
 }

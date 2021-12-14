@@ -15,7 +15,7 @@ function SocialFooter(props) {
 
   return (
     <div className="footerSection">
-      <h5>Social</h5>
+      <h5>Github</h5>
       <div className="social">
         <a
           className="github-button" // part of the https://buttons.github.io/buttons.js script in siteConfig.js
@@ -95,7 +95,7 @@ class Footer extends React.Component {
           className="fbOpenSource">
           <img
             src={`${this.props.config.baseUrl}img/oss_logo.png`}
-            alt="Facebook Open Source"
+            alt="Meta Open Source"
             width="170"
             height="45"
           />
@@ -104,7 +104,7 @@ class Footer extends React.Component {
           {this.props.config.copyright && (
             <span>{this.props.config.copyright}</span>
           )}{' '}
-          Copyright &copy; {currentYear} Facebook Inc.
+          Copyright &copy; {currentYear} Meta Platforms Inc.
         </section>
       </footer>
     );

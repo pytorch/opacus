@@ -38,7 +38,7 @@ class TutorialHome extends React.Component {
                 target="_blank">
                 Introducing Opacus
               </a>
-              , by Facebook AI
+              , by Meta AI
             </p>
             <h4>Differential Privacy Blog Post Series</h4>
             <ol>
