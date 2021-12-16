@@ -131,9 +131,11 @@
 <span class="sd">    Notes:</span>
 <span class="sd">        If `secure_mode` is enabled, the generated noise is also secure</span>
 <span class="sd">        against the floating point representation attacks, such as the ones</span>
-<span class="sd">        in https://arxiv.org/abs/2107.10138. This is achieved through calling</span>
-<span class="sd">        the Gaussian noise function 2*n times, when n=2 (see section 5.1 in</span>
-<span class="sd">        https://arxiv.org/abs/2107.10138).</span>
+<span class="sd">        in https://arxiv.org/abs/2107.10138 and https://arxiv.org/abs/2112.05307.</span>
+<span class="sd">        The attack for Opacus first appeared in https://arxiv.org/abs/2112.05307.</span>
+<span class="sd">        The implemented fix is based on https://arxiv.org/abs/2107.10138 and is</span>
+<span class="sd">        achieved through calling the Gaussian noise function 2*n times, when n=2</span>
+<span class="sd">        (see section 5.1 in https://arxiv.org/abs/2107.10138).</span>
 
 <span class="sd">        Reason for choosing n=2: n can be any number &gt; 1. The bigger, the more</span>
 <span class="sd">        computation needs to be done (`2n` Gaussian samples will be generated).</span>
@@ -560,7 +562,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
