@@ -13,7 +13,7 @@ from .utils import register_grad_sampler
 
 @register_grad_sampler([nn.Conv1d, nn.Conv2d, nn.Conv3d])
 def compute_conv_grad_sample(
-    layer: Union[nn.Conv2d, nn.Conv1d],
+    layer: Union[nn.Conv1d, nn.Conv2d, nn.Conv3d],
     activations: torch.Tensor,
     backprops: torch.Tensor,
 ) -> Dict[nn.Parameter, torch.Tensor]:
@@ -26,7 +26,7 @@ def compute_conv_grad_sample(
         backprops: Backpropagations
     """
     n = activations.shape[0]
-    # get A and B in shape depending on the Conv layer
+    # get activations and backprops in shape depending on the Conv layer
     if type(layer) == nn.Conv2d:
         activations = unfold2d(
             activations,
@@ -35,9 +35,7 @@ def compute_conv_grad_sample(
             stride=layer.stride,
             dilation=layer.dilation,
         )
-        backprops = backprops.reshape(n, -1, activations.shape[-1])
     elif type(layer) == nn.Conv1d:
-        # unfold doesn't work for 3D tensors; so force it to be 4D
         activations = activations.unsqueeze(-2)  # add the H dimension
         # set arguments to tuples with appropriate second element
         activations = torch.nn.functional.unfold(
@@ -47,7 +45,6 @@ def compute_conv_grad_sample(
             stride=(1, layer.stride[0]),
             dilation=(1, layer.dilation[0]),
         )
-        backprops = backprops.reshape(n, -1, activations.shape[-1])
     elif type(layer) == nn.Conv3d:
         activations = unfold3d(
             activations,
@@ -56,8 +53,7 @@ def compute_conv_grad_sample(
             stride=layer.stride,
             dilation=layer.dilation,
         )
-        backprops = backprops.reshape(n, -1, activations.shape[-1])
-
+    backprops = backprops.reshape(n, -1, activations.shape[-1])
     # n=batch_sz; o=num_out_channels; p=(num_in_channels/groups)*kernel_sz
     grad_sample = torch.einsum("noq,npq->nop", backprops, activations)
     # rearrange the above tensor and extract diagonals.

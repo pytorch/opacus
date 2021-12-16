@@ -22,7 +22,7 @@ On the downside, however, the new API lacks backward compatibility. If you've be
 
 First, a quick recap on how the new API looks.
 
-The first difference you'll notice is increased focus on data handling. Batch sampling is an important component of DP-SGD (e.g. privacy accounting relies on amplification by sampling) and Poisson sampling is quite tricky to get right, so now Opacus takes control of 3 PyTorch training objects: model, optimizer, and data loader.
+The first difference you'll notice is increased focus on data handling. Batch sampling is an important component of DP-SGD (e.g. privacy accounting relies on amplification by sampling) and Poisson sampling is quite tricky to get right. So now Opacus takes control of 3 PyTorch training objects: model, optimizer, and data loader.
 
 Here's a simple example:
 
@@ -44,7 +44,7 @@ model, optimizer, data_loader = privacy_engine.make_private(
 # Now it's business as usual
 ```
 
-What actually happens in the `make_private` method deserves more attention and we'll cover it later in this doc. For now all we need to know is that `make_private` takes three fully initialized objects (model, optimizer and data loader), along with privacy configuration parameters, and returns wrappers, each taking some additional privacy-related responsibility (while also doing everything the original modules did).
+What actually happens in the `make_private` method deserves more attention and we'll cover it later in this doc. For now all we need to know is that `make_private` takes three fully initialized objects (model, optimizer and data loader), along with privacy configuration parameters. `make_private` method then returns wrappers, each taking some additional privacy-related responsibilities, while also doing everything the original modules do.
 
 - model is wrapped with `GradSampleModule`, which computes per sample gradients
 - optimizer is wrapped with `DPOptimizer`, which does gradient clipping and noise addition
@@ -55,7 +55,7 @@ What actually happens in the `make_private` method deserves more attention and w
 
 ### Basics
 
-Let's take the most simple (and hopefully the most common) migration use case. We assume that we're using standard PyTorch `DataLoader` and take an example we used to demonstrate the old API in our readme.
+Let's take the simplest (and hopefully the most common) migration use case. We assume that we're using standard PyTorch `DataLoader` and take an example we used to demonstrate the old API with in the Opacus readme.
 
 ```diff
 model = Net()
@@ -84,7 +84,7 @@ optimizer = SGD(model.parameters(), lr=0.05)
 
 ### Privacy accounting
 
-This part is mostly the same, except that the API is now adapted to a more generic concept of privacy accountant. We've already implemented two accountants: RDP (default and recommended one) and Gaussian DP accountant.
+This part is mostly unchanged, except that the API is now adapted to a more generic concept of privacy accountant. We've already implemented two accountants: RDP (default and recommended one) and Gaussian DP accountant.
 
 In most cases, here's what you'll need to change:
 ```diff
@@ -105,13 +105,13 @@ eps, alpha = privacy_engine.accountant.get_privacy_spent(delta=target_delta, alp
 
 ### Zero grad
 
-Note, that previous opacus version didn't require you to call `optimizer.zero_grad()` - opacus cleared gradients after optimization steps regardless. Now we rely on user to call the method (but will still detect and throw and exception if it's not done)
+The previous Opacus version didn't require you to call `optimizer.zero_grad()` - Opacus would clear gradients after optimization steps regardless. Now we rely on user to call the method (but will still detect and throw an exception if it's not done)
 
 ## Your model has BatchNorm
 
 By default `PrivacyEngine` only does module validation - you have to pass a module that already meets the expectations. We've aggregated all known module fixes, including `BatchNorm -> GroupNorm` replacement into `ModuleValidator.fix()`
 
-Note, that it'll also perform other known remediations like replacing `LSTM` with `DPLSTM`. For the full list of actions see `opacus.validators` package docs
+`ModuleValidator.fix()` also performs other known remediations like replacing `LSTM` with `DPLSTM`. For the full list of actions see `opacus.validators` package docs
 
 ```diff
 + model = ModuleValidator.fix(model)
@@ -120,7 +120,7 @@ Note, that it'll also perform other known remediations like replacing `LSTM` wit
 
 ## If you're using virtual steps
 
-Old opacus featured the concept of virtual steps - you could decouple the logical batch size (which defined how often model weights are updated and how much dp noise is added) and physical batch size (which defined the maximum physical batch size processed by the model at any one time).
+Old Opacus featured the concept of virtual steps - you could decouple the logical batch size (which defined how often model weights are updated and how much DP noise is added) and physical batch size (which defined the maximum physical batch size processed by the model at any one time).
 While the concept is extremely useful, it suffers from some serious flaws:
 - Not compatible with poisson sampling. Two subsequent poisson batches with `sample_rate=x` are not equivalent
   to a single batch with `sample_rate=2x`. Therefore simulating larger batches by setting lower sampling rate isn't
@@ -169,7 +169,7 @@ model, optimizer, data_loader = privacy_engine.make_private_with_epsilon(
 
 ## Distributed
 
-Actually, nothing has changed. The only thing you should know is that `DifferentiallyPrivateDistributedDataParallel` is moved to a different module:
+Nothing has changed here. The only thing you should know is that `DifferentiallyPrivateDistributedDataParallel` is moved to a different module:
 
 ```diff
 + from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
@@ -180,7 +180,7 @@ Actually, nothing has changed. The only thing you should know is that `Different
 
 Now, if you're using something else as your data source, things get interesting. You'll still be able to use Opacus, but will need to do a little more.
 
-`PrivacyEngine` is intentionally designed to expect and amend `DataLoader`, as this is the right thing to do in the majority of cases. However, the good news is that `PrivacyEngine` itself is not absolutely necessary - if you know what you're doing, and are happy with whatever data source you have, here's how to plug in opacus.
+`PrivacyEngine` is intentionally designed to expect and amend `DataLoader`, as this is the right thing to do in the majority of cases. However, the good news is that `PrivacyEngine` itself is not absolutely necessary - if you know what you're doing, and are happy with whatever data source you have, here's how to plug in Opacus.
 
 NB: This is only a brief example of using Opacus components independently of `PrivacyEngine`.
 See [this tutorial](https://github.com/pytorch/opacus/blob/main/tutorials/intro_to_advanced_features.ipynb) for extended guide.
