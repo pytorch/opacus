@@ -428,10 +428,10 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             if self.batch_first:
                 output = output.transpose(0, 1)
 
-        hs = torch.stack(hs, dim=0)  # [L*P, B, H]
+        hs = torch.stack(hs, dim=0).to(device)  # [L*P, B, H]
         hs = apply_permutation(hs, 1, unsorted_indices)
         if self.has_cell_state:
-            cs = torch.stack(cs, dim=0)  # [L*P, B, H]
+            cs = torch.stack(cs, dim=0).to(device)  # [L*P, B, H]
             cs = apply_permutation(cs, 1, unsorted_indices)
 
         hidden = (hs, cs) if self.has_cell_state else hs
