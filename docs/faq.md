@@ -5,11 +5,11 @@ title: FAQ
 
 ## What is Opacus?
 
-Opacus is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment. Please refer to [this post](https://ai.facebook.com/blog/introducing-opacus-a-high-speed-library-for-training-pytorch-models-with-differential-privacy/) to read more about Opacus.
+Opacus is a library that enables training PyTorch models with differential privacy. It supports training with minimal code changes required on the client, has little impact on training performance and allows the client to online track the privacy budget expended at any given moment. Please refer to [this paper](https://arxiv.org/abs/2109.12298) to read more about Opacus.
 
 ## Is Opacus open-source? What is the license?
 
-Yes! Opacus is open-source for public use, and it is licensed under the [Apache-2.0](https://github.com/pytorch/opacus/blob/main/LICENSE).
+Yes! Opacus is open-source for public use, and it is licensed under the [Apache 2.0](https://github.com/pytorch/opacus/blob/main/LICENSE) license.
 
 ## How can I report a bug or ask a question?
 
@@ -25,8 +25,8 @@ Thank you for your interest in contributing to Opacus! Submit your contributions
 If you use Opacus in your papers, you can cite it as follows:
 ```
 @article{opacus,
-  title={Opacus: User-Friendly Differential Privacy Library in PyTorch},
-  author={A. Yousefpour and I. Shilov and A. Sablayrolles and D. Testuggine and K. Prasad and M. Malek and J. Nguyen and S. Ghosh and A. Bharadwaj and J. Zhao and G. Cormode and I. Mironov},
+  title={Opacus: {U}ser-Friendly Differential Privacy Library in {PyTorch}},
+  author={Ashkan Yousefpour and Igor Shilov and Alexandre Sablayrolles and Davide Testuggine and Karthik Prasad and Mani Malek and John Nguyen and Sayan Ghosh and Akash Bharadwaj and Jessica Zhao and Graham Cormode and Ilya Mironov},
   journal={arXiv preprint arXiv:2109.12298},
   year={2021}
 }
@@ -40,17 +40,21 @@ DP-SGD is an algorithm described in this [paper](https://arxiv.org/pdf/1607.0013
 
 Training with Opacus is as simple as instantiating a `PrivacyEngine` and attaching it to the `optimizer`:
 
-```
-model = Net(). # your NN model
-optimizer = SGD(model.parameters(), lr=0.05)  # your optimizer
-privacy_engine = PrivacyEngine(
-    model,
-    sample_rate=0.01,
-    alphas=[1, 10, 100],
-    noise_multiplier=1.3,
+```python
+# define your components as usual
+model = Net()
+optimizer = SGD(model.parameters(), lr=0.05)
+data_loader = torch.utils.data.DataLoader(dataset, batch_size=1024)
+
+# enter PrivacyEngine
+privacy_engine = PrivacyEngine()
+model, optimizer, data_loader = privacy_engine.make_private(
+    module=model,
+    optimizer=optimizer,
+    data_loader=data_loader,
+    noise_multiplier=1.1,
     max_grad_norm=1.0,
 )
-privacy_engine.attach(optimizer)
 # Now it's business as usual
 ```
 
@@ -108,7 +112,7 @@ When the privacy engine needs to bound the privacy loss of a training run using 
 
 A call to `privacy_engine.get_privacy_spent(delta)` returns a pair: an epsilon such that the training run satisfies (epsilon, delta)-DP and an optimal order alpha. An easy diagnostic to determine whether the list of `alphas` ought to be expanded is whether the returned value alpha is one of the two boundary values of `alphas`.
 
-## How do I run Opacus in Colab?
+<!-- ## How do I run Opacus in Colab?
 
 If you are getting an error like this, `ImportError: libcudart.so.10.2: cannot open shared object file: No such file or directory`, the reason is that you are on the wrong CUDA version. For example, as of October 2020 Colab is still on Cuda 10.1, while PyTorch has moved on to Cuda 10.2 as its default. You would actually see this issue even with installing PyTorch - you don't see it because PyTorch comes pre-installed in Colab so they have the right Cuda version already.
 
@@ -125,3 +129,4 @@ After this, you can just `pip install opacus` and it will work :)
 Notice our convention in naming package versions: <lib_version>+cu<cuda_version>. If at any point you lose the copypasta or forget the convention, you can simply go to the PyTorch install page, select Cuda 10.1 for Linux and you'll see it: https://pytorch.org/get-started/locally/
 
 The same principle will apply for future CUDA releases should Colab and PyTorch fall out of sync again.
+ -->
