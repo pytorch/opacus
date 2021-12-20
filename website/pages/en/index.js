@@ -29,7 +29,7 @@ class HomeSplash extends React.Component {
       <div className="announcement">
         <p>We are excited to announce the release of Opacus 1.0.</p>
         <p>This release packs in lot of new features and bug fixes, and most importantly, also brings forth new APIs that are simpler, more modular, and easily extensible.</p>
-        <p>See our <a href="https://github.com/pytorch/opacus/releases/tag/v1.0.0">Release Notes</a> for more details</p>
+        <p>See our <a href="https://github.com/pytorch/opacus/releases/tag/v1.0.0">Release Notes</a> for more details. <a href="https://github.com/pytorch/opacus/blob/main/Migration_Guide.md" target="_blank">Migration Guide</a></p>
       </div>
     );
 

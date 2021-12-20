@@ -104,9 +104,11 @@ def _generate_noise(
     Notes:
         If `secure_mode` is enabled, the generated noise is also secure
         against the floating point representation attacks, such as the ones
-        in https://arxiv.org/abs/2107.10138. This is achieved through calling
-        the Gaussian noise function 2*n times, when n=2 (see section 5.1 in
-        https://arxiv.org/abs/2107.10138).
+        in https://arxiv.org/abs/2107.10138 and https://arxiv.org/abs/2112.05307.
+        The attack for Opacus first appeared in https://arxiv.org/abs/2112.05307.
+        The implemented fix is based on https://arxiv.org/abs/2107.10138 and is
+        achieved through calling the Gaussian noise function 2*n times, when n=2
+        (see section 5.1 in https://arxiv.org/abs/2107.10138).
 
         Reason for choosing n=2: n can be any number > 1. The bigger, the more
         computation needs to be done (`2n` Gaussian samples will be generated).
