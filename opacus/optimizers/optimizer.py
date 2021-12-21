@@ -14,12 +14,12 @@ logger = logging.getLogger(__name__)
 
 def _mark_as_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
     """
-    Marks parameters that's already been used in the optimizer step.
+    Marks parameters that have already been used in the optimizer step.
 
-    DP-SGD puts certain restrictions on how gradients can be accumulated. In patricular,
-    no gradient can be used twice - client must call .zero_grad() betwwen
+    DP-SGD puts certain restrictions on how gradients can be accumulated. In particular,
+    no gradient can be used twice - client must call .zero_grad() between
     optimizer steps, otherwise privacy guarantees are compromised.
-    This method marks tensors that's already been used in optimizer steps to then
+    This method marks tensors that have already been used in optimizer steps to then
     check if zero_grad has been duly called.
 
     Notes:
@@ -54,7 +54,7 @@ def _check_processed_flag_tensor(x: torch.Tensor):
 
     if hasattr(x, "_processed"):
         raise ValueError(
-            "Gradients hasn't been cleared since the last optimizer step. "
+            "Gradients haven't been cleared since the last optimizer step. "
             "In order to obtain privacy guarantees you must call optimizer.zero_grad()"
             "on each step"
         )
@@ -95,7 +95,7 @@ def _generate_noise(
 
     Args:
         std: Standard deviation of the noise
-        reference: The reference Tensor to get the appripriate shape and device
+        reference: The reference Tensor to get the appropriate shape and device
             for generating the noise
         generator: The PyTorch noise generator
         secure_mode: boolean showing if "secure" noise need to be generate
@@ -159,9 +159,9 @@ def _get_flat_grad_sample(p: torch.Tensor):
     batch basis. Therefore, ``p.grad_sample`` is a single tensor if holds results from
     only one batch, and a list of tensors if gradients are accumulated over multiple
     steps. This is done to provide visibility into which sample belongs to which batch,
-    and how many batches has been processed.
+    and how many batches have been processed.
 
-    This method returns per sample grardients as a single concatenated tensor, regarless
+    This method returns per sample gradients as a single concatenated tensor, regardless
     of how many batches have been accumulated
 
     Args:
@@ -191,13 +191,13 @@ def _get_flat_grad_sample(p: torch.Tensor):
 class DPOptimizer(Optimizer):
     """
     ``torch.optim.Optimizer`` wrapper that adds additional functionality to clip per
-    sample gradients and add gaissian noise.
+    sample gradients and add Gaussian noise.
 
     Can be used with any ``torch.optim.Optimizer`` subclass as an underlying optimizer.
     ``DPOptimzer`` assumes that parameters over which it performs optimization belong
-    to GradSampleModule and therefore have ``grad_sample`` attribute.
+    to GradSampleModule and therefore have the ``grad_sample`` attribute.
 
-    On a high lever ``DPOptimizer``'s step looks like this:
+    On a high level ``DPOptimizer``'s step looks like this:
     1) Aggregate ``p.grad_sample`` over all parameters to calculate per sample norms
     2) Clip ``p.grad_sample`` so that per sample norm is not above threshold
     3) Aggregate clipped per sample gradients into ``p.grad``
@@ -232,7 +232,7 @@ class DPOptimizer(Optimizer):
         Args:
             optimizer: wrapped optimizer.
             noise_multiplier: noise multiplier
-            max_grad_norm: max grad norm used for gradient clpping
+            max_grad_norm: max grad norm used for gradient clipping
             expected_batch_size: batch_size used for averaging gradients. When using
                 Poisson sampling averaging denominator can't be inferred from the
                 actual batch size. Required is ``loss_reduction="mean"``, ignored if
@@ -322,9 +322,9 @@ class DPOptimizer(Optimizer):
 
         In other words ``accumulated_iterations`` tracks the number of forward/backward
         passed done in between two optimizer steps. The value would typically be 1,
-        but there are possible exeptions.
+        but there are possible exceptions.
 
-        Used by privacy accountants to calcualte real sampling rate.
+        Used by privacy accountants to calculate real sampling rate.
         """
         vals = []
         for p in self.params:
@@ -348,7 +348,7 @@ class DPOptimizer(Optimizer):
     def attach_step_hook(self, fn: Callable[[DPOptimizer], None]):
         """
         Attaches a hook to be executed after gradient clipping/noising, but before the
-        actual optimzation step.
+        actual optimization step.
 
         Most commonly used for privacy accounting.
 
@@ -387,7 +387,7 @@ class DPOptimizer(Optimizer):
 
     def add_noise(self):
         """
-        Adds noise to clipped gradeints. Stores clipped and noised result in ``p.grad``
+        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
 
         for p in self.params:
@@ -407,7 +407,7 @@ class DPOptimizer(Optimizer):
         """
         Applies given ``loss_reduction`` to ``p.grad``.
 
-        Does nothing if ``loss_reduction="sum"``. Divides gradeints by
+        Does nothing if ``loss_reduction="sum"``. Divides gradients by
         ``self.expected_batch_size`` if ``loss_reduction="mean"``
         """
         if self.loss_reduction == "mean":
