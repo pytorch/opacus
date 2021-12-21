@@ -6,7 +6,7 @@ from typing import List
 
 import torch.nn as nn
 from opacus.grad_sample.grad_sample_module import GradSampleModule
-from opacus.utils.module_utils import clone_module, get_submodule
+from opacus.utils.module_utils import clone_module, get_submodule, trainable_modules
 from opacus.validators.errors import (
     IllegalModuleConfigurationError,
     UnsupportedModuleError,
@@ -49,9 +49,9 @@ class ModuleValidator:
             )
         # 2. validate that all trainable modules are supported by GradSampleModule.
         errors.extend(GradSampleModule.validate(module=module, strict=False))
-        # 3. perform module specific validations.
+        # 3. perform module specific validations for trainable modules.
         # TODO: use module name here - it's useful part of error message
-        for _, sub_module in module.named_modules():
+        for _, sub_module in trainable_modules(module):
             if type(sub_module) in ModuleValidator.VALIDATORS:
                 sub_module_validator = ModuleValidator.VALIDATORS[type(sub_module)]
                 errors.extend(sub_module_validator(sub_module))
@@ -87,9 +87,9 @@ class ModuleValidator:
         """
         module = clone_module(module)
         # iterate over all sub_modules
-        #   Need to get sub_module names first as we will be changing
-        #   inside the the loop.
-        sub_module_names = [name for name, _ in module.named_modules()]
+        # We have to get sub_module names in a list first as we will be
+        # changing the modules inside the the loop.
+        sub_module_names = [name for name, _ in trainable_modules(module)]
         for sub_module_name in sub_module_names:
             # get sub_module
             sub_module = get_submodule(module, sub_module_name)
