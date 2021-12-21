@@ -41,12 +41,12 @@
 
 <span class="k">def</span> <span class="nf">_mark_as_processed</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]):</span>
     <span class="sd">"""</span>
-<span class="sd">    Marks parameters that's already been used in the optimizer step.</span>
+<span class="sd">    Marks parameters that have already been used in the optimizer step.</span>
 
-<span class="sd">    DP-SGD puts certain restrictions on how gradients can be accumulated. In patricular,</span>
-<span class="sd">    no gradient can be used twice - client must call .zero_grad() betwwen</span>
+<span class="sd">    DP-SGD puts certain restrictions on how gradients can be accumulated. In particular,</span>
+<span class="sd">    no gradient can be used twice - client must call .zero_grad() between</span>
 <span class="sd">    optimizer steps, otherwise privacy guarantees are compromised.</span>
-<span class="sd">    This method marks tensors that's already been used in optimizer steps to then</span>
+<span class="sd">    This method marks tensors that have already been used in optimizer steps to then</span>
 <span class="sd">    check if zero_grad has been duly called.</span>
 
 <span class="sd">    Notes:</span>
@@ -81,7 +81,7 @@
 
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"_processed"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">"Gradients hasn't been cleared since the last optimizer step. "</span>
+            <span class="s2">"Gradients haven't been cleared since the last optimizer step. "</span>
             <span class="s2">"In order to obtain privacy guarantees you must call optimizer.zero_grad()"</span>
             <span class="s2">"on each step"</span>
         <span class="p">)</span>
@@ -122,7 +122,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        std: Standard deviation of the noise</span>
-<span class="sd">        reference: The reference Tensor to get the appripriate shape and device</span>
+<span class="sd">        reference: The reference Tensor to get the appropriate shape and device</span>
 <span class="sd">            for generating the noise</span>
 <span class="sd">        generator: The PyTorch noise generator</span>
 <span class="sd">        secure_mode: boolean showing if "secure" noise need to be generate</span>
@@ -186,9 +186,9 @@
 <span class="sd">    batch basis. Therefore, ``p.grad_sample`` is a single tensor if holds results from</span>
 <span class="sd">    only one batch, and a list of tensors if gradients are accumulated over multiple</span>
 <span class="sd">    steps. This is done to provide visibility into which sample belongs to which batch,</span>
-<span class="sd">    and how many batches has been processed.</span>
+<span class="sd">    and how many batches have been processed.</span>
 
-<span class="sd">    This method returns per sample grardients as a single concatenated tensor, regarless</span>
+<span class="sd">    This method returns per sample gradients as a single concatenated tensor, regardless</span>
 <span class="sd">    of how many batches have been accumulated</span>
 
 <span class="sd">    Args:</span>
@@ -218,13 +218,13 @@
 <div class="viewcode-block" id="DPOptimizer"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer">[docs]</a><span class="k">class</span> <span class="nc">DPOptimizer</span><span class="p">(</span><span class="n">Optimizer</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    ``torch.optim.Optimizer`` wrapper that adds additional functionality to clip per</span>
-<span class="sd">    sample gradients and add gaissian noise.</span>
+<span class="sd">    sample gradients and add Gaussian noise.</span>
 
 <span class="sd">    Can be used with any ``torch.optim.Optimizer`` subclass as an underlying optimizer.</span>
 <span class="sd">    ``DPOptimzer`` assumes that parameters over which it performs optimization belong</span>
-<span class="sd">    to GradSampleModule and therefore have ``grad_sample`` attribute.</span>
+<span class="sd">    to GradSampleModule and therefore have the ``grad_sample`` attribute.</span>
 
-<span class="sd">    On a high lever ``DPOptimizer``'s step looks like this:</span>
+<span class="sd">    On a high level ``DPOptimizer``'s step looks like this:</span>
 <span class="sd">    1) Aggregate ``p.grad_sample`` over all parameters to calculate per sample norms</span>
 <span class="sd">    2) Clip ``p.grad_sample`` so that per sample norm is not above threshold</span>
 <span class="sd">    3) Aggregate clipped per sample gradients into ``p.grad``</span>
@@ -259,7 +259,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            optimizer: wrapped optimizer.</span>
 <span class="sd">            noise_multiplier: noise multiplier</span>
-<span class="sd">            max_grad_norm: max grad norm used for gradient clpping</span>
+<span class="sd">            max_grad_norm: max grad norm used for gradient clipping</span>
 <span class="sd">            expected_batch_size: batch_size used for averaging gradients. When using</span>
 <span class="sd">                Poisson sampling averaging denominator can't be inferred from the</span>
 <span class="sd">                actual batch size. Required is ``loss_reduction="mean"``, ignored if</span>
@@ -349,9 +349,9 @@
 
 <span class="sd">        In other words ``accumulated_iterations`` tracks the number of forward/backward</span>
 <span class="sd">        passed done in between two optimizer steps. The value would typically be 1,</span>
-<span class="sd">        but there are possible exeptions.</span>
+<span class="sd">        but there are possible exceptions.</span>
 
-<span class="sd">        Used by privacy accountants to calcualte real sampling rate.</span>
+<span class="sd">        Used by privacy accountants to calculate real sampling rate.</span>
 <span class="sd">        """</span>
         <span class="n">vals</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
@@ -375,7 +375,7 @@
 <div class="viewcode-block" id="DPOptimizer.attach_step_hook"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.attach_step_hook">[docs]</a>    <span class="k">def</span> <span class="nf">attach_step_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">DPOptimizer</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
         <span class="sd">"""</span>
 <span class="sd">        Attaches a hook to be executed after gradient clipping/noising, but before the</span>
-<span class="sd">        actual optimzation step.</span>
+<span class="sd">        actual optimization step.</span>
 
 <span class="sd">        Most commonly used for privacy accounting.</span>
 
@@ -414,7 +414,7 @@
 
 <div class="viewcode-block" id="DPOptimizer.add_noise"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.add_noise">[docs]</a>    <span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        Adds noise to clipped gradeints. Stores clipped and noised result in ``p.grad``</span>
+<span class="sd">        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``</span>
 <span class="sd">        """</span>
 
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
@@ -434,7 +434,7 @@
         <span class="sd">"""</span>
 <span class="sd">        Applies given ``loss_reduction`` to ``p.grad``.</span>
 
-<span class="sd">        Does nothing if ``loss_reduction="sum"``. Divides gradeints by</span>
+<span class="sd">        Does nothing if ``loss_reduction="sum"``. Divides gradients by</span>
 <span class="sd">        ``self.expected_batch_size`` if ``loss_reduction="mean"``</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>

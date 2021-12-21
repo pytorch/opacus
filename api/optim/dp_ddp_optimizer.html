@@ -36,7 +36,7 @@ distributed data processing</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – wrapped optimizer.</p></li>
 <li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – noise multiplier</p></li>
-<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – max grad norm used for gradient clpping</p></li>
+<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – max grad norm used for gradient clipping</p></li>
 <li><p><strong>expected_batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – batch_size used for averaging gradients. When using
 Poisson sampling averaging denominator can’t be inferred from the
 actual batch size. Required is <code class="docutils literal notranslate"><span class="pre">loss_reduction="mean"</span></code>, ignored if
@@ -54,7 +54,7 @@ See <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.add_noise">
 <span class="sig-name descname"><span class="pre">add_noise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/ddpoptimizer.html#DistributedDPOptimizer.add_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.add_noise" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds noise to clipped gradeints. Stores clipped and noised result in <code class="docutils literal notranslate"><span class="pre">p.grad</span></code></p>
+<dd><p>Adds noise to clipped gradients. Stores clipped and noised result in <code class="docutils literal notranslate"><span class="pre">p.grad</span></code></p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.step">

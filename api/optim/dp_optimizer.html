@@ -30,11 +30,11 @@
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.optimizers.optimizer.</span></span><span class="sig-name descname"><span class="pre">DPOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer" title="Permalink to this definition">¶</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">torch.optim.Optimizer</span></code> wrapper that adds additional functionality to clip per
-sample gradients and add gaissian noise.</p>
+sample gradients and add Gaussian noise.</p>
 <p>Can be used with any <code class="docutils literal notranslate"><span class="pre">torch.optim.Optimizer</span></code> subclass as an underlying optimizer.
 <code class="docutils literal notranslate"><span class="pre">DPOptimzer</span></code> assumes that parameters over which it performs optimization belong
-to GradSampleModule and therefore have <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> attribute.</p>
-<p>On a high lever <code class="docutils literal notranslate"><span class="pre">DPOptimizer</span></code>’s step looks like this:
+to GradSampleModule and therefore have the <code class="docutils literal notranslate"><span class="pre">grad_sample</span></code> attribute.</p>
+<p>On a high level <code class="docutils literal notranslate"><span class="pre">DPOptimizer</span></code>’s step looks like this:
 1) Aggregate <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code> over all parameters to calculate per sample norms
 2) Clip <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code> so that per sample norm is not above threshold
 3) Aggregate clipped per sample gradients into <code class="docutils literal notranslate"><span class="pre">p.grad</span></code>
@@ -57,7 +57,7 @@ max grad norm limit (<code class="docutils literal notranslate"><span class="pre
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – wrapped optimizer.</p></li>
 <li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – noise multiplier</p></li>
-<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – max grad norm used for gradient clpping</p></li>
+<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – max grad norm used for gradient clipping</p></li>
 <li><p><strong>expected_batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – batch_size used for averaging gradients. When using
 Poisson sampling averaging denominator can’t be inferred from the
 actual batch size. Required is <code class="docutils literal notranslate"><span class="pre">loss_reduction="mean"</span></code>, ignored if
@@ -78,8 +78,8 @@ See <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 <dd><p>Returns number of batches currently accumulated and not yet processed.</p>
 <p>In other words <code class="docutils literal notranslate"><span class="pre">accumulated_iterations</span></code> tracks the number of forward/backward
 passed done in between two optimizer steps. The value would typically be 1,
-but there are possible exeptions.</p>
-<p>Used by privacy accountants to calcualte real sampling rate.</p>
+but there are possible exceptions.</p>
+<p>Used by privacy accountants to calculate real sampling rate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
@@ -89,13 +89,13 @@ but there are possible exeptions.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.add_noise">
 <span class="sig-name descname"><span class="pre">add_noise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.add_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.add_noise" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds noise to clipped gradeints. Stores clipped and noised result in <code class="docutils literal notranslate"><span class="pre">p.grad</span></code></p>
+<dd><p>Adds noise to clipped gradients. Stores clipped and noised result in <code class="docutils literal notranslate"><span class="pre">p.grad</span></code></p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.attach_step_hook">
 <span class="sig-name descname"><span class="pre">attach_step_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.attach_step_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.attach_step_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attaches a hook to be executed after gradient clipping/noising, but before the
-actual optimzation step.</p>
+actual optimization step.</p>
 <p>Most commonly used for privacy accounting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -162,7 +162,7 @@ returns the loss. Optional for most optimizers.</p>
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.scale_grad">
 <span class="sig-name descname"><span class="pre">scale_grad</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer.html#DPOptimizer.scale_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.scale_grad" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies given <code class="docutils literal notranslate"><span class="pre">loss_reduction</span></code> to <code class="docutils literal notranslate"><span class="pre">p.grad</span></code>.</p>
-<p>Does nothing if <code class="docutils literal notranslate"><span class="pre">loss_reduction="sum"</span></code>. Divides gradeints by
+<p>Does nothing if <code class="docutils literal notranslate"><span class="pre">loss_reduction="sum"</span></code>. Divides gradients by
 <code class="docutils literal notranslate"><span class="pre">self.expected_batch_size</span></code> if <code class="docutils literal notranslate"><span class="pre">loss_reduction="mean"</span></code></p>
 </dd></dl>
 <dl class="py method">
