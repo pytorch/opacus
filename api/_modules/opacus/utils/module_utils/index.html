@@ -52,8 +52,8 @@
 <span class="sd">    have parameters (as opposed to "wrapper modules" that just organize modules).</span>
 <span class="sd">    """</span>
     <span class="k">yield from</span> <span class="p">(</span>
-        <span class="n">m</span>
-        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">modules</span><span class="p">()</span>
+        <span class="p">(</span><span class="n">m_name</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">m_name</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_modules</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="n">recurse</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
     <span class="p">)</span></div>
 
@@ -64,8 +64,8 @@
 <span class="sd">    have parameters and are trainable (ie they want a grad).</span>
 <span class="sd">    """</span>
     <span class="k">yield from</span> <span class="p">(</span>
-        <span class="n">m</span>
-        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">parametrized_modules</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">m_name</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">m_name</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parametrized_modules</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="n">recurse</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
     <span class="p">)</span></div>
 

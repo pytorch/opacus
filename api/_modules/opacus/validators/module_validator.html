@@ -33,7 +33,7 @@
 
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
 <span class="kn">from</span> <span class="nn">opacus.grad_sample.grad_sample_module</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
-<span class="kn">from</span> <span class="nn">opacus.utils.module_utils</span> <span class="kn">import</span> <span class="n">clone_module</span><span class="p">,</span> <span class="n">get_submodule</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.module_utils</span> <span class="kn">import</span> <span class="n">clone_module</span><span class="p">,</span> <span class="n">get_submodule</span><span class="p">,</span> <span class="n">trainable_modules</span>
 <span class="kn">from</span> <span class="nn">opacus.validators.errors</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">IllegalModuleConfigurationError</span><span class="p">,</span>
     <span class="n">UnsupportedModuleError</span><span class="p">,</span>
@@ -76,9 +76,9 @@
             <span class="p">)</span>
         <span class="c1"># 2. validate that all trainable modules are supported by GradSampleModule.</span>
         <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">GradSampleModule</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
-        <span class="c1"># 3. perform module specific validations.</span>
+        <span class="c1"># 3. perform module specific validations for trainable modules.</span>
         <span class="c1"># TODO: use module name here - it's useful part of error message</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">sub_module</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">sub_module</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">VALIDATORS</span><span class="p">:</span>
                 <span class="n">sub_module_validator</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">VALIDATORS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)]</span>
                 <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sub_module_validator</span><span class="p">(</span><span class="n">sub_module</span><span class="p">))</span>
@@ -114,9 +114,9 @@
 <span class="sd">        """</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">clone_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
         <span class="c1"># iterate over all sub_modules</span>
-        <span class="c1">#   Need to get sub_module names first as we will be changing</span>
-        <span class="c1">#   inside the the loop.</span>
-        <span class="n">sub_module_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_modules</span><span class="p">()]</span>
+        <span class="c1"># We have to get sub_module names in a list first as we will be</span>
+        <span class="c1"># changing the modules inside the the loop.</span>
+        <span class="n">sub_module_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
         <span class="k">for</span> <span class="n">sub_module_name</span> <span class="ow">in</span> <span class="n">sub_module_names</span><span class="p">:</span>
             <span class="c1"># get sub_module</span>
             <span class="n">sub_module</span> <span class="o">=</span> <span class="n">get_submodule</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">sub_module_name</span><span class="p">)</span>
