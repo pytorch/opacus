@@ -25,8 +25,8 @@ def parametrized_modules(module: nn.Module) -> Iterable[nn.Module]:
     have parameters (as opposed to "wrapper modules" that just organize modules).
     """
     yield from (
-        m
-        for m in module.modules()
+        (m_name, m)
+        for (m_name, m) in module.named_modules()
         if any(p is not None for p in m.parameters(recurse=False))
     )
 
@@ -37,8 +37,8 @@ def trainable_modules(module: nn.Module) -> Iterable[nn.Module]:
     have parameters and are trainable (ie they want a grad).
     """
     yield from (
-        m
-        for m in parametrized_modules(module)
+        (m_name, m)
+        for (m_name, m) in parametrized_modules(module)
         if any(p.requires_grad for p in m.parameters(recurse=False))
     )
 

@@ -69,5 +69,25 @@ class ModuleValidator_test(unittest.TestCase):
                     "The default batch_norm fixer replaces BatchNorm with GroupNorm",
                 )
 
-        # with self.assertNoLogs(level="INFO"):
-        #     ModuleValidator.fix(self.fixed_model)
+    def test_is_valid_non_learnable_bn(self):
+        class SampleNetWithNonLearnableBN(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.c1 = nn.Conv2d(8, 3, 4, 4)
+                self.b1 = nn.BatchNorm2d(3)
+                self.c2 = nn.Conv2d(8, 3, 4, 4)
+                self.b2 = nn.BatchNorm2d(3, affine=False)
+
+            def forward(self, x):
+                x = self.c1(x)
+                x = self.b1(x)
+                x = self.c2(x)
+                x = self.b2(x)
+                return x
+
+        model = SampleNetWithNonLearnableBN()
+        self.assertFalse(ModuleValidator.is_valid(model))
+
+        model.b1.weight.requires_grad = False
+        model.b1.bias.requires_grad = False
+        self.assertTrue(ModuleValidator.is_valid(model))

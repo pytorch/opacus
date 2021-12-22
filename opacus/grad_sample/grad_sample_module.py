@@ -201,7 +201,7 @@ class GradSampleModule(nn.Module):
             self._module.autograd_grad_sample_hooks = []
             self.autograd_grad_sample_hooks = self._module.autograd_grad_sample_hooks
 
-        for module in trainable_modules(self._module):
+        for _module_name, module in trainable_modules(self._module):
             if type(module) in self.GRAD_SAMPLERS:
                 self.autograd_grad_sample_hooks.append(
                     module.register_forward_hook(self.capture_activations_hook)
@@ -438,8 +438,10 @@ class GradSampleModule(nn.Module):
         errors = []
         errors.extend(
             [
-                NotImplementedError(f"grad sampler is not yet implemented for {m}")
-                for m in trainable_modules(module)
+                NotImplementedError(
+                    f"grad sampler is not yet implemented for {m_name}:{m}"
+                )
+                for m_name, m in trainable_modules(module)
                 if not GradSampleModule.is_supported(m)
             ]
         )
