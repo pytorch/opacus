@@ -19,7 +19,7 @@ The latest release of Opacus can be installed via `pip`:
 pip install opacus
 ```
 
-You can also install directly from the source for the latest features (along with its quirks and potentially ocassional bugs):
+You can also install directly from the source for the latest features (along with its quirks and potentially occasional bugs):
 ```bash
 git clone https://github.com/pytorch/opacus.git
 cd opacus
@@ -47,7 +47,7 @@ model, optimizer, data_loader = privacy_engine.make_private(
 # Now it's business as usual
 ```
 
-The [MNIST example](https://github.com/pytorch/opacus/tree/main/examples/mnist.py) shows an end-to-end run using opacus. The [examples](https://github.com/pytorch/opacus/tree/main/examples/) folder contains more such examples.
+The [MNIST example](https://github.com/pytorch/opacus/tree/main/examples/mnist.py) shows an end-to-end run using Opacus. The [examples](https://github.com/pytorch/opacus/tree/main/examples/) folder contains more such examples.
 
 ### Migrating to 1.0
 
@@ -70,33 +70,36 @@ with privacy and using various Opacus features.
 - [Opacus Guide: Grad samplers](https://github.com/pytorch/opacus/blob/main/tutorials/guide_to_grad_sampler.ipynb)
 - [Opacus Guide: Module Validator and Fixer](https://github.com/pytorch/opacus/blob/main/tutorials/guide_to_module_validator.ipynb)
 
+## Technical report and citation
+The technical report introducing Opacus, presenting its design principles, mathematical foundations, and benchmarks can be found [here](https://arxiv.org/abs/2109.12298).
+
+Consider citing the report if you use Opacus in your papers, as follows:
+```
+@article{opacus,
+  title={Opacus: {U}ser-Friendly Differential Privacy Library in {PyTorch}},
+  author={Ashkan Yousefpour and Igor Shilov and Alexandre Sablayrolles and Davide Testuggine and Karthik Prasad and Mani Malek and John Nguyen and Sayan Ghosh and Akash Bharadwaj and Jessica Zhao and Graham Cormode and Ilya Mironov},
+  journal={arXiv preprint arXiv:2109.12298},
+  year={2021}
+}
+```
+
 ### Blogposts and talks
 
-If you want to learn more about DP-SGD and related topics, check our our series of blogposts and talks:
+If you want to learn more about DP-SGD and related topics, check out our series of blogposts and talks:
 
 - [Differential Privacy Series Part 1 | DP-SGD Algorithm Explained](https://medium.com/pytorch/differential-privacy-series-part-1-dp-sgd-algorithm-explained-12512c3959a3)
 - [Differential Privacy Series Part 2 | Efficient Per-Sample Gradient Computation in Opacus](https://medium.com/pytorch/differential-privacy-series-part-2-efficient-per-sample-gradient-computation-in-opacus-5bf4031d9e22)
 - [PriCon 2020 Tutorial: Differentially Private Model Training with Opacus](https://www.youtube.com/watch?v=MWPwofiQMdE&list=PLUNOsx6Az_ZGKQd_p4StdZRFQkCBwnaY6&index=52)
 - [Differential Privacy on PyTorch | PyTorch Developer Day 2020](https://www.youtube.com/watch?v=l6fbl2CBnq0)
+- [Opacus v1.0 Highlights | PyTorch Developer Day 2021](https://www.youtube.com/watch?v=U1mszp8lzUI)
 
 
 ## FAQ
-Checkout the [FAQ](https://opacus.ai/docs/faq) page for answers to some of the most frequently asked questions about Differential Privacy and Opacus.
+Check out the [FAQ](https://opacus.ai/docs/faq) page for answers to some of the most frequently asked questions about differential privacy and Opacus.
 
 ## Contributing
 See the [CONTRIBUTING](https://github.com/pytorch/opacus/tree/main/CONTRIBUTING.md) file for how to help out.
 Do also check out the README files inside the repo to learn how the code is organized.
-
-## Citation
-To cite Opacus in your papers (much appreciated!), please use the following:
-```
-@article{opacus,
-  title={Opacus: User-Friendly Differential Privacy Library in PyTorch},
-  author={A. Yousefpour and I. Shilov and A. Sablayrolles and D. Testuggine and K. Prasad and M. Malek and J. Nguyen and S. Ghosh and A. Bharadwaj and J. Zhao and G. Cormode and I. Mironov},
-  journal={arXiv preprint arXiv:2109.12298},
-  year={2021}
-}
-```
 
 ## License
 This code is released under Apache 2.0, as found in the [LICENSE](https://github.com/pytorch/opacus/tree/main/LICENSE) file.
