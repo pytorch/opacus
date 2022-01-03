@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.1
+### Bug fixes
+* Hidden states of RNN is passed to device (#314)
+* Validate and fix trainable modules only (#316)
+### Miscellaneous
+* Minor corrections and typo fixes in links, documentation, and tutorials.
+
 ## v1.0.0
 * This release packs in lot of new features and bug fixes, and most importantly, also brings forth new APIs that are simpler, more modular, and easily extensible.
 * We have bumped up the major version number from 0 to 1 and have introduced breaking changes. However, the major version bump also indicates a step-function upgrade in the capabilities.
