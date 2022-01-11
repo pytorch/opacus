@@ -18,6 +18,10 @@ The latest release of Opacus can be installed via `pip`:
 ```bash
 pip install opacus
 ```
+OR, alternatively, via `conda`:
+```bash
+conda install -c conda-forge opacus
+```
 
 You can also install directly from the source for the latest features (along with its quirks and potentially occasional bugs):
 ```bash
