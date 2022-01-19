@@ -141,6 +141,8 @@ model, optimizer, data_loader = privacy_engine.make_private(
               <h4>Installing Opacus:</h4>
               <a>Via pip:</a>
               <MarkdownBlock>{bash`pip install opacus`}</MarkdownBlock>
+              <a>Via conda:</a>
+              <MarkdownBlock>{bash`conda install -c conda-forge opacus`}</MarkdownBlock>
               <a>From source:</a>
               <MarkdownBlock>{bash`
 git clone https://github.com/pytorch/opacus.git
