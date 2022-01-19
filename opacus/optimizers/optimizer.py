@@ -476,7 +476,7 @@ class DPOptimizer(Optimizer):
                 closure()
 
         if self.pre_step():
-            return self.original_optimizer.step(closure)
+            return self.original_optimizer.step()
         else:
             return None
 
