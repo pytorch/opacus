@@ -114,7 +114,7 @@ class BatchMemoryManager(object):
     a logical one, and will change behaviour accordignly.
 
     If it was not the last, ``optimizer.step()`` will only clip per sample gradients and
-    sum them into ``p.summed_grad`.` ``optimizeer.zero_grad()`` will clear ``p.grad_sample``,
+    sum them into ``p.summed_grad`.` ``optimizer.zero_grad()`` will clear ``p.grad_sample``,
     but will leave ``p.grad`` and ``p.summed_grad``
 
     If the batch was the last one of the current logical batch, then
