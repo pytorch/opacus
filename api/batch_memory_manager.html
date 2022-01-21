@@ -41,7 +41,7 @@ certain maximum size.
 On every step optimzer will check if the batch was the last physical batch comprising
 a logical one, and will change behaviour accordignly.</p>
 <p>If it was not the last, <code class="docutils literal notranslate"><span class="pre">optimizer.step()</span></code> will only clip per sample gradients and
-sum them into <code class="docutils literal notranslate"><span class="pre">p.summed_grad`.`</span> <span class="pre">``optimizeer.zero_grad()</span></code> will clear <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code>,
+sum them into <code class="docutils literal notranslate"><span class="pre">p.summed_grad`.`</span> <span class="pre">``optimizer.zero_grad()</span></code> will clear <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code>,
 but will leave <code class="docutils literal notranslate"><span class="pre">p.grad</span></code> and <code class="docutils literal notranslate"><span class="pre">p.summed_grad</span></code></p>
 <p>If the batch was the last one of the current logical batch, then
 <code class="docutils literal notranslate"><span class="pre">optimizer.step()</span></code> and <code class="docutils literal notranslate"><span class="pre">optimizer.zero_grad()</span></code> will behave normally.</p>

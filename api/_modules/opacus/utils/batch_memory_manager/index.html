@@ -141,7 +141,7 @@
 <span class="sd">    a logical one, and will change behaviour accordignly.</span>
 
 <span class="sd">    If it was not the last, ``optimizer.step()`` will only clip per sample gradients and</span>
-<span class="sd">    sum them into ``p.summed_grad`.` ``optimizeer.zero_grad()`` will clear ``p.grad_sample``,</span>
+<span class="sd">    sum them into ``p.summed_grad`.` ``optimizer.zero_grad()`` will clear ``p.grad_sample``,</span>
 <span class="sd">    but will leave ``p.grad`` and ``p.summed_grad``</span>
 
 <span class="sd">    If the batch was the last one of the current logical batch, then</span>
