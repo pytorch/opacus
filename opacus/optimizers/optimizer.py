@@ -263,6 +263,7 @@ class DPOptimizer(Optimizer):
         self.secure_mode = secure_mode
 
         self.param_groups = optimizer.param_groups
+        self.defaults = self.original_optimizer.defaults
         self.state = optimizer.state
         self._step_skip_queue = []
         self._is_last_step_skipped = False
