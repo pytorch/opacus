@@ -180,6 +180,10 @@ def _get_flat_grad_sample(p: torch.Tensor):
         raise ValueError(
             "Per sample gradient not found. Are you using GradSampleModule?"
         )
+    if p.grad_sample is None:
+        raise ValueError(
+            "Per sample gradient is not initialized. Not updated in backward pass?"
+        )
     if isinstance(p.grad_sample, torch.Tensor):
         return p.grad_sample
     elif isinstance(p.grad_sample, list):
