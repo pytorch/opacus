@@ -131,6 +131,31 @@ class BasePrivacyEngineTest(ABC):
                 if max_steps and steps >= max_steps:
                     break
 
+    def _train_steps_with_closure(
+        self,
+        model: nn.Module,
+        optimizer: torch.optim.Optimizer,
+        dl: DataLoader,
+        max_steps: Optional[int] = None,
+    ):
+        steps = 0
+        epochs = 1 if max_steps is None else math.ceil(max_steps / len(dl))
+
+        for _ in range(epochs):
+            for x, y in dl:
+                def closure():
+                    optimizer.zero_grad()
+                    logits = model(x)
+                    loss = self.criterion(logits, y)
+                    loss.backward()
+                    return loss
+
+                optimizer.step(closure)
+
+                steps += 1
+                if max_steps and steps >= max_steps:
+                    break
+
     def test_basic(self):
         model, optimizer, dl, _ = self._init_private_training(
             noise_multiplier=1.0,
@@ -139,10 +164,13 @@ class BasePrivacyEngineTest(ABC):
         )
         self._train_steps(model, optimizer, dl)
 
-    def _compare_to_vanilla(self, do_noise, do_clip, expected_match):
+    def _compare_to_vanilla(self, do_noise, do_clip, expected_match, use_closure=False):
         torch.manual_seed(0)
         v_model, v_optimizer, v_dl = self._init_vanilla_training()
-        self._train_steps(v_model, v_optimizer, v_dl, max_steps=1)
+        if not use_closure:
+            self._train_steps(v_model, v_optimizer, v_dl, max_steps=1)
+        else:
+            self._train_steps_with_closure(v_model, v_optimizer, v_dl, max_steps=1)
         vanilla_params = [
             (name, p) for name, p in v_model.named_parameters() if p.requires_grad
         ]
@@ -153,7 +181,10 @@ class BasePrivacyEngineTest(ABC):
             noise_multiplier=1.0 if do_noise else 0.0,
             max_grad_norm=1.0 if do_clip else 9999.0,
         )
-        self._train_steps(p_model, p_optimizer, p_dl, max_steps=1)
+        if not use_closure:
+            self._train_steps(p_model, p_optimizer, p_dl, max_steps=1)
+        else:
+            self._train_steps_with_closure(p_model, p_optimizer, p_dl, max_steps=1)
         private_params = [p for p in p_model.parameters() if p.requires_grad]
 
         for (name, vp), pp in zip(vanilla_params, private_params):
@@ -216,12 +247,14 @@ class BasePrivacyEngineTest(ABC):
         """
         for do_noise in (True, False):
             for do_clip in (True, False):
-                with self.subTest(do_noise=do_noise, do_clip=do_clip):
-                    self._compare_to_vanilla(
-                        do_noise=do_noise,
-                        do_clip=do_clip,
-                        expected_match=not (do_noise or do_clip),
-                    )
+                for use_closure in (True, False):
+                    with self.subTest(do_noise=do_noise, do_clip=do_clip):
+                        self._compare_to_vanilla(
+                            do_noise=do_noise,
+                            do_clip=do_clip,
+                            expected_match=not (do_noise or do_clip),
+                            use_closure=use_closure,
+                        )
 
     def test_compare_to_vanilla_accumulated(self):
         """
