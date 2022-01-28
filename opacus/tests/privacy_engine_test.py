@@ -143,6 +143,7 @@ class BasePrivacyEngineTest(ABC):
 
         for _ in range(epochs):
             for x, y in dl:
+
                 def closure():
                     optimizer.zero_grad()
                     logits = model(x)
