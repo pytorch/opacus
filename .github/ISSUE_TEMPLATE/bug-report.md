@@ -9,7 +9,7 @@ about: Submit a bug report to help us improve Opacus
 <!-- A clear and concise description of what the bug is. -->
 
 
-## Please reproduce using our [template Colab](https://colab.research.google.com/drive/1pCyN3_gN3WyhyQt8--eBPN5zVf2XZxiN?usp=sharing) and post here the link
+## Please reproduce using our [template Colab](https://colab.research.google.com/drive/1R-dnKipK9LOVV4_oKbuHoq4VvGKGbDnd?usp=sharing) and post here the link
 <!-- Please paste your colab link here. Remember: SET IT TO PUBLIC! :D -->
 
 ## To Reproduce
