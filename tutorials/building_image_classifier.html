@@ -419,7 +419,7 @@ You can see, that after this, no exception is raised</p>
 
 <span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">()</span>
 
-<span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">make_private_with_epsilon</span><span class="p">(</span>
+<span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_loader</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">make_private_with_epsilon</span><span class="p">(</span>
     <span class="n">module</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
     <span class="n">data_loader</span><span class="o">=</span><span class="n">train_loader</span><span class="p">,</span>
