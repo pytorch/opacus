@@ -74,6 +74,7 @@ class ModuleValidator:
         """
         return len(cls.validate(module, strict=False)) == 0
 
+    # TODO: fix method doesn't respect devices: new modules are always created on cpu
     @classmethod
     def fix(cls, module: nn.Module) -> nn.Module:
         """
