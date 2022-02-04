@@ -342,6 +342,11 @@ class PrivacyEngine:
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
+        # expected_batch_size should be the *total* batch size across workers
+        if distributed:
+            world_size = torch.distributed.get_world_size()
+            expected_batch_size /= world_size
+
         optimizer = self._prepare_optimizer(
             optimizer,
             noise_multiplier=noise_multiplier,
