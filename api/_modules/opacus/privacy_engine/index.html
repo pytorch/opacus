@@ -369,6 +369,11 @@
         <span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span>
         <span class="n">expected_batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span>
 
+        <span class="c1"># expected_batch_size should be the *total* batch size across workers</span>
+        <span class="k">if</span> <span class="n">distributed</span><span class="p">:</span>
+            <span class="n">world_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
+            <span class="n">expected_batch_size</span> <span class="o">/=</span> <span class="n">world_size</span>
+
         <span class="n">optimizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_optimizer</span><span class="p">(</span>
             <span class="n">optimizer</span><span class="p">,</span>
             <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">noise_multiplier</span><span class="p">,</span>
