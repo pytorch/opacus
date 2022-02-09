@@ -76,12 +76,13 @@ class ModuleValidator:
 
     # TODO: fix method doesn't respect devices: new modules are always created on cpu
     @classmethod
-    def fix(cls, module: nn.Module) -> nn.Module:
+    def fix(cls, module: nn.Module, **kwargs) -> nn.Module:
         """
         Make the module and sub_modules DP compatible by running registered custom fixers.
 
         Args:
             module: The root module to be made compatible.
+            **kwargs: Arbitrary keyword arguments.
 
         Returns:
             Fixed module.
@@ -98,7 +99,7 @@ class ModuleValidator:
             if type(sub_module) in ModuleValidator.FIXERS:
                 # get a repalcement for sub_module
                 sub_module_fixer = ModuleValidator.FIXERS[type(sub_module)]
-                new_sub_module = sub_module_fixer(sub_module)
+                new_sub_module = sub_module_fixer(sub_module, **kwargs)
                 # get module after replacement.
                 module = cls._repalce_sub_module(
                     root=module,
@@ -134,12 +135,13 @@ class ModuleValidator:
         return root
 
     @classmethod
-    def fix_and_validate(cls, module: nn.Module) -> nn.Module:
+    def fix_and_validate(cls, module: nn.Module, **kwargs) -> nn.Module:
         """
         Fix the module and sub_modules first, and then run validation.
 
         Args:
             module: The root module to be fixed and validted
+            **kwargs: Arbitrary keyword arguments.
 
         Returns:
             Fixed module.
@@ -148,7 +150,7 @@ class ModuleValidator:
             UnsupportedModuleError in case of validation failures.
         """
         # 1. replace any fixable modules
-        fixed_module = cls.fix(module)
+        fixed_module = cls.fix(module, **kwargs)
         # 2. perform module specific validations.
         cls.validate(fixed_module, strict=True)
         # return fixed module
