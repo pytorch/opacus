@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.0.2
+### Bug fixes
+* DPOptimizer
+  * Passes through `.defaults` field to match pytorch Optimizer (#329)
+  * Better exception message in `.step()` when p.grad_sample=None (#331)
+  * Correct `closure` call after applying DP noise (#330)
+* Proper gradient scaling in DDP mode
+* Corrections of typos and errors in tutorials
+### Miscellaneous
+* Opacus can be installed with conda: added recipe in conda-forge (#326)
+* Formatting change in accordance with black-22.1.0
+
 ## v1.0.1
 ### Bug fixes
 * Hidden states of RNN is passed to device (#314)
