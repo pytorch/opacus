@@ -66,8 +66,18 @@ class ModuleValidator_test(unittest.TestCase):
                     log_msg,
                     "Replaced sub_module .+ with .*"
                     "|"
-                    "The default batch_norm fixer replaces BatchNorm with GroupNorm",
+                    "The default batch_norm fixer replaces BatchNorm with GroupNorm.",
                 )
+
+    def test_fix_w_replace_bn_with_in(self):
+        with self.assertLogs(level="INFO") as log_cm:
+            all_modules_before = self.original_model.modules()
+            self.assertTrue(all([not isinstance(module, nn.InstanceNorm2d) for module in all_modules_before]))
+
+            fixed_model = ModuleValidator.fix(self.original_model, replace_bn_with_in=True)
+            all_modules_after = fixed_model.modules()
+            self.assertTrue(any([isinstance(module, nn.InstanceNorm2d) for module in all_modules_after]))
+
 
     def test_is_valid_non_learnable_bn(self):
         class SampleNetWithNonLearnableBN(nn.Module):
