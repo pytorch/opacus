@@ -120,7 +120,7 @@ def _compute_log_a_for_int_alpha(q: float, sigma: float, alpha: int) -> float:
             + (alpha - i) * math.log(1 - q)
         )
 
-        s = log_coef_i + (i * i - i) / (2 * (sigma ** 2))
+        s = log_coef_i + (i * i - i) / (2 * (sigma**2))
         log_a = _log_add(log_a, s)
 
     return float(log_a)
@@ -150,7 +150,7 @@ def _compute_log_a_for_frac_alpha(q: float, sigma: float, alpha: float) -> float
     log_a0, log_a1 = -np.inf, -np.inf
     i = 0
 
-    z0 = sigma ** 2 * math.log(1 / q - 1) + 0.5
+    z0 = sigma**2 * math.log(1 / q - 1) + 0.5
 
     while True:  # do ... until loop
         coef = special.binom(alpha, i)
@@ -163,8 +163,8 @@ def _compute_log_a_for_frac_alpha(q: float, sigma: float, alpha: float) -> float
         log_e0 = math.log(0.5) + _log_erfc((i - z0) / (math.sqrt(2) * sigma))
         log_e1 = math.log(0.5) + _log_erfc((z0 - j) / (math.sqrt(2) * sigma))
 
-        log_s0 = log_t0 + (i * i - i) / (2 * (sigma ** 2)) + log_e0
-        log_s1 = log_t1 + (j * j - j) / (2 * (sigma ** 2)) + log_e1
+        log_s0 = log_t0 + (i * i - i) / (2 * (sigma**2)) + log_e0
+        log_s1 = log_t1 + (j * j - j) / (2 * (sigma**2)) + log_e1
 
         if coef > 0:
             log_a0 = _log_add(log_a0, log_s0)
@@ -217,7 +217,7 @@ def _log_erfc(x: float) -> float:
     Returns:
         :math:`log(erfc(x))`
     """
-    return math.log(2) + special.log_ndtr(-x * 2 ** 0.5)
+    return math.log(2) + special.log_ndtr(-x * 2**0.5)
 
 
 def _compute_rdp(q: float, sigma: float, alpha: float) -> float:
@@ -239,7 +239,7 @@ def _compute_rdp(q: float, sigma: float, alpha: float) -> float:
         return np.inf
 
     if q == 1.0:
-        return alpha / (2 * sigma ** 2)
+        return alpha / (2 * sigma**2)
 
     if np.isinf(alpha):
         return np.inf
