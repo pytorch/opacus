@@ -103,12 +103,13 @@
 
     <span class="c1"># TODO: fix method doesn't respect devices: new modules are always created on cpu</span>
 <div class="viewcode-block" id="ModuleValidator.fix"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
         <span class="sd">"""</span>
 <span class="sd">        Make the module and sub_modules DP compatible by running registered custom fixers.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            module: The root module to be made compatible.</span>
+<span class="sd">            **kwargs: Arbitrary keyword arguments.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Fixed module.</span>
@@ -125,7 +126,7 @@
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">FIXERS</span><span class="p">:</span>
                 <span class="c1"># get a repalcement for sub_module</span>
                 <span class="n">sub_module_fixer</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">FIXERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)]</span>
-                <span class="n">new_sub_module</span> <span class="o">=</span> <span class="n">sub_module_fixer</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)</span>
+                <span class="n">new_sub_module</span> <span class="o">=</span> <span class="n">sub_module_fixer</span><span class="p">(</span><span class="n">sub_module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
                 <span class="c1"># get module after replacement.</span>
                 <span class="n">module</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_repalce_sub_module</span><span class="p">(</span>
                     <span class="n">root</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
@@ -161,12 +162,13 @@
         <span class="k">return</span> <span class="n">root</span>
 
 <div class="viewcode-block" id="ModuleValidator.fix_and_validate"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix_and_validate">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">fix_and_validate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">fix_and_validate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
         <span class="sd">"""</span>
 <span class="sd">        Fix the module and sub_modules first, and then run validation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            module: The root module to be fixed and validted</span>
+<span class="sd">            **kwargs: Arbitrary keyword arguments.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Fixed module.</span>
@@ -175,7 +177,7 @@
 <span class="sd">            UnsupportedModuleError in case of validation failures.</span>
 <span class="sd">        """</span>
         <span class="c1"># 1. replace any fixable modules</span>
-        <span class="n">fixed_module</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="n">fixed_module</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># 2. perform module specific validations.</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">fixed_module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># return fixed module</span>
