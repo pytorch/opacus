@@ -16,7 +16,7 @@ import unittest
 
 import torch
 from opacus.data_loader import DPDataLoader
-from torch.utils.data import TensorDataset
+from torch.utils.data import DataLoader, TensorDataset
 
 
 class DPDataLoaderTest(unittest.TestCase):
@@ -45,3 +45,10 @@ class DPDataLoaderTest(unittest.TestCase):
         (s,) = next(iter(data_loader))
 
         self.assertEqual(s.size(0), 0)
+
+    def test_drop_last_true(self):
+        x = torch.randn(self.data_size, self.dimension)
+
+        dataset = TensorDataset(x)
+        data_loader = DataLoader(dataset, drop_last=True)
+        _ = DPDataLoader.from_data_loader(data_loader)
