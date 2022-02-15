@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 from typing import Any, Optional, Sequence
 
 import torch
@@ -23,6 +24,7 @@ from torch.utils.data import BatchSampler, DataLoader, Dataset, IterableDataset,
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
+logger = logging.getLogger(__name__)
 
 def wrap_collate_with_empty(
     collate_fn: Optional[_collate_fn_t], sample_empty_shapes: Sequence
@@ -143,13 +145,15 @@ class DPDataLoader(DataLoader):
         if collate_fn is None:
             collate_fn = default_collate
 
+        if drop_last:
+            logger.warning("Ignoring drop_last as it is not compatible with DPDataLoader.")
+
         super().__init__(
             dataset=dataset,
             batch_sampler=batch_sampler,
             num_workers=num_workers,
             collate_fn=wrap_collate_with_empty(collate_fn, sample_empty_shapes),
             pin_memory=pin_memory,
-            drop_last=drop_last,
             timeout=timeout,
             worker_init_fn=worker_init_fn,
             multiprocessing_context=multiprocessing_context,
