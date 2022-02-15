@@ -25,6 +25,7 @@ from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 
 
@@ -340,7 +341,7 @@ class PrivacyEngine:
         if noise_generator and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
 
-        distributed = type(module) is DPDDP
+        distributed = isinstance(module, (DPDDP, DDP))
 
         module = self._prepare_model(
             module, batch_first=batch_first, loss_reduction=loss_reduction
@@ -355,7 +356,7 @@ class PrivacyEngine:
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
-        # expected_batch_size should be the *total* batch size across workers
+        # expected_batch_size is the *per worker* batch size
         if distributed:
             world_size = torch.distributed.get_world_size()
             expected_batch_size /= world_size

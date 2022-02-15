@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import torch
 from torch import nn
@@ -29,8 +29,7 @@ def _clip_and_accumulate_parameter(p: nn.Parameter, max_grad_norm: float):
     per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0)
 
     grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
-
-    if hasattr(p, "summed_grad"):
+    if p.summed_grad is not None:
         p.summed_grad += grad
     else:
         p.summed_grad = grad
@@ -47,14 +46,15 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         optimizer: Optimizer,
         *,
         noise_multiplier: float,
-        max_grad_norms: List[float],
+        max_grad_norm: List[float],
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
     ):
         self.rank = torch.distributed.get_rank()
-        self.max_grad_norms = max_grad_norms
+        self.world_size = torch.distributed.get_world_size()
+        self.max_grad_norms = max_grad_norm
         max_grad_norm = torch.norm(torch.Tensor(self.max_grad_norms), p=2).item()
         super().__init__(
             optimizer,
@@ -79,12 +79,18 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         )
         p.grad = p.summed_grad + noise
 
+    @property
+    def accumulated_iterations(self) -> int:
+        return max([p.accumulated_iterations for p in self.params])
+
     def _scale_grad_parameter(self, p: nn.Parameter):
         if not hasattr(p, "accumulated_iterations"):
             p.accumulated_iterations = 0
         p.accumulated_iterations += 1
         if self.loss_reduction == "mean":
-            p.grad /= self.expected_batch_size * p.accumulated_iterations
+            p.grad /= (
+                self.expected_batch_size * p.accumulated_iterations * self.world_size
+            )
 
     def clip_and_accumulate(self):
         raise NotImplementedError(
@@ -94,20 +100,30 @@ class DistributedPerLayerOptimizer(DPOptimizer):
     def add_noise(self):
         raise NotImplementedError("Noise is added per layer in DPDDP Per Layer.")
 
-    def pre_step(self):
-        self.accumulated_iterations = max(
-            [p.accumulated_iterations for p in self.params]
-        )
+    def pre_step(
+        self, closure: Optional[Callable[[], float]] = None
+    ) -> Optional[float]:
+        if self._check_skip_next_step():
+            self._is_last_step_skipped = True
+            return False
+
         if self.step_hook:
             self.step_hook(self)
-        self.accumulated_iterations = 0
+
         for p in self.params:
             p.accumulated_iterations = 0
+
+        self._is_last_step_skipped = False
+        return True
 
     def _ddp_per_layer_hook(
         self, p: nn.Parameter, max_grad_norm: float, _: torch.Tensor
     ):
         _clip_and_accumulate_parameter(p, max_grad_norm)
+        # Equivalent ot _check_skip_next_step but without popping because it has to be done for every parameter p
+        if self._check_skip_next_step(pop_next=False):
+            return
+
         if self.rank == 0:
             self._add_noise_parameter(p)
         else:
