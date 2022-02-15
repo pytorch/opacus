@@ -13,26 +13,19 @@
 # limitations under the License.
 
 from opacus.accountants import create_accountant
+from typing import Optional
 
-
-# min range bound when searching for sigma given epsilon
-DEFAULT_SIGMA_MIN_BOUND = 0.01
-# starting point for a max range bound when searching for sigma given epsilon
-DEFAULT_SIGMA_MAX_BOUND = 10
-# condition to halt binary search for sigma given epsilon
-SIGMA_PRECISION = 0.01
-# max possible value for returned sigma.
-# Noise higher than MAX_SIGMA considered unreasonable
-MAX_SIGMA = 2000
-
+MAX_SIGMA = 1e6
 
 def get_noise_multiplier(
     *,
     target_epsilon: float,
     target_delta: float,
     sample_rate: float,
-    epochs: int,
+    epochs: Optional[int] = None,
+    steps: Optional[int] = None,
     accountant: str = "rdp",
+    epsilon_tolerance: float = 0.01,
     **kwargs,
 ) -> float:
     r"""
@@ -44,7 +37,9 @@ def get_noise_multiplier(
         target_delta: the privacy budget's delta
         sample_rate: the sampling rate (usually batch_size / n_data)
         epochs: the number of epochs to run
+        steps: number of steps to run
         accountant: accounting mechanism used to estimate epsilon
+        epsilon_tolerance: precision for the binary search
     Returns:
         The noise level sigma to ensure privacy budget of (target_epsilon, target_delta)
     """
@@ -53,27 +48,33 @@ def get_noise_multiplier(
         raise NotImplementedError(
             "get_noise_multiplier is currently only supports RDP accountant"
         )
+    if (steps is None) == (epochs is None):
+        raise ValueError(
+            "get_noise_multiplier takes as input EITHER a number of steps or a number of epochs"
+        )
+    if steps is None:
+        steps = int(epochs / sample_rate)
 
-    eps = float("inf")
-    sigma_min = DEFAULT_SIGMA_MIN_BOUND
-    sigma_max = DEFAULT_SIGMA_MAX_BOUND
+    eps_high = float("inf")
     accountant = create_accountant(mechanism=accountant)
 
-    while eps > target_epsilon:
-        sigma_max = 2 * sigma_max
-        accountant.steps = [(sigma_max, sample_rate, int(epochs / sample_rate))]
-        eps = accountant.get_epsilon(delta=target_delta, **kwargs)
-        if sigma_max > MAX_SIGMA:
+    sigma_low, sigma_high = 0, 10
+    while eps_high > target_epsilon:
+        sigma_high = 2 * sigma_high
+        accountant.steps = [(sigma_high, sample_rate, int(epochs / sample_rate))]
+        eps_high = accountant.get_epsilon(delta=target_delta, **kwargs)
+        if sigma_high > MAX_SIGMA:
             raise ValueError("The privacy budget is too low.")
 
-    while sigma_max - sigma_min > SIGMA_PRECISION:
-        sigma = (sigma_min + sigma_max) / 2
-        accountant.steps = [(sigma, sample_rate, int(epochs / sample_rate))]
+    while target_epsilon - eps_high > epsilon_tolerance:
+        sigma = (sigma_low + sigma_high) / 2
+        accountant.steps = [(sigma, sample_rate, steps)]
         eps = accountant.get_epsilon(delta=target_delta, **kwargs)
 
         if eps < target_epsilon:
-            sigma_max = sigma
+            sigma_high = sigma
+            eps_high = eps
         else:
-            sigma_min = sigma
+            sigma_low = sigma
 
-    return sigma
+    return sigma_high

@@ -433,7 +433,7 @@ class BasePrivacyEngineTest(ABC):
             epochs=epochs,
             max_grad_norm=1.0,
         )
-        self._train_steps(model, optimizer, dl, max_steps=total_steps)
+        self._train_steps(model, optimizer, poisson_dl, max_steps=total_steps)
         self.assertAlmostEqual(
             target_eps, privacy_engine.get_epsilon(target_delta), places=2
         )
