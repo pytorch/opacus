@@ -40,26 +40,19 @@
 <span class="c1"># limitations under the License.</span>
 
 <span class="kn">from</span> <span class="nn">opacus.accountants</span> <span class="kn">import</span> <span class="n">create_accountant</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
-
-<span class="c1"># min range bound when searching for sigma given epsilon</span>
-<span class="n">DEFAULT_SIGMA_MIN_BOUND</span> <span class="o">=</span> <span class="mf">0.01</span>
-<span class="c1"># starting point for a max range bound when searching for sigma given epsilon</span>
-<span class="n">DEFAULT_SIGMA_MAX_BOUND</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="c1"># condition to halt binary search for sigma given epsilon</span>
-<span class="n">SIGMA_PRECISION</span> <span class="o">=</span> <span class="mf">0.01</span>
-<span class="c1"># max possible value for returned sigma.</span>
-<span class="c1"># Noise higher than MAX_SIGMA considered unreasonable</span>
-<span class="n">MAX_SIGMA</span> <span class="o">=</span> <span class="mi">2000</span>
-
+<span class="n">MAX_SIGMA</span> <span class="o">=</span> <span class="mf">1e6</span>
 
 <div class="viewcode-block" id="get_noise_multiplier"><a class="viewcode-back" href="../../../accounting/utils.html#opacus.accountants.utils.get_noise_multiplier">[docs]</a><span class="k">def</span> <span class="nf">get_noise_multiplier</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">target_epsilon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">target_delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">accountant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"rdp"</span><span class="p">,</span>
+    <span class="n">epsilon_tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""</span>
@@ -71,7 +64,9 @@
 <span class="sd">        target_delta: the privacy budget's delta</span>
 <span class="sd">        sample_rate: the sampling rate (usually batch_size / n_data)</span>
 <span class="sd">        epochs: the number of epochs to run</span>
+<span class="sd">        steps: number of steps to run</span>
 <span class="sd">        accountant: accounting mechanism used to estimate epsilon</span>
+<span class="sd">        epsilon_tolerance: precision for the binary search</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The noise level sigma to ensure privacy budget of (target_epsilon, target_delta)</span>
 <span class="sd">    """</span>
@@ -80,30 +75,36 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"get_noise_multiplier is currently only supports RDP accountant"</span>
         <span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">steps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">epochs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"get_noise_multiplier takes as input EITHER a number of steps or a number of epochs"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">steps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">epochs</span> <span class="o">/</span> <span class="n">sample_rate</span><span class="p">)</span>
 
-    <span class="n">eps</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span>
-    <span class="n">sigma_min</span> <span class="o">=</span> <span class="n">DEFAULT_SIGMA_MIN_BOUND</span>
-    <span class="n">sigma_max</span> <span class="o">=</span> <span class="n">DEFAULT_SIGMA_MAX_BOUND</span>
+    <span class="n">eps_high</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span>
     <span class="n">accountant</span> <span class="o">=</span> <span class="n">create_accountant</span><span class="p">(</span><span class="n">mechanism</span><span class="o">=</span><span class="n">accountant</span><span class="p">)</span>
 
-    <span class="k">while</span> <span class="n">eps</span> <span class="o">&gt;</span> <span class="n">target_epsilon</span><span class="p">:</span>
-        <span class="n">sigma_max</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sigma_max</span>
-        <span class="n">accountant</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="p">[(</span><span class="n">sigma_max</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">epochs</span> <span class="o">/</span> <span class="n">sample_rate</span><span class="p">))]</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="n">target_delta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">sigma_max</span> <span class="o">&gt;</span> <span class="n">MAX_SIGMA</span><span class="p">:</span>
+    <span class="n">sigma_low</span><span class="p">,</span> <span class="n">sigma_high</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span>
+    <span class="k">while</span> <span class="n">eps_high</span> <span class="o">&gt;</span> <span class="n">target_epsilon</span><span class="p">:</span>
+        <span class="n">sigma_high</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sigma_high</span>
+        <span class="n">accountant</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="p">[(</span><span class="n">sigma_high</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">epochs</span> <span class="o">/</span> <span class="n">sample_rate</span><span class="p">))]</span>
+        <span class="n">eps_high</span> <span class="o">=</span> <span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="n">target_delta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sigma_high</span> <span class="o">&gt;</span> <span class="n">MAX_SIGMA</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The privacy budget is too low."</span><span class="p">)</span>
 
-    <span class="k">while</span> <span class="n">sigma_max</span> <span class="o">-</span> <span class="n">sigma_min</span> <span class="o">&gt;</span> <span class="n">SIGMA_PRECISION</span><span class="p">:</span>
-        <span class="n">sigma</span> <span class="o">=</span> <span class="p">(</span><span class="n">sigma_min</span> <span class="o">+</span> <span class="n">sigma_max</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="n">accountant</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="p">[(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">epochs</span> <span class="o">/</span> <span class="n">sample_rate</span><span class="p">))]</span>
+    <span class="k">while</span> <span class="n">target_epsilon</span> <span class="o">-</span> <span class="n">eps_high</span> <span class="o">&gt;</span> <span class="n">epsilon_tolerance</span><span class="p">:</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="p">(</span><span class="n">sigma_low</span> <span class="o">+</span> <span class="n">sigma_high</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">accountant</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="p">[(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="n">steps</span><span class="p">)]</span>
         <span class="n">eps</span> <span class="o">=</span> <span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="n">target_delta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">eps</span> <span class="o">&lt;</span> <span class="n">target_epsilon</span><span class="p">:</span>
-            <span class="n">sigma_max</span> <span class="o">=</span> <span class="n">sigma</span>
+            <span class="n">sigma_high</span> <span class="o">=</span> <span class="n">sigma</span>
+            <span class="n">eps_high</span> <span class="o">=</span> <span class="n">eps</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">sigma_min</span> <span class="o">=</span> <span class="n">sigma</span>
+            <span class="n">sigma_low</span> <span class="o">=</span> <span class="n">sigma</span>
 
-    <span class="k">return</span> <span class="n">sigma</span></div>
+    <span class="k">return</span> <span class="n">sigma_high</span></div>
 </pre></div>
 </div>
 </div>
