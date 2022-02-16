@@ -311,9 +311,18 @@ class DPOptimizer(Optimizer):
         """
         self._step_skip_queue.append(do_skip)
 
-    def _check_skip_next_step(self):
+    def _check_skip_next_step(self, pop_next=True):
+        """
+        Checks if next step should be skipped by the optimizer.
+        This is for large Poisson batches that get split into smaller physical batches
+        to fit on the device. Batches that do not correspond to the end of a Poisson 
+        batch or thus `skipped` as their gradient gets accumulated for one big step.
+        """
         if self._step_skip_queue:
-            return self._step_skip_queue.pop(0)
+            if pop_next:
+                return self._step_skip_queue.pop(0)
+            else:
+                return self._step_skip_queue[0]
         else:
             return False
 
@@ -418,7 +427,7 @@ class DPOptimizer(Optimizer):
                 generator=self.generator,
                 secure_mode=self.secure_mode,
             )
-            p.grad = p.summed_grad + noise
+            p.grad = (p.summed_grad + noise).view_as(p.grad)
 
             _mark_as_processed(p.summed_grad)
 

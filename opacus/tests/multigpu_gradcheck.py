@@ -16,6 +16,8 @@
 import os
 import sys
 import unittest
+from opacus.optimizers.ddp_perlayeroptimizer import DistributedPerLayerOptimizer
+from opacus.optimizers.ddpoptimizer import DistributedDPOptimizer
 
 import torch
 import torch.distributed as dist
@@ -26,6 +28,7 @@ from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data.distributed import DistributedSampler
 
 
 PRIVACY_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
@@ -66,18 +69,17 @@ class ToyModel(nn.Module):
 def demo_basic(rank, weight, world_size, dp, clipping):
     torch.manual_seed(world_size)
     batch_size = 32
-    withdp = "with" + ("out " if not dp else "")
-    print(f"Running basic DDP {withdp} differential privacy example on rank {rank}.")
     setup(rank, world_size)
 
     # create model and move it to GPU with id rank
     model = ToyModel().to(rank)
+    model.net1.weight.data.zero_()
     optimizer = optim.SGD(model.parameters(), lr=1)
 
-    labels = torch.randn(batch_size, 5).to(rank)
-    data = torch.randn(batch_size, 10)
+    labels = torch.randn(2  * batch_size, 5).to(rank)
+    data = torch.randn(2  * batch_size, 10)
 
-    data_loader = DataLoader(TensorDataset(data, labels), batch_size=batch_size)
+    dataset = TensorDataset(data, labels)
 
     loss_fn = nn.MSELoss()
     if dp and clipping == "flat":
@@ -87,10 +89,12 @@ def demo_basic(rank, weight, world_size, dp, clipping):
 
     privacy_engine = PrivacyEngine()
 
+    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=False)
+    data_loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler)
     if dp:
         max_grad_norm = 1e8
         if clipping == "per_layer":
-            max_grad_norm = [1e8 for p in model.parameters()]
+            max_grad_norm = [max_grad_norm for _ in model.parameters()]
         ddp_model, optimizer, data_loader = privacy_engine.make_private(
             module=ddp_model,
             optimizer=optimizer,
@@ -100,12 +104,16 @@ def demo_basic(rank, weight, world_size, dp, clipping):
             poisson_sampling=False,
             clipping=clipping,
         )
+        if clipping == "per_layer":
+            assert isinstance(optimizer, DistributedPerLayerOptimizer)
+        else:
+            assert isinstance(optimizer, DistributedDPOptimizer)
 
-    optimizer.zero_grad()
 
     for x, y in data_loader:
         outputs = ddp_model(x.to(rank))
         loss = loss_fn(outputs, y)
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         break
