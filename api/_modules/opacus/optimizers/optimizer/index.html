@@ -338,9 +338,18 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">do_skip</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_check_skip_next_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_check_skip_next_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pop_next</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Checks if next step should be skipped by the optimizer.</span>
+<span class="sd">        This is for large Poisson batches that get split into smaller physical batches</span>
+<span class="sd">        to fit on the device. Batches that do not correspond to the end of a Poisson </span>
+<span class="sd">        batch or thus `skipped` as their gradient gets accumulated for one big step.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pop_next</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
@@ -445,7 +454,7 @@
                 <span class="n">generator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">,</span>
                 <span class="n">secure_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">+</span> <span class="n">noise</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">+</span> <span class="n">noise</span><span class="p">)</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span>
 
             <span class="n">_mark_as_processed</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span><span class="p">)</span></div>
 

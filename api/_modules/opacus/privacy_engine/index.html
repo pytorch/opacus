@@ -52,6 +52,7 @@
 <span class="kn">from</span> <span class="nn">opacus.optimizers</span> <span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">get_optimizer_class</span>
 <span class="kn">from</span> <span class="nn">opacus.validators.module_validator</span> <span class="kn">import</span> <span class="n">ModuleValidator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
+<span class="kn">from</span> <span class="nn">torch.nn.parallel</span> <span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
 
 
@@ -367,7 +368,7 @@
         <span class="k">if</span> <span class="n">noise_generator</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Passing seed is prohibited in secure mode"</span><span class="p">)</span>
 
-        <span class="n">distributed</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">is</span> <span class="n">DPDDP</span>
+        <span class="n">distributed</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">DPDDP</span><span class="p">,</span> <span class="n">DDP</span><span class="p">))</span>
 
         <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_model</span><span class="p">(</span>
             <span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span>
@@ -382,7 +383,7 @@
         <span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span>
         <span class="n">expected_batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span>
 
-        <span class="c1"># expected_batch_size should be the *total* batch size across workers</span>
+        <span class="c1"># expected_batch_size is the *per worker* batch size</span>
         <span class="k">if</span> <span class="n">distributed</span><span class="p">:</span>
             <span class="n">world_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
             <span class="n">expected_batch_size</span> <span class="o">/=</span> <span class="n">world_size</span>
