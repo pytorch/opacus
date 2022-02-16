@@ -24,7 +24,9 @@ from torch.utils.data import BatchSampler, DataLoader, Dataset, IterableDataset,
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t, _worker_init_fn_t
 
+
 logger = logging.getLogger(__name__)
+
 
 def wrap_collate_with_empty(
     collate_fn: Optional[_collate_fn_t], sample_empty_shapes: Sequence
@@ -146,7 +148,9 @@ class DPDataLoader(DataLoader):
             collate_fn = default_collate
 
         if drop_last:
-            logger.warning("Ignoring drop_last as it is not compatible with DPDataLoader.")
+            logger.warning(
+                "Ignoring drop_last as it is not compatible with DPDataLoader."
+            )
 
         super().__init__(
             dataset=dataset,
