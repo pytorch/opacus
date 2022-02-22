@@ -113,7 +113,7 @@ class Footer extends React.Component {
           {this.props.config.copyright && (
             <span>{this.props.config.copyright}</span>
           )}{' '}
-          Copyright &copy; {currentYear} Meta Platforms Inc.
+          Copyright &copy; {currentYear} Meta Platforms, Inc.
         </section>
       </footer>
     );
