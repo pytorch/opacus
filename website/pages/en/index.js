@@ -19,11 +19,20 @@ const bash = (...args) => `~~~bash\n${String.raw(...args)}\n~~~`;
 
 class HomeSplash extends React.Component {
   render() {
-    const {siteConfig, language = ''} = this.props;
-    const {baseUrl, docsUrl} = siteConfig;
+    const { siteConfig, language = '' } = this.props;
+    const { baseUrl, docsUrl } = siteConfig;
     const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
+
+    const AnnocunementSupportUkraine = () => (
+      <div className="annocuncementSupportUkraine">
+        <span class="annocuncementSupportUkraineTitle"> Support Ukraine 🇺🇦 </span>
+        <a href="https://opensource.fb.com/support-ukraine" target="_blank" rel="noopener">
+          <span>Help Provide Humanitarian Aid to Ukraine.</span>
+        </a>
+      </div>
+    );
 
     const Announcement = () => (
       <div className="announcement">
@@ -35,6 +44,7 @@ class HomeSplash extends React.Component {
 
     const SplashContainer = props => (
       <div className="homeContainer">
+        <AnnocunementSupportUkraine />
         <Announcement />
         <div className="homeSplashFade">
           <div className="wrapper homeWrapper">{props.children}</div>
@@ -92,8 +102,8 @@ class HomeSplash extends React.Component {
 
 class Index extends React.Component {
   render() {
-    const {config: siteConfig, language = ''} = this.props;
-    const {baseUrl} = siteConfig;
+    const { config: siteConfig, language = '' } = this.props;
+    const { baseUrl } = siteConfig;
 
     const Block = props => (
       <Container
@@ -133,7 +143,7 @@ model, optimizer, data_loader = privacy_engine.make_private(
       <div
         className="productShowcaseSection"
         id="quickstart"
-        style={{textAlign: 'center'}}>
+        style={{ textAlign: 'center' }}>
         <h2>Get Started</h2>
         <Container>
           <ol>
@@ -164,7 +174,7 @@ pip install -e .
     );
 
     const Features = () => (
-      <div className="productShowcaseSection" style={{textAlign: 'center'}}>
+      <div className="productShowcaseSection" style={{ textAlign: 'center' }}>
         <h2>Key Features</h2>
         <Block layout="threeColumn">
           {[
