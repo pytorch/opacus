@@ -25,9 +25,9 @@ class HomeSplash extends React.Component {
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
 
-    const AnnocunementSupportUkraine = () => (
-      <div className="annocuncementSupportUkraine">
-        <span class="annocuncementSupportUkraineTitle"> Support Ukraine 🇺🇦 </span>
+    const AnnouncementSupportUkraine = () => (
+      <div className="announcementSupportUkraine">
+        <span class="announcementSupportUkraineTitle"> Support Ukraine 🇺🇦 </span>
         <a href="https://opensource.fb.com/support-ukraine" target="_blank" rel="noopener">
           <span>Help Provide Humanitarian Aid to Ukraine.</span>
         </a>
@@ -44,7 +44,7 @@ class HomeSplash extends React.Component {
 
     const SplashContainer = props => (
       <div className="homeContainer">
-        <AnnocunementSupportUkraine />
+        <AnnouncementSupportUkraine />
         <Announcement />
         <div className="homeSplashFade">
           <div className="wrapper homeWrapper">{props.children}</div>
