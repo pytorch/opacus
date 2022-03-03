@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import logging
 from typing import List, Union
@@ -44,14 +56,18 @@ def validate(module: BATCHNORM) -> List[UnsupportedModuleError]:
 @register_module_fixer(
     [nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.SyncBatchNorm]
 )
-def fix(module: BATCHNORM) -> nn.GroupNorm:
+def fix(module: BATCHNORM, **kwargs) -> Union[nn.GroupNorm, INSTANCENORM]:
     logger.info(
         "The default batch_norm fixer replaces BatchNorm with GroupNorm."
-        " The batch_norm validator module also offers implementations to replace"
-        " it with InstanceNorm or Identity. Please check them out and override the"
-        " fixer if those are more suitable for your needs."
+        "To overwrite the default to InstanceNorm, call fix() with replace_bn_with_in=True."
     )
-    return _batchnorm_to_groupnorm(module)
+    is_replace_bn_with_in = kwargs.get("replace_bn_with_in", False)
+
+    return (
+        _batchnorm_to_instancenorm(module)
+        if is_replace_bn_with_in
+        else _batchnorm_to_groupnorm(module)
+    )
 
 
 def _batchnorm_to_groupnorm(module: BATCHNORM) -> nn.GroupNorm:

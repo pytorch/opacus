@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import unittest
 
 import torch
@@ -66,8 +79,25 @@ class ModuleValidator_test(unittest.TestCase):
                     log_msg,
                     "Replaced sub_module .+ with .*"
                     "|"
-                    "The default batch_norm fixer replaces BatchNorm with GroupNorm",
+                    "The default batch_norm fixer replaces BatchNorm with GroupNorm.",
                 )
+
+    def test_fix_w_replace_bn_with_in(self):
+        all_modules_before = self.original_model.modules()
+        self.assertTrue(
+            all(
+                [
+                    not isinstance(module, nn.InstanceNorm2d)
+                    for module in all_modules_before
+                ]
+            )
+        )
+
+        fixed_model = ModuleValidator.fix(self.original_model, replace_bn_with_in=True)
+        all_modules_after = fixed_model.modules()
+        self.assertTrue(
+            any([isinstance(module, nn.InstanceNorm2d) for module in all_modules_after])
+        )
 
     def test_is_valid_non_learnable_bn(self):
         class SampleNetWithNonLearnableBN(nn.Module):
