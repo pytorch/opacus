@@ -67,6 +67,14 @@ html body {
   padding-bottom: 1px;
 }
 
+.announcementSupportUkraine {
+  background-color: #000000;
+  padding: 20px;
+}
+
+.announcementSupportUkraineTitle {
+  color: #FFFFFF;
+}
 
 .productTitle {
   color: #ffffff;
