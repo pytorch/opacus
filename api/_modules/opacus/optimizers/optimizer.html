@@ -342,7 +342,7 @@
         <span class="sd">"""</span>
 <span class="sd">        Checks if next step should be skipped by the optimizer.</span>
 <span class="sd">        This is for large Poisson batches that get split into smaller physical batches</span>
-<span class="sd">        to fit on the device. Batches that do not correspond to the end of a Poisson </span>
+<span class="sd">        to fit on the device. Batches that do not correspond to the end of a Poisson</span>
 <span class="sd">        batch or thus `skipped` as their gradient gets accumulated for one big step.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span><span class="p">:</span>
