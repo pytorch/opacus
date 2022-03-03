@@ -1,8 +1,23 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import unittest
 
-from opacus.accountants import GaussianAccountant, RDPAccountant
+import hypothesis.strategies as st
+from hypothesis import given, settings
+from opacus.accountants import GaussianAccountant, RDPAccountant, create_accountant
 from opacus.accountants.utils import get_noise_multiplier
 
 
@@ -45,4 +60,28 @@ class AccountingTest(unittest.TestCase):
             epochs=epochs,
         )
 
-        self.assertAlmostEqual(noise_multiplier, 1.425307617)
+        self.assertAlmostEqual(noise_multiplier, 1.416, places=4)
+
+    @given(
+        epsilon=st.floats(1.0, 10.0),
+        epochs=st.integers(10, 100),
+        sample_rate=st.sampled_from(
+            [1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2, 2e-2, 5e-2, 1e-1]
+        ),
+        delta=st.sampled_from([1e-4, 1e-5, 1e-6]),
+    )
+    @settings(deadline=10000)
+    def test_get_noise_multiplier_overshoot(self, epsilon, epochs, sample_rate, delta):
+
+        noise_multiplier = get_noise_multiplier(
+            target_epsilon=epsilon,
+            target_delta=delta,
+            sample_rate=sample_rate,
+            epochs=epochs,
+        )
+
+        accountant = create_accountant(mechanism="rdp")
+        accountant.steps = [(noise_multiplier, sample_rate, int(epochs / sample_rate))]
+
+        actual_epsilon = accountant.get_epsilon(delta=delta)
+        self.assertLess(actual_epsilon, epsilon)

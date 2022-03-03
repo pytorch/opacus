@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import warnings
 from typing import List, Optional, Tuple, Union
 
@@ -12,6 +25,7 @@ from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 
 
@@ -327,7 +341,7 @@ class PrivacyEngine:
         if noise_generator and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
 
-        distributed = type(module) is DPDDP
+        distributed = isinstance(module, (DPDDP, DDP))
 
         module = self._prepare_model(
             module, batch_first=batch_first, loss_reduction=loss_reduction
@@ -342,7 +356,7 @@ class PrivacyEngine:
         sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
-        # expected_batch_size should be the *total* batch size across workers
+        # expected_batch_size is the *per worker* batch size
         if distributed:
             world_size = torch.distributed.get_world_size()
             expected_batch_size /= world_size
