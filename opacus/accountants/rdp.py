@@ -22,29 +22,29 @@ class RDPAccountant(IAccountant):
     DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
     def __init__(self):
-        self.steps = []
+        self.history = []
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
-        if len(self.steps) >= 1:
-            last_noise_multiplier, last_sample_rate, num_steps = self.steps.pop()
+        if len(self.history) >= 1:
+            last_noise_multiplier, last_sample_rate, num_steps = self.history.pop()
             if (
                 last_noise_multiplier == noise_multiplier
                 and last_sample_rate == sample_rate
             ):
-                self.steps.append(
+                self.history.append(
                     (last_noise_multiplier, last_sample_rate, num_steps + 1)
                 )
             else:
-                self.steps.append((last_noise_multiplier, last_sample_rate, num_steps))
-                self.steps.append((noise_multiplier, sample_rate, 1))
+                self.history.append((last_noise_multiplier, last_sample_rate, num_steps))
+                self.history.append((noise_multiplier, sample_rate, 1))
 
         else:
-            self.steps.append((noise_multiplier, sample_rate, 1))
+            self.history.append((noise_multiplier, sample_rate, 1))
 
     def get_privacy_spent(
         self, *, delta: float, alphas: Optional[List[Union[float, int]]] = None
     ) -> Tuple[float, float]:
-        if not self.steps:
+        if not self.history:
             return 0, 0
 
         if alphas is None:
@@ -57,7 +57,7 @@ class RDPAccountant(IAccountant):
                     steps=num_steps,
                     orders=alphas,
                 )
-                for (noise_multiplier, sample_rate, num_steps) in self.steps
+                for (noise_multiplier, sample_rate, num_steps) in self.history
             ]
         )
         eps, best_alpha = privacy_analysis.get_privacy_spent(
@@ -80,7 +80,7 @@ class RDPAccountant(IAccountant):
         return eps
 
     def __len__(self):
-        return len(self.steps)
+        return len(self.history)
 
     @classmethod
     def mechanism(cls) -> str:
