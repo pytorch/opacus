@@ -315,7 +315,7 @@ class DPOptimizer(Optimizer):
         """
         Checks if next step should be skipped by the optimizer.
         This is for large Poisson batches that get split into smaller physical batches
-        to fit on the device. Batches that do not correspond to the end of a Poisson 
+        to fit on the device. Batches that do not correspond to the end of a Poisson
         batch or thus `skipped` as their gradient gets accumulated for one big step.
         """
         if self._step_skip_queue:

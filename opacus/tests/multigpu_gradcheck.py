@@ -76,8 +76,8 @@ def demo_basic(rank, weight, world_size, dp, clipping):
     model.net1.weight.data.zero_()
     optimizer = optim.SGD(model.parameters(), lr=1)
 
-    labels = torch.randn(2  * batch_size, 5).to(rank)
-    data = torch.randn(2  * batch_size, 10)
+    labels = torch.randn(2 * batch_size, 5).to(rank)
+    data = torch.randn(2 * batch_size, 10)
 
     dataset = TensorDataset(data, labels)
 
@@ -89,7 +89,9 @@ def demo_basic(rank, weight, world_size, dp, clipping):
 
     privacy_engine = PrivacyEngine()
 
-    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=False)
+    sampler = DistributedSampler(
+        dataset, num_replicas=world_size, rank=rank, shuffle=False
+    )
     data_loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler)
     if dp:
         max_grad_norm = 1e8
