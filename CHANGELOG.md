@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.1.0
+
+### New Feature
+* Add support for GDP accounting in get_noise_multiplier (#303)
+
+### Bug fixes
+* Conservative search for target epsilon in get_noise_multiplier (#348)
+* Warn and ignore "drop_last" when set in DPDataLoader (#357)
+* Fix per-layer clipping in distributed (#347)
+
+### Miscellaneous
+* Update code of conduct and file headers
+* Add "Support Ukraine" banner to opacus website homepage
+* Lint fixes
+
 ## v1.0.2
 ### Bug fixes
 * DPOptimizer
