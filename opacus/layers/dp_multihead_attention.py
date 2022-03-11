@@ -21,52 +21,6 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 
-class SequenceBias(nn.Module):
-    r"""
-    Adds one bias element to the end of the sequence.
-    so if the input has a shape ``(L, N, E)``, (``batch_first = False``),
-    where ``L`` is the sequence length, ``N`` is the batch size, and ``E`` is
-    the embedding dimension, the output will have a shape
-    ``(L+1, N, E)``. When ``batch_first = True``, input has a shape ``(N, L, E)``
-    and the output will have a shape ``(N, L+1, E)``
-
-    Attributes:
-        bias (:class:`torch.nn.parameter.Parameter`): the learnable bias of
-            the module of shape ``(E)``, where ``E`` is the embedding dimension.
-
-    Example:
-        >>> m = SequenceBias(16, batch_first=False)
-        >>> input = torch.randn(20, 4, 16)
-        >>> output = m(input)
-        >>> output.size()
-        torch.Size([21, 4, 16])
-    """
-
-    def __init__(self, embed_dim: int, batch_first: bool = False):
-        r"""
-        Args:
-            embed_dim: Embedding dimension
-        """
-        super(SequenceBias, self).__init__()
-        self.batch_first = batch_first
-        self.bias = Parameter(torch.empty(embed_dim))
-        self._reset_parameters()
-
-    def _reset_parameters(self):
-        r"""
-        assigns Normally distributed random values to bias.
-        """
-        nn.init.normal_(self.bias)
-
-    def forward(self, x):
-        if self.batch_first:
-            bsz, _, _ = x.shape
-            return torch.cat([x, self.bias.repeat(bsz, 1, 1)], 1)
-        else:
-            _, bsz, _ = x.shape
-            return torch.cat([x, self.bias.repeat(1, bsz, 1)])
-
-
 class DPMultiheadAttention(nn.Module):
     r"""
     This is DP-friendly implementation of nn.MultiheadAttention.
@@ -93,6 +47,7 @@ class DPMultiheadAttention(nn.Module):
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
+        self._qkv_same_embed_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
         self.dropout = dropout
@@ -101,71 +56,33 @@ class DPMultiheadAttention(nn.Module):
             self.head_dim * num_heads == self.embed_dim
         ), "embed_dim must be divisible by num_heads"
 
-        self.qlinear = nn.Linear(embed_dim, embed_dim, bias=bias)
-        self.klinear = nn.Linear(self.kdim, embed_dim, bias=bias)
-        self.vlinear = nn.Linear(self.vdim, embed_dim, bias=bias)
+        factory_kwargs = {'device': None, 'dtype': None}
+        if self._qkv_same_embed_dim:
+            self.in_proj_weight = Parameter(torch.empty((3 * embed_dim, embed_dim), **factory_kwargs))
+            self.register_parameter('q_proj_weight', None)
+            self.register_parameter('k_proj_weight', None)
+            self.register_parameter('v_proj_weight', None)
+        else:
+            self.q_proj_weight = Parameter(torch.empty((embed_dim, embed_dim), **factory_kwargs))
+            self.k_proj_weight = Parameter(torch.empty((embed_dim, self.kdim), **factory_kwargs))
+            self.v_proj_weight = Parameter(torch.empty((embed_dim, self.vdim), **factory_kwargs))
+            self.register_parameter('in_proj_weight', None)
 
-        # torch.nn.MultiHeadAttention out_proj is _LinearWithBias
-        # explicilty setting bias=True for consistent mimicry
-        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=True)
+        if bias:
+            self.in_proj_bias = Parameter(torch.empty(3 * embed_dim, **factory_kwargs))
+        else:
+            self.register_parameter('in_proj_bias', None)
+
+        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
 
         self.add_bias_kv = add_bias_kv
         if self.add_bias_kv:
-            self.seq_bias_k = SequenceBias(embed_dim)
-            self.seq_bias_v = SequenceBias(embed_dim)
+            self.bias_k = Parameter(torch.empty((1, 1, embed_dim), **factory_kwargs))
+            self.bias_v = Parameter(torch.empty((1, 1, embed_dim), **factory_kwargs))
 
         self.add_zero_attn = add_zero_attn
 
         self.dropout = nn.Dropout(dropout)
-
-    def load_state_dict(self, state_dict):
-        r"""
-        Loads module from previously saved state.
-
-        Supports loading from both :class:`torch.nn.MultiheadAttention` and
-        :class:`opacus.layers.dp_multihead_attention.DPMultiheadAttention`.
-
-        Args:
-            state_dict: Please refer to
-                https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html.
-        """
-        if "in_proj_weight" in state_dict:
-            qweight, kweight, vweight = state_dict["in_proj_weight"].chunk(3, dim=0)
-
-            state_dict["qlinear.weight"] = qweight
-            state_dict["klinear.weight"] = kweight
-            state_dict["vlinear.weight"] = vweight
-            del state_dict["in_proj_weight"]
-
-        if "in_proj_bias" in state_dict:
-            qbias, kbias, vbias = state_dict["in_proj_bias"].chunk(3, dim=0)
-
-            state_dict["qlinear.bias"] = qbias
-            state_dict["klinear.bias"] = kbias
-            state_dict["vlinear.bias"] = vbias
-            del state_dict["in_proj_bias"]
-
-        if "bias_k" in state_dict:
-            state_dict["seq_bias_k.bias"] = state_dict["bias_k"].squeeze()
-            del state_dict["bias_k"]
-
-        if "bias_v" in state_dict:
-            state_dict["seq_bias_v.bias"] = state_dict["bias_v"].squeeze()
-            del state_dict["bias_v"]
-
-        if "q_proj_weight" in state_dict:
-            state_dict["qlinear.weight"] = state_dict["q_proj_weight"]
-            del state_dict["q_proj_weight"]
-
-        if "k_proj_weight" in state_dict:
-            state_dict["klinear.weight"] = state_dict["k_proj_weight"]
-            del state_dict["k_proj_weight"]
-
-        if "v_proj_weight" in state_dict:
-            state_dict["vlinear.weight"] = state_dict["v_proj_weight"]
-            del state_dict["v_proj_weight"]
-
-        super(DPMultiheadAttention, self).load_state_dict(state_dict)
 
     # flake8: noqa C901
     def forward(
@@ -192,9 +109,17 @@ class DPMultiheadAttention(nn.Module):
             )
         scaling = float(head_dim) ** -0.5
 
-        q = self.qlinear(query)
-        k = self.klinear(key)
-        v = self.vlinear(value)
+        if self._qkv_same_embed_dim:
+            q, k, v = F._in_projection_packed(query, key, value, self.in_proj_weight, self.in_proj_bias)
+        else:
+            if self.in_proj_bias is None:
+                b_q = b_k = b_v = None
+            else:
+                b_q, b_k, b_v = self.in_proj_bias.chunk(3)
+            q, k, v = F._in_projection(
+                query, key, value,
+                self.q_proj_weight, self.k_proj_weight, self.v_proj_weight,
+                b_q, b_k, b_v)
 
         q = q * scaling
 
@@ -243,8 +168,9 @@ class DPMultiheadAttention(nn.Module):
             key_padding_mask = key_padding_mask.to(torch.bool)
 
         if self.add_bias_kv:
-            k = self.seq_bias_k(k)
-            v = self.seq_bias_v(v)
+            _, bsz, _ = query.shape
+            k = torch.cat([k, self.bias_k.repeat(1, bsz, 1)])
+            v = torch.cat([v, self.bias_v.repeat(1, bsz, 1)])
             if attn_mask is not None:
                 attn_mask = F.pad(attn_mask, (0, 1))
             if key_padding_mask is not None:

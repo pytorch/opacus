@@ -18,21 +18,22 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from opacus.layers.dp_multihead_attention import SequenceBias
+from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 
 from .utils import register_grad_sampler
 
 
-@register_grad_sampler(SequenceBias)
+@register_grad_sampler(DPMultiheadAttention)
 def compute_sequence_bias_grad_sample(
-    layer: SequenceBias, activations: torch.Tensor, backprops: torch.Tensor
+    layer: DPMultiheadAttention, activations: torch.Tensor, backprops: torch.Tensor
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
-    Computes per sample gradients for ``SequenceBias`` layer
+    Computes per sample gradients for ``DPMultiheadAttention`` layer
 
     Args:
         layer: Layer
         activations: Activations
         backprops: Backpropagations
     """
-    return {layer.bias: backprops[:, -1]}
+    # TODO: caclulate the reverse gradient for all of the custom parameters (non-trivial)
+    return {}

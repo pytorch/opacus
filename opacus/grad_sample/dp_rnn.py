@@ -40,7 +40,6 @@ def compute_rnn_linear_grad_sample(
     """
 
     gs = torch.einsum("n...i,n...j->nij", backprops, activations)
-
     ret = {layer.weight: gs}
     if layer.bias is not None:
         ret[layer.bias] = torch.einsum("n...k->nk", backprops)
