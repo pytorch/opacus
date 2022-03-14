@@ -66,4 +66,4 @@ class GaussianAccountant(IAccountant):
 
     @classmethod
     def mechanism(cls) -> str:
-        return "gpd"
+        return "gdp"
