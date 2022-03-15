@@ -13,7 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .dp_multihead_attention import DPMultiheadAttention, InputProjection, SequenceBias
+from .dp_multihead_attention import (
+    DPMultiheadAttention,
+    InputProjection,
+    PackedInputProjection,
+    SequenceBias,
+)
 from .dp_rnn import DPGRU, DPLSTM, DPRNN
 from .param_rename import RenameParamsMixin
 
@@ -24,6 +29,7 @@ __all__ = [
     "DPLSTM",
     "DPMultiheadAttention",
     "InputProjection",
+    "PackedInputProjection",
     "RenameParamsMixin",
     "SequenceBias",
 ]

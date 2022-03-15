@@ -16,7 +16,7 @@
 import hypothesis.strategies as st
 import torch
 from hypothesis import given, settings
-from opacus.layers import InputProjection
+from opacus.layers import InputProjection, PackedInputProjection
 
 from .common import GradSampleHooks_test
 
@@ -39,3 +39,23 @@ class InputProjection_test(GradSampleHooks_test):
         value = torch.randn([1, 1, vdim])
         x = torch.cat((query, key, value), dim=-1)
         self.run_test(x, input_projection, batch_first=batch_first)
+
+
+class PackedInputProjection_test(GradSampleHooks_test):
+    @given(
+        embed_dim=st.integers(2, 4),
+        bias=st.booleans(),
+    )
+    @settings(deadline=10000)
+    def test_batch_second(
+        self,
+        embed_dim: int,
+        bias: bool,
+    ):
+        input_projection = PackedInputProjection(embed_dim, bias)
+        query = torch.randn([1, 1, embed_dim])
+        key = torch.randn([1, 1, embed_dim])
+        value = torch.randn([1, 1, embed_dim])
+
+        x = torch.cat((query, key, value), dim=-1)
+        self.run_test(x, input_projection, batch_first=False)

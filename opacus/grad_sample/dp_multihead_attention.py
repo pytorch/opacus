@@ -18,7 +18,11 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from opacus.layers.dp_multihead_attention import InputProjection, SequenceBias
+from opacus.layers.dp_multihead_attention import (
+    InputProjection,
+    PackedInputProjection,
+    SequenceBias,
+)
 
 from .utils import register_grad_sampler
 
@@ -37,6 +41,11 @@ def compute_sequence_bias_grad_sample(
     """
     return {layer.bias: backprops[:, -1]}
 
+def linear_weight_grad(activations: torch.Tensor, backprops: torch.Tensor):
+    return torch.einsum("n...i,n...j->nij", backprops, activations)
+
+def linear_bias_grad(backprops: torch.Tensor):
+    return torch.einsum("n...k->nk", backprops)
 
 @register_grad_sampler(InputProjection)
 def compute_input_projection_grad_sample(
@@ -51,14 +60,6 @@ def compute_input_projection_grad_sample(
         backprops: Backpropagations
     """
     ret = {}
-
-    # TODO: since these calculations are taken from the linear module, perhaps they should
-    # be imported from there and reused between both methods?
-    def linear_weight_grad(activations: torch.Tensor, backprops: torch.Tensor):
-        return torch.einsum("n...i,n...j->nij", backprops, activations)
-
-    def linear_bias_grad(backprops: torch.Tensor):
-        return torch.einsum("n...k->nk", backprops)
 
     q_bp, k_bp, v_bp = backprops.unbind(-1)
 
@@ -77,5 +78,38 @@ def compute_input_projection_grad_sample(
             (linear_bias_grad(q_bp), linear_bias_grad(k_bp), linear_bias_grad(v_bp)),
             axis=-1,
         )
+
+    return ret
+
+
+@register_grad_sampler(PackedInputProjection)
+def compute_packed_input_projection_grad_sample(
+    layer: PackedInputProjection, activations: torch.Tensor, backprops: torch.Tensor
+) -> Dict[nn.Parameter, torch.Tensor]:
+    """
+    Computes per sample gradients for ``PackedInputProjection`` layer
+
+    Args:
+        layer: Layer
+        activations: Activations
+        backprops: Backpropagations
+    """
+    ret = {}
+
+    backprops_cat = torch.cat(backprops.unbind(-1), dim=-1)
+
+    q_bp, k_bp, v_bp = backprops.unbind(-1)
+    q_a, k_a, v_a = activations.chunk(3, dim=-1)
+
+    ret[layer.weight] = torch.cat(
+        (
+            linear_weight_grad(q_a, q_bp),
+            linear_weight_grad(k_a, k_bp),
+            linear_weight_grad(v_a, v_bp),
+        ),
+        dim=1,
+    )
+    if layer.bias is not None:
+        ret[layer.bias] = linear_bias_grad(backprops_cat)
 
     return ret

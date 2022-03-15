@@ -16,6 +16,7 @@
 from .conv import compute_conv_grad_sample  # noqa
 from .dp_multihead_attention import (
     compute_input_projection_grad_sample,
+    compute_packed_input_projection_grad_sample,
     compute_sequence_bias_grad_sample,
 )  # noqa
 from .dp_rnn import compute_rnn_linear_grad_sample  # noqa

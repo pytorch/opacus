@@ -120,6 +120,43 @@ class InputProjection(nn.Module):
         return torch.stack(projected_values, dim=-1)
 
 
+class PackedInputProjection(nn.Module):
+    def __init__(self, embed_dim: int, bias: bool = False):
+        super().__init__()
+        self.q_end_index = embed_dim
+        self.k_end_index = 2 * embed_dim
+
+        self.weight = Parameter(torch.empty((3 * embed_dim, embed_dim)))
+        if bias:
+            self.bias = Parameter(torch.empty(3 * embed_dim))
+        else:
+            self.bias = None
+
+    def _reset_parameters(self):
+        r"""
+        assigns Normally distributed random values to bias.
+        """
+        # TODO: nn.MultiheadAttention uses xavier_uniform_, while .nn.Linear uses kaiming_uniform_.
+        # This module was based on the latter, but should it be migrted to the former?
+        # Biases also are initialized using different distributions....
+        init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        if self.bias is not None:
+            fan_in, _ = init._calculate_fan_in_and_fan_out(weight)
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            init.uniform_(self.bias, -bound, bound)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        query = x[:, :, : self.q_end_index]
+        key = x[:, :, self.q_end_index : self.k_end_index]
+        value = x[:, :, self.k_end_index :]
+
+        projected_values = F._in_projection_packed(
+            query, key, value, self.weight, self.bias
+        )
+
+        return torch.stack(projected_values, dim=-1)
+
+
 class DPMultiheadAttention(nn.Module):
     r"""
     This is DP-friendly implementation of nn.MultiheadAttention.
@@ -146,6 +183,7 @@ class DPMultiheadAttention(nn.Module):
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
+        self._qkv_same_embed_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
         self.dropout = dropout
@@ -154,7 +192,10 @@ class DPMultiheadAttention(nn.Module):
             self.head_dim * num_heads == self.embed_dim
         ), "embed_dim must be divisible by num_heads"
 
-        self.in_proj = InputProjection(embed_dim, self.kdim, self.vdim, bias)
+        if self._qkv_same_embed_dim:
+            self.in_proj = PackedInputProjection(embed_dim, bias)
+        else:
+            self.in_proj = InputProjection(embed_dim, self.kdim, self.vdim, bias)
 
         # torch.nn.MultiHeadAttention out_proj is _LinearWithBias
         # explicilty setting bias=True for consistent mimicry
@@ -180,13 +221,22 @@ class DPMultiheadAttention(nn.Module):
             state_dict: Please refer to
                 https://pytorch.org/tutorials/recipes/recipes/what_is_state_dict.html.
         """
-        if "in_proj_weight" in state_dict:
-            qweight, kweight, vweight = state_dict["in_proj_weight"].chunk(3, dim=0)
+        if self._qkv_same_embed_dim:
+            if "in_proj_weight" in state_dict:
+                state_dict["in_proj.weight"] = state_dict["in_proj_weight"]
+                del state_dict["in_proj_weight"]
+        else:
+            if "q_proj_weight" in state_dict:
+                state_dict["in_proj.qlinear_weight"] = state_dict["q_proj_weight"]
+                del state_dict["q_proj_weight"]
 
-            state_dict["in_proj.qlinear_weight"] = qweight
-            state_dict["in_proj.klinear_weight"] = kweight
-            state_dict["in_proj.vlinear_weight"] = vweight
-            del state_dict["in_proj_weight"]
+            if "k_proj_weight" in state_dict:
+                state_dict["in_proj.klinear_weight"] = state_dict["k_proj_weight"]
+                del state_dict["k_proj_weight"]
+
+            if "v_proj_weight" in state_dict:
+                state_dict["in_proj.vlinear_weight"] = state_dict["v_proj_weight"]
+                del state_dict["v_proj_weight"]
 
         if "in_proj_bias" in state_dict:
             state_dict["in_proj.bias"] = state_dict["in_proj_bias"]
@@ -199,18 +249,6 @@ class DPMultiheadAttention(nn.Module):
         if "bias_v" in state_dict:
             state_dict["seq_bias_v.bias"] = state_dict["bias_v"].squeeze()
             del state_dict["bias_v"]
-
-        if "q_proj_weight" in state_dict:
-            state_dict["in_proj.qlinear_weight"] = state_dict["q_proj_weight"]
-            del state_dict["q_proj_weight"]
-
-        if "k_proj_weight" in state_dict:
-            state_dict["in_proj.klinear_weight"] = state_dict["k_proj_weight"]
-            del state_dict["k_proj_weight"]
-
-        if "v_proj_weight" in state_dict:
-            state_dict["in_proj.vlinear_weight"] = state_dict["v_proj_weight"]
-            del state_dict["v_proj_weight"]
 
         super(DPMultiheadAttention, self).load_state_dict(state_dict)
 
