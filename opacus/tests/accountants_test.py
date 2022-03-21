@@ -47,7 +47,7 @@ class AccountingTest(unittest.TestCase):
         self.assertLess(6.59, epsilon)
         self.assertLess(epsilon, 6.6)
 
-    def test_get_noise_multiplier_rdp(self):
+    def test_get_noise_multiplier_rdp_epochs(self):
         delta = 1e-5
         sample_rate = 0.04
         epsilon = 8
@@ -62,6 +62,21 @@ class AccountingTest(unittest.TestCase):
         )
 
         self.assertAlmostEqual(noise_multiplier, 1.416, places=4)
+
+    def test_get_noise_multiplier_rdp_steps(self):
+        delta = 1e-5
+        sample_rate = 0.04
+        epsilon = 8
+        steps = 2000
+
+        noise_multiplier = get_noise_multiplier(
+            target_epsilon=epsilon,
+            target_delta=delta,
+            sample_rate=sample_rate,
+            steps=steps,
+        )
+
+        self.assertAlmostEqual(noise_multiplier, 1.3562, places=4)
 
     @given(
         epsilon=st.floats(1.0, 10.0),

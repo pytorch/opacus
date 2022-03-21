@@ -56,7 +56,7 @@ def get_noise_multiplier(
     sigma_low, sigma_high = 0, 10
     while eps_high > target_epsilon:
         sigma_high = 2 * sigma_high
-        accountant.history = [(sigma_high, sample_rate, int(epochs / sample_rate))]
+        accountant.history = [(sigma_high, sample_rate, steps)]
         eps_high = accountant.get_epsilon(delta=target_delta, **kwargs)
         if sigma_high > MAX_SIGMA:
             raise ValueError("The privacy budget is too low.")
