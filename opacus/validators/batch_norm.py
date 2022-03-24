@@ -15,6 +15,7 @@
 
 import logging
 from typing import List, Union
+import math
 
 import torch.nn as nn
 
@@ -85,12 +86,8 @@ def _batchnorm_to_groupnorm(module: BATCHNORM) -> nn.GroupNorm:
         A default value of 32 is chosen for the number of groups based on the
         paper *Group Normalization* https://arxiv.org/abs/1803.08494
     """
-    if module.num_features % min(32, module.num_features) != 0:
-       raise UnsupportableModuleError(
-                "There is no equivalent GroupNorm  module to replace BatchNorm with."
-            )
     return nn.GroupNorm(
-        min(32, module.num_features), module.num_features, affine=module.affine
+        math.gcd(32, module.num_features), module.num_features, affine=module.affine
     )
 
 
