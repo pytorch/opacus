@@ -111,7 +111,6 @@ def demo_basic(rank, weight, world_size, dp, clipping):
         else:
             assert isinstance(optimizer, DistributedDPOptimizer)
 
-
     for x, y in data_loader:
         outputs = ddp_model(x.to(rank))
         loss = loss_fn(outputs, y)

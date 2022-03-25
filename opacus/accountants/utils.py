@@ -17,6 +17,7 @@ from typing import Optional
 
 MAX_SIGMA = 1e6
 
+
 def get_noise_multiplier(
     *,
     target_epsilon: float,
