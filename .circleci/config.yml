@@ -314,7 +314,6 @@ jobs:
       resource_class: gpu.nvidia.small.multi
       image: ubuntu-2004-cuda-11.4:202110-01
     steps:
-      - update_gpg_key
       - checkout
       - py_3_7_setup
       - pip_dev_install
@@ -335,7 +334,6 @@ jobs:
       resource_class: gpu.nvidia.medium.multi
       image: ubuntu-2004-cuda-11.4:202110-01
     steps:
-      - update_gpg_key
       - checkout
       - py_3_7_setup
       - pip_dev_install
