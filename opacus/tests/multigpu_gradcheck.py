@@ -16,8 +16,6 @@
 import os
 import sys
 import unittest
-from opacus.optimizers.ddp_perlayeroptimizer import DistributedPerLayerOptimizer
-from opacus.optimizers.ddpoptimizer import DistributedDPOptimizer
 
 import torch
 import torch.distributed as dist
@@ -26,6 +24,8 @@ import torch.nn as nn
 import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
+from opacus.optimizers.ddp_perlayeroptimizer import DistributedPerLayerOptimizer
+from opacus.optimizers.ddpoptimizer import DistributedDPOptimizer
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
@@ -110,7 +110,6 @@ def demo_basic(rank, weight, world_size, dp, clipping):
             assert isinstance(optimizer, DistributedPerLayerOptimizer)
         else:
             assert isinstance(optimizer, DistributedDPOptimizer)
-
 
     for x, y in data_loader:
         outputs = ddp_model(x.to(rank))
