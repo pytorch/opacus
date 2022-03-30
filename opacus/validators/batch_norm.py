@@ -14,8 +14,8 @@
 # limitations under the License.
 
 import logging
-from typing import List, Union
 import math
+from typing import List, Union
 
 import torch.nn as nn
 

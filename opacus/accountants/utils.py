@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from opacus.accountants import create_accountant
 from typing import Optional
+
+from opacus.accountants import create_accountant
+
 
 MAX_SIGMA = 1e6
 
