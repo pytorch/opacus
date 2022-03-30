@@ -374,6 +374,9 @@ aliases:
 
 workflows:
   commit:
+    when:
+      not:
+        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - lint_py37_torch_release:
           filters: *exclude_ghpages
@@ -393,13 +396,8 @@ workflows:
           filters: *exclude_ghpages
 
   nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - main
+    when:
+      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - unittest_py39_torch_nightly:
           filters: *exclude_ghpages
@@ -409,6 +407,9 @@ workflows:
           filters: *exclude_ghpages
 
   website_deployment:
+    when:
+      not:
+        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - auto_deploy_site:
           filters:
