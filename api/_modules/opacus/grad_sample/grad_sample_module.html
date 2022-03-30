@@ -479,7 +479,10 @@
         <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
             <span class="p">[</span>
                 <span class="ne">NotImplementedError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"grad sampler is not yet implemented for </span><span class="si">{</span><span class="n">m_name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="sa">f</span><span class="s2">"Model contains a trainable layer "</span>
+                    <span class="sa">f</span><span class="s2">"that Opacus doesn't currently support(</span><span class="si">{</span><span class="n">m_name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">). "</span>
+                    <span class="sa">f</span><span class="s2">"Please implement and register grad sampler for this layer. "</span>
+                    <span class="sa">f</span><span class="s2">"(See opacus.grad_sample.utils.register_grad_sampler)"</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">m_name</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">GradSampleModule</span><span class="o">.</span><span class="n">is_supported</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
