@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from opacus.accountants import create_accountant
 from typing import Optional
 
+from opacus.accountants import create_accountant
+
+
 MAX_SIGMA = 1e6
+
 
 def get_noise_multiplier(
     *,
@@ -43,11 +46,6 @@ def get_noise_multiplier(
     Returns:
         The noise level sigma to ensure privacy budget of (target_epsilon, target_delta)
     """
-    if accountant != "rdp":
-        # TODO: rewrite method to accept GDP
-        raise NotImplementedError(
-            "get_noise_multiplier is currently only supports RDP accountant"
-        )
     if (steps is None) == (epochs is None):
         raise ValueError(
             "get_noise_multiplier takes as input EITHER a number of steps or a number of epochs"
@@ -61,14 +59,14 @@ def get_noise_multiplier(
     sigma_low, sigma_high = 0, 10
     while eps_high > target_epsilon:
         sigma_high = 2 * sigma_high
-        accountant.steps = [(sigma_high, sample_rate, int(epochs / sample_rate))]
+        accountant.history = [(sigma_high, sample_rate, steps)]
         eps_high = accountant.get_epsilon(delta=target_delta, **kwargs)
         if sigma_high > MAX_SIGMA:
             raise ValueError("The privacy budget is too low.")
 
     while target_epsilon - eps_high > epsilon_tolerance:
         sigma = (sigma_low + sigma_high) / 2
-        accountant.steps = [(sigma, sample_rate, steps)]
+        accountant.history = [(sigma, sample_rate, steps)]
         eps = accountant.get_epsilon(delta=target_delta, **kwargs)
 
         if eps < target_epsilon:

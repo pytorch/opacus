@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+import math
 from typing import List, Union
 
 import torch.nn as nn
@@ -86,7 +87,7 @@ def _batchnorm_to_groupnorm(module: BATCHNORM) -> nn.GroupNorm:
         paper *Group Normalization* https://arxiv.org/abs/1803.08494
     """
     return nn.GroupNorm(
-        min(32, module.num_features), module.num_features, affine=module.affine
+        math.gcd(32, module.num_features), module.num_features, affine=module.affine
     )
 
 
