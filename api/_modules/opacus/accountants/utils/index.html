@@ -39,10 +39,13 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="kn">from</span> <span class="nn">opacus.accountants</span> <span class="kn">import</span> <span class="n">create_accountant</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
+<span class="kn">from</span> <span class="nn">opacus.accountants</span> <span class="kn">import</span> <span class="n">create_accountant</span>
+
+
 <span class="n">MAX_SIGMA</span> <span class="o">=</span> <span class="mf">1e6</span>
+
 
 <div class="viewcode-block" id="get_noise_multiplier"><a class="viewcode-back" href="../../../accounting/utils.html#opacus.accountants.utils.get_noise_multiplier">[docs]</a><span class="k">def</span> <span class="nf">get_noise_multiplier</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
