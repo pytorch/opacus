@@ -452,7 +452,10 @@ class GradSampleModule(nn.Module):
         errors.extend(
             [
                 NotImplementedError(
-                    f"grad sampler is not yet implemented for {m_name}:{m}"
+                    f"Model contains a trainable layer "
+                    f"that Opacus doesn't currently support({m_name}:{m}). "
+                    f"Please implement and register grad sampler for this layer. "
+                    f"(See opacus.grad_sample.utils.register_grad_sampler)"
                 )
                 for m_name, m in trainable_modules(module)
                 if not GradSampleModule.is_supported(m)
