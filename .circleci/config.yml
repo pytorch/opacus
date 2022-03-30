@@ -405,6 +405,8 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
+      - lint_py37_torch_release:
+          filters: *exclude_ghpages
 
   website_deployment:
     when:
