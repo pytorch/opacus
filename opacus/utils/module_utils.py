@@ -87,7 +87,10 @@ def clone_module(module: nn.Module) -> nn.Module:
         torch.save(module, bytesio)
         bytesio.seek(0)
         module_copy = torch.load(bytesio)
-    return module_copy
+    next_param = next(
+        module.parameters(), None
+    )  # Eg, InstanceNorm with affine=False has no params
+    return module_copy.to(next_param.device) if next_param is not None else module_copy
 
 
 def get_submodule(module: nn.Module, target: str) -> nn.Module:

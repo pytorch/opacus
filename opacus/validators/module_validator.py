@@ -86,7 +86,6 @@ class ModuleValidator:
         """
         return len(cls.validate(module, strict=False)) == 0
 
-    # TODO: fix method doesn't respect devices: new modules are always created on cpu
     @classmethod
     def fix(cls, module: nn.Module, **kwargs) -> nn.Module:
         """
@@ -112,6 +111,8 @@ class ModuleValidator:
                 # get a repalcement for sub_module
                 sub_module_fixer = ModuleValidator.FIXERS[type(sub_module)]
                 new_sub_module = sub_module_fixer(sub_module, **kwargs)
+                # move new_sub_module to the same device as that of sub_module
+                new_sub_module.to(next(sub_module.parameters()).device)
                 # get module after replacement.
                 module = cls._repalce_sub_module(
                     root=module,

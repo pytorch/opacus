@@ -71,6 +71,8 @@ class ModuleValidator_test(unittest.TestCase):
 
     def test_fix(self):
         with self.assertLogs(level="INFO") as log_cm:
+            if torch.cuda.is_available():
+                self.original_model.to(torch.device("cuda:0"))
             ModuleValidator.fix(self.original_model)
             self.assertGreater(len(log_cm.records), 0)
             for log_record in log_cm.records:
@@ -81,6 +83,15 @@ class ModuleValidator_test(unittest.TestCase):
                     "|"
                     "The default batch_norm fixer replaces BatchNorm with GroupNorm.",
                 )
+
+    def test_fix_device(self):
+        orig_model_device = next(self.original_model.parameters()).device
+        if torch.cuda.is_available():
+            self.original_model.to(torch.device("cuda:0"))
+        fixed_model = ModuleValidator.fix(self.original_model)
+        if torch.cuda.is_available():
+            self.assertTrue(next(fixed_model.parameters()).is_cuda)
+        self.original_model.to(orig_model_device)
 
     def test_fix_w_replace_bn_with_in(self):
         all_modules_before = self.original_model.modules()
