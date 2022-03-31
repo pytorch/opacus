@@ -12,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import warnings
+
 from .accountant import IAccountant
 from .analysis import gdp as privacy_analysis
 
 
 class GaussianAccountant(IAccountant):
     def __init__(self):
+        warnings.warn(
+            "GDP accounting is experimental and can underestimate privacy expenditure."
+            "Proceed with caution. More details: https://arxiv.org/pdf/2106.02848.pdf"
+        )
         self.history = []  # history of noise multiplier, sample rate, and steps
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
