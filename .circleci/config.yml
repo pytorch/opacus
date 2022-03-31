@@ -21,19 +21,6 @@ commands:
             sudo "$(which python)" -m pip install --upgrade pip
             sudo "$(which python)" -m pip install pytest
 
-  update_gpg_key:
-    description: "Temp fix due to CircleCI image being old and requiring manual GPG key updates to Ubuntu, Nvidia, Heroku"
-    steps:
-      - run:
-          name: "Update GPG keys"
-          command: |
-            wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-            curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-            distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-            curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-            sudo apt-get update
-            curl https://cli-assets.heroku.com/apt/release.key | sudo apt-key add -
-
   run_nvidia_smi:
     description: "Prints GPU capabilities from nvidia-smi"
     steps:
@@ -312,9 +299,8 @@ jobs:
   integrationtest_py37_torch_release_cuda:
     machine:
       resource_class: gpu.nvidia.small.multi
-      image: ubuntu-1604-cuda-11.1:202012-01
+      image: ubuntu-2004-cuda-11.4:202110-01
     steps:
-      - update_gpg_key
       - checkout
       - py_3_7_setup
       - pip_dev_install
@@ -333,9 +319,8 @@ jobs:
   unittest_multi_gpu:
     machine:
       resource_class: gpu.nvidia.medium.multi
-      image: ubuntu-1604-cuda-11.1:202012-01
+      image: ubuntu-2004-cuda-11.4:202110-01
     steps:
-      - update_gpg_key
       - checkout
       - py_3_7_setup
       - pip_dev_install
