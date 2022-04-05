@@ -25,4 +25,4 @@ If ($TORCH_VERSION -eq "1.8.0") {
   $TORCHVISION_VERSION="0.10.1"
 }
 pip install torch==$TORCH_VERSION+cpu torchvision==$TORCHVISION_VERSION+cpu -f https://download.pytorch.org/whl/torch_stable.html
-pip install "git+https://github.com/pytorch/csprng.git@cd8f2f670355f5a9b345dbe2cb58a52fb2c44d39#egg=torchcsprng"
+#pip install "git+https://github.com/pytorch/csprng.git@cd8f2f670355f5a9b345dbe2cb58a52fb2c44d39#egg=torchcsprng"

@@ -35,4 +35,4 @@ pip install torch=="${TORCH_VERSION}"
 pip install torchvision==${TORCHVISION_VERSION}
 
 # torchcsprng
-pip install git+https://github.com/pytorch/csprng.git@cd8f2f670355f5a9b345dbe2cb58a52fb2c44d39#egg=torchcsprng
+#pip install git+https://github.com/pytorch/csprng.git@cd8f2f670355f5a9b345dbe2cb58a52fb2c44d39#egg=torchcsprng
