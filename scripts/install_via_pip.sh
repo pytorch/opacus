@@ -46,6 +46,11 @@ export TERM=xterm
 # upgrade pip
 pip install --upgrade pip
 
+# install without dependencies first
+# this is needed because csprng temporarily depends on the source
+# we need to have torch installed to correctly install .[dev]
+pip install -e . --user
+
 # install with dev dependencies
 pip install -e .[dev] --user
 
