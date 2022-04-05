@@ -35,9 +35,4 @@ pip install torch=="${TORCH_VERSION}"
 pip install torchvision==${TORCHVISION_VERSION}
 
 # torchcsprng
-if [ "$TORCH_VERSION" = "1.8.0" ]
-then
-    pip install torchcsprng==${TORCHCSPRNG_VERSION}
-else
-    echo "No torchcsprng"
-fi
+pip install git+https://github.com/pytorch/csprng.git@cd8f2f670355f5a9b345dbe2cb58a52fb2c44d39#egg=torchcsprng

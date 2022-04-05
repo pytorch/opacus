@@ -118,10 +118,11 @@ If you are getting an error like this, `ImportError: libcudart.so.10.2: cannot o
 
 The fix is to just install the package for the right Cuda version you have :)
 
-Here's the copypasta to install PyTorch with CUDA 10.1:
+Here's the copypasta to install PyTorch with CUDA 10.2:
 
 ```
-pip install torchcsprng==0.1.2+cu101 torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+pip3 install torch torchvision torchaudio
+pip install git+https://github.com/pytorch/csprng.git#egg=torchcsprng
 ```
 
 After this, you can just `pip install opacus` and it will work :)

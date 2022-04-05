@@ -1,5 +1,5 @@
-torch==1.8.1
-torchvision>=0.9.1
+torch
+torchvision
 tqdm>=4.40
 requests>=2.25.1
 black
@@ -9,7 +9,6 @@ sphinx
 sphinx-autodoc-typehints
 mypy>=0.760
 isort
-torchcsprng
 hypothesis
 tensorboard
 datasets
@@ -18,3 +17,4 @@ scikit-learn
 pytorch-lightning
 lightning-bolts
 jsonargparse[signatures]>=3.19.3 # required for Lightning CLI
+-e git+https://github.com/pytorch/csprng.git@cd8f2f670355f5a9b345dbe2cb58a52fb2c44d39#egg=torchcsprng
