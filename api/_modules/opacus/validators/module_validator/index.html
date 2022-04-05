@@ -113,7 +113,6 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span></div>
 
-    <span class="c1"># TODO: fix method doesn't respect devices: new modules are always created on cpu</span>
 <div class="viewcode-block" id="ModuleValidator.fix"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
         <span class="sd">"""</span>
@@ -139,6 +138,8 @@
                 <span class="c1"># get a repalcement for sub_module</span>
                 <span class="n">sub_module_fixer</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">FIXERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)]</span>
                 <span class="n">new_sub_module</span> <span class="o">=</span> <span class="n">sub_module_fixer</span><span class="p">(</span><span class="n">sub_module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="c1"># move new_sub_module to the same device as that of sub_module</span>
+                <span class="n">new_sub_module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">sub_module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
                 <span class="c1"># get module after replacement.</span>
                 <span class="n">module</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_repalce_sub_module</span><span class="p">(</span>
                     <span class="n">root</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>

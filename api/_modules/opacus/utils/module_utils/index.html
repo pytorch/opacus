@@ -114,7 +114,10 @@
         <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">bytesio</span><span class="p">)</span>
         <span class="n">bytesio</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">module_copy</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">bytesio</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">module_copy</span></div>
+    <span class="n">next_param</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+        <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="kc">None</span>
+    <span class="p">)</span>  <span class="c1"># Eg, InstanceNorm with affine=False has no params</span>
+    <span class="k">return</span> <span class="n">module_copy</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">next_param</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="k">if</span> <span class="n">next_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">module_copy</span></div>
 
 
 <div class="viewcode-block" id="get_submodule"><a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.get_submodule">[docs]</a><span class="k">def</span> <span class="nf">get_submodule</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
