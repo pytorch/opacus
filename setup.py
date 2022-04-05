@@ -15,6 +15,7 @@
 
 import os
 import sys
+import re
 
 from setuptools import find_packages, setup
 
@@ -55,7 +56,13 @@ with open("requirements.txt", encoding="utf8") as f:
     required = f.read().splitlines()
 
 with open("dev_requirements.txt", encoding="utf8") as f:
-    dev_required = f.read().splitlines()
+    dev_required = [
+        # This is to process correctly git repositories as dependencies
+        # https://stackoverflow.com/questions/32688688/how-to-write-setup-py-to-include-a-git-repository-as-a-dependency
+        re.sub(r'-e (git\+.*egg=(.*))', r'\2 @ \1', line)
+        for line in f.read().splitlines()
+    ]
+
 
 setup(
     name="opacus",
