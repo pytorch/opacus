@@ -40,6 +40,14 @@ commands:
           name: "Install dependencies via pip"
           command: ./scripts/install_via_pip.sh << parameters.args >>
 
+  torch_cuda_install:
+    description: "Install PyTorch"
+    steps:
+      - run:
+          name: "Install PyTorch"
+          command: |
+            pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+
   lint_flake8:
     description: "Lint with flake8"
     steps:
@@ -303,6 +311,7 @@ jobs:
     steps:
       - checkout
       - py_3_7_setup
+      - torch_cuda_install
       - pip_dev_install
       - run_nvidia_smi
       - mnist_integration_test:
@@ -323,6 +332,7 @@ jobs:
     steps:
       - checkout
       - py_3_7_setup
+      - torch_cuda_install
       - pip_dev_install
       - run_nvidia_smi
       - run:
