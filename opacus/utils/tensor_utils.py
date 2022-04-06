@@ -195,9 +195,6 @@ def unfold3d(
     if isinstance(dilation, int):
         dilation = (dilation, dilation, dilation)
 
-    if dilation != (1, 1, 1):
-        raise NotImplementedError(f"dilation={dilation} not supported. We'd love a PR!")
-
     batch_size, channels, _, _, _ = tensor.shape
 
     # Input shape: (B, C, D, H, W)
@@ -206,9 +203,19 @@ def unfold3d(
     )
     # Output shape: (B, C, D+2*padding[2], H+2*padding[1], W+2*padding[0])
 
-    tensor = tensor.unfold(dimension=2, size=kernel_size[0], step=stride[0])
-    tensor = tensor.unfold(dimension=3, size=kernel_size[1], step=stride[1])
-    tensor = tensor.unfold(dimension=4, size=kernel_size[2], step=stride[2])
+    dilated_kernel_size = (
+        kernel_size[0] + (kernel_size[0] - 1) * (dilation[0] - 1),
+        kernel_size[1] + (kernel_size[1] - 1) * (dilation[1] - 1),
+        kernel_size[2] + (kernel_size[2] - 1) * (dilation[2] - 1),
+    )
+
+    tensor = tensor.unfold(dimension=2, size=dilated_kernel_size[0], step=stride[0])
+    tensor = tensor.unfold(dimension=3, size=dilated_kernel_size[1], step=stride[1])
+    tensor = tensor.unfold(dimension=4, size=dilated_kernel_size[2], step=stride[2])
+
+    if dilation != (1, 1, 1):
+        tensor = filter_dilated_rows(tensor, dilation, dilated_kernel_size, kernel_size)
+
     # Output shape: (B, C, D_out, H_out, W_out, kernel_size[0], kernel_size[1], kernel_size[2])
     # For D_out, H_out, W_out definitions see :class:`torch.nn.Unfold`
 
@@ -221,3 +228,51 @@ def unfold3d(
     # Output shape: (B, D_out * H_out * W_out, C * kernel_size[0] * kernel_size[1] * kernel_size[2]
 
     return tensor
+
+
+def filter_dilated_rows(
+    tensor: torch.Tensor,
+    dilation: Tuple[int, int, int],
+    dilated_kernel_size: Tuple[int, int, int],
+    kernel_size: Tuple[int, int, int],
+):
+    """
+    A helper function that removes extra rows created during the process of
+    implementing dilation.
+
+    Args:
+        tensor: A tensor containing the output slices resulting from unfolding
+                the input tensor to `unfold3d()`.
+                Shape is ``(B, C, D_out, H_out, W_out, dilated_kernel_size[0],
+                dilated_kernel_size[1], dilated_kernel_size[2])``.
+        dilation: The dilation given to `unfold3d()`.
+        dilated_kernel_size: The size of the dilated kernel.
+        kernel_size: The size of the kernel given to `unfold3d()`.
+
+    Returns:
+        A tensor of shape (B, C, D_out, H_out, W_out, kernel_size[0], kernel_size[1], kernel_size[2])
+        For D_out, H_out, W_out definitions see :class:`torch.nn.Unfold`.
+
+    Example:
+        >>> tensor = torch.zeros([1, 1, 3, 3, 3, 5, 5, 5])
+        >>> dilation = (2, 2, 2)
+        >>> dilated_kernel_size = (5, 5, 5)
+        >>> kernel_size = (3, 3, 3)
+        >>> filter_dilated_rows(tensor, dilation, dilated_kernel_size, kernel_size).shape
+        torch.Size([1, 1, 3, 3, 3, 3, 3, 3])
+    """
+
+    kernel_rank = len(kernel_size)
+
+    indices_to_keep = [
+        list(range(0, dilated_kernel_size[i], dilation[i])) for i in range(kernel_rank)
+    ]
+
+    tensor_np = tensor.numpy()
+
+    axis_offset = len(tensor.shape) - kernel_rank
+
+    for dim in range(kernel_rank):
+        tensor_np = np.take(tensor_np, indices_to_keep[dim], axis=axis_offset + dim)
+
+    return torch.Tensor(tensor_np)
