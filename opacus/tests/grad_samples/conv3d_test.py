@@ -34,7 +34,7 @@ class Conv3d_test(GradSampleHooks_test):
         kernel_size=st.sampled_from([2, 3, (1, 2, 3)]),
         stride=st.sampled_from([1, 2, (1, 2, 3)]),
         padding=st.sampled_from([0, 2, (1, 2, 3)]),
-        dilation=st.just(1),
+        dilation=st.sampled_from([1, (1, 2, 2)]),
         groups=st.integers(1, 16),
     )
     @settings(deadline=10000)
