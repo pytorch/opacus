@@ -56,6 +56,7 @@ class BatchSplittingSampler(Sampler[List[int]]):
             split_idxs = np.array_split(
                 batch_idxs, math.ceil(len(batch_idxs) / self.max_batch_size)
             )
+            split_idxs = [s.tolist() for s in split_idxs]
             for x in split_idxs[:-1]:
                 self.optimizer.signal_skip_step(do_skip=True)
                 yield x
