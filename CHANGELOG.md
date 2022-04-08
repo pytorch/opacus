@@ -1,15 +1,28 @@
 # Changelog
 
-## v1.1.0
+## v1.1.1
+### Bug fixes
+* Fix accountant when using number of steps instead of epochs
+* Add params check when converting BatchNorm to GroupNorm (#390)
+* Fix typo in gdp accountant mechansim name (#386)
+* Fix linter errors (#392)
+* Add friendly and detailed message for unsupported layers (#401)
+* Run linter on nightly workflow (#399)
+* Add warning for Gaussian DP accounting (#400)
+* Clone replacement modules on the same device as original (#356)
+* Implementing 3D dilation (#408)
+* fix(batch_memory_manager): Ensures split_idxs use native python types (#410)
+### Miscellaneous
+* Migrate nightly CircleCI flows to scheduled pipelines (#402)
+* Migrate from ubuntu 16.04 to 20.04 on CircleCI (#403)
 
+## v1.1.0
 ### New Feature
 * Add support for GDP accounting in get_noise_multiplier (#303)
-
 ### Bug fixes
 * Conservative search for target epsilon in get_noise_multiplier (#348)
 * Warn and ignore "drop_last" when set in DPDataLoader (#357)
 * Fix per-layer clipping in distributed (#347)
-
 ### Miscellaneous
 * Update code of conduct and file headers
 * Add "Support Ukraine" banner to opacus website homepage
