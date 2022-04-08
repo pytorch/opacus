@@ -46,7 +46,7 @@ commands:
       - run:
           name: "Install PyTorch"
           command: |
-            pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+            pip install torch torchvision torchaudio
 
   lint_flake8:
     description: "Lint with flake8"
