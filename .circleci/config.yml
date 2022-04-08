@@ -46,7 +46,7 @@ commands:
       - run:
           name: "Install PyTorch"
           command: |
-            pip install torch torchvision torchaudio
+            pip install torch==1.10.2 torchvision torchaudio
 
   lint_flake8:
     description: "Lint with flake8"
@@ -307,7 +307,7 @@ jobs:
   integrationtest_py37_torch_release_cuda:
     machine:
       resource_class: gpu.nvidia.small.multi
-      image: ubuntu-2004-cuda-11.2:202103-01
+      image: ubuntu-1604-cuda-10.2:202012-01
     steps:
       - checkout
       - py_3_7_setup
@@ -328,7 +328,7 @@ jobs:
   unittest_multi_gpu:
     machine:
       resource_class: gpu.nvidia.medium.multi
-      image: ubuntu-2004-cuda-11.2:202103-01
+      image: ubuntu-1604-cuda-10.2:202012-01
     steps:
       - checkout
       - py_3_7_setup
