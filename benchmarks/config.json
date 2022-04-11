@@ -1,0 +1,43 @@
+{
+	"linear": {
+		"input_shape": [],
+		"in_features": 512,
+		"out_features": 512
+	},
+	"conv": {
+		"in_channels": 64,
+		"input_shape": [50, 100],
+		"out_channels": 64,
+		"kernel_size": 8
+	},
+	"layernorm": {
+		"input_shape": [64],
+		"D": 1
+	},
+	"instancenorm": {
+		"num_features": 256,
+		"input_shape": [64],
+		"affine": true
+	},
+	"groupnorm": {
+		"input_shape": [],
+		"num_groups": 16,
+		"num_channels": 256
+	},
+	"embedding": {
+		"input_shape": [],
+		"num_embeddings": 20000,
+		"embedding_dim": 100
+	},
+	"mha": {
+		"source_seq_len": 128,
+		"targ_seq_len": 64,
+		"embed_dim": 100,
+		"num_heads": 4
+	},
+	"rnn_base": {
+		"seq_len": 128,
+		"input_size": 100,
+		"hidden_size": 100
+	}
+}
