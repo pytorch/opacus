@@ -22,8 +22,8 @@ def run_layer_benchmark(
         forward_only: whether to skip the backward pass
         create_layer: function for creating the layer, takes **kwargs
 
-    Returns:
-        Runtime as a float
+    Returns: a tuple consisting of
+        Runtime as a float, and
         Memory statistics as a dict
     """
 

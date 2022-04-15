@@ -2,6 +2,7 @@
 
 A set of micro-benchmarks that measure elapsed runtime and allocated CUDA memory for both [basic modules](https://github.com/pytorch/opacus/tree/main/opacus/grad_sample) and [more complex layers](https://github.com/pytorch/opacus/tree/main/opacus/layers), as well as their respective [torch.nn](https://pytorch.org/docs/stable/nn.html) counterparts.
 
+Requires PyTorch version >= 1.10.0.
 
 ## Contents
 
@@ -67,6 +68,16 @@ A note on `input_shape` in [config.json](config.json): parameters that are share
 
 ## Usage
 
+`run_benchmarks.py` without additional arguments will replicate the results in the [technical report introducing Opacus](https://arxiv.org/abs/2109.12298), which you can cite as follows:
+```
+@article{opacus,
+  title={Opacus: {U}ser-Friendly Differential Privacy Library in {PyTorch}},
+  author={Ashkan Yousefpour and Igor Shilov and Alexandre Sablayrolles and Davide Testuggine and Karthik Prasad and Mani Malek and John Nguyen and Sayan Ghosh and Akash Bharadwaj and Jessica Zhao and Graham Cormode and Ilya Mironov},
+  journal={arXiv preprint arXiv:2109.12298},
+  year={2021}
+}
+```
+
 If saving results, ensure that the `results/raw` (or otherwise specified) root directory exists.
 
 ```
@@ -94,16 +105,6 @@ optional arguments:
   --suffix SUFFIX       suffix to append to each result file's name
   --no_save
   -v, --verbose
-```
-
-`run_benchmarks.py` will replicate the results in the [technical report introducing Opacus](https://arxiv.org/abs/2109.12298), which you can cite as follows:
-```
-@article{opacus,
-  title={Opacus: {U}ser-Friendly Differential Privacy Library in {PyTorch}},
-  author={Ashkan Yousefpour and Igor Shilov and Alexandre Sablayrolles and Davide Testuggine and Karthik Prasad and Mani Malek and John Nguyen and Sayan Ghosh and Akash Bharadwaj and Jessica Zhao and Graham Cormode and Ilya Mironov},
-  journal={arXiv preprint arXiv:2109.12298},
-  year={2021}
-}
 ```
 
 ## Tests
