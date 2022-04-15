@@ -5,9 +5,8 @@ from itertools import product
 import pytest
 import torch
 import torch.nn as nn
-from helpers import get_actual_memory_allocated, get_n_byte_tensor, skipifnocuda
-
 from benchmark_layer import run_layer_benchmark
+from helpers import get_actual_memory_allocated, get_n_byte_tensor, skipifnocuda
 from layers import Layer
 from utils import reset_peak_memory_stats
 

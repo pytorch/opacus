@@ -3,7 +3,6 @@ from collections import namedtuple
 from typing import Any, Dict, List, Optional
 
 import torch
-
 from layers import LayerType
 
 

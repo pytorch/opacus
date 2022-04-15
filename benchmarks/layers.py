@@ -537,6 +537,7 @@ class LayerFactory:
         return layer
 
     @staticmethod
+    # flake8: noqa C901
     def create(layer_name: str, **kwargs) -> Layer:
         if layer_name == LayerType.LINEAR:
             return LinearBase(**kwargs)

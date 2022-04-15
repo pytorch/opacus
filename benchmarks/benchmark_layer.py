@@ -4,7 +4,6 @@ from typing import Callable, Dict, Tuple
 
 import torch
 import torch.utils.benchmark as benchmark
-
 from layers import LayerFactory, LayerType
 from utils import get_layer_set, reset_peak_memory_stats
 

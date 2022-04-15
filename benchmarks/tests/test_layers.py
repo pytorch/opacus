@@ -6,10 +6,9 @@ import pytest
 import torch
 import torch.nn as nn
 from helpers import skipifnocuda
+from layers import LayerFactory
 from opacus.grad_sample import GradSampleModule
 from opacus.layers import DPGRU, DPLSTM, DPRNN, DPMultiheadAttention
-
-from layers import LayerFactory
 from utils import reset_peak_memory_stats
 
 
