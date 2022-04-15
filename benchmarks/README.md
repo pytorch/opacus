@@ -67,17 +67,14 @@ A note on `input_shape` in [config.json](config.json): parameters that are share
 
 ## Usage
 
-If saving results, ensure that `results/raw` directory exists.
+If saving results, ensure that the `results/raw` (or otherwise specified) root directory exists.
 
 ```
 usage: run_benchmarks.py [-h]
                          [--layers {linear,gsm_linear,conv,gsm_conv,layernorm,gsm_layernorm,instancenorm,gsm_instancenorm,groupnorm,gsm_groupnorm,embedding,gsm_embedding,mha,dpmha,gsm_dpmha,rnn,dprnn,gsm_dprnn,gru,dpgru,gsm_dpgru,lstm,dplstm,gsm_dplstm} [{linear,gsm_linear,conv,gsm_conv,layernorm,gsm_layernorm,instancenorm,gsm_instancenorm,groupnorm,gsm_groupnorm,embedding,gsm_embedding,mha,dpmha,gsm_dpmha,rnn,dprnn,gsm_dprnn,gru,dpgru,gsm_dpgru,lstm,dplstm,gsm_dplstm} ...]]
-                         [--batch_sizes BATCH_SIZES [BATCH_SIZES ...]]
-                         [--num_runs NUM_RUNS]
-                         [--num_repeats NUM_REPEATS]
-                         [--forward_only]
-                         [--random_seed RANDOM_SEED]
-                         [-c CONFIG_FILE] [--cont] [--no_save]
+                         [--batch_sizes BATCH_SIZES [BATCH_SIZES ...]] [--num_runs NUM_RUNS]
+                         [--num_repeats NUM_REPEATS] [--forward_only] [--random_seed RANDOM_SEED]
+                         [-c CONFIG_FILE] [--cont] [--root ROOT] [--suffix SUFFIX] [--no_save]
                          [-v]
 
 optional arguments:
@@ -89,11 +86,12 @@ optional arguments:
                         how many forward/backward passes per run
   --forward_only        only run forward passes
   --random_seed RANDOM_SEED
-                        random seed for the first run of each
-                        layer, subsequent runs increase the
+                        random seed for the first run of each layer, subsequent runs increase the
                         random seed by 1
   -c CONFIG_FILE, --config_file CONFIG_FILE
   --cont                only run missing experiments
+  --root ROOT           path to directory that benchmark results should be saved in
+  --suffix SUFFIX       suffix to append to each result file's name
   --no_save
   -v, --verbose
 ```

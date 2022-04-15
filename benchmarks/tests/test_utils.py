@@ -1,7 +1,7 @@
 import os
 import pickle
 import shutil
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import pytest
 import torch
@@ -95,6 +95,18 @@ def test_reset_peak_memory_stats(prev_max_memory: int, allocated_memory: int) ->
             },
             "./results/raw/gsm_rnn_bs_128_runs_5_repeats_20_seed_13964_forward_only.pkl",
         ),
+        (
+            {
+                "layer": "dpmha",
+                "batch_size": 16,
+                "num_runs": 20,
+                "num_repeats": 50,
+                "random_seed": 88362,
+                "root": "./results/tmp/",
+                "suffix": "no_3",
+            },
+            "./results/tmp/dpmha_bs_16_runs_20_repeats_50_seed_88362_no_3.pkl",
+        ),
     ],
 )
 def test_get_path(config: Dict[str, Any], path: str) -> None:
@@ -107,8 +119,25 @@ def test_get_path(config: Dict[str, Any], path: str) -> None:
     assert path == get_path(**config)
 
 
+@pytest.fixture(scope="function")
+def pickle_data_and_config(
+    config: Dict[str, Any], root: str, suffix: str
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+
+    # setup test directory and save results to pickle file
+    os.mkdir(root)
+    save_results(**config, results=[], config={}, root=root, suffix=suffix)
+
+    # return pickle data and the config
+    with open(get_path(**config, root=root, suffix=suffix), "rb") as f:
+        yield pickle.load(f), config
+
+    # remove directory
+    shutil.rmtree(root)
+
+
 @pytest.mark.parametrize(
-    "config, root",
+    "config, root, suffix",
     [
         (
             {
@@ -117,36 +146,33 @@ def test_get_path(config: Dict[str, Any], path: str) -> None:
                 "num_runs": 10,
                 "num_repeats": 100,
                 "random_seed": 13964,
-                "results": [],
-                "config": {},
             },
             "tests/tmp/",
-        )
+            "",
+        ),
+        (
+            {
+                "layer": "dpmha",
+                "batch_size": 16,
+                "num_runs": 20,
+                "num_repeats": 50,
+                "random_seed": 88362,
+                "forward_only": True,
+            },
+            "tests/tmp1/",
+            "no_3",
+        ),
     ],
 )
-def test_save_results(config: Dict[str, Any], root: str) -> None:
+def test_save_results(
+    pickle_data_and_config: Tuple[Dict[str, Any], Dict[str, Any]]
+) -> None:
     """Tests saving benchmark results.
 
     Args:
-        config: arguments to pass to save_results
-        root: directory to temporarily store results
+        pickle_data_and_config: tuple consisting of the pickle data as a dict and the
+            original data as a dict, as given in the config
     """
-    os.mkdir(root)
-    save_results(**config, root=root)
-
-    with open(
-        get_path(
-            layer=config["layer"],
-            batch_size=config["batch_size"],
-            num_runs=config["num_runs"],
-            num_repeats=config["num_repeats"],
-            random_seed=config["random_seed"],
-            root=root,
-        ),
-        "rb",
-    ) as f:
-        data = pickle.load(f)
-        for key, value in config.items():
-            assert data[key] == value
-
-    shutil.rmtree(root)
+    pickle_data, config = pickle_data_and_config
+    for key, value in config.items():
+        assert pickle_data[key] == value

@@ -69,6 +69,7 @@ def get_path(
     random_seed: Optional[int] = None,
     forward_only: bool = False,
     root: str = "./results/raw/",
+    suffix: str = "",
 ) -> str:
     """Gets the path to the file where the corresponding results are located.
     File is presumed to be a pickle file.
@@ -81,6 +82,7 @@ def get_path(
         random_seed: the initial random seed
         forward_only: whether backward passes were skipped
         root: directory to write results to
+        suffix: optional string to append to file name
 
     Returns:
         Path to results pickle file
@@ -88,7 +90,11 @@ def get_path(
     pickle_name = f"{layer}_bs_{batch_size}_runs_{num_runs}_repeats_{num_repeats}_seed_{random_seed}"
     if forward_only:
         pickle_name += "_forward_only"
-    return f"{root}{pickle_name}.pkl"
+
+    if len(suffix) and not suffix.startswith("_"):
+        suffix = f"_{suffix}"
+
+    return f"{root}{pickle_name}{suffix}.pkl"
 
 
 def save_results(
@@ -101,6 +107,7 @@ def save_results(
     random_seed: Optional[int] = None,
     forward_only: bool = False,
     root: str = "./results/raw/",
+    suffix: str = "",
 ) -> None:
     """Saves the corresponding results as a pickle file.
 
@@ -115,6 +122,7 @@ def save_results(
         random_seed: the initial random seed
         forward_only: whether backward passes were skipped
         root: directory to write results to
+        suffix: optional string to append to file name
     """
     path = get_path(
         layer=layer,
@@ -124,6 +132,7 @@ def save_results(
         random_seed=random_seed,
         forward_only=forward_only,
         root=root,
+        suffix=suffix,
     )
 
     with open(path, "wb") as handle:

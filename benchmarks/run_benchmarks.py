@@ -13,7 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 def run_and_save_benchmark(
-    layer: LayerType, batch_size: int, args, layer_config: Dict[str, Any]
+    layer: LayerType,
+    batch_size: int,
+    args,
+    layer_config: Dict[str, Any],
+    root: str = "./results/raw/",
+    suffix: str = "",
 ) -> None:
     """Runs and saves (if desired) the benchmark for the given layer and batch size.
 
@@ -22,6 +27,8 @@ def run_and_save_benchmark(
         batch_size: the batch size to run benchmarks for
         args: additional arguments
         layer_config: the settings for this layer
+        root: directory to write results to
+        suffix: optional string to append to result file name
     """
 
     logger.info(f"Benchmarking {layer} layer with batch size {batch_size}.")
@@ -51,6 +58,8 @@ def run_and_save_benchmark(
             config=layer_config,
             random_seed=args.random_seed,
             forward_only=args.forward_only,
+            root=root,
+            suffix=suffix,
         )
 
 
@@ -76,6 +85,8 @@ def main(args) -> None:
                     num_repeats=args.num_repeats,
                     random_seed=args.random_seed,
                     forward_only=args.forward_only,
+                    root=args.root,
+                    suffix=args.suffix,
                 )
             ):
                 logger.info(f"Skipping {layer} at {batch_size} - already exists.")
@@ -87,6 +98,8 @@ def main(args) -> None:
                 batch_size=batch_size,
                 args=args,
                 layer_config=config[get_layer_set(layer)],
+                root=args.root,
+                suffix=args.suffix,
             )
 
 
@@ -121,6 +134,15 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config_file", type=str, default="config.json")
     parser.add_argument(
         "--cont", action="store_true", help="only run missing experiments"
+    )
+    parser.add_argument(
+        "--root",
+        type=str,
+        default="./results/raw/",
+        help="path to directory where benchmark results should be saved in",
+    )
+    parser.add_argument(
+        "--suffix", type=str, help="suffix to append to each result file's name"
     )
     parser.add_argument("--no_save", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
