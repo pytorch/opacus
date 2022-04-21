@@ -30,7 +30,7 @@ from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, TensorDataset
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
@@ -193,7 +193,7 @@ class BasePrivacyEngineTest(ABC):
         p_model, p_optimizer, p_dl, _ = self._init_private_training(
             poisson_sampling=False,
             noise_multiplier=1.0 if do_noise else 0.0,
-            max_grad_norm=1.0 if do_clip else 9999.0,
+            max_grad_norm=1.0 if do_clip else 99999.0,
         )
         if not use_closure:
             self._train_steps(p_model, p_optimizer, p_dl, max_steps=1)
@@ -231,7 +231,7 @@ class BasePrivacyEngineTest(ABC):
         p_model, p_optimizer, p_dl, _ = self._init_private_training(
             poisson_sampling=False,
             noise_multiplier=1.0 if do_noise else 0.0,
-            max_grad_norm=10.0 if do_clip else 9999.0,
+            max_grad_norm=10.0 if do_clip else 99999.0,
         )
         self._train_steps(p_model, p_optimizer, p_dl, max_steps=4)
         private_params = [p for p in p_model.parameters() if p.requires_grad]
@@ -262,7 +262,9 @@ class BasePrivacyEngineTest(ABC):
         for do_noise in (True, False):
             for do_clip in (True, False):
                 for use_closure in (True, False):
-                    with self.subTest(do_noise=do_noise, do_clip=do_clip):
+                    with self.subTest(
+                        do_noise=do_noise, do_clip=do_clip, use_closure=use_closure
+                    ):
                         self._compare_to_vanilla(
                             do_noise=do_noise,
                             do_clip=do_clip,
@@ -338,6 +340,7 @@ class BasePrivacyEngineTest(ABC):
         Check if final gradient is indeed an aggregation over per-sample gradients
         """
         model, optimizer, dl, _ = self._init_private_training(
+            poisson_sampling=False,
             noise_multiplier=0.0,
             max_grad_norm=99999.0,
         )
@@ -678,3 +681,43 @@ class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
         self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
     ):
         return SampleAttnNet()
+
+
+class SampleTiedWeights(nn.Module):
+    def __init__(self, tie=True):
+        super().__init__()
+        self.emb = nn.Embedding(100, 8)
+        self.fc1 = nn.Linear(8, 8)
+        self.fc2 = nn.Linear(8, 100)
+
+        w = torch.empty(100, 8)
+        nn.init.uniform_(w, -100, 100)
+
+        if tie:
+            p = nn.Parameter(w)
+            self.emb.weight = p
+            self.fc2.weight = p
+        else:
+            self.emb.weight = nn.Parameter(w.clone())
+            self.fc2.weight = nn.Parameter(w.clone())
+
+    def forward(self, x):
+        x = self.emb(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
+
+        return x
+
+
+class PrivacyEngineTiedWeightsTest(BasePrivacyEngineTest, unittest.TestCase):
+    def _init_data(self):
+        ds = TensorDataset(
+            torch.randint(low=0, high=100, size=(1000,)),
+            torch.randint(low=0, high=100, size=(1000,)),
+        )
+        return DataLoader(ds, batch_size=self.BATCH_SIZE)
+
+    def _init_model(
+        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
+    ):
+        return SampleTiedWeights(tie=False)

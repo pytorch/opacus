@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import warnings
 from typing import List, Optional, Tuple, Union
 
@@ -354,7 +353,10 @@ class PrivacyEngine:
         )
 
         sample_rate = 1 / len(data_loader)
-        expected_batch_size = int(len(data_loader.dataset) * sample_rate)
+        if getattr(data_loader, "batch_size", None):
+            expected_batch_size = data_loader.batch_size
+        else:
+            expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
         # expected_batch_size is the *per worker* batch size
         if distributed:

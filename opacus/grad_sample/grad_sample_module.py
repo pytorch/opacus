@@ -351,7 +351,9 @@ class GradSampleModule(nn.Module):
         grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
         grad_samples = grad_sampler_fn(module, activations, backprops)
         for param, gs in grad_samples.items():
-            create_or_accumulate_grad_sample(param=param, grad_sample=gs, max_batch_len=module.max_batch_len)
+            create_or_accumulate_grad_sample(
+                param=param, grad_sample=gs, max_batch_len=module.max_batch_len
+            )
 
         for p in module.parameters():
             p._forward_counter -= 1
