@@ -352,10 +352,11 @@ class PrivacyEngine:
             data_loader, distributed=distributed, poisson_sampling=poisson_sampling
         )
 
-        sample_rate = 1 / len(data_loader)
         if getattr(data_loader, "batch_size", None):
             expected_batch_size = data_loader.batch_size
+            sample_rate = expected_batch_size / len(data_loader.dataset)
         else:
+            sample_rate = 1 / len(data_loader)
             expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
         # expected_batch_size is the *per worker* batch size
