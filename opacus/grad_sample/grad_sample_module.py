@@ -27,9 +27,11 @@ from opacus.utils.module_utils import requires_grad, trainable_modules
 
 logger = logging.getLogger(__name__)
 
+OPACUS_PARAM_MONKEYPATCH_ATTRS = ["_forward_counter", "_current_grad_sample"]
+
 
 def create_or_accumulate_grad_sample(
-    *, param: torch.Tensor, grad_sample: torch.Tensor, layer: nn.Module
+    *, param: torch.Tensor, grad_sample: torch.Tensor, max_batch_len: int
 ) -> None:
     """
     Creates a ``_current_grad_sample`` attribute in the given parameter, or adds to it
@@ -46,9 +48,6 @@ def create_or_accumulate_grad_sample(
     if hasattr(param, "_current_grad_sample"):
         param._current_grad_sample[: grad_sample.shape[0]] += grad_sample
     else:
-        # TODO: maybe set max_batch_len on a parameter level, so
-        # you don't need to pass layer here?
-        max_batch_len = layer.max_batch_len
         param._current_grad_sample = torch.zeros(
             torch.Size([max_batch_len]) + grad_sample.shape[1:],
             device=grad_sample.device,
@@ -125,6 +124,7 @@ class GradSampleModule(nn.Module):
 
         for p in self.parameters():
             p.grad_sample = None
+            p._forward_counter = 0
 
     def __getattr__(self, item):
         try:
@@ -273,8 +273,15 @@ class GradSampleModule(nn.Module):
         return f"GradSampleModule({self._module.__repr__()})"
 
     def _close(self):
-        self.set_grad_sample_to_none()
+        self.del_grad_sample()
         self.remove_hooks()
+        self._clean_up_attributes()
+
+    def _clean_up_attributes(self):
+        for attr in OPACUS_PARAM_MONKEYPATCH_ATTRS:
+            for p in self.parameters():
+                if hasattr(p, attr):
+                    delattr(p, attr)
 
     def capture_activations_hook(
         self,
@@ -295,6 +302,9 @@ class GradSampleModule(nn.Module):
         if not hasattr(module, "activations"):
             module.activations = []
         module.activations.append(forward_input[0].detach())  # pyre-ignore
+
+        for p in module.parameters():
+            p._forward_counter += 1
 
     def capture_backprops_hook(
         self,
@@ -341,14 +351,16 @@ class GradSampleModule(nn.Module):
         grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
         grad_samples = grad_sampler_fn(module, activations, backprops)
         for param, gs in grad_samples.items():
-            create_or_accumulate_grad_sample(param=param, grad_sample=gs, layer=module)
+            create_or_accumulate_grad_sample(param=param, grad_sample=gs, max_batch_len=module.max_batch_len)
+
+        for p in module.parameters():
+            p._forward_counter -= 1
+            if p._forward_counter == 0:
+                promote_current_grad_sample(p)
 
         if len(module.activations) == 0:
             if hasattr(module, "max_batch_len"):
                 del module.max_batch_len
-
-            for p in module.parameters():
-                promote_current_grad_sample(p)
 
     def rearrange_grad_samples(
         self,
