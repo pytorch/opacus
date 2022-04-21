@@ -599,7 +599,7 @@ class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
                 [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
             ),
         )
-        return DataLoader(ds, batch_size=self.BATCH_SIZE)
+        return DataLoader(ds, batch_size=self.BATCH_SIZE, drop_last=True)
 
     def _init_model(
         self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
@@ -674,7 +674,10 @@ class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
         y = torch.randint(0, 12, (self.DATA_SIZE,))
         ds = MockTextDataset(x, y)
         return DataLoader(
-            ds, batch_size=self.BATCH_SIZE, collate_fn=batch_second_collate
+            ds,
+            batch_size=self.BATCH_SIZE,
+            collate_fn=batch_second_collate,
+            drop_last=True,
         )
 
     def _init_model(
@@ -712,10 +715,10 @@ class SampleTiedWeights(nn.Module):
 class PrivacyEngineTiedWeightsTest(BasePrivacyEngineTest, unittest.TestCase):
     def _init_data(self):
         ds = TensorDataset(
-            torch.randint(low=0, high=100, size=(1000,)),
-            torch.randint(low=0, high=100, size=(1000,)),
+            torch.randint(low=0, high=100, size=(self.DATA_SIZE,)),
+            torch.randint(low=0, high=100, size=(self.DATA_SIZE,)),
         )
-        return DataLoader(ds, batch_size=self.BATCH_SIZE)
+        return DataLoader(ds, batch_size=self.BATCH_SIZE, drop_last=True)
 
     def _init_model(
         self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
