@@ -355,6 +355,9 @@ class GradSampleModule(nn.Module):
                 param=param, grad_sample=gs, max_batch_len=module.max_batch_len
             )
 
+        # Detect end of current batch processing and switch accumulation
+        # mode from sum to stacking. Used for RNNs and tied parameters
+        # (See #417 for details)
         for p in module.parameters():
             p._forward_counter -= 1
             if p._forward_counter == 0:
