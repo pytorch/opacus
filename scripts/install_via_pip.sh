@@ -46,6 +46,8 @@ export TERM=xterm
 # upgrade pip
 pip install --upgrade pip
 
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+
 # install without dependencies first
 # this is needed because csprng temporarily depends on the source
 # we need to have torch installed to correctly install .[dev]
