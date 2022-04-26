@@ -54,9 +54,11 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
+<span class="n">OPACUS_PARAM_MONKEYPATCH_ATTRS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"_forward_counter"</span><span class="p">,</span> <span class="s2">"_current_grad_sample"</span><span class="p">]</span>
+
 
 <div class="viewcode-block" id="create_or_accumulate_grad_sample"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.create_or_accumulate_grad_sample">[docs]</a><span class="k">def</span> <span class="nf">create_or_accumulate_grad_sample</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">grad_sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">grad_sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">max_batch_len</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Creates a ``_current_grad_sample`` attribute in the given parameter, or adds to it</span>
@@ -73,9 +75,6 @@
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="s2">"_current_grad_sample"</span><span class="p">):</span>
         <span class="n">param</span><span class="o">.</span><span class="n">_current_grad_sample</span><span class="p">[:</span> <span class="n">grad_sample</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">grad_sample</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># TODO: maybe set max_batch_len on a parameter level, so</span>
-        <span class="c1"># you don't need to pass layer here?</span>
-        <span class="n">max_batch_len</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">max_batch_len</span>
         <span class="n">param</span><span class="o">.</span><span class="n">_current_grad_sample</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">max_batch_len</span><span class="p">])</span> <span class="o">+</span> <span class="n">grad_sample</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
             <span class="n">device</span><span class="o">=</span><span class="n">grad_sample</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
@@ -152,6 +151,7 @@
 
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
             <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">_forward_counter</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
@@ -300,8 +300,15 @@
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"GradSampleModule(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span><span class="si">}</span><span class="s2">)"</span>
 
     <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_grad_sample_to_none</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">del_grad_sample</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">remove_hooks</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_up_attributes</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_clean_up_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">OPACUS_PARAM_MONKEYPATCH_ATTRS</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+                    <span class="nb">delattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">capture_activations_hook</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -322,6 +329,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"activations"</span><span class="p">):</span>
             <span class="n">module</span><span class="o">.</span><span class="n">activations</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">module</span><span class="o">.</span><span class="n">activations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">forward_input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>  <span class="c1"># pyre-ignore</span>
+
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">_forward_counter</span> <span class="o">+=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="GradSampleModule.capture_backprops_hook"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.capture_backprops_hook">[docs]</a>    <span class="k">def</span> <span class="nf">capture_backprops_hook</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -368,14 +378,21 @@
         <span class="n">grad_sampler_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
         <span class="n">grad_samples</span> <span class="o">=</span> <span class="n">grad_sampler_fn</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">activations</span><span class="p">,</span> <span class="n">backprops</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">gs</span> <span class="ow">in</span> <span class="n">grad_samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">create_or_accumulate_grad_sample</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="n">param</span><span class="p">,</span> <span class="n">grad_sample</span><span class="o">=</span><span class="n">gs</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
+            <span class="n">create_or_accumulate_grad_sample</span><span class="p">(</span>
+                <span class="n">param</span><span class="o">=</span><span class="n">param</span><span class="p">,</span> <span class="n">grad_sample</span><span class="o">=</span><span class="n">gs</span><span class="p">,</span> <span class="n">max_batch_len</span><span class="o">=</span><span class="n">module</span><span class="o">.</span><span class="n">max_batch_len</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Detect end of current batch processing and switch accumulation</span>
+        <span class="c1"># mode from sum to stacking. Used for RNNs and tied parameters</span>
+        <span class="c1"># (See #417 for details)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">_forward_counter</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">_forward_counter</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">promote_current_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">activations</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"max_batch_len"</span><span class="p">):</span>
-                <span class="k">del</span> <span class="n">module</span><span class="o">.</span><span class="n">max_batch_len</span>
-
-            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
-                <span class="n">promote_current_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
+                <span class="k">del</span> <span class="n">module</span><span class="o">.</span><span class="n">max_batch_len</span></div>
 
 <div class="viewcode-block" id="GradSampleModule.rearrange_grad_samples"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.rearrange_grad_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rearrange_grad_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
