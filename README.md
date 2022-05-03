@@ -2,11 +2,9 @@
 
 <hr/>
 
-<p align="center">
-  [![CircleCI](https://circleci.com/gh/pytorch/opacus.svg?style=svg)](https://circleci.com/gh/pytorch/opacus)
-  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/pytorch/opacus/blob/main/CONTRIBUTING.md)
-  [![License](https://img.shields.io/badge/license-apache2-green.svg)](https://github.com/pytorch/opacus/blob/main/LICENSE)
-</p>
+[![CircleCI](https://circleci.com/gh/pytorch/opacus.svg?style=svg)](https://circleci.com/gh/pytorch/opacus)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/pytorch/opacus/blob/main/CONTRIBUTING.md)
+[![License](https://img.shields.io/badge/license-apache2-green.svg)](https://github.com/pytorch/opacus/blob/main/LICENSE)
 
 [Opacus](https://opacus.ai) is a library that enables training PyTorch models with differential privacy.
 It supports training with minimal code changes required on the client, has little impact on training performance, and allows the client to online track the privacy budget expended at any given moment.
