@@ -14,7 +14,6 @@
 
 import math
 import time
-from itertools import product
 
 import pytest
 import torch
@@ -66,14 +65,9 @@ class FakeLayer(Layer):
         _ = self.forward_only()
 
 
-@pytest.mark.parametrize(
-    "duration, num_repeats, forward_only",
-    product(
-        [0, 0.005, 0.01, 0.05],
-        [10, 20, 50],
-        [False, True],
-    ),
-)
+@pytest.mark.parametrize("duration", [0, 0.005, 0.01, 0.05])
+@pytest.mark.parametrize("num_repeats", [10, 20, 50])
+@pytest.mark.parametrize("forward_only", [False, True])
 def test_runtime_benchmark(
     duration: float, num_repeats: int, forward_only: bool
 ) -> None:
@@ -98,15 +92,10 @@ def test_runtime_benchmark(
 
 
 @skipifnocuda
-@pytest.mark.parametrize(
-    "pass_bytes, layer_bytes, num_repeats, forward_only",
-    product(
-        [0, 1, 100, 500, 4096],
-        [0, 1, 256, 1024, 2000],
-        [10, 20, 50, 100],
-        [False, True],
-    ),
-)
+@pytest.mark.parametrize("pass_bytes", [0, 1, 100, 500, 4096])
+@pytest.mark.parametrize("layer_bytes", [0, 1, 256, 1024, 2000])
+@pytest.mark.parametrize("num_repeats", [10, 20, 50, 100])
+@pytest.mark.parametrize("forward_only", [False, True])
 def test_memory_benchmark(
     pass_bytes: int, layer_bytes: int, num_repeats: int, forward_only: bool
 ) -> None:
@@ -145,15 +134,10 @@ def test_memory_benchmark(
 
 
 @skipifnocuda
-@pytest.mark.parametrize(
-    "pass_bytes, layer_bytes, num_repeats, forward_only",
-    product(
-        [0, 1, 100, 500, 4096],
-        [0, 1, 256, 1024, 2000],
-        [10, 20, 50, 100],
-        [False, True],
-    ),
-)
+@pytest.mark.parametrize("pass_bytes", [0, 1, 100, 500, 4096])
+@pytest.mark.parametrize("layer_bytes", [0, 1, 256, 1024, 2000])
+@pytest.mark.parametrize("num_repeats", [10, 20, 50, 100])
+@pytest.mark.parametrize("forward_only", [False, True])
 def test_memory_benchmark_strict(
     pass_bytes: int, layer_bytes: int, num_repeats: int, forward_only: bool
 ) -> None:
