@@ -28,17 +28,20 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 
 
-def forbid_accumulation_hook(module: GradSampleModule, _grad_input: torch.Tensor, _grad_output: torch.Tensor):
+def forbid_accumulation_hook(
+    module: GradSampleModule, _grad_input: torch.Tensor, _grad_output: torch.Tensor
+):
     """
     Model hook that detects repetitive forward/backward passes between optimizer steps.
 
     This is a backward hook that will be wrapped around the whole model using
-    `register_full_backward_hook`. Hence, this hook will be *the first* to be called
-    among all backward hooks. In particular, it will be called *before* all hooks
-    present in the `autograd_grad_sample_hooks` attribute of `GradSampleModule`.
-    Hence, if `optimizer.zero_grad()` is not called before the backward hook and if
-    some `p.grad_sample` is not None, it means that `p.grad_sample` was updated in
-    a *previous* iteration.
+    `register_backward_hook`. We wish to detect a case where:
+        -  `optimizer.zero_grad()` is not called before the backward pass; and
+        -  `p.grad_sample` was updated in a *previous* iteration.
+
+    To do so, we attach a backward hook to the model that runs *after* the computation
+    of `grad_sample` for the current step. We compute the number of accumulated iterations
+    like on `optimizers/optimizer.py` and check whether it's strictly larger than one.
 
     Args:
         module: input module
@@ -55,11 +58,17 @@ def forbid_accumulation_hook(module: GradSampleModule, _grad_input: torch.Tensor
 
     for p in module.parameters():
         if p.grad_sample is not None:
-            raise ValueError(
-                "Poisson sampling is not compatible with grad accumulation. "
-                "You need to call optimizer.step() after every forward/backward pass "
-                "or consider using BatchMemoryManager"
-            )
+            if isinstance(p.grad_sample, torch.Tensor):
+                accumulated_iterations = 1
+            elif isinstance(p.grad_sample, list):
+                accumulated_iterations = len(p.grad_sample)
+
+            if accumulated_iterations > 1:
+                raise ValueError(
+                    "Poisson sampling is not compatible with grad accumulation. "
+                    "You need to call optimizer.step() after every forward/backward pass "
+                    "or consider using BatchMemoryManager"
+                )
 
 
 class PrivacyEngine:
@@ -354,7 +363,7 @@ class PrivacyEngine:
             module, batch_first=batch_first, loss_reduction=loss_reduction
         )
         if poisson_sampling:
-            module.register_full_backward_hook(forbid_accumulation_hook)
+            module.register_backward_hook(forbid_accumulation_hook)
 
         data_loader = self._prepare_data_loader(
             data_loader, distributed=distributed, poisson_sampling=poisson_sampling
