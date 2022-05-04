@@ -54,7 +54,7 @@ def run_and_save_benchmark(
             forward_only=args.forward_only,
             layer_name=layer,
             batch_size=batch_size,
-            random_seed=args.random_seed + i if args.random_seed else args.random_seed,
+            random_seed=args.random_seed + i if args.random_seed is not None else None,
             **layer_config,
         )
         res = {"runtime": runtime, "memory_stats": memory_stats}
@@ -144,7 +144,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--random_seed",
-        default=0,
         type=int,
         help="random seed for the first run for each layer and batch size, subsequent runs increase the random seed by 1",
     )
