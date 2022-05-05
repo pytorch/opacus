@@ -20,7 +20,7 @@ from typing import Iterator, List, Tuple, Union
 
 import numpy as np
 import torch
-from torch.functional import F
+import torch.nn.functional as F
 
 
 def calc_sample_norms(
