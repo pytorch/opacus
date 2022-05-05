@@ -99,6 +99,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "layer",
+        type=str,
         choices=[v for k, v in LayerType.__dict__.items() if not k.startswith("__")],
     )
     parser.add_argument("--batch_size", default=64, type=int)
@@ -106,12 +107,18 @@ if __name__ == "__main__":
         "--num_repeats",
         default=20,
         type=int,
-        help="how many forward/backward passes to run",
+        help="number of forward/backward passes to run",
     )
     parser.add_argument(
         "--forward_only", action="store_true", help="only run forward passes"
     )
     parser.add_argument("--random_seed", default=0, type=int)
-    parser.add_argument("-c", "--config_file", type=str, default="config.json")
+    parser.add_argument(
+        "-c",
+        "--config_file",
+        default="config.json",
+        type=str,
+        help="path to config file with settings for each layer",
+    )
     args = parser.parse_args()
     main(args)

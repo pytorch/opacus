@@ -54,7 +54,7 @@ def run_and_save_benchmark(
             forward_only=args.forward_only,
             layer_name=layer,
             batch_size=batch_size,
-            random_seed=args.random_seed + i if args.random_seed else args.random_seed,
+            random_seed=args.random_seed + i if args.random_seed is not None else None,
             **layer_config,
         )
         res = {"runtime": runtime, "memory_stats": memory_stats}
@@ -120,43 +120,54 @@ def main(args) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     layers = [v for k, v in LayerType.__dict__.items() if not k.startswith("__")]
-    parser.add_argument("--layers", choices=layers, default=layers, nargs="+")
+    parser.add_argument("--layers", nargs="+", default=layers, type=str, choices=layers)
     parser.add_argument(
         "--batch_sizes",
-        default=[16, 32, 64, 128, 256, 512],
         nargs="+",
+        default=[16, 32, 64, 128, 256, 512],
         type=int,
     )
     parser.add_argument(
-        "--num_runs", default=100, type=int, help="number of benchmarking runs"
+        "--num_runs",
+        default=100,
+        type=int,
+        help="number of benchmarking runs for each layer and batch size",
     )
     parser.add_argument(
         "--num_repeats",
         default=20,
         type=int,
-        help="how many forward/backward passes per run",
+        help="number of forward/backward passes per run",
     )
     parser.add_argument(
         "--forward_only", action="store_true", help="only run forward passes"
     )
     parser.add_argument(
         "--random_seed",
-        default=0,
         type=int,
-        help="random seed for the first run of each layer, subsequent runs increase the random seed by 1",
+        help="random seed for the first run for each layer and batch size, subsequent runs increase the random seed by 1",
     )
-    parser.add_argument("-c", "--config_file", type=str, default="config.json")
+    parser.add_argument(
+        "-c",
+        "--config_file",
+        default="config.json",
+        type=str,
+        help="path to config file with settings for each layer",
+    )
     parser.add_argument(
         "--cont", action="store_true", help="only run missing experiments"
     )
     parser.add_argument(
         "--root",
-        type=str,
         default="./results/raw/",
-        help="path to directory where benchmark results should be saved in",
+        type=str,
+        help="path to directory where benchmark results should be saved",
     )
     parser.add_argument(
-        "--suffix", type=str, help="suffix to append to each result file's name"
+        "--suffix",
+        default="",
+        type=str,
+        help="suffix to append to each result file's name",
     )
     parser.add_argument("--no_save", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
