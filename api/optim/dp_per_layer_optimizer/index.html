@@ -24,40 +24,8 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="module-opacus.optimizers.perlayeroptimizer">
-<span id="dpperlayeroptimizer"></span><h1>DPPerLayerOptimizer<a class="headerlink" href="#module-opacus.optimizers.perlayeroptimizer" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.optimizers.perlayeroptimizer.</span></span><span class="sig-name descname"><span class="pre">DPPerLayerOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/perlayeroptimizer.html#DPPerLayerOptimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a> that implements
-per layer clipping strategy</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – wrapped optimizer.</p></li>
-<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – noise multiplier</p></li>
-<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – max grad norm used for gradient clipping</p></li>
-<li><p><strong>expected_batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – batch_size used for averaging gradients. When using
-Poisson sampling averaging denominator can’t be inferred from the
-actual batch size. Required is <code class="docutils literal notranslate"><span class="pre">loss_reduction="mean"</span></code>, ignored if
-<code class="docutils literal notranslate"><span class="pre">loss_reduction="sum"</span></code></p></li>
-<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the gradients)
-is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
-<li><p><strong>generator</strong> – torch.Generator() object used as a source of randomness for
-the noise</p></li>
-<li><p><strong>secure_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – if <code class="docutils literal notranslate"><span class="pre">True</span></code> uses noise generation approach robust to floating
-point arithmetic attacks.
-See <code class="xref py py-meth docutils literal notranslate"><span class="pre">_generate_noise()</span></code> for details</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer.clip_and_accumulate">
-<span class="sig-name descname"><span class="pre">clip_and_accumulate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/perlayeroptimizer.html#DPPerLayerOptimizer.clip_and_accumulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer.clip_and_accumulate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs gradient clipping.
-Stores clipped and aggregated gradients into <cite>p.summed_grad``</cite></p>
-</dd></dl>
-</dd></dl>
+<section id="dpperlayeroptimizer">
+<h1>DPPerLayerOptimizer<a class="headerlink" href="#dpperlayeroptimizer" title="Permalink to this headline">¶</a></h1>
 </section>
 </div>
 </div>
