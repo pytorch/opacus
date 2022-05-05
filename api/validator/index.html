@@ -24,8 +24,122 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="modulevalidator">
-<h1>ModuleValidator<a class="headerlink" href="#modulevalidator" title="Permalink to this headline">¶</a></h1>
+<section id="module-opacus.validators.module_validator">
+<span id="modulevalidator"></span><h1>ModuleValidator<a class="headerlink" href="#module-opacus.validators.module_validator" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.validators.module_validator.</span></span><span class="sig-name descname"><span class="pre">ModuleValidator</span></span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encapsulates all the validation logic required by Opacus.
+Also works as a namespace to hold registered validators and fixers.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator.fix">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator.fix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator.fix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make the module and sub_modules DP compatible by running registered custom fixers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The root module to be made compatible.</p></li>
+<li><p><strong>**kwargs</strong> – Arbitrary keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Fixed module.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator.fix_and_validate">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fix_and_validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator.fix_and_validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator.fix_and_validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fix the module and sub_modules first, and then run validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The root module to be fixed and validted</p></li>
+<li><p><strong>**kwargs</strong> – Arbitrary keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Fixed module.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>UnsupportedModuleError in case of validation failures.</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator.is_valid">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator.is_valid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator.is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if module and sub_modules are valid by running registered custom validators.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The root module to validate.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.validators.module_validator.ModuleValidator.validate">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/module_validator.html#ModuleValidator.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.module_validator.ModuleValidator.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate module and sub_modules by running registered custom validators.
+Returns or raises excpetions depending on <code class="docutils literal notranslate"><span class="pre">strict</span></code> flag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The root module to validate.</p></li>
+<li><p><strong>strict</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Boolean to indicate whether to raise errors or return</p></li>
+<li><p><strong>errors.</strong> (<em>the list of</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>UnsupportedModuleError in case of validation failures.</strong> – </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">UnsupportedModuleError</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<span class="target" id="module-opacus.validators.utils"></span><dl class="py function">
+<dt class="sig sig-object py" id="opacus.validators.utils.register_module_fixer">
+<span class="sig-prename descclassname"><span class="pre">opacus.validators.utils.</span></span><span class="sig-name descname"><span class="pre">register_module_fixer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_class_or_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validator_class=&lt;class</span> <span class="pre">'opacus.validators.module_validator.ModuleValidator'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/utils.html#register_module_fixer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.utils.register_module_fixer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers the decorated function as the <code class="docutils literal notranslate"><span class="pre">fixer</span></code> of <code class="docutils literal notranslate"><span class="pre">target_class_or_classes</span></code>, which is
+the function that will be invoked every time you want to fix an incompatoble module to make
+it work for training with Opacus.
+You may supply your own validator_class that holds the registry of FIXERS.
+The signature of every fixer is always the same:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_module_fixer</span><span class="p">(</span><span class="n">MyCustomModel</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+<span class="gp">... </span>   <span class="k">pass</span>
+</pre></div>
+</div>
+<p>It may help you to take a look at the existing fixers inside Opacus, under <code class="docutils literal notranslate"><span class="pre">opacus.validators.</span></code></p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.validators.utils.register_module_validator">
+<span class="sig-prename descclassname"><span class="pre">opacus.validators.utils.</span></span><span class="sig-name descname"><span class="pre">register_module_validator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_class_or_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validator_class=&lt;class</span> <span class="pre">'opacus.validators.module_validator.ModuleValidator'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/validators/utils.html#register_module_validator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.validators.utils.register_module_validator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers the decorated function as the <code class="docutils literal notranslate"><span class="pre">validator</span></code> of <code class="docutils literal notranslate"><span class="pre">target_class_or_classes</span></code>, which is
+the function that will be invoked every time you want to validate that a module is compatible
+for training with Opacus.
+You may supply your own validator_class that holds the registry of VALIDATORS.
+The signature of every validator is always the same:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_module_validator</span><span class="p">(</span><span class="n">MyCustomModel</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">opacus</span><span class="o">.</span><span class="n">validators</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">UnsupportedError</span><span class="p">]:</span>
+<span class="gp">... </span>   <span class="k">pass</span>
+</pre></div>
+</div>
+<p>It may help you to take a look at the existing validator inside Opacus, under <code class="docutils literal notranslate"><span class="pre">opacus.validators.</span></code></p>
+</dd></dl>
 </section>
 </div>
 </div>

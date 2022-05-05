@@ -24,8 +24,74 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="distributedperlayeroptimizer">
-<h1>DistributedPerLayerOptimizer<a class="headerlink" href="#distributedperlayeroptimizer" title="Permalink to this headline">¶</a></h1>
+<section id="module-opacus.optimizers.ddp_perlayeroptimizer">
+<span id="distributedperlayeroptimizer"></span><h1>DistributedPerLayerOptimizer<a class="headerlink" href="#module-opacus.optimizers.ddp_perlayeroptimizer" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.optimizers.ddp_perlayeroptimizer.</span></span><span class="sig-name descname"><span class="pre">DistributedPerLayerOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/ddp_perlayeroptimizer.html#DistributedPerLayerOptimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a> that implements
+per layer clipping strategy and is compatible with distibured data parallel</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – wrapped optimizer.</p></li>
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – noise multiplier</p></li>
+<li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – max grad norm used for gradient clipping</p></li>
+<li><p><strong>expected_batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – batch_size used for averaging gradients. When using
+Poisson sampling averaging denominator can’t be inferred from the
+actual batch size. Required is <code class="docutils literal notranslate"><span class="pre">loss_reduction="mean"</span></code>, ignored if
+<code class="docutils literal notranslate"><span class="pre">loss_reduction="sum"</span></code></p></li>
+<li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the gradients)
+is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
+<li><p><strong>generator</strong> – torch.Generator() object used as a source of randomness for
+the noise</p></li>
+<li><p><strong>secure_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – if <code class="docutils literal notranslate"><span class="pre">True</span></code> uses noise generation approach robust to floating
+point arithmetic attacks.
+See <code class="xref py py-meth docutils literal notranslate"><span class="pre">_generate_noise()</span></code> for details</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.accumulated_iterations">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">accumulated_iterations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></em><a class="headerlink" href="#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.accumulated_iterations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns number of batches currently accumulated and not yet processed.</p>
+<p>In other words <code class="docutils literal notranslate"><span class="pre">accumulated_iterations</span></code> tracks the number of forward/backward
+passed done in between two optimizer steps. The value would typically be 1,
+but there are possible exceptions.</p>
+<p>Used by privacy accountants to calculate real sampling rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.add_noise">
+<span class="sig-name descname"><span class="pre">add_noise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/ddp_perlayeroptimizer.html#DistributedPerLayerOptimizer.add_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.add_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds noise to clipped gradients. Stores clipped and noised result in <code class="docutils literal notranslate"><span class="pre">p.grad</span></code></p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.clip_and_accumulate">
+<span class="sig-name descname"><span class="pre">clip_and_accumulate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/ddp_perlayeroptimizer.html#DistributedPerLayerOptimizer.clip_and_accumulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.clip_and_accumulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs gradient clipping.
+Stores clipped and aggregated gradients into <cite>p.summed_grad``</cite></p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.pre_step">
+<span class="sig-name descname"><span class="pre">pre_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/ddp_perlayeroptimizer.html#DistributedPerLayerOptimizer.pre_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.pre_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform actions specific to <code class="docutils literal notranslate"><span class="pre">DPOptimizer</span></code> before calling
+underlying  <code class="docutils literal notranslate"><span class="pre">optimizer.step()</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>closure</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]) – A closure that reevaluates the model and
+returns the loss. Optional for most optimizers.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 </div>
 </div>

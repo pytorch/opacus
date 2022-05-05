@@ -1,0 +1,586 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://opacus.ai/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://opacus.ai/img/opacus_logo.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://opacus.ai/img/opacus_logo.svg"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-117752657-3', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.svg" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Introduction</a></li><li class=""><a href="/docs/faq" target="_self">FAQ</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for opacus.privacy_engine</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">opacus.accountants</span> <span class="kn">import</span> <span class="n">create_accountant</span>
+<span class="kn">from</span> <span class="nn">opacus.accountants.utils</span> <span class="kn">import</span> <span class="n">get_noise_multiplier</span>
+<span class="kn">from</span> <span class="nn">opacus.data_loader</span> <span class="kn">import</span> <span class="n">DPDataLoader</span><span class="p">,</span> <span class="n">switch_generator</span>
+<span class="kn">from</span> <span class="nn">opacus.distributed</span> <span class="kn">import</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span> <span class="k">as</span> <span class="n">DPDDP</span>
+<span class="kn">from</span> <span class="nn">opacus.grad_sample.grad_sample_module</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
+<span class="kn">from</span> <span class="nn">opacus.optimizers</span> <span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">get_optimizer_class</span>
+<span class="kn">from</span> <span class="nn">opacus.validators.module_validator</span> <span class="kn">import</span> <span class="n">ModuleValidator</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
+<span class="kn">from</span> <span class="nn">torch.nn.parallel</span> <span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+
+
+<span class="k">def</span> <span class="nf">forbid_accumulation_hook</span><span class="p">(</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">_grad_input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">_grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+<span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Model hook that detects repetitive forward/backward passes between optimizer steps.</span>
+
+<span class="sd">    This is a backward hook that will be wrapped around the whole model using</span>
+<span class="sd">    `register_backward_hook`. We wish to detect a case where:</span>
+<span class="sd">        -  `optimizer.zero_grad()` is not called before the backward pass; and</span>
+<span class="sd">        -  `p.grad_sample` was updated in a *previous* iteration.</span>
+
+<span class="sd">    To do so, we attach a backward hook to the model that runs *after* the computation</span>
+<span class="sd">    of `grad_sample` for the current step. We compute the number of accumulated iterations</span>
+<span class="sd">    like on `optimizers/optimizer.py` and check whether it's strictly larger than one.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: input module</span>
+<span class="sd">        _grad_input: module input gradient (not used here)</span>
+<span class="sd">        _grad_output: module output gradient (not used here)</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the hook detected multiple forward/backward passes between optimizer steps</span>
+
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">module</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+                <span class="n">accumulated_iterations</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">accumulated_iterations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">accumulated_iterations</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Poisson sampling is not compatible with grad accumulation. "</span>
+                    <span class="s2">"You need to call optimizer.step() after every forward/backward pass "</span>
+                    <span class="s2">"or consider using BatchMemoryManager"</span>
+                <span class="p">)</span>
+
+
+<div class="viewcode-block" id="PrivacyEngine"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine">[docs]</a><span class="k">class</span> <span class="nc">PrivacyEngine</span><span class="p">:</span>
+    <span class="sd">"""</span>
+<span class="sd">    Main entry point to the Opacus API - use ``PrivacyEngine``  to enable differential</span>
+<span class="sd">    privacy for your model training.</span>
+
+<span class="sd">    ``PrivacyEngine`` object encapsulates current privacy state (privacy budget +</span>
+<span class="sd">    method it's been calculated) and exposes ``make_private`` method to wrap your</span>
+<span class="sd">    PyTorch training objects with their private counterparts.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; dataloader = demo_dataloader</span>
+<span class="sd">        &gt;&gt;&gt; model = MyCustomModel()</span>
+<span class="sd">        &gt;&gt;&gt; optimizer = torch.optim.SGD(model.parameters(), lr=0.05)</span>
+<span class="sd">        &gt;&gt;&gt; privacy_engine = PrivacyEngine()</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; model, optimizer, dataloader = privacy_engine.make_private(</span>
+<span class="sd">        ...    module=model,</span>
+<span class="sd">        ...    optimizer=optimizer,</span>
+<span class="sd">        ...    data_loader=dataloader,</span>
+<span class="sd">        ...    noise_multiplier=1.0,</span>
+<span class="sd">        ...    max_grad_norm=1.0,</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; # continue training as normal</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">accountant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"rdp"</span><span class="p">,</span> <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">"""</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            accountant: Accounting mechanism. Currently supported:</span>
+<span class="sd">                - rdp (:class:`~opacus.accountants.RDPAccountant`)</span>
+<span class="sd">                - gdp (:class:`~opacus.accountants.GaussianAccountant`)</span>
+<span class="sd">            secure_mode: Set to ``True`` if cryptographically strong DP guarantee is</span>
+<span class="sd">                required. ``secure_mode=True`` uses secure random number generator for</span>
+<span class="sd">                noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and</span>
+<span class="sd">                prevents certain floating-point arithmetic-based attacks.</span>
+<span class="sd">                See :meth:`~opacus.optimizers.optimizer._generate_noise` for details.</span>
+<span class="sd">                When set to ``True`` requires ``torchcsprng`` to be installed</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span> <span class="o">=</span> <span class="n">create_accountant</span><span class="p">(</span><span class="n">mechanism</span><span class="o">=</span><span class="n">accountant</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span> <span class="o">=</span> <span class="n">secure_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># only used to detect switching to a different dataset</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span> <span class="nn">torchcsprng</span> <span class="k">as</span> <span class="nn">csprng</span>
+            <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"To use secure RNG, you must install the torchcsprng package! "</span>
+                    <span class="s2">"Check out the instructions here: https://github.com/pytorch/csprng#installation"</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span> <span class="o">=</span> <span class="n">csprng</span><span class="o">.</span><span class="n">create_random_device_generator</span><span class="p">(</span><span class="s2">"/dev/urandom"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"Secure RNG turned off. This is perfectly fine for experimentation as it allows "</span>
+                <span class="s2">"for much faster training performance, but remember to turn it on and retrain "</span>
+                <span class="s2">"one last time before production with ``secure_mode`` turned on."</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_prepare_optimizer</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">max_grad_norm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="n">expected_batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+        <span class="n">distributed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">clipping</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"flat"</span><span class="p">,</span>
+        <span class="n">noise_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DPOptimizer</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">):</span>
+            <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">original_optimizer</span>
+
+        <span class="n">generator</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">:</span>
+            <span class="n">generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span>
+        <span class="k">elif</span> <span class="n">noise_generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">generator</span> <span class="o">=</span> <span class="n">noise_generator</span>
+
+        <span class="n">optim_class</span> <span class="o">=</span> <span class="n">get_optimizer_class</span><span class="p">(</span><span class="n">clipping</span><span class="o">=</span><span class="n">clipping</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="n">distributed</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">optim_class</span><span class="p">(</span>
+            <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">noise_multiplier</span><span class="p">,</span>
+            <span class="n">max_grad_norm</span><span class="o">=</span><span class="n">max_grad_norm</span><span class="p">,</span>
+            <span class="n">expected_batch_size</span><span class="o">=</span><span class="n">expected_batch_size</span><span class="p">,</span>
+            <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+            <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
+            <span class="n">secure_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_prepare_data_loader</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">poisson_sampling</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">distributed</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">data_loader</span><span class="o">.</span><span class="n">dataset</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">!=</span> <span class="n">data_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"PrivacyEngine detected new dataset object. "</span>
+                <span class="sa">f</span><span class="s2">"Was: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="si">}</span><span class="s2">, got: </span><span class="si">{</span><span class="n">data_loader</span><span class="o">.</span><span class="n">dataset</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="sa">f</span><span class="s2">"Privacy accounting works per dataset, please initialize "</span>
+                <span class="sa">f</span><span class="s2">"new PrivacyEngine if you're using different dataset. "</span>
+                <span class="sa">f</span><span class="s2">"You can ignore this warning if two datasets above "</span>
+                <span class="sa">f</span><span class="s2">"represent the same logical dataset"</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">poisson_sampling</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DPDataLoader</span><span class="o">.</span><span class="n">from_data_loader</span><span class="p">(</span>
+                <span class="n">data_loader</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="n">distributed</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">switch_generator</span><span class="p">(</span><span class="n">data_loader</span><span class="o">=</span><span class="n">data_loader</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data_loader</span>
+
+    <span class="k">def</span> <span class="nf">_prepare_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GradSampleModule</span><span class="p">:</span>
+        <span class="c1"># Ideally, validation should have been taken care of by calling</span>
+        <span class="c1"># `get_compatible_module()`</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_loader</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># wrap</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">GradSampleModule</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">module</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">!=</span> <span class="n">batch_first</span>
+                <span class="ow">or</span> <span class="n">module</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">!=</span> <span class="n">loss_reduction</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Pre-existing GradSampleModule doesn't match new arguments."</span>
+                    <span class="sa">f</span><span class="s2">"Got: module.batch_first: </span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="n">batch_first</span><span class="si">}</span><span class="s2">, module.loss_reduction: </span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="n">loss_reduction</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="sa">f</span><span class="s2">"Requested: batch_first:</span><span class="si">{</span><span class="n">batch_first</span><span class="si">}</span><span class="s2">, loss_reduction: </span><span class="si">{</span><span class="n">loss_reduction</span><span class="si">}</span><span class="s2">. "</span>
+                    <span class="sa">f</span><span class="s2">"Please pass vanilla nn.Module instead"</span>
+                <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">module</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">GradSampleModule</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="PrivacyEngine.is_compatible"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.is_compatible">[docs]</a>    <span class="k">def</span> <span class="nf">is_compatible</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">],</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Check if task components are compatible with DP.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: module to be checked</span>
+<span class="sd">            optimizer: optimizer to be checked</span>
+<span class="sd">            data_loader: data_loader to be checked</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``True`` if compatible, ``False`` otherwise</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">module</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PrivacyEngine.validate"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">],</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Validate that task components are compatible with DP.</span>
+<span class="sd">        Same as ``is_compatible()``, but raises error instead of returning bool.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: module to be checked</span>
+<span class="sd">            optimizer: optimizer to be checked</span>
+<span class="sd">            data_loader: data_loader to be checked</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            UnsupportedModuleError</span>
+<span class="sd">                If one or more modules found to be incompatible</span>
+<span class="sd">        """</span>
+        <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PrivacyEngine.get_compatible_module"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_compatible_module">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_compatible_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Return a privacy engine compatible module. Also validates the module after</span>
+<span class="sd">        running registered fixes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: module to be modified</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Module with some submodules replaced for their deep copies or</span>
+<span class="sd">            close equivalents.</span>
+<span class="sd">            See :class:`~opacus.validators.module_validator.ModuleValidator` for</span>
+<span class="sd">            more details</span>
+<span class="sd">        """</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">module</span></div>
+
+<div class="viewcode-block" id="PrivacyEngine.make_private"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.make_private">[docs]</a>    <span class="k">def</span> <span class="nf">make_private</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">max_grad_norm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+        <span class="n">poisson_sampling</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">clipping</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"flat"</span><span class="p">,</span>
+        <span class="n">noise_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">]:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Add privacy-related responsibilites to the main PyTorch training objects:</span>
+<span class="sd">        model, optimizer, and the data loader.</span>
+
+<span class="sd">        All of the returned objects act just like their non-private counterparts</span>
+<span class="sd">        passed as arguments, but with added DP tasks.</span>
+
+<span class="sd">        - Model is wrapped to also compute per sample gradients.</span>
+<span class="sd">        - Optimizer is now responsible for gradient clipping and adding noise to the gradients.</span>
+<span class="sd">        - DataLoader is updated to perform Poisson sampling.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            Using any other models, optimizers, or data sources during training</span>
+<span class="sd">            will invalidate stated privacy guarantees.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: PyTorch module to be used for training</span>
+<span class="sd">            optimizer: Optimizer to be used for training</span>
+<span class="sd">            data_loader: DataLoader to be used for training</span>
+<span class="sd">            noise_multiplier: The ratio of the standard deviation of the Gaussian noise to</span>
+<span class="sd">                the L2-sensitivity of the function to which the noise is added</span>
+<span class="sd">                (How much noise to add)</span>
+<span class="sd">            max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm</span>
+<span class="sd">                higher than this will be clipped to this value.</span>
+<span class="sd">            batch_first: Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">                has the first dimension representing the batch. If set to True, dimensions on</span>
+<span class="sd">                input tensor are expected be ``[batch_size, ...]``, otherwise</span>
+<span class="sd">                ``[K, batch_size, ...]``</span>
+<span class="sd">            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
+<span class="sd">                is a sum or a mean operation. Can take values "sum" or "mean"</span>
+<span class="sd">            poisson_sampling: ``True`` if you want to use standard sampling required</span>
+<span class="sd">                for DP guarantees. Setting ``False`` will leave provided data_loader</span>
+<span class="sd">                unchanged. Technically this doesn't fit the assumptions made by</span>
+<span class="sd">                privacy accounting mechanism, but it can be a good approximation when</span>
+<span class="sd">                using Poisson sampling is unfeasible.</span>
+<span class="sd">            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer").</span>
+<span class="sd">                Flat clipping calculates the norm of the entire gradient over</span>
+<span class="sd">                all parameters, while per layer clipping sets individual norms for</span>
+<span class="sd">                every parameter tensor. Flat clipping is usually preferred, but using</span>
+<span class="sd">                per layer clipping in combination with distributed training can provide</span>
+<span class="sd">                notable performance gains.</span>
+<span class="sd">            noise_generator: torch.Generator() object used as a source of randomness for</span>
+<span class="sd">                the noise</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (model, optimizer, data_loader).</span>
+
+<span class="sd">            Model is a wrapper around the original model that also computes per sample</span>
+<span class="sd">                gradients</span>
+<span class="sd">            Optimizer is a wrapper around the original optimizer that also does</span>
+<span class="sd">             gradient clipping and noise addition to the gradients</span>
+<span class="sd">            DataLoader is a brand new DataLoader object, constructed to behave as</span>
+<span class="sd">                equivalent to the original data loader, possibly with updated</span>
+<span class="sd">                sampling mechanism. Points to the same dataset object.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">noise_generator</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Passing seed is prohibited in secure mode"</span><span class="p">)</span>
+
+        <span class="n">distributed</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">DPDDP</span><span class="p">,</span> <span class="n">DDP</span><span class="p">))</span>
+
+        <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_model</span><span class="p">(</span>
+            <span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">poisson_sampling</span><span class="p">:</span>
+            <span class="n">module</span><span class="o">.</span><span class="n">register_backward_hook</span><span class="p">(</span><span class="n">forbid_accumulation_hook</span><span class="p">)</span>
+
+        <span class="n">data_loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_data_loader</span><span class="p">(</span>
+            <span class="n">data_loader</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="n">distributed</span><span class="p">,</span> <span class="n">poisson_sampling</span><span class="o">=</span><span class="n">poisson_sampling</span>
+        <span class="p">)</span>
+
+        <span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span>
+        <span class="n">expected_batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span>
+
+        <span class="c1"># expected_batch_size is the *per worker* batch size</span>
+        <span class="k">if</span> <span class="n">distributed</span><span class="p">:</span>
+            <span class="n">world_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
+            <span class="n">expected_batch_size</span> <span class="o">/=</span> <span class="n">world_size</span>
+
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_optimizer</span><span class="p">(</span>
+            <span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">noise_multiplier</span><span class="p">,</span>
+            <span class="n">max_grad_norm</span><span class="o">=</span><span class="n">max_grad_norm</span><span class="p">,</span>
+            <span class="n">expected_batch_size</span><span class="o">=</span><span class="n">expected_batch_size</span><span class="p">,</span>
+            <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+            <span class="n">noise_generator</span><span class="o">=</span><span class="n">noise_generator</span><span class="p">,</span>
+            <span class="n">distributed</span><span class="o">=</span><span class="n">distributed</span><span class="p">,</span>
+            <span class="n">clipping</span><span class="o">=</span><span class="n">clipping</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">attach_step_hook</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_optimizer_hook_fn</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span></div>
+
+<div class="viewcode-block" id="PrivacyEngine.make_private_with_epsilon"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.make_private_with_epsilon">[docs]</a>    <span class="k">def</span> <span class="nf">make_private_with_epsilon</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="n">target_epsilon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">target_delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">max_grad_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+        <span class="n">noise_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Version of :meth:`~opacus.privacy_engine.PrivacyEngine.make_private`,</span>
+<span class="sd">        that calculates privacy parameters based on a given privacy budget.</span>
+
+<span class="sd">        For the full documentation see</span>
+<span class="sd">        :meth:`~opacus.privacy_engine.PrivacyEngine.make_private`</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: PyTorch module to be used for training</span>
+<span class="sd">            optimizer: Optimizer to be used for training</span>
+<span class="sd">            data_loader: DataLoader to be used for training</span>
+<span class="sd">            noise_multiplier: The ratio of the standard deviation of the Gaussian noise to</span>
+<span class="sd">                the L2-sensitivity of the function to which the noise is added</span>
+<span class="sd">                (How much noise to add)</span>
+<span class="sd">            max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm</span>
+<span class="sd">                higher than this will be clipped to this value.</span>
+<span class="sd">            batch_first: Flag to indicate if the input tensor to the corresponding module</span>
+<span class="sd">                has the first dimension representing the batch. If set to True, dimensions on</span>
+<span class="sd">                input tensor are expected be ``[batch_size, ...]``, otherwise</span>
+<span class="sd">                ``[K, batch_size, ...]``</span>
+<span class="sd">            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
+<span class="sd">                is a sum or a mean operation. Can take values "sum" or "mean"</span>
+<span class="sd">            noise_seed: Seed to be used for random noise generation</span>
+<span class="sd">            poisson_sampling: ``True`` if you want to use standard sampling required</span>
+<span class="sd">                for DP guarantees. Setting ``False`` will leave provided data_loader</span>
+<span class="sd">                unchanged. Technically this doesn't fit the assumptions made by</span>
+<span class="sd">                privacy accounting mechanism, but it can be a good approximation when</span>
+<span class="sd">                using Poisson sampling is unfeasible.</span>
+<span class="sd">            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer").</span>
+<span class="sd">                Flat clipping calculates the norm of the entire gradient over</span>
+<span class="sd">                all parameters, while per layer clipping sets individual norms for</span>
+<span class="sd">                every parameter tensor. Flat clipping is usually preferred, but using</span>
+<span class="sd">                per layer clipping in combination with distributed training can provide</span>
+<span class="sd">                notable performance gains.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (model, optimizer, data_loader).</span>
+
+<span class="sd">            Model is a wrapper around the original model that also computes per sample</span>
+<span class="sd">                gradients</span>
+<span class="sd">            Optimizer is a wrapper around the original optimizer that also does</span>
+<span class="sd">             gradient clipping and adding noise to the gradients</span>
+<span class="sd">            DataLoader is a brand new DataLoader object, constructed to behave as</span>
+<span class="sd">                equivalent to the original data loader, possibly with updated</span>
+<span class="sd">                sampling mechanism. Points to the same dataset object.</span>
+<span class="sd">        """</span>
+        <span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"You're calling make_private_with_epsilon with non-zero privacy budget "</span>
+                <span class="s2">"already spent. Returned noise_multiplier assumes zero starting point, "</span>
+                <span class="s2">"so your overall privacy budget will be higher."</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_private</span><span class="p">(</span>
+            <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
+            <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">data_loader</span><span class="o">=</span><span class="n">data_loader</span><span class="p">,</span>
+            <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">get_noise_multiplier</span><span class="p">(</span>
+                <span class="n">target_epsilon</span><span class="o">=</span><span class="n">target_epsilon</span><span class="p">,</span>
+                <span class="n">target_delta</span><span class="o">=</span><span class="n">target_delta</span><span class="p">,</span>
+                <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
+                <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
+                <span class="n">accountant</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">mechanism</span><span class="p">(),</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">max_grad_norm</span><span class="o">=</span><span class="n">max_grad_norm</span><span class="p">,</span>
+            <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
+            <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+            <span class="n">noise_generator</span><span class="o">=</span><span class="n">noise_generator</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="PrivacyEngine.get_epsilon"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_epsilon">[docs]</a>    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Computes the (epsilon, delta) privacy budget spent so far.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            delta: The target delta.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Privacy budget (epsilon) expended so far.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span></div></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Opacus</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../privacy_engine.html">Privacy Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../grad_sample_module.html">GradSampleModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../optim/optimizers.html">Optimizers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data_loader.html">DP Data Loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/accounting.html">Privacy Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../validator.html">ModuleValidator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../distributed.html">Distributed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../noise_scheduler.html">Noise Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../batch_memory_manager.html">Batch Memory Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../layers.html">DP Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils/utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../index.html">Documentation overview</a><ul>
+<li><a href="../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'opacus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

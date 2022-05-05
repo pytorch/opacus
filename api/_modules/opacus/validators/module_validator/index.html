@@ -1,0 +1,261 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Opacus · Train PyTorch models with Differential Privacy</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Train PyTorch models with Differential Privacy"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Opacus · Train PyTorch models with Differential Privacy"/><meta property="og:type" content="website"/><meta property="og:url" content="https://opacus.ai/"/><meta property="og:description" content="Train PyTorch models with Differential Privacy"/><meta property="og:image" content="https://opacus.ai/img/opacus_logo.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://opacus.ai/img/opacus_logo.svg"/><link rel="shortcut icon" href="/img/opacus_favicon.svg"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-117752657-3', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/opacus_logo.svg" alt="Opacus"/></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Introduction</a></li><li class=""><a href="/docs/faq" target="_self">FAQ</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/opacus" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./"
+  src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for opacus.validators.module_validator</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">from</span> <span class="nn">opacus.grad_sample.grad_sample_module</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.module_utils</span> <span class="kn">import</span> <span class="n">clone_module</span><span class="p">,</span> <span class="n">get_submodule</span><span class="p">,</span> <span class="n">trainable_modules</span>
+<span class="kn">from</span> <span class="nn">opacus.validators.errors</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IllegalModuleConfigurationError</span><span class="p">,</span>
+    <span class="n">UnsupportedModuleError</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ModuleValidator"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator">[docs]</a><span class="k">class</span> <span class="nc">ModuleValidator</span><span class="p">:</span>
+    <span class="sd">"""</span>
+<span class="sd">    Encapsulates all the validation logic required by Opacus.</span>
+<span class="sd">    Also works as a namespace to hold registered validators and fixers.</span>
+<span class="sd">    """</span>
+
+    <span class="n">VALIDATORS</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">FIXERS</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="ModuleValidator.validate"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.validate">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">UnsupportedModuleError</span><span class="p">]:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Validate module and sub_modules by running registered custom validators.</span>
+<span class="sd">        Returns or raises excpetions depending on ``strict`` flag.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: The root module to validate.</span>
+<span class="sd">            strict: Boolean to indicate whether to raise errors or return</span>
+<span class="sd">            the list of errors.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            UnsupportedModuleError in case of validation failures.</span>
+<span class="sd">        """</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># 1. validate that module is in training mode</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">module</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">IllegalModuleConfigurationError</span><span class="p">(</span><span class="s2">"Model needs to be in training mode"</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="c1"># 2. validate that all trainable modules are supported by GradSampleModule.</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">GradSampleModule</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="c1"># 3. perform module specific validations for trainable modules.</span>
+        <span class="c1"># TODO: use module name here - it's useful part of error message</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">sub_module</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">VALIDATORS</span><span class="p">:</span>
+                <span class="n">sub_module_validator</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">VALIDATORS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)]</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sub_module_validator</span><span class="p">(</span><span class="n">sub_module</span><span class="p">))</span>
+        <span class="c1"># raise/return as needed</span>
+        <span class="k">if</span> <span class="n">strict</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnsupportedModuleError</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">errors</span></div>
+
+<div class="viewcode-block" id="ModuleValidator.is_valid"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.is_valid">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Check if module and sub_modules are valid by running registered custom validators.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: The root module to validate.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="ModuleValidator.fix"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Make the module and sub_modules DP compatible by running registered custom fixers.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: The root module to be made compatible.</span>
+<span class="sd">            **kwargs: Arbitrary keyword arguments.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Fixed module.</span>
+<span class="sd">        """</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">clone_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="c1"># iterate over all sub_modules</span>
+        <span class="c1"># We have to get sub_module names in a list first as we will be</span>
+        <span class="c1"># changing the modules inside the the loop.</span>
+        <span class="n">sub_module_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">sub_module_name</span> <span class="ow">in</span> <span class="n">sub_module_names</span><span class="p">:</span>
+            <span class="c1"># get sub_module</span>
+            <span class="n">sub_module</span> <span class="o">=</span> <span class="n">get_submodule</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">sub_module_name</span><span class="p">)</span>
+            <span class="c1"># if sub_module has a registered fixer</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">FIXERS</span><span class="p">:</span>
+                <span class="c1"># get a repalcement for sub_module</span>
+                <span class="n">sub_module_fixer</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">FIXERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)]</span>
+                <span class="n">new_sub_module</span> <span class="o">=</span> <span class="n">sub_module_fixer</span><span class="p">(</span><span class="n">sub_module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="c1"># move new_sub_module to the same device as that of sub_module</span>
+                <span class="n">new_sub_module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">sub_module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                <span class="c1"># get module after replacement.</span>
+                <span class="n">module</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_repalce_sub_module</span><span class="p">(</span>
+                    <span class="n">root</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
+                    <span class="n">sub_module_name</span><span class="o">=</span><span class="n">sub_module_name</span><span class="p">,</span>
+                    <span class="n">new_sub_module</span><span class="o">=</span><span class="n">new_sub_module</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="c1"># log it</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Replaced sub_module </span><span class="si">{</span><span class="n">sub_module_name</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="n">sub_module</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="sa">f</span><span class="s2">" with </span><span class="si">{</span><span class="n">new_sub_module</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="c1"># return fixed module</span>
+        <span class="k">return</span> <span class="n">module</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_repalce_sub_module</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">sub_module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">new_sub_module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sub_module_path</span> <span class="o">=</span> <span class="n">sub_module_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">sub_module_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">sub_module_path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">""</span>
+        <span class="p">):</span>  <span class="c1"># root is the only sub_module of root</span>
+            <span class="k">return</span> <span class="n">new_sub_module</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># repalce root's descendant</span>
+            <span class="n">sub_module_parent</span> <span class="o">=</span> <span class="n">root</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sub_module_path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>  <span class="c1"># descend down to sub_module</span>
+                <span class="n">sub_module_parent</span> <span class="o">=</span> <span class="n">sub_module_parent</span><span class="o">.</span><span class="n">_modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">sub_module_parent</span><span class="o">.</span><span class="n">_modules</span><span class="p">[</span><span class="n">sub_module_path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_sub_module</span>
+        <span class="k">return</span> <span class="n">root</span>
+
+<div class="viewcode-block" id="ModuleValidator.fix_and_validate"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix_and_validate">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">fix_and_validate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Fix the module and sub_modules first, and then run validation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module: The root module to be fixed and validted</span>
+<span class="sd">            **kwargs: Arbitrary keyword arguments.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Fixed module.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            UnsupportedModuleError in case of validation failures.</span>
+<span class="sd">        """</span>
+        <span class="c1"># 1. replace any fixable modules</span>
+        <span class="n">fixed_module</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># 2. perform module specific validations.</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">fixed_module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># return fixed module</span>
+        <span class="k">return</span> <span class="n">fixed_module</span></div></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Opacus</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../privacy_engine.html">Privacy Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../grad_sample_module.html">GradSampleModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim/optimizers.html">Optimizers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_loader.html">DP Data Loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../accounting/accounting.html">Privacy Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../validator.html">ModuleValidator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../distributed.html">Distributed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../noise_scheduler.html">Noise Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../batch_memory_manager.html">Batch Memory Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../layers.html">DP Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'opacus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

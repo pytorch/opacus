@@ -24,8 +24,252 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="dprnn">
-<h1>DPRNN<a class="headerlink" href="#dprnn" title="Permalink to this headline">¶</a></h1>
+<section id="module-opacus.layers.dp_rnn">
+<span id="dprnn"></span><h1>DPRNN<a class="headerlink" href="#module-opacus.layers.dp_rnn" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPGRU">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPGRU</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proj_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPGRU"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPGRU" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies a multi-layer gated recurrent unit (GRU) RNN to an input sequence.</p>
+<p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.GRU</span></code> module.
+Refer to <code class="docutils literal notranslate"><span class="pre">torch.nn.GRU</span></code> documentation for the model description, parameters and inputs/outputs.</p>
+<p>After training this module can be exported and loaded by the original <code class="docutils literal notranslate"><span class="pre">torch.nn</span></code> implementation for inference.</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPGRUCell">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPGRUCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPGRUCell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPGRUCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>A gated recurrent unit (GRU) cell</p>
+<p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.GRUCell</span></code> module to use in <code class="docutils literal notranslate"><span class="pre">DPGRU</span></code>.
+Refer to <code class="docutils literal notranslate"><span class="pre">torch.nn.GRUCell</span></code> documentation for the model description, parameters and inputs/outputs.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPGRUCell.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPGRUCell.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPGRUCell.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPLSTM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPLSTM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proj_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPLSTM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPLSTM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies a multi-layer long short-term memory (LSTM) RNN to an input
+sequence.</p>
+<p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.LSTM</span></code> module.
+Refer to <code class="docutils literal notranslate"><span class="pre">torch.nn.LSTM</span></code> documentation for the model description, parameters and inputs/outputs.</p>
+<p>After training this module can be exported and loaded by the original <code class="docutils literal notranslate"><span class="pre">torch.nn</span></code> implementation for inference.</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPLSTMCell">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPLSTMCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPLSTMCell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPLSTMCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>A long short-term memory (LSTM) cell.</p>
+<p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.LSTMCell</span></code> module to use in <code class="docutils literal notranslate"><span class="pre">DPLSTM</span></code>.
+Refer to <code class="docutils literal notranslate"><span class="pre">torch.nn.LSTMCell</span></code> documentation for the model description, parameters and inputs/outputs.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPLSTMCell.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPLSTMCell.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPLSTMCell.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPRNN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proj_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinearity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tanh'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies a multi-layer Elman RNN with :math:`    anh` or :math:` ext{ReLU}` non-linearity to an
+input sequence.</p>
+<p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.RNN</span></code> module.
+Refer to <code class="docutils literal notranslate"><span class="pre">torch.nn.RNN</span></code> documentation for the model description, parameters and inputs/outputs.</p>
+<p>After training this module can be exported and loaded by the original <code class="docutils literal notranslate"><span class="pre">torch.nn</span></code> implementation for inference.</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNNBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPRNNBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proj_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for all RNN-like sequence models.</p>
+<p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.RNNBase</span></code> module.
+After training this module can be exported and loaded by the original <code class="docutils literal notranslate"><span class="pre">torch.nn</span></code>
+implementation for inference.</p>
+<p>This module implements multi-layer (Type-2, see
+[this issue](<a class="reference external" href="https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298">https://github.com/pytorch/pytorch/issues/4930#issuecomment-361851298</a>))
+bi-directional sequential model based on abstract cell.
+Cell should be a subclass of <code class="docutils literal notranslate"><span class="pre">DPRNNCellBase</span></code>.</p>
+<p>Limitations:
+- proj_size &gt; 0 is not implemented
+- this implementation doesn’t use cuDNN</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNNBase.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNBase.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNBase.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forward pass of a full RNN, containing one or many single- or bi-directional layers.
+Implemented for an abstract cell type.</p>
+<p>Note: <code class="docutils literal notranslate"><span class="pre">proj_size</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> is not supported here.
+Cell state size is always equal to hidden state size.</p>
+<dl>
+<dt>Inputs: input, h_0/(h_0, c_0)</dt><dd><dl class="simple">
+<dt>input: Input sequence. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">D]</span></code> (<code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">T,</span> <span class="pre">D]</span></code> if <code class="docutils literal notranslate"><span class="pre">batch_first=True</span></code>)</dt><dd><p>or PackedSequence.</p>
+</dd>
+</dl>
+<p>h_0: Initial hidden state for each element in the batch. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[L*P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code>. Default to zeros.
+c_0: Initial cell state for each element in the batch. Only for cell types with an additional state.</p>
+<blockquote>
+<div><p>Tensor of shape <code class="docutils literal notranslate"><span class="pre">[L*P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code>. Default to zeros.</p>
+</div></blockquote>
+</dd>
+<dt>Outputs: output, h_n/(h_n, c_n)</dt><dd><dl class="simple">
+<dt>output: Output features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) from the last layer of the model for each <code class="docutils literal notranslate"><span class="pre">t</span></code>. Tensor of</dt><dd><p>shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">P*H]</span></code> (<code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">T,</span> <span class="pre">P*H]</span></code> if <code class="docutils literal notranslate"><span class="pre">batch_first=True</span></code>), or PackedSequence.</p>
+</dd>
+</dl>
+<p>h_n: Final hidden state for each element in the batch. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[L*P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code>.
+c_n: Final cell state for each element in the batch. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[L*P,</span> <span class="pre">B,</span> <span class="pre">H]</span></code>.</p>
+</dd>
+<dt>where</dt><dd><p>T = sequence length
+B = batch size
+D = input_size
+H = hidden_size
+L = num_layers
+P = num_directions (2 if <cite>bidirectional=True</cite> else 1)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.utils.rnn.PackedSequence.html#torch.nn.utils.rnn.PackedSequence" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PackedSequence</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNNBase.forward_layer">
+<span class="sig-name descname"><span class="pre">forward_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_packed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse_layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNBase.forward_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNBase.forward_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forward pass of a single RNN layer (one direction). Implemented for an abstract cell type.</p>
+<dl>
+<dt>Inputs: x, h_0, c_0</dt><dd><p>x: Input sequence. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">D]</span></code> or PackedSequence if <cite>is_packed = True</cite>.
+h_0: Initial hidden state. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>.
+c_0: Initial cell state. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>. Only for cells with additional</p>
+<blockquote>
+<div><p>state <cite>c_t</cite>, e.g. DPLSTMCell.</p>
+</div></blockquote>
+</dd>
+<dt>Outputs: h_t, h_last, c_last</dt><dd><dl class="simple">
+<dt>h_t: Final hidden state, output features (<code class="docutils literal notranslate"><span class="pre">h_t</span></code>) for each timestep <code class="docutils literal notranslate"><span class="pre">t</span></code>. Tensor of</dt><dd><p>shape <code class="docutils literal notranslate"><span class="pre">[T,</span> <span class="pre">B,</span> <span class="pre">H]</span></code> or list of length <code class="docutils literal notranslate"><span class="pre">T</span></code> with tensors <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code> if PackedSequence is used.</p>
+</dd>
+</dl>
+<p>h_last: The last hidden state. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>.
+c_last: The last cell state. Tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">H]</span></code>. None if cell has no additional state.</p>
+</dd>
+<dt>where</dt><dd><p>T = sequence length
+B = batch size
+D = input_size (for this specific layer)
+H = hidden_size (output size, for this specific layer)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch_sizes</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Contains the batch sizes as stored in PackedSequence</p></li>
+<li><p><strong>cell</strong> (<a class="reference internal" href="#opacus.layers.dp_rnn.DPRNNCellBase" title="opacus.layers.dp_rnn.DPRNNCellBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPRNNCellBase</span></code></a>) – Module implementing a single cell of the network, must be an instance of DPRNNCell</p></li>
+<li><p><strong>max_batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – batch size</p></li>
+<li><p><strong>seq_length</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – sequence length</p></li>
+<li><p><strong>is_packed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – whether PackedSequence is used as input</p></li>
+<li><p><strong>reverse_layer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – if True, it will run forward pass for a reversed layer</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]], <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNNBase.iterate_layers">
+<span class="sig-name descname"><span class="pre">iterate_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNBase.iterate_layers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNBase.iterate_layers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate through all the layers and through all directions within each layer.</p>
+<p>Arguments should be list-like of length <code class="docutils literal notranslate"><span class="pre">num_layers</span> <span class="pre">*</span> <span class="pre">num_directions</span></code> where
+each element corresponds to (layer, direction) pair. The corresponding elements
+of each of these lists will be iterated over.</p>
+<p class="rubric">Example</p>
+<p>num_layers = 3
+bidirectional = True</p>
+<dl class="simple">
+<dt>for layer, directions in self.iterate_layers(self.cell, h):</dt><dd><dl class="simple">
+<dt>for dir, (cell, hi) in directions:</dt><dd><p>print(layer, dir, hi)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p># 0 0 h[0]
+# 0 1 h[1]
+# 1 0 h[2]
+# 1 1 h[3]
+# 2 0 h[4]
+# 2 1 h[5]</p>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNNCell">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPRNNCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinearity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tanh'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNCell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>An Elman RNN cell with tanh or ReLU non-linearity.</p>
+<p>DP-friendly drop-in replacement of the <code class="docutils literal notranslate"><span class="pre">torch.nn.RNNCell</span></code> module to use in <code class="docutils literal notranslate"><span class="pre">DPRNN</span></code>.
+Refer to <code class="docutils literal notranslate"><span class="pre">torch.nn.RNNCell</span></code> documentation for the model description, parameters and inputs/outputs.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNNCell.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNCell.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNCell.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.DPRNNCellBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">DPRNNCellBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chunks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#DPRNNCellBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.DPRNNCellBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.RNNLinear">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">RNNLinear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#RNNLinear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.RNNLinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies a linear transformation to the incoming data: <span class="math notranslate nohighlight">\(y = xA^T + b\)</span></p>
+<p>This module is the same as a <code class="docutils literal notranslate"><span class="pre">torch.nn.Linear`</span></code> layer, except that in the backward pass
+the grad_samples get accumulated (instead of being concatenated as in the standard
+nn.Linear).</p>
+<p>When used with <cite>PackedSequence`s, additional attribute `max_batch_len</cite> is defined to determine
+the size of per-sample grad tensor.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.layers.dp_rnn.apply_permutation">
+<span class="sig-prename descclassname"><span class="pre">opacus.layers.dp_rnn.</span></span><span class="sig-name descname"><span class="pre">apply_permutation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permutation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/layers/dp_rnn.html#apply_permutation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.layers.dp_rnn.apply_permutation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Permute elements of a tensor along a dimension <cite>dim</cite>. If permutation is None do nothing.</p>
+</dd></dl>
 </section>
 </div>
 </div>
