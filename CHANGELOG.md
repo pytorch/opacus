@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.1.2
+### Bug fixes
+* Support tied parameters (#417)
+* Fix callsite sensitiveness of `zero_grad()` (#422, #423)
+* Improve microbenchmark argument parsing and tests (#425)
+* Fix opacus nn.functional import (#426) 
+### Miscellaneous
+* Add microbenchmarks (#412, #416)
+* Add more badges to readme (#424) 
+
 ## v1.1.1
 ### Bug fixes
 * Fix accountant when using number of steps instead of epochs
