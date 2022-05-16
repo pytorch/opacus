@@ -23,6 +23,10 @@
     {
       "id": "guide_to_grad_sampler",
       "title": "Guide to grad samplers"
-    }
+    },
+    {
+      "id": "ddp_tutorial",
+      "title": "Training on multiple GPUs with DistributedDataParallel"
+    } 
   ]
 }
