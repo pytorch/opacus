@@ -23,7 +23,6 @@ class RDPAccountant(IAccountant):
 
     def __init__(self):
         super().__init__()
-        self.mechanism = _mechanism
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
         if len(self.history) >= 1:
@@ -87,7 +86,4 @@ class RDPAccountant(IAccountant):
 
     @classmethod
     def mechanism(cls) -> str:
-        """
-        Accounting mechanism name
-        """
         return "rdp"

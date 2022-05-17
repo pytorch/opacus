@@ -25,7 +25,6 @@ class GaussianAccountant(IAccountant):
             "Proceed with caution. More details: https://arxiv.org/pdf/2106.02848.pdf"
         )
         super().__init__()
-        self.mechanism = _mechanism
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
         if len(self.history) >= 1:
@@ -73,7 +72,4 @@ class GaussianAccountant(IAccountant):
 
     @classmethod
     def mechanism(cls) -> str:
-        """
-        Accounting mechanism name
-        """
         return "gdp"

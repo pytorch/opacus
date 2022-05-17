@@ -25,7 +25,6 @@ class IAccountant(abc.ABC):
     @abc.abstractmethod
     def __init__(self):
         self.history = []  # history of noise multiplier, sample rate, and steps
-        self.mechanism = _mechanism
 
     @abc.abstractmethod
     def step(self, *, noise_multiplier: float, sample_rate: float):
@@ -57,8 +56,8 @@ class IAccountant(abc.ABC):
         """
         pass
 
-    @abc.abstractmethod
     @classmethod
+    @abc.abstractmethod
     def mechanism(cls) -> str:
         """
         Accounting mechanism name
