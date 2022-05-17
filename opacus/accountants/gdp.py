@@ -19,8 +19,6 @@ from .analysis import gdp as privacy_analysis
 
 
 class GaussianAccountant(IAccountant):
-    _mechanism = "gdp"
-
     def __init__(self):
         warnings.warn(
             "GDP accounting is experimental and can underestimate privacy expenditure."
@@ -72,3 +70,10 @@ class GaussianAccountant(IAccountant):
 
     def __len__(self):
         return len(self.history)
+
+    @classmethod
+    def mechanism(cls) -> str:
+        """
+        Accounting mechanism name
+        """
+        return "gdp"

@@ -22,8 +22,6 @@ T_destination = TypeVar("T_destination", bound=Mapping[str, Any])
 
 
 class IAccountant(abc.ABC):
-    _mechanism = ""
-
     @abc.abstractmethod
     def __init__(self):
         self.history = []  # history of noise multiplier, sample rate, and steps
@@ -59,12 +57,13 @@ class IAccountant(abc.ABC):
         """
         pass
 
+    @abc.abstractmethod
     @classmethod
     def mechanism(cls) -> str:
         """
         Accounting mechanism name
         """
-        cls._mechanism
+        pass
 
     def get_optimizer_hook_fn(
         self, sample_rate: float
@@ -88,15 +87,29 @@ class IAccountant(abc.ABC):
 
     def state_dict(self, destination: T_destination = None) -> T_destination:
         """
-        Retruns a dictionary containing the state of the accountant
+        Retruns a dictionary containing the state of the accountant.
+        Args:
+            destination: a mappable object to populate the current state_dict into.
+                If this arg is None, an OrderedDict is created and populated.
+                Default: None
         """
         if destination is None:
             destination = OrderedDict()
         destination["history"] = self.history
-        destination["mechanism"] = self.mechanism
+        destination["mechanism"] = self.__class__.mechanism
         return destination
 
     def load_state_dict(self, state_dict: T_destination):
+        """
+        Validates the supplied state_dict and populates the current
+        Privacy Accountant's state dict.
+
+        Args:
+            state_dict: state_dict to load.
+
+        Raises:
+            ValueError if supplied state_dict is invalid and cannot be loaded.
+        """
         if state_dict is None or len(state_dict) == 0:
             raise ValueError(
                 "state dict is either None or empty and hence cannot be loaded"
@@ -118,4 +131,3 @@ class IAccountant(abc.ABC):
                 f" Privacy Accountant with mechanism {self.__class__.mechanism}"
             )
         self.history = state_dict["history"]
-        self.mechanism = state_dict["mechanism"]
