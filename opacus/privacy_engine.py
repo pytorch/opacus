@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import Any, BinaryIO, Dict, IO, List, Optional, Tuple, Union
 
 import torch
 from opacus.accountants import create_accountant
@@ -493,3 +494,50 @@ class PrivacyEngine:
             Privacy budget (epsilon) expended so far.
         """
         return self.accountant.get_epsilon(delta)
+
+    def save_checkpoint(
+        self,
+        *,
+        path: Union[str, os.PathLike, BinaryIO, IO[bytes]],
+        module: GradSampleModule,
+        optimizer: DPOptimizer,
+        module_state_dict_kwargs: Optional[Dict[str, Any]] = None,
+        save_kwargs: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Saves the state_dict of module, optimzer, and accountant at path.
+        Args:
+            path: Path to save the state dict objects.
+            module: GradSampleModule to save; wrapped module's state_dict is saved.
+            optimizer: DPOptimizer to save; wrapped optimizer's state_dict is saved.
+            module_state_dict_kwargs: dict of kwargs to pass to ``module.state_dict()``
+            save_kwargs: dict of kwargs to pass to ``torch.save()``
+
+        """
+        torch.save(
+            {
+                "module_state_dict": module.state_dict(
+                    **(module_state_dict_kwargs or {})
+                ),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "privacy_accountant_state_dict": self.accountant.state_dict(),
+            },
+            path,
+            **(save_kwargs or {}),
+        )
+
+    def load_checkpoint(
+        self,
+        *,
+        path: Union[str, os.PathLike, BinaryIO, IO[bytes]],
+        module: GradSampleModule,
+        optimizer: DPOptimizer,
+        module_load_dict_kwargs: Optional[Dict[str, Any]] = None,
+        torch_load_kwargs: Optional[Dict[str, Any]] = None,
+    ):
+        checkpoint = torch.load(path, **(torch_load_kwargs or {}))
+        module.load_state_dict(
+            checkpoint["module_state_dict"], **(module_load_dict_kwargs or {})
+        )
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.accountant.load_state_dict(checkpoint["privacy_accountant_state_dict"])

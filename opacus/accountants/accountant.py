@@ -18,7 +18,7 @@ from typing import Any, Callable, Mapping
 
 from opacus.optimizers import DPOptimizer
 
-T_destination = TypeVar("T_destination", bound=Mapping[str, Any])
+T_state_dict = TypeVar("T_state_dict", bound=Mapping[str, Any])
 
 
 class IAccountant(abc.ABC):
@@ -84,7 +84,7 @@ class IAccountant(abc.ABC):
 
         return hook_fn
 
-    def state_dict(self, destination: T_destination = None) -> T_destination:
+    def state_dict(self, destination: T_state_dict = None) -> T_state_dict:
         """
         Retruns a dictionary containing the state of the accountant.
         Args:
@@ -98,7 +98,7 @@ class IAccountant(abc.ABC):
         destination["mechanism"] = self.__class__.mechanism
         return destination
 
-    def load_state_dict(self, state_dict: T_destination):
+    def load_state_dict(self, state_dict: T_state_dict):
         """
         Validates the supplied state_dict and populates the current
         Privacy Accountant's state dict.

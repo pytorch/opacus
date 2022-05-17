@@ -425,6 +425,18 @@ class GradSampleModule(nn.Module):
 
         return activations, backprops
 
+    def state_dict(self, *args, **kwargs):
+        """
+        Return the state dict of the wrapped module
+        """
+        return self._module.state_dict(*args, **kwargs)
+
+    def load_state_dict(self, *args, **kwargs):
+        """
+        Load the state_dict into the wrapped module
+        """
+        return self._module.load_state_dict(*args, **kwargs)
+
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
         """
