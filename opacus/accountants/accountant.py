@@ -14,7 +14,7 @@
 
 import abc
 from collections import OrderedDict
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, TypeVar
 
 from opacus.optimizers import DPOptimizer
 
