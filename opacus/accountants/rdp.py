@@ -19,10 +19,12 @@ from .analysis import rdp as privacy_analysis
 
 
 class RDPAccountant(IAccountant):
+    _mechanism = "rdp"
     DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
     def __init__(self):
-        self.history = []
+        super().__init__()
+        self.mechanism = _mechanism
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
         if len(self.history) >= 1:
@@ -83,7 +85,3 @@ class RDPAccountant(IAccountant):
 
     def __len__(self):
         return len(self.history)
-
-    @classmethod
-    def mechanism(cls) -> str:
-        return "rdp"
