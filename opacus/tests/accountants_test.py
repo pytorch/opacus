@@ -138,7 +138,9 @@ class AccountingTest(unittest.TestCase):
             accountant.state_dict(dummy_dest)["mechanism"], accountant.mechanism
         )
         # existing values in supplied dict unchanged
-        self.assertEqual(accountant.state_dict(dummy_dest)["dummy_k"], dummy_dest["dummy_k"])
+        self.assertEqual(
+            accountant.state_dict(dummy_dest)["dummy_k"], dummy_dest["dummy_k"]
+        )
 
     def test_accountant_load_state_dict(self):
         noise_multiplier = 1.5
@@ -166,7 +168,7 @@ class AccountingTest(unittest.TestCase):
         self.assertEqual(new_rdp_accountant.state_dict(), accountant.state_dict())
 
         # ensure correct output after completion
-        for _ in range(steps - 1000 + 1, steps):
+        for _ in range(steps - 1000, steps):
             new_rdp_accountant.step(
                 noise_multiplier=noise_multiplier, sample_rate=sample_rate
             )
