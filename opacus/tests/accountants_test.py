@@ -134,7 +134,9 @@ class AccountingTest(unittest.TestCase):
         self.assertEqual(accountant.state_dict()["history"], accountant.history)
         self.assertFalse(accountant.state_dict()["history"] is accountant.history)
         # mechanism populated to supplied dict
-        self.assertEqual(accountant.state_dict(dummy_dest)["mechansim"], accountant.mechanism)
+        self.assertEqual(
+            accountant.state_dict(dummy_dest)["mechansim"], accountant.mechanism
+        )
         # existing values in supplied dict unchanged
         self.assertEqual(accountant.state_dict(dest)["dummy_k"], dummy_dest["dummy_k"])
 
@@ -165,7 +167,9 @@ class AccountingTest(unittest.TestCase):
 
         # ensure correct output after completion
         for _ in range(steps - 1000 + 1, steps):
-            new_rdp_accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
+            new_rdp_accountant.step(
+                noise_multiplier=noise_multiplier, sample_rate=sample_rate
+            )
 
         epsilon = new_rdp_accountant.get_epsilon(delta=1e-5)
         self.assertAlmostEqual(epsilon, 7.32911117143)
