@@ -14,7 +14,7 @@
 ### Bug fixes
 * Fix accountant when using number of steps instead of epochs
 * Add params check when converting BatchNorm to GroupNorm (#390)
-* Fix typo in gdp accountant mechansim name (#386)
+* Fix typo in gdp accountant mechanism name (#386)
 * Fix linter errors (#392)
 * Add friendly and detailed message for unsupported layers (#401)
 * Run linter on nightly workflow (#399)

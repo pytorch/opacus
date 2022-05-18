@@ -135,7 +135,7 @@ class AccountingTest(unittest.TestCase):
         self.assertFalse(accountant.state_dict()["history"] is accountant.history)
         # mechanism populated to supplied dict
         self.assertEqual(
-            accountant.state_dict(dummy_dest)["mechansim"], accountant.mechanism
+            accountant.state_dict(dummy_dest)["mechanism"], accountant.mechanism
         )
         # existing values in supplied dict unchanged
         self.assertEqual(accountant.state_dict(dest)["dummy_k"], dummy_dest["dummy_k"])
