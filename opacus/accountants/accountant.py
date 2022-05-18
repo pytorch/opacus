@@ -14,6 +14,7 @@
 
 import abc
 from collections import OrderedDict
+from copy import deepcopy
 from typing import Any, Callable, Mapping, TypeVar
 
 from opacus.optimizers import DPOptimizer
@@ -94,7 +95,7 @@ class IAccountant(abc.ABC):
         """
         if destination is None:
             destination = OrderedDict()
-        destination["history"] = self.history
+        destination["history"] = deepcopy(self.history)
         destination["mechanism"] = self.__class__.mechanism
         return destination
 

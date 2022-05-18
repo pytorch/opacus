@@ -119,3 +119,53 @@ class AccountingTest(unittest.TestCase):
         )
 
         self.assertAlmostEqual(noise_multiplier, 1.3232421875)
+
+    def test_accountant_state_dict(self):
+        noise_multiplier = 1.5
+        sample_rate = 0.04
+        steps = int(90 / 0.04)
+
+        accountant = RDPAccountant()
+        for _ in range(steps):
+            accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
+
+        dummy_dest = {"dummy_k": "dummy_v"}
+        # history should be equal but not the same instance
+        self.assertEqual(accountant.state_dict()["history"], accountant.history)
+        self.assertFalse(accountant.state_dict()["history"] is accountant.history)
+        # mechanism populated to supplied dict
+        self.assertEqual(accountant.state_dict(dummy_dest)["mechansim"], accountant.mechanism)
+        # existing values in supplied dict unchanged
+        self.assertEqual(accountant.state_dict(dest)["dummy_k"], dummy_dest["dummy_k"])
+
+    def test_accountant_load_state_dict(self):
+        noise_multiplier = 1.5
+        sample_rate = 0.04
+        steps = int(90 / 0.04)
+
+        accountant = RDPAccountant()
+        for _ in range(steps - 1000):
+            accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
+
+        new_rdp_accountant = RDPAccountant()
+        new_gdp_accountant = GaussianAccountant()
+        # check corner cases
+        with self.assertRaises(ValueError):
+            new_rdp_accountant.load_state_dict({})
+        with self.assertRaises(ValueError):
+            new_rdp_accountant.load_state_dict({"1": 2})
+        with self.assertRaises(ValueError):
+            new_rdp_accountant.load_state_dict({"history": []})
+        with self.assertRaises(ValueError):
+            new_gdp_accountant.load_state_dict(accountant.state_dict())
+        # check loading logic
+        self.assertNotEqual(new_rdp_accountant.state_dict(), accountant.state_dict())
+        new_rdp_accountant.load_state_dict(accountant.state_dict())
+        self.assertEqual(new_rdp_accountant.state_dict(), accountant.state_dict())
+
+        # ensure correct output after completion
+        for _ in range(steps - 1000 + 1, steps):
+            new_rdp_accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
+
+        epsilon = new_rdp_accountant.get_epsilon(delta=1e-5)
+        self.assertAlmostEqual(epsilon, 7.32911117143)
