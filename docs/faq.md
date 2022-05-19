@@ -88,7 +88,7 @@ This statement extends to all downstream uses of this model: its inferences, fin
 
 From the expression above it is obvious that epsilon and delta play different roles: epsilon controls the multiplicative increase in the baseline probability while delta lifts all probabilities by the same amount. For instance, if your baseline scenario (the model trained on *D*′, without your data) assigns 0 probability to some event, the bound on observing this event on *D* (that includes your data) is delta. Because of that, we’d like to target epsilon to be a small constant and select delta to be tiny. A rule of thumb is to set delta to be less than the inverse of the size of the training dataset.
 
-Epsilon and delta are computed *ex post*, following an optimizer run. In fact, for each delta there’s some epsilon, depending on that delta, such that the run satisfies (epsilon, delta)-DP. The call `privacy_engine.accountant.get_privacy_spent(delta)` outputs that epsilon in its first return value.
+Epsilon and delta are computed *ex post*, following an optimizer run. In fact, for each delta there’s some epsilon, depending on that delta, such that the run satisfies (epsilon, delta)-DP. The call `privacy_engine.accountant.get_privacy_spent(delta=delta)` outputs that epsilon in its first return value.
 
 Importantly, (epsilon, delta)-DP is a *conservative upper bound* on the actual privacy loss. There’s [growing](https://arxiv.org/abs/2006.07709) [evidence](https://arxiv.org/pdf/2006.11601.pdf) that the observable privacy loss of the DP-SGD algorithm can be significantly smaller.
 
