@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from functools import partial
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import torch
 import torch.nn as nn
@@ -93,7 +93,7 @@ class GradSampleModule(nn.Module):
                 ``[K, batch_size, ...]``
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
-            strict: If set to ``True``, the input module will be validater to check that
+            strict: If set to ``True``, the input module will be validated to check that
                 ``GradSampleModule`` has grad sampler functions for all submodules of
                 the input module (i.e. if it knows how to calculate per sample gradients)
                 for all model parameters. If set to ``False``, per sample gradients will
@@ -425,17 +425,31 @@ class GradSampleModule(nn.Module):
 
         return activations, backprops
 
-    def state_dict(self, *args, **kwargs):
+    def state_dict(self, *args, **kwargs) -> Dict:
         """
         Return the state dict of the wrapped module
         """
-        return self._module.state_dict(*args, **kwargs)
+        ret_state_dict = {f"_module.{key}": value for key, value in self._module.state_dict(*args, **kwargs).items()}
+        ret_state_dict["batch_first"] = self.batch_first
+        ret_state_dict["loss_reduction"] = self.loss_reduction
+        return ret_state_dict
 
-    def load_state_dict(self, *args, **kwargs):
+    def load_state_dict(self, state_dict: Dict, *, **kwargs):
         """
         Load the state_dict into the wrapped module
         """
-        return self._module.load_state_dict(*args, **kwargs)
+        state_dict = state_dict.copy()
+        self.batch_first = state_dict.pop("batch_first", self.batch_first)
+        self.loss_reduction = state_dict.pop("loss_reduction", self.loss_reduction)
+        # remove "_module." prefix before loading into wrapped module
+        for key in state_dict.keys():
+            if key.startswith("_module."):
+                prefix_stripped_key = key[len("_module."):]
+                state_dict[prefix_stripped_key] = state_dict.pop(key)
+        self._module.load_state_dict(state_dict, **kwargs)
+        # remove and add hooks with the newly loaded loss_reduction and batch_first
+        self.remove_hooks()
+        self.add_hooks(loss_reduction=self.loss_reduction, batch_first=self.batch_first)
 
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
