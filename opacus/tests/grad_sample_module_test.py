@@ -245,7 +245,9 @@ class GradSampleModuleTest(unittest.TestCase):
         gs_state_dict["loss_reduction"] = "sum"
         _ = gs_state_dict.pop("batch_first")
 
-        new_gs = GradSampleModule(SampleConvNet, batch_first=False, loss_reduction="mean")
+        new_gs = GradSampleModule(
+            SampleConvNet(), batch_first=False, loss_reduction="mean"
+        )
 
         new_gs_hook_before_load = new_gs.autograd_grad_sample_hooks[0]
         new_gs.load_state_dict(gs_state_dict)
@@ -253,6 +255,12 @@ class GradSampleModuleTest(unittest.TestCase):
 
         self.assertEqual(new_gs.loss_reduction, "sum")  # value should have changed
         self.assertEqual(new_gs.batch_first, False)  # old value to be retained
-        self.assertTrue(new_gs_hook_before_load != new_gs_hook_after_load)  # hook is reset
+        self.assertTrue(
+            new_gs_hook_before_load != new_gs_hook_after_load
+        )  # hook is reset
         # wrapped module is the same
-        self.assertEqual(self.original_model.state_dict(), self.new_gs._module.state_dict())
+        for key in self.original_model.state_dict().keys():
+            self.assertTrue(key in new_gs._module.state_dict())
+            assert_allclose(
+                self.original_model.state_dict()[key], new_gs._module.state_dict()[key]
+            )
