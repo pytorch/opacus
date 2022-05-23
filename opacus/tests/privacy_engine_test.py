@@ -29,7 +29,7 @@ from hypothesis import given, settings
 from opacus import PrivacyEngine
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
-from opacus.scheduler import _NoiseScheduler, StepNoise
+from opacus.scheduler import StepNoise, _NoiseScheduler
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from torch.utils.data import DataLoader, Dataset, TensorDataset
