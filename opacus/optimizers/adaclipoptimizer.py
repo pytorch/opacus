@@ -57,8 +57,7 @@ class AdaClipDPOptimizer(DPOptimizer):
     ):
         super().__init__(
             optimizer,
-            noise_multiplier=(noise_multiplier ** (-2) - (2 * fraction_std) ** (-2))
-            ** (-1 / 2),
+            noise_multiplier=noise_multiplier,
             max_grad_norm=max_grad_norm,
             expected_batch_size=expected_batch_size,
             loss_reduction=loss_reduction,
@@ -73,6 +72,9 @@ class AdaClipDPOptimizer(DPOptimizer):
         self.max_clipbound = max_clipbound
         self.min_clipbound = min_clipbound
         self.fraction_std = fraction_std
+        self.noise_multiplier_delta = (
+            self.noise_multiplier ** (-2) - (2 * fraction_std) ** (-2)
+        ) ** (-1 / 2)
         self.sample_size = 0
         self.unclipped_num = 0
 
@@ -131,7 +133,7 @@ class AdaClipDPOptimizer(DPOptimizer):
             _check_processed_flag(p.summed_grad)
 
             noise = _generate_noise(
-                std=self.noise_multiplier * self.max_grad_norm,
+                std=self.noise_multiplier_delta * self.max_grad_norm,
                 reference=p.summed_grad,
                 generator=self.generator,
                 secure_mode=self.secure_mode,
