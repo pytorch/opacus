@@ -20,8 +20,7 @@ import torch
 from opacus.accountants import create_accountant
 from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
-from opacus.distributed import \
-    DifferentiallyPrivateDistributedDataParallel as DPDDP
+from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.scheduler import _NoiseScheduler
