@@ -429,7 +429,10 @@ class GradSampleModule(nn.Module):
         """
         Return the state dict of the wrapped module
         """
-        ret_state_dict = {f"_module.{key}": value for key, value in self._module.state_dict(*args, **kwargs).items()}
+        ret_state_dict = {
+            f"_module.{key}": value
+            for key, value in self._module.state_dict(*args, **kwargs).items()
+        }
         ret_state_dict["batch_first"] = self.batch_first
         ret_state_dict["loss_reduction"] = self.loss_reduction
         return ret_state_dict
@@ -444,7 +447,7 @@ class GradSampleModule(nn.Module):
         # remove "_module." prefix before loading into wrapped module
         for key in list(state_dict.keys()):
             if key.startswith("_module."):
-                prefix_stripped_key = key[len("_module."):]
+                prefix_stripped_key = key[len("_module.") :]
                 state_dict[prefix_stripped_key] = state_dict.pop(key)
         self._module.load_state_dict(state_dict, **kwargs)
         # remove and add hooks with the newly loaded loss_reduction and batch_first

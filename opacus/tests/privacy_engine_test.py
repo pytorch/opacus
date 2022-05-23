@@ -464,22 +464,30 @@ class BasePrivacyEngineTest(ABC):
                 "Model parameters after deterministic run must match",
             )
 
-    @given(
-        noise_scheduler=st.sampled_from([None, StepNoise])
-    )
+    @given(noise_scheduler=st.sampled_from([None, StepNoise]))
     @settings(deadline=None)
     def test_checkpoints(self, noise_scheduler: Optional[_NoiseScheduler]):
         # create a set of components: set 1
         torch.manual_seed(1)
         m1, opt1, dl1, pe1 = self._init_private_training(noise_multiplier=1.0)
-        s1 = noise_scheduler(optimizer=opt1, step_size=1, gamma=1.0) if noise_scheduler is not None else None
+        s1 = (
+            noise_scheduler(optimizer=opt1, step_size=1, gamma=1.0)
+            if noise_scheduler is not None
+            else None
+        )
         # create a different set of components: set 2
         torch.manual_seed(2)
         m2, opt2, _, pe2 = self._init_private_training(noise_multiplier=2.0)
-        s2 = noise_scheduler(optimizer=opt2, step_size=1, gamma=2.0) if noise_scheduler is not None else None
+        s2 = (
+            noise_scheduler(optimizer=opt2, step_size=1, gamma=2.0)
+            if noise_scheduler is not None
+            else None
+        )
 
         # check that two sets of components are different
-        self.assertFalse(are_state_dict_equal(m1._module.state_dict(), m2._module.state_dict()))
+        self.assertFalse(
+            are_state_dict_equal(m1._module.state_dict(), m2._module.state_dict())
+        )
         if noise_scheduler:
             self.assertNotEqual(s1.state_dict(), s2.state_dict())
         self.assertNotEqual(opt1.noise_multiplier, opt2.noise_multiplier)
@@ -491,12 +499,18 @@ class BasePrivacyEngineTest(ABC):
 
         # load into set 2
         with io.BytesIO() as bytesio:
-            pe1.save_checkpoint(path=bytesio, module=m1, optimizer=opt1, noise_scheduler=s1)
+            pe1.save_checkpoint(
+                path=bytesio, module=m1, optimizer=opt1, noise_scheduler=s1
+            )
             bytesio.seek(0)
-            pe2.load_checkpoint(path=bytesio, module=m2, optimizer=opt2, noise_scheduler=s2)
+            pe2.load_checkpoint(
+                path=bytesio, module=m2, optimizer=opt2, noise_scheduler=s2
+            )
 
         # check the two sets of components are now the same
-        self.assertTrue(are_state_dict_equal(m1._module.state_dict(), m2._module.state_dict()))
+        self.assertTrue(
+            are_state_dict_equal(m1._module.state_dict(), m2._module.state_dict())
+        )
         if noise_scheduler:
             self.assertEqual(s1.state_dict(), s2.state_dict())
         # check that non-state params are still different
@@ -511,8 +525,14 @@ class BasePrivacyEngineTest(ABC):
         # recreate set 1 from scratch (set11) and check it is different from the trained set 2
         torch.manual_seed(1)
         m11, opt11, dl11, _ = self._init_private_training(noise_multiplier=1.0)
-        s11 = noise_scheduler(optimizer=opt11, step_size=1, gamma=1.0) if noise_scheduler is not None else None
-        self.assertFalse(are_state_dict_equal(m2._module.state_dict(), m11._module.state_dict()))
+        s11 = (
+            noise_scheduler(optimizer=opt11, step_size=1, gamma=1.0)
+            if noise_scheduler is not None
+            else None
+        )
+        self.assertFalse(
+            are_state_dict_equal(m2._module.state_dict(), m11._module.state_dict())
+        )
         if noise_scheduler:
             self.assertNotEqual(s2.state_dict(), s11.state_dict())
         # train the recreated set for the same number of steps
@@ -523,7 +543,9 @@ class BasePrivacyEngineTest(ABC):
         if noise_scheduler:
             s11.step()
         # check that recreated set is now same as the original set 1 after training
-        self.assertTrue(are_state_dict_equal(m2._module.state_dict(), m11._module.state_dict()))
+        self.assertTrue(
+            are_state_dict_equal(m2._module.state_dict(), m11._module.state_dict())
+        )
         if noise_scheduler:
             self.assertEqual(s2.state_dict(), s11.state_dict())
 
@@ -572,9 +594,9 @@ class BasePrivacyEngineTest(ABC):
             expected_norm = (
                 steps
                 * n_params
-                * optimizer.noise_multiplier**2
-                * self.LR**2
-                / (optimizer.expected_batch_size**2)
+                * optimizer.noise_multiplier ** 2
+                * self.LR ** 2
+                / (optimizer.expected_batch_size ** 2)
             )
             real_norm = sum(
                 [torch.sum(torch.pow(p.data, 2)) for p in model.parameters()]
