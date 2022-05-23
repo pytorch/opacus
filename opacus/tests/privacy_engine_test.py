@@ -467,9 +467,12 @@ class BasePrivacyEngineTest(ABC):
     @given(noise_scheduler=st.sampled_from([None, StepNoise]))
     @settings(deadline=None)
     def test_checkpoints(self, noise_scheduler: Optional[_NoiseScheduler]):
+        # Disable poisson sampling to avoid randomness in data loading caused by changing seeds.
         # create a set of components: set 1
         torch.manual_seed(1)
-        m1, opt1, dl1, pe1 = self._init_private_training(noise_multiplier=1.0)
+        m1, opt1, dl1, pe1 = self._init_private_training(
+            noise_multiplier=1.0, poisson_sampling=False
+        )
         s1 = (
             noise_scheduler(optimizer=opt1, step_size=1, gamma=1.0)
             if noise_scheduler is not None
@@ -477,7 +480,9 @@ class BasePrivacyEngineTest(ABC):
         )
         # create a different set of components: set 2
         torch.manual_seed(2)
-        m2, opt2, _, pe2 = self._init_private_training(noise_multiplier=2.0)
+        m2, opt2, _, pe2 = self._init_private_training(
+            noise_multiplier=2.0, poisson_sampling=False
+        )
         s2 = (
             noise_scheduler(optimizer=opt2, step_size=1, gamma=2.0)
             if noise_scheduler is not None
@@ -524,7 +529,9 @@ class BasePrivacyEngineTest(ABC):
 
         # recreate set 1 from scratch (set11) and check it is different from the trained set 2
         torch.manual_seed(1)
-        m11, opt11, dl11, _ = self._init_private_training(noise_multiplier=1.0)
+        m11, opt11, dl11, _ = self._init_private_training(
+            noise_multiplier=1.0, poisson_sampling=False
+        )
         s11 = (
             noise_scheduler(optimizer=opt11, step_size=1, gamma=1.0)
             if noise_scheduler is not None
