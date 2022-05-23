@@ -33,6 +33,14 @@ from torch.utils.data import TensorDataset
 from torchvision import models
 from tqdm import tqdm
 
+import torch.nn.functional as F
+from functorch import make_functional_with_buffers, vmap, grad
+
+
+def loss_fn(predictions, targets):
+    return F.nll_loss(predictions, targets)
+
+
 
 def pretty_number(n):
     if n >= 1e6:
@@ -62,12 +70,12 @@ def main():  # noqa: C901
         pin_memory=True,
     )
 
-    if not args.disable_dp:
-        model = models.__dict__[args.architecture](
-            pretrained=False, norm_layer=(lambda c: nn.GroupNorm(args.gn_groups, c))
-        )
-    else:
-        model = models.__dict__[args.architecture](pretrained=False)
+    # if not args.disable_dp:
+    model = models.__dict__[args.architecture](
+        pretrained=False, norm_layer=(lambda c: nn.GroupNorm(args.gn_groups, c))
+    )
+    # else:
+    #     model = models.__dict__[args.architecture](pretrained=False)
 
     model = model.to(args.device)
     print("Model size: " + pretty_number(sum([p.numel() for p in model.parameters()])))
@@ -129,6 +137,21 @@ def main():  # noqa: C901
     model.train()
     print(type(model))
 
+    # Setup per sample grad with functorch
+    fmodel, params, buffers = make_functional_with_buffers(model)
+    def compute_loss_stateless_model (params, buffers, sample, target):
+        batch = sample.unsqueeze(0)
+        targets = target.unsqueeze(0)
+
+        predictions = fmodel(params, buffers, batch) 
+        loss = loss_fn(predictions, targets)
+
+        return loss
+
+    ft_compute_grad = grad(compute_loss_stateless_model)
+    ft_compute_sample_grad = vmap(ft_compute_grad, in_dims=(None, None, 0, 0))
+    
+
     if args.benchmark_data_loader:
         torch.cuda.synchronize()
         start = time.time()
@@ -152,11 +175,13 @@ def main():  # noqa: C901
         torch.cuda.synchronize()
         start = time.time()
         for _ in tqdm(range(args.steps)):
-            output = model(images)
-            loss = criterion(output, target)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            ft_per_sample_grads = ft_compute_sample_grad(params, buffers, images, target)
+            del ft_per_sample_grads
+            # output = model(images)
+            # loss = criterion(output, target)
+            # optimizer.zero_grad()
+            # loss.backward()
+            # optimizer.step()
 
     torch.cuda.synchronize()
     elapsed = time.time() - start
