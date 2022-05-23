@@ -82,21 +82,7 @@ class AdaClipDPOptimizer(DPOptimizer):
         """
         Clear gradients, self.sample_size and self.unclipped_num
         """
-
-        if set_to_none is False:
-            logger.info(
-                "Despite set_to_none is set to False, "
-                "opacus will set p.grad_sample and p.summed_grad to None due to "
-                "non-trivial gradient accumulation behaviour"
-            )
-
-        for p in self.params:
-            p.grad_sample = None
-
-            if not self._is_last_step_skipped:
-                p.summed_grad = None
-
-        self.original_optimizer.zero_grad(set_to_none)
+        super().zero_grad(set_to_none)
 
         self.sample_size = 0
         self.unclipped_num = 0
