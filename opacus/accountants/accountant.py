@@ -71,7 +71,7 @@ class IAccountant(abc.ABC):
         """
         Returns a callback function which can be used to attach to DPOptimizer
         Args:
-            sample_rate: Expested samping rate used for accounting
+            sample_rate: Expected samping rate used for accounting
         """
 
         def hook_fn(optim: DPOptimizer):
