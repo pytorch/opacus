@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .adaclipoptimizer import AdaClipDPOptimizer
 from .ddp_perlayeroptimizer import DistributedPerLayerOptimizer
 from .ddpoptimizer import DistributedDPOptimizer
 from .optimizer import DPOptimizer
 from .perlayeroptimizer import DPPerLayerOptimizer
-from .adaclipoptimizer import AdaClipDPOptimizer
 
 
 __all__ = [
+    "AdaClipDPOptimizer",
     "DistributedPerLayerOptimizer",
     "DistributedDPOptimizer",
     "DPOptimizer",
-    "DPPerLayerOptimizer",
-    "AdaClipDPOptimizer",
+    "DPPerLayerOptimizer"
 ]
 
 
