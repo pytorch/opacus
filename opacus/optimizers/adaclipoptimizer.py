@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Callable, Optional
 
 import torch
 from torch.optim import Optimizer
@@ -96,6 +96,8 @@ class AdaClipDPOptimizer(DPOptimizer):
             max=1.0
         )
 
+        # the two lines below are the only changes
+        # relative to the parent DPOptimizer class.
         self.sample_size += len(per_sample_clip_factor)
         self.unclipped_num += (
             len(per_sample_clip_factor) - (per_sample_clip_factor < 1).sum()
@@ -115,29 +117,18 @@ class AdaClipDPOptimizer(DPOptimizer):
             _mark_as_processed(p.grad_sample)
 
     def add_noise(self):
-        for p in self.params:
-            _check_processed_flag(p.summed_grad)
+        super().add_noise()
 
-            noise = _generate_noise(
-                std=self.noise_multiplier_delta * self.max_grad_norm,
-                reference=p.summed_grad,
-                generator=self.generator,
-                secure_mode=self.secure_mode,
-            )
-            p.grad = (p.summed_grad + noise).view_as(p.grad)
-
-            _mark_as_processed(p.summed_grad)
-
-        noise = _generate_noise(
+        unclipped_num_noise = _generate_noise(
             std=self.fraction_std,
             reference=self.unclipped_num,
             generator=self.generator,
         )
 
         self.unclipped_num = float(self.unclipped_num)
-        self.unclipped_num += noise
+        self.unclipped_num += unclipped_num_noise
 
-    def scale_grad(self):
+    def update_max_grad_norm(self):
         """
         Update clipping bound based on unclipped fraction
         """
@@ -151,6 +142,10 @@ class AdaClipDPOptimizer(DPOptimizer):
         elif self.max_grad_norm < self.min_clipbound:
             self.max_grad_norm = self.min_clipbound
 
-        if self.loss_reduction == "mean":
-            for p in self.params:
-                p.grad /= self.expected_batch_size * self.accumulated_iterations
+    def pre_step(
+        self, closure: Optional[Callable[[], float]] = None
+    ) -> Optional[float]:
+        pre_step_full = super().pre_step()
+        if pre_step_full:
+            self.update_max_grad_norm()
+        return pre_step_full
