@@ -24,7 +24,7 @@ __all__ = [
     "DistributedPerLayerOptimizer",
     "DistributedDPOptimizer",
     "DPOptimizer",
-    "DPPerLayerOptimizer"
+    "DPPerLayerOptimizer",
 ]
 
 

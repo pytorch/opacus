@@ -48,7 +48,7 @@ class AdaClipDPOptimizer(DPOptimizer):
         clipbound_learning_rate: float,
         max_clipbound: float,
         min_clipbound: float,
-        fraction_std: float,
+        unclipped_num_std: float,
         max_grad_norm: float,
         expected_batch_size: Optional[int],
         loss_reduction: str = "mean",
@@ -71,9 +71,10 @@ class AdaClipDPOptimizer(DPOptimizer):
         self.clipbound_learning_rate = clipbound_learning_rate
         self.max_clipbound = max_clipbound
         self.min_clipbound = min_clipbound
-        self.fraction_std = fraction_std
-        self.noise_multiplier_delta = (
-            self.noise_multiplier ** (-2) - (2 * fraction_std) ** (-2)
+        self.unclipped_num_std = unclipped_num_std
+        # Theorem 1. in  https://arxiv.org/pdf/1905.03871.pdf
+        self.noise_multiplier = (
+            self.noise_multiplier ** (-2) - (2 * unclipped_num_std) ** (-2)
         ) ** (-1 / 2)
         self.sample_size = 0
         self.unclipped_num = 0
@@ -120,7 +121,7 @@ class AdaClipDPOptimizer(DPOptimizer):
         super().add_noise()
 
         unclipped_num_noise = _generate_noise(
-            std=self.fraction_std,
+            std=self.unclipped_num_std,
             reference=self.unclipped_num,
             generator=self.generator,
         )
