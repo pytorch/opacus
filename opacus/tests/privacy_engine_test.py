@@ -491,9 +491,7 @@ class BasePrivacyEngineTest(ABC):
         )
 
         # check that two sets of components are different
-        self.assertFalse(
-            are_state_dict_equal(m1._module.state_dict(), m2._module.state_dict())
-        )
+        self.assertFalse(are_state_dict_equal(m1.state_dict(), m2.state_dict()))
         if noise_scheduler:
             self.assertNotEqual(s1.state_dict(), s2.state_dict())
         self.assertNotEqual(opt1.noise_multiplier, opt2.noise_multiplier)
@@ -504,20 +502,27 @@ class BasePrivacyEngineTest(ABC):
             s1.step()
 
         # load into set 2
+        checkpoint_to_save = {"foo": "bar"}
         with io.BytesIO() as bytesio:
             pe1.save_checkpoint(
-                path=bytesio, module=m1, optimizer=opt1, noise_scheduler=s1
+                path=bytesio,
+                module=m1,
+                optimizer=opt1,
+                noise_scheduler=s1,
+                checkpoint_dict=checkpoint_to_save,
             )
             bytesio.seek(0)
-            pe2.load_checkpoint(
+            loaded_checkpoint = pe2.load_checkpoint(
                 path=bytesio, module=m2, optimizer=opt2, noise_scheduler=s2
             )
 
+        # check if loaded checkpoint has dummy dict
+        self.assertTrue(
+            "foo" in loaded_checkpoint and loaded_checkpoint["foo"] == "bar"
+        )
         # check the two sets of components are now the same
         self.assertEqual(pe1.accountant.state_dict(), pe2.accountant.state_dict())
-        self.assertTrue(
-            are_state_dict_equal(m1._module.state_dict(), m2._module.state_dict())
-        )
+        self.assertTrue(are_state_dict_equal(m1.state_dict(), m2.state_dict()))
         if noise_scheduler:
             self.assertEqual(s1.state_dict(), s2.state_dict())
         # check that non-state params are still different
@@ -539,9 +544,7 @@ class BasePrivacyEngineTest(ABC):
             if noise_scheduler is not None
             else None
         )
-        self.assertFalse(
-            are_state_dict_equal(m2._module.state_dict(), m11._module.state_dict())
-        )
+        self.assertFalse(are_state_dict_equal(m2.state_dict(), m11.state_dict()))
         if noise_scheduler:
             self.assertNotEqual(s2.state_dict(), s11.state_dict())
         # train the recreated set for the same number of steps
@@ -552,9 +555,7 @@ class BasePrivacyEngineTest(ABC):
         if noise_scheduler:
             s11.step()
         # check that recreated set is now same as the original set 1 after training
-        self.assertTrue(
-            are_state_dict_equal(m2._module.state_dict(), m11._module.state_dict())
-        )
+        self.assertTrue(are_state_dict_equal(m2.state_dict(), m11.state_dict()))
         if noise_scheduler:
             self.assertEqual(s2.state_dict(), s11.state_dict())
 

@@ -433,8 +433,6 @@ class GradSampleModule(nn.Module):
             f"_module.{key}": value
             for key, value in self._module.state_dict(*args, **kwargs).items()
         }
-        ret_state_dict["batch_first"] = self.batch_first
-        ret_state_dict["loss_reduction"] = self.loss_reduction
         return ret_state_dict
 
     def load_state_dict(self, state_dict: Dict, **kwargs):
@@ -442,17 +440,12 @@ class GradSampleModule(nn.Module):
         Load the state_dict into the wrapped module
         """
         state_dict = state_dict.copy()
-        self.batch_first = state_dict.pop("batch_first", self.batch_first)
-        self.loss_reduction = state_dict.pop("loss_reduction", self.loss_reduction)
         # remove "_module." prefix before loading into wrapped module
         for key in list(state_dict.keys()):
             if key.startswith("_module."):
                 prefix_stripped_key = key[len("_module.") :]
                 state_dict[prefix_stripped_key] = state_dict.pop(key)
-        self._module.load_state_dict(state_dict, **kwargs)
-        # remove and add hooks with the newly loaded loss_reduction and batch_first
-        self.remove_hooks()
-        self.add_hooks(loss_reduction=self.loss_reduction, batch_first=self.batch_first)
+        return self._module.load_state_dict(state_dict, **kwargs)
 
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:

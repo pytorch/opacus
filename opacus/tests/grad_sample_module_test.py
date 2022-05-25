@@ -232,9 +232,6 @@ class GradSampleModuleTest(unittest.TestCase):
     def test_state_dict(self):
         gs_state_dict = self.grad_sample_module.state_dict()
         og_state_dict = self.original_model.state_dict()
-        # check gs specific attributes
-        self.assertEqual(gs_state_dict["batch_first"], True)
-        self.assertEqual(gs_state_dict["loss_reduction"], "mean")
         # check wrapped module state dict
         for key in og_state_dict.keys():
             self.assertTrue(f"_module.{key}" in gs_state_dict)
@@ -242,22 +239,10 @@ class GradSampleModuleTest(unittest.TestCase):
 
     def test_load_state_dict(self):
         gs_state_dict = self.grad_sample_module.state_dict()
-        gs_state_dict["loss_reduction"] = "sum"
-        _ = gs_state_dict.pop("batch_first")
-
         new_gs = GradSampleModule(
             SampleConvNet(), batch_first=False, loss_reduction="mean"
         )
-
-        new_gs_hook_before_load = new_gs.autograd_grad_sample_hooks[0]
         new_gs.load_state_dict(gs_state_dict)
-        new_gs_hook_after_load = new_gs.autograd_grad_sample_hooks[0]
-
-        self.assertEqual(new_gs.loss_reduction, "sum")  # value should have changed
-        self.assertEqual(new_gs.batch_first, False)  # old value to be retained
-        self.assertTrue(
-            new_gs_hook_before_load != new_gs_hook_after_load
-        )  # hook is reset
         # wrapped module is the same
         for key in self.original_model.state_dict().keys():
             self.assertTrue(key in new_gs._module.state_dict())
