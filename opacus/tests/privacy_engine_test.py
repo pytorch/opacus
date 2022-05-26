@@ -467,7 +467,7 @@ class BasePrivacyEngineTest(ABC):
         max_steps=st.integers(8, 10),
         secure_mode=st.just(False),   # TODO: enable after fixing torchcsprng build
     )
-    @settings(max_examples=20, deadline=None)
+    @settings(deadline=None)
     def test_noise_level(
         self, noise_multiplier: float, max_steps: int, secure_mode: bool
     ):
