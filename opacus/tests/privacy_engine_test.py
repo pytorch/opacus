@@ -465,11 +465,11 @@ class BasePrivacyEngineTest(ABC):
     @given(
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
-        secure_mode=st.booleans(),
+        # secure_mode=st.booleans(),  # TODO: enable after fixing torchcsprng build
     )
     @settings(max_examples=20, deadline=None)
     def test_noise_level(
-        self, noise_multiplier: float, max_steps: int, secure_mode: bool
+        self, noise_multiplier: float, max_steps: int, secure_mode: bool = False
     ):
         """
         Tests that the noise level is correctly set
@@ -523,6 +523,7 @@ class BasePrivacyEngineTest(ABC):
             secure_mode=secure_mode,
         )
 
+    @unittest.skip("requires torchcsprng compatible with new pytorch versions")
     @patch("torch.normal", MagicMock(return_value=torch.Tensor([0.6])))
     def test_generate_noise_in_secure_mode(self):
         """
