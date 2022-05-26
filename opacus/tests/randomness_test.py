@@ -314,6 +314,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
 
         self.assertFalse(torch.allclose(model1._module.weight, model2._module.weight))
 
+    @unittest.skip("requires torchcsprng compatible with new pytorch versions")
     def test_raise_secure_mode(self):
         with self.assertRaises(ValueError):
             self._init_dp_training(secure_mode=True, noise_seed=42)
