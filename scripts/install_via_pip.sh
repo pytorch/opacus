@@ -52,9 +52,9 @@ pip install -e .[dev] --user
 # install pytorch nightly if asked for
 if [[ $PYTORCH_NIGHTLY == true ]]; then
   if [[ $CUDA == true ]]; then
-    pip install --upgrade --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu101/torch_nightly.html
+    pip install --upgrade --pre torch torchvision torchcsprng -f https://download.pytorch.org/whl/nightly/cu101/torch_nightly.html
   else
-    pip install --upgrade --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+    pip install --upgrade --pre torch torchvision torchcsprng -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
   fi
 else
   # If no version specified, upgrade to latest release.

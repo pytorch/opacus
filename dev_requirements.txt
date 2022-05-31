@@ -9,6 +9,7 @@ sphinx
 sphinx-autodoc-typehints
 mypy>=0.760
 isort
+torchcsprng
 hypothesis
 tensorboard
 datasets
