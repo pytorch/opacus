@@ -38,7 +38,7 @@ commands:
     steps:
       - run:
           name: "Install dependencies via pip"
-          command: ./scripts/install_via_pip.sh -v 1.8.1 << parameters.args >>
+          command: ./scripts/install_via_pip.sh << parameters.args >>
 
   lint_flake8:
     description: "Lint with flake8"
