@@ -425,28 +425,6 @@ class GradSampleModule(nn.Module):
 
         return activations, backprops
 
-    def state_dict(self, *args, **kwargs) -> Dict:
-        """
-        Return the state dict of the wrapped module
-        """
-        ret_state_dict = {
-            f"_module.{key}": value
-            for key, value in self._module.state_dict(*args, **kwargs).items()
-        }
-        return ret_state_dict
-
-    def load_state_dict(self, state_dict: Dict, **kwargs):
-        """
-        Load the state_dict into the wrapped module
-        """
-        state_dict = state_dict.copy()
-        # remove "_module." prefix before loading into wrapped module
-        for key in list(state_dict.keys()):
-            if key.startswith("_module."):
-                prefix_stripped_key = key[len("_module.") :]
-                state_dict[prefix_stripped_key] = state_dict.pop(key)
-        return self._module.load_state_dict(state_dict, **kwargs)
-
     @classmethod
     def is_supported(cls, module: nn.Module) -> bool:
         """
