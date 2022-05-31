@@ -25,14 +25,14 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="module-opacus.accountants.utils">
-<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-opacus.accountants.utils" title="Permalink to this headline">¶</a></h1>
+<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-opacus.accountants.utils" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.accountants.utils.get_noise_multiplier">
 <span class="sig-prename descclassname"><span class="pre">opacus.accountants.utils.</span></span><span class="sig-name descname"><span class="pre">get_noise_multiplier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_epsilon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accountant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rdp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/accountants/utils.html#get_noise_multiplier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.accountants.utils.get_noise_multiplier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the noise level sigma to reach a total budget of (target_epsilon, target_delta)
 at the end of epochs, with a given sample_rate</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>target_epsilon</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – the privacy budget’s epsilon</p></li>
 <li><p><strong>target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – the privacy budget’s delta</p></li>
@@ -43,10 +43,10 @@ at the end of epochs, with a given sample_rate</p>
 <li><p><strong>epsilon_tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – precision for the binary search</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
 </dd>
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The noise level sigma to ensure privacy budget of (target_epsilon, target_delta)</p>
 </dd>
 </dl>
@@ -100,7 +100,7 @@ at the end of epochs, with a given sample_rate</p>
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

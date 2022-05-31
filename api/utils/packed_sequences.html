@@ -25,20 +25,20 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="module-opacus.utils.packed_sequences">
-<span id="packed-sequences"></span><h1>Packed Sequences<a class="headerlink" href="#module-opacus.utils.packed_sequences" title="Permalink to this headline">¶</a></h1>
+<span id="packed-sequences"></span><h1>Packed Sequences<a class="headerlink" href="#module-opacus.utils.packed_sequences" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.packed_sequences.compute_seq_lengths">
 <span class="sig-prename descclassname"><span class="pre">opacus.utils.packed_sequences.</span></span><span class="sig-name descname"><span class="pre">compute_seq_lengths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_sizes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/packed_sequences.html#compute_seq_lengths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.packed_sequences.compute_seq_lengths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the sequence lengths of a PackedSequence represented with batch_sizes.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>batch_sizes</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – Contains the batch sizes as stored in a PackedSequence</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>the length parameter used in the torch.nn.utils.rnn.packed_padded_sequence function
 to create a PackedSequence. It’s a list of the same length as batch_sizes.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>running_seq_lengths</p>
 </dd>
 </dl>
@@ -92,7 +92,7 @@ to create a PackedSequence. It’s a list of the same length as batch_sizes.</p>
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

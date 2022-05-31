@@ -25,7 +25,7 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="module-opacus.utils.tensor_utils">
-<span id="tensor-utils"></span><h1>Tensor Utils<a class="headerlink" href="#module-opacus.utils.tensor_utils" title="Permalink to this headline">¶</a></h1>
+<span id="tensor-utils"></span><h1>Tensor Utils<a class="headerlink" href="#module-opacus.utils.tensor_utils" title="Permalink to this heading">¶</a></h1>
 <p>Utils for generating stats from torch tensors.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.tensor_utils.calc_sample_norms">
@@ -34,7 +34,7 @@
 <p>This function calculates the overall norm of the given tensors for each sample,
 assuming the each batch’s dim is zero.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>named_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]]) – An iterator of tuples &lt;name, param&gt; with name being a
 string and param being a tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">...]</span></code> where <code class="docutils literal notranslate"><span class="pre">B</span></code>
@@ -43,10 +43,10 @@ is the size of the batch and is the 0th dimension.</p></li>
 layers norms</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]</p>
 </dd>
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A list of tensor norms where length of the list is the number of layers</p>
 </dd>
 </dl>
@@ -68,14 +68,14 @@ assuming the each batch’s dim is zero.</p>
 <p>It is equivalent to:
 <cite>calc_sample_norms(named_params=((None, param),))[0]</cite></p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>param</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – A tensor of shape <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">...]</span></code> where <code class="docutils literal notranslate"><span class="pre">B</span></code>
 is the size of the batch and is the 0th dimension.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></p>
 </dd>
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A tensor of norms</p>
 </dd>
 </dl>
@@ -93,7 +93,7 @@ is the size of the batch and is the 0th dimension.</p>
 <dd><p>A helper function that removes extra rows created during the process of
 implementing dilation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensor</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – A tensor containing the output slices resulting from unfolding
 the input tensor to <cite>unfold3d()</cite>.
@@ -104,7 +104,7 @@ Shape is <code class="docutils literal notranslate"><span class="pre">(B,</span>
 <li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – The size of the kernel given to <cite>unfold3d()</cite>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A tensor of shape (B, C, D_out, H_out, W_out, kernel_size[0], kernel_size[1], kernel_size[2])
 For D_out, H_out, W_out definitions see <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Unfold.html#torch.nn.Unfold" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Unfold</span></code></a>.</p>
 </dd>
@@ -127,16 +127,16 @@ For D_out, H_out, W_out definitions see <a class="reference external" href="http
 <p>This function will ignore the first dimension and it will
 not aggregate over the last n_dims dimensions.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensor</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – An input tensor of shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">...,</span> <span class="pre">X[n_dims-1])</span></code>.</p></li>
 <li><p><strong>n_dims</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Number of dimensions to keep.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></p>
 </dd>
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A tensor of shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">...,</span> <span class="pre">X[n_dims-1])</span></code></p>
 </dd>
 </dl>
@@ -159,7 +159,7 @@ not aggregate over the last n_dims dimensions.</p>
 <p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Unfold.html#torch.nn.Unfold" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Unfold</span></code></a> only supports 4D inputs (batched image-like tensors).
 This method implements the same action for 5D inputs</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensor</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>) – An input tensor of shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">C,</span> <span class="pre">D,</span> <span class="pre">H,</span> <span class="pre">W)</span></code>.</p></li>
 <li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]]) – the size of the sliding blocks</p></li>
@@ -168,7 +168,7 @@ This method implements the same action for 5D inputs</p>
 <li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]]) – the spacing between the kernel points.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A tensor of shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">C</span> <span class="pre">*</span> <span class="pre">np.product(kernel_size),</span> <span class="pre">L)</span></code>, where L - output spatial dimensions.
 See <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Unfold.html#torch.nn.Unfold" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Unfold</span></code></a> for more details</p>
 </dd>
@@ -230,7 +230,7 @@ See <a class="reference external" href="https://pytorch.org/docs/stable/generate
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

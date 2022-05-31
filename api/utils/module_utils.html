@@ -25,7 +25,7 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="module-opacus.utils.module_utils">
-<span id="module-utils"></span><h1>Module Utils<a class="headerlink" href="#module-opacus.utils.module_utils" title="Permalink to this headline">¶</a></h1>
+<span id="module-utils"></span><h1>Module Utils<a class="headerlink" href="#module-opacus.utils.module_utils" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.module_utils.are_state_dict_equal">
 <span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">are_state_dict_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sd1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#are_state_dict_equal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.are_state_dict_equal" title="Permalink to this definition">¶</a></dt>
@@ -37,13 +37,13 @@
 <dd><p>Handy utility to clone an nn.Module. PyTorch doesn’t always support copy.deepcopy(), so it is
 just easier to serialize the model to a BytesIO and read it from there.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The module to clone</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 </dd>
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The clone of <code class="docutils literal notranslate"><span class="pre">module</span></code></p>
 </dd>
 </dl>
@@ -57,19 +57,19 @@ included here to also support Pytorch 1.8. This function can be removed in favou
 of <code class="docutils literal notranslate"><span class="pre">module.get_submodule()</span></code> once Opacus abandons support for torch 1.8.</p>
 <p>See more details at <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html?highlight=get_submodule#torch.nn.Module.get_submodule">https://pytorch.org/docs/stable/generated/torch.nn.Module.html?highlight=get_submodule#torch.nn.Module.get_submodule</a></p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – module</p></li>
 <li><p><strong>target</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – submodule string</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 </dd>
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The submodule given by target if it exists</p>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.10)"><strong>AttributeError</strong></a> – If submodule doesn’t exist</p>
 </dd>
 </dl>
@@ -80,7 +80,7 @@ of <code class="docutils literal notranslate"><span class="pre">module.get_submo
 <dd><p>Recursively iterates over all submodules, returning those that
 have parameters (as opposed to “wrapper modules” that just organize modules).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]</p>
 </dd>
 </dl>
@@ -90,17 +90,17 @@ have parameters (as opposed to “wrapper modules” that just organize modules)
 <span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">requires_grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#requires_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.requires_grad" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks if any parameters in a specified module require gradients.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – PyTorch module whose parameters are to be examined.</p></li>
 <li><p><strong>recurse</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag specifying if the gradient requirement check should
 be applied recursively to sub-modules of the specified module</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
 </dd>
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Flag indicate if any parameters require gradients</p>
 </dd>
 </dl>
@@ -111,7 +111,7 @@ be applied recursively to sub-modules of the specified module</p></li>
 <dd><p>Recursively iterates over all submodules, returning those that
 have parameters and are trainable (ie they want a grad).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]</p>
 </dd>
 </dl>
@@ -165,7 +165,7 @@ have parameters and are trainable (ie they want a grad).</p>
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

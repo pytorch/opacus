@@ -25,7 +25,7 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="batch-memory-manager">
-<h1>Batch Memory Manager<a class="headerlink" href="#batch-memory-manager" title="Permalink to this headline">¶</a></h1>
+<h1>Batch Memory Manager<a class="headerlink" href="#batch-memory-manager" title="Permalink to this heading">¶</a></h1>
 <span class="target" id="module-opacus.utils.batch_memory_manager"></span><dl class="py class">
 <dt class="sig sig-object py" id="opacus.utils.batch_memory_manager.BatchMemoryManager">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.utils.batch_memory_manager.</span></span><span class="sig-name descname"><span class="pre">BatchMemoryManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_physical_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/batch_memory_manager.html#BatchMemoryManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.batch_memory_manager.BatchMemoryManager" title="Permalink to this definition">¶</a></dt>
@@ -73,7 +73,7 @@ the index sequences into smaller chunks.</p>
 <p>Used to split large logical batches into physocal batches of a smaller size,
 while coordinating with DPOptimizer when the logical batch has ended.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sampler</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sampler</span></code>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]]) – Wrapped Sampler instance</p></li>
 <li><p><strong>max_batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Max size of emitted chunk of indices</p></li>
@@ -87,14 +87,14 @@ while coordinating with DPOptimizer when the logical batch has ended.</p>
 <span class="sig-prename descclassname"><span class="pre">opacus.utils.batch_memory_manager.</span></span><span class="sig-name descname"><span class="pre">wrap_data_loader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/utils/batch_memory_manager.html#wrap_data_loader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.batch_memory_manager.wrap_data_loader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replaces batch_sampler in the input data loader with <code class="docutils literal notranslate"><span class="pre">BatchSplittingSampler</span></code></p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>data_loader</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>) – Wrapper DataLoader</p></li>
 <li><p><strong>max_batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – max physical batch size we want to emit</p></li>
 <li><p><strong>optimizer</strong> (<a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>) – DPOptimizer instance used for training</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>New DataLoader instance with batch_sampler wrapped in <code class="docutils literal notranslate"><span class="pre">BatchSplittingSampler</span></code></p>
 </dd>
 </dl>
@@ -140,7 +140,7 @@ while coordinating with DPOptimizer when the logical batch has ended.</p>
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

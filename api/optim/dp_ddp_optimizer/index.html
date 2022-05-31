@@ -25,14 +25,14 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="module-opacus.optimizers.ddpoptimizer">
-<span id="distributeddpoptimizer"></span><h1>DistributedDPOptimizer<a class="headerlink" href="#module-opacus.optimizers.ddpoptimizer" title="Permalink to this headline">¶</a></h1>
+<span id="distributeddpoptimizer"></span><h1>DistributedDPOptimizer<a class="headerlink" href="#module-opacus.optimizers.ddpoptimizer" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="opacus.optimizers.ddpoptimizer.DistributedDPOptimizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.optimizers.ddpoptimizer.</span></span><span class="sig-name descname"><span class="pre">DistributedDPOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/ddpoptimizer.html#DistributedDPOptimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a> compatible with
 distributed data processing</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – wrapped optimizer.</p></li>
 <li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – noise multiplier</p></li>
@@ -61,7 +61,7 @@ See <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 <span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/ddpoptimizer.html#DistributedDPOptimizer.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.step" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs a single optimization step (parameter update).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>closure</strong> (<em>callable</em>) – A closure that reevaluates the model and
 returns the loss. Optional for most optimizers.</p>
 </dd>
@@ -72,7 +72,7 @@ returns the loss. Optional for most optimizers.</p>
 <code class="docutils literal notranslate"><span class="pre">.grad</span></code> field of the parameters.</p>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a>]</p>
 </dd>
 </dl>
@@ -127,7 +127,7 @@ returns the loss. Optional for most optimizers.</p>
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>
