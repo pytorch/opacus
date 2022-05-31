@@ -314,6 +314,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
 
         self.assertFalse(torch.allclose(model1._module.weight, model2._module.weight))
 
+    @unittest.skip("requires torchcsprng compatible with new pytorch versions")
     def test_raise_secure_mode(self):
         with self.assertRaises(ValueError):
             self._init_dp_training(secure_mode=True, noise_seed=42)
@@ -329,6 +330,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
 
         self.assertTrue(torch.allclose(model1._module.weight, model2._module.weight))
 
+    @unittest.skip("requires torchcsprng compatible with new pytorch versions")
     def test_secure_mode_global_seed(self):
         model1, optim1, dl1 = self._init_dp_training(secure_mode=True)
         torch.manual_seed(1337)
@@ -403,6 +405,7 @@ class PrivacyEngineSecureModeTest(unittest.TestCase):
 
         self.assertTrue(torch.allclose(data1, data2))
 
+    @unittest.skip("requires torchcsprng compatible with new pytorch versions")
     def test_secure_mode_no_poisson(self):
         _, _, dl1 = self._init_dp_training(
             secure_mode=True, dl_seed=1337, poisson_sampling=False
