@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from functools import partial
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
