@@ -24,7 +24,7 @@ class GaussianAccountant(IAccountant):
             "GDP accounting is experimental and can underestimate privacy expenditure."
             "Proceed with caution. More details: https://arxiv.org/pdf/2106.02848.pdf"
         )
-        self.history = []  # history of noise multiplier, sample rate, and steps
+        super().__init__()
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
         if len(self.history) >= 1:

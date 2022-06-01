@@ -13,15 +13,20 @@
 # limitations under the License.
 
 import abc
-from typing import Callable
+from collections import OrderedDict
+from copy import deepcopy
+from typing import Any, Callable, Mapping, TypeVar
 
 from opacus.optimizers import DPOptimizer
+
+
+T_state_dict = TypeVar("T_state_dict", bound=Mapping[str, Any])
 
 
 class IAccountant(abc.ABC):
     @abc.abstractmethod
     def __init__(self):
-        pass
+        self.history = []  # history of noise multiplier, sample rate, and steps
 
     @abc.abstractmethod
     def step(self, *, noise_multiplier: float, sample_rate: float):
@@ -67,7 +72,7 @@ class IAccountant(abc.ABC):
         """
         Returns a callback function which can be used to attach to DPOptimizer
         Args:
-            sample_rate: Expested samping rate used for accounting
+            sample_rate: Expected samping rate used for accounting
         """
 
         def hook_fn(optim: DPOptimizer):
@@ -80,3 +85,50 @@ class IAccountant(abc.ABC):
             )
 
         return hook_fn
+
+    def state_dict(self, destination: T_state_dict = None) -> T_state_dict:
+        """
+        Retruns a dictionary containing the state of the accountant.
+        Args:
+            destination: a mappable object to populate the current state_dict into.
+                If this arg is None, an OrderedDict is created and populated.
+                Default: None
+        """
+        if destination is None:
+            destination = OrderedDict()
+        destination["history"] = deepcopy(self.history)
+        destination["mechanism"] = self.__class__.mechanism
+        return destination
+
+    def load_state_dict(self, state_dict: T_state_dict):
+        """
+        Validates the supplied state_dict and populates the current
+        Privacy Accountant's state dict.
+
+        Args:
+            state_dict: state_dict to load.
+
+        Raises:
+            ValueError if supplied state_dict is invalid and cannot be loaded.
+        """
+        if state_dict is None or len(state_dict) == 0:
+            raise ValueError(
+                "state dict is either None or empty and hence cannot be loaded"
+                " into Privacy Accountant."
+            )
+        if "history" not in state_dict.keys():
+            raise ValueError(
+                "state_dict does not have the key `history`."
+                " Cannot be loaded into Privacy Accountant."
+            )
+        if "mechanism" not in state_dict.keys():
+            raise ValueError(
+                "state_dict does not have the key `mechanism`."
+                " Cannot be loaded into Privacy Accountant."
+            )
+        if self.__class__.mechanism != state_dict["mechanism"]:
+            raise ValueError(
+                f"state_dict of {state_dict['mechanism']} cannot be loaded into "
+                f" Privacy Accountant with mechanism {self.__class__.mechanism}"
+            )
+        self.history = state_dict["history"]

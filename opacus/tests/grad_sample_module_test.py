@@ -228,3 +228,24 @@ class GradSampleModuleTest(unittest.TestCase):
 
         with self.assertRaises(AttributeError):
             _ = self.grad_sample_module.fc3
+
+    def test_state_dict(self):
+        gs_state_dict = self.grad_sample_module.state_dict()
+        og_state_dict = self.original_model.state_dict()
+        # check wrapped module state dict
+        for key in og_state_dict.keys():
+            self.assertTrue(f"_module.{key}" in gs_state_dict)
+            assert_allclose(og_state_dict[key], gs_state_dict[f"_module.{key}"])
+
+    def test_load_state_dict(self):
+        gs_state_dict = self.grad_sample_module.state_dict()
+        new_gs = GradSampleModule(
+            SampleConvNet(), batch_first=False, loss_reduction="mean"
+        )
+        new_gs.load_state_dict(gs_state_dict)
+        # wrapped module is the same
+        for key in self.original_model.state_dict().keys():
+            self.assertTrue(key in new_gs._module.state_dict())
+            assert_allclose(
+                self.original_model.state_dict()[key], new_gs._module.state_dict()[key]
+            )

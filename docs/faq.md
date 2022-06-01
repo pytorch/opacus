@@ -88,7 +88,7 @@ This statement extends to all downstream uses of this model: its inferences, fin
 
 From the expression above it is obvious that epsilon and delta play different roles: epsilon controls the multiplicative increase in the baseline probability while delta lifts all probabilities by the same amount. For instance, if your baseline scenario (the model trained on *D*′, without your data) assigns 0 probability to some event, the bound on observing this event on *D* (that includes your data) is delta. Because of that, we’d like to target epsilon to be a small constant and select delta to be tiny. A rule of thumb is to set delta to be less than the inverse of the size of the training dataset.
 
-Epsilon and delta are computed *ex post*, following an optimizer run. In fact, for each delta there’s some epsilon, depending on that delta, such that the run satisfies (epsilon, delta)-DP. The call `privacy_engine.accountant.get_privacy_spent(delta=delta)` outputs that epsilon in its first return value.
+Epsilon and delta are computed *ex post*, following an optimizer run. In fact, for each delta there’s some epsilon, depending on that delta, such that the run satisfies (epsilon, delta)-DP. The call `privacy_engine.get_epsilon(delta=delta)` outputs that epsilon in its first return value.
 
 Importantly, (epsilon, delta)-DP is a *conservative upper bound* on the actual privacy loss. There’s [growing](https://arxiv.org/abs/2006.07709) [evidence](https://arxiv.org/pdf/2006.11601.pdf) that the observable privacy loss of the DP-SGD algorithm can be significantly smaller.
 
@@ -110,7 +110,7 @@ Although we report expended privacy budget using the (epsilon, delta) language, 
 
 When the privacy engine needs to bound the privacy loss of a training run using (epsilon, delta)-DP for a given delta, it searches for the optimal order from among `alphas`. There’s very little additional cost in expanding the list of orders. We suggest using a list `[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))`. You can pass your own alphas by passing `alphas=custom_alphas` when calling `privacy_engine.make_private_with_epsilon`.
 
-A call to `privacy_engine.accountant.get_privacy_spent(delta=delta)` returns a pair: an epsilon such that the training run satisfies (epsilon, delta)-DP and an optimal order alpha. An easy diagnostic to determine whether the list of `alphas` ought to be expanded is whether the returned value alpha is one of the two boundary values of `alphas`.
+A call to `privacy_engine.get_epsilon(delta=delta)` returns a pair: an epsilon such that the training run satisfies (epsilon, delta)-DP and an optimal order alpha. An easy diagnostic to determine whether the list of `alphas` ought to be expanded is whether the returned value alpha is one of the two boundary values of `alphas`.
 
 <!-- ## How do I run Opacus in Colab?
 

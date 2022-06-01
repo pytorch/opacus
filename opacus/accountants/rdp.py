@@ -22,7 +22,7 @@ class RDPAccountant(IAccountant):
     DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
     def __init__(self):
-        self.history = []
+        super().__init__()
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
         if len(self.history) >= 1:

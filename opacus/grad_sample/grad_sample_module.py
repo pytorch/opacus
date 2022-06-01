@@ -93,7 +93,7 @@ class GradSampleModule(nn.Module):
                 ``[K, batch_size, ...]``
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
-            strict: If set to ``True``, the input module will be validater to check that
+            strict: If set to ``True``, the input module will be validated to check that
                 ``GradSampleModule`` has grad sampler functions for all submodules of
                 the input module (i.e. if it knows how to calculate per sample gradients)
                 for all model parameters. If set to ``False``, per sample gradients will

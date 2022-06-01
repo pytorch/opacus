@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import IO, Any, BinaryIO, Dict, List, Optional, Tuple, Union
 
 import torch
 from opacus.accountants import create_accountant
@@ -22,6 +23,7 @@ from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import DPOptimizer, get_optimizer_class
+from opacus.scheduler import _NoiseScheduler
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -493,3 +495,68 @@ class PrivacyEngine:
             Privacy budget (epsilon) expended so far.
         """
         return self.accountant.get_epsilon(delta)
+
+    def save_checkpoint(
+        self,
+        *,
+        path: Union[str, os.PathLike, BinaryIO, IO[bytes]],
+        module: GradSampleModule,
+        optimizer: Optional[DPOptimizer] = None,
+        noise_scheduler: Optional[_NoiseScheduler] = None,
+        checkpoint_dict: Optional[Dict[str, Any]] = None,
+        module_state_dict_kwargs: Optional[Dict[str, Any]] = None,
+        torch_save_kwargs: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Saves the state_dict of module, optimzer, and accountant at path.
+        Args:
+            path: Path to save the state dict objects.
+            module: GradSampleModule to save; wrapped module's state_dict is saved.
+            optimizer: DPOptimizer to save; wrapped optimizer's state_dict is saved.
+            module_state_dict_kwargs: dict of kwargs to pass to ``module.state_dict()``
+            torch_save_kwargs: dict of kwargs to pass to ``torch.save()``
+
+        """
+        checkpoint_dict = checkpoint_dict or {}
+        checkpoint_dict["module_state_dict"] = module.state_dict(
+            **(module_state_dict_kwargs or {})
+        )
+        checkpoint_dict["privacy_accountant_state_dict"] = self.accountant.state_dict()
+        if optimizer is not None:
+            checkpoint_dict["optimizer_state_dict"] = optimizer.state_dict()
+        if noise_scheduler is not None:
+            checkpoint_dict["noise_scheduler_state_dict"] = noise_scheduler.state_dict()
+
+        torch.save(checkpoint_dict, path, **(torch_save_kwargs or {}))
+
+    def load_checkpoint(
+        self,
+        *,
+        path: Union[str, os.PathLike, BinaryIO, IO[bytes]],
+        module: GradSampleModule,
+        optimizer: Optional[DPOptimizer] = None,
+        noise_scheduler: Optional[_NoiseScheduler] = None,
+        module_load_dict_kwargs: Optional[Dict[str, Any]] = None,
+        torch_load_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> Dict:
+        checkpoint = torch.load(path, **(torch_load_kwargs or {}))
+        module.load_state_dict(
+            checkpoint["module_state_dict"], **(module_load_dict_kwargs or {})
+        )
+        self.accountant.load_state_dict(checkpoint["privacy_accountant_state_dict"])
+
+        optimizer_state_dict = checkpoint.pop("optimizer_state_dict", {})
+        if optimizer is not None and len(optimizer_state_dict) > 0:
+            optimizer.load_state_dict(optimizer_state_dict)
+        elif (optimizer is not None) ^ (len(optimizer_state_dict) > 0):
+            # warn if only one of them is available
+            warnings.warn(
+                f"optimizer_state_dict has {len(optimizer_state_dict)} items"
+                f" but optimizer is {'' if optimizer else 'not'} provided."
+            )
+
+        noise_scheduler_state_dict = checkpoint.pop("noise_scheduler_state_dict", {})
+        if noise_scheduler is not None and len(noise_scheduler_state_dict) > 0:
+            noise_scheduler.load_state_dict(noise_scheduler_state_dict)
+
+        return checkpoint
