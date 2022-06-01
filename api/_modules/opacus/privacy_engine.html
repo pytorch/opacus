@@ -39,8 +39,9 @@
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">IO</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">opacus.accountants</span> <span class="kn">import</span> <span class="n">create_accountant</span>
@@ -49,6 +50,7 @@
 <span class="kn">from</span> <span class="nn">opacus.distributed</span> <span class="kn">import</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span> <span class="k">as</span> <span class="n">DPDDP</span>
 <span class="kn">from</span> <span class="nn">opacus.grad_sample.grad_sample_module</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
 <span class="kn">from</span> <span class="nn">opacus.optimizers</span> <span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">get_optimizer_class</span>
+<span class="kn">from</span> <span class="nn">opacus.scheduler</span> <span class="kn">import</span> <span class="n">_NoiseScheduler</span>
 <span class="kn">from</span> <span class="nn">opacus.validators.module_validator</span> <span class="kn">import</span> <span class="n">ModuleValidator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
 <span class="kn">from</span> <span class="nn">torch.nn.parallel</span> <span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
@@ -519,7 +521,72 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Privacy budget (epsilon) expended so far.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PrivacyEngine.save_checkpoint"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.save_checkpoint">[docs]</a>    <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">IO</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]],</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">GradSampleModule</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DPOptimizer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_NoiseScheduler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">checkpoint_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">module_state_dict_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">torch_save_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Saves the state_dict of module, optimzer, and accountant at path.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            path: Path to save the state dict objects.</span>
+<span class="sd">            module: GradSampleModule to save; wrapped module's state_dict is saved.</span>
+<span class="sd">            optimizer: DPOptimizer to save; wrapped optimizer's state_dict is saved.</span>
+<span class="sd">            module_state_dict_kwargs: dict of kwargs to pass to ``module.state_dict()``</span>
+<span class="sd">            torch_save_kwargs: dict of kwargs to pass to ``torch.save()``</span>
+
+<span class="sd">        """</span>
+        <span class="n">checkpoint_dict</span> <span class="o">=</span> <span class="n">checkpoint_dict</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">checkpoint_dict</span><span class="p">[</span><span class="s2">"module_state_dict"</span><span class="p">]</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">(</span><span class="n">module_state_dict_kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="p">)</span>
+        <span class="n">checkpoint_dict</span><span class="p">[</span><span class="s2">"privacy_accountant_state_dict"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">optimizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">checkpoint_dict</span><span class="p">[</span><span class="s2">"optimizer_state_dict"</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">noise_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">checkpoint_dict</span><span class="p">[</span><span class="s2">"noise_scheduler_state_dict"</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_scheduler</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">checkpoint_dict</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">torch_save_kwargs</span> <span class="ow">or</span> <span class="p">{}))</span></div>
+
+    <span class="k">def</span> <span class="nf">load_checkpoint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">IO</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]],</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">GradSampleModule</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DPOptimizer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_NoiseScheduler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">module_load_dict_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">torch_load_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="n">checkpoint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">torch_load_kwargs</span> <span class="ow">or</span> <span class="p">{}))</span>
+        <span class="n">module</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span>
+            <span class="n">checkpoint</span><span class="p">[</span><span class="s2">"module_state_dict"</span><span class="p">],</span> <span class="o">**</span><span class="p">(</span><span class="n">module_load_dict_kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">[</span><span class="s2">"privacy_accountant_state_dict"</span><span class="p">])</span>
+
+        <span class="n">optimizer_state_dict</span> <span class="o">=</span> <span class="n">checkpoint</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"optimizer_state_dict"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">optimizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">optimizer_state_dict</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">optimizer_state_dict</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">optimizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">optimizer_state_dict</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="c1"># warn if only one of them is available</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"optimizer_state_dict has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">optimizer_state_dict</span><span class="p">)</span><span class="si">}</span><span class="s2"> items"</span>
+                <span class="sa">f</span><span class="s2">" but optimizer is </span><span class="si">{</span><span class="s1">''</span> <span class="k">if</span> <span class="n">optimizer</span> <span class="k">else</span> <span class="s1">'not'</span><span class="si">}</span><span class="s2"> provided."</span>
+            <span class="p">)</span>
+
+        <span class="n">noise_scheduler_state_dict</span> <span class="o">=</span> <span class="n">checkpoint</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"noise_scheduler_state_dict"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">noise_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">noise_scheduler_state_dict</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">noise_scheduler</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">noise_scheduler_state_dict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">checkpoint</span></div>
 </pre></div>
 </div>
 </div>

@@ -51,7 +51,7 @@
             <span class="s2">"GDP accounting is experimental and can underestimate privacy expenditure."</span>
             <span class="s2">"Proceed with caution. More details: https://arxiv.org/pdf/2106.02848.pdf"</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># history of noise multiplier, sample rate, and steps</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
 <div class="viewcode-block" id="GaussianAccountant.step"><a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>

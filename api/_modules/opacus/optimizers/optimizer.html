@@ -307,9 +307,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span> <span class="o">=</span> <span class="n">secure_mode</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">param_groups</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">param_groups</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">defaults</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_last_step_skipped</span> <span class="o">=</span> <span class="kc">False</span>
 

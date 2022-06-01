@@ -40,15 +40,20 @@
 <span class="c1"># limitations under the License.</span>
 
 <span class="kn">import</span> <span class="nn">abc</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span> <span class="nn">opacus.optimizers</span> <span class="kn">import</span> <span class="n">DPOptimizer</span>
+
+
+<span class="n">T_state_dict</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T_state_dict"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
 
 
 <div class="viewcode-block" id="IAccountant"><a class="viewcode-back" href="../../../accounting/iaccountant.html#opacus.accountants.accountant.IAccountant">[docs]</a><span class="k">class</span> <span class="nc">IAccountant</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># history of noise multiplier, sample rate, and steps</span>
 
 <div class="viewcode-block" id="IAccountant.step"><a class="viewcode-back" href="../../../accounting/iaccountant.html#opacus.accountants.accountant.IAccountant.step">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
@@ -94,7 +99,7 @@
         <span class="sd">"""</span>
 <span class="sd">        Returns a callback function which can be used to attach to DPOptimizer</span>
 <span class="sd">        Args:</span>
-<span class="sd">            sample_rate: Expested samping rate used for accounting</span>
+<span class="sd">            sample_rate: Expected samping rate used for accounting</span>
 <span class="sd">        """</span>
 
         <span class="k">def</span> <span class="nf">hook_fn</span><span class="p">(</span><span class="n">optim</span><span class="p">:</span> <span class="n">DPOptimizer</span><span class="p">):</span>
@@ -106,7 +111,54 @@
                 <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">optim</span><span class="o">.</span><span class="n">accumulated_iterations</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">hook_fn</span></div></div>
+        <span class="k">return</span> <span class="n">hook_fn</span></div>
+
+<div class="viewcode-block" id="IAccountant.state_dict"><a class="viewcode-back" href="../../../accounting/iaccountant.html#opacus.accountants.accountant.IAccountant.state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="n">T_state_dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T_state_dict</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Retruns a dictionary containing the state of the accountant.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            destination: a mappable object to populate the current state_dict into.</span>
+<span class="sd">                If this arg is None, an OrderedDict is created and populated.</span>
+<span class="sd">                Default: None</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">destination</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">destination</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">destination</span><span class="p">[</span><span class="s2">"history"</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
+        <span class="n">destination</span><span class="p">[</span><span class="s2">"mechanism"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">mechanism</span>
+        <span class="k">return</span> <span class="n">destination</span></div>
+
+<div class="viewcode-block" id="IAccountant.load_state_dict"><a class="viewcode-back" href="../../../accounting/iaccountant.html#opacus.accountants.accountant.IAccountant.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">T_state_dict</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Validates the supplied state_dict and populates the current</span>
+<span class="sd">        Privacy Accountant's state dict.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state_dict: state_dict to load.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError if supplied state_dict is invalid and cannot be loaded.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">state_dict</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"state dict is either None or empty and hence cannot be loaded"</span>
+                <span class="s2">" into Privacy Accountant."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"history"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"state_dict does not have the key `history`."</span>
+                <span class="s2">" Cannot be loaded into Privacy Accountant."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"mechanism"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"state_dict does not have the key `mechanism`."</span>
+                <span class="s2">" Cannot be loaded into Privacy Accountant."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">mechanism</span> <span class="o">!=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"mechanism"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"state_dict of </span><span class="si">{</span><span class="n">state_dict</span><span class="p">[</span><span class="s1">'mechanism'</span><span class="p">]</span><span class="si">}</span><span class="s2"> cannot be loaded into "</span>
+                <span class="sa">f</span><span class="s2">" Privacy Accountant with mechanism </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">mechanism</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"history"</span><span class="p">]</span></div></div>
 </pre></div>
 </div>
 </div>

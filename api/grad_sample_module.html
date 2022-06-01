@@ -40,7 +40,7 @@ input tensor are expected be <code class="docutils literal notranslate"><span cl
 <code class="docutils literal notranslate"><span class="pre">[K,</span> <span class="pre">batch_size,</span> <span class="pre">...]</span></code></p></li>
 <li><p><strong>loss_reduction</strong> – Indicates if the loss reduction (for aggregating the gradients)
 is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
-<li><p><strong>strict</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the input module will be validater to check that
+<li><p><strong>strict</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the input module will be validated to check that
 <code class="docutils literal notranslate"><span class="pre">GradSampleModule</span></code> has grad sampler functions for all submodules of
 the input module (i.e. if it knows how to calculate per sample gradients)
 for all model parameters. If set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, per sample gradients will
