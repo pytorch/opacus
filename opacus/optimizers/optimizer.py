@@ -427,7 +427,7 @@ class DPOptimizer(Optimizer):
                 generator=self.generator,
                 secure_mode=self.secure_mode,
             )
-            p.grad = (p.summed_grad + noise).view_as(p.grad)
+            p.grad = (p.summed_grad + noise).view_as(p)
 
             _mark_as_processed(p.summed_grad)
 

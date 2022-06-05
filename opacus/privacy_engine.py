@@ -20,7 +20,7 @@ from opacus.accountants import create_accountant
 from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.grad_sample.grad_sample_module import GradSampleModule
+from opacus.grad_sample.grad_sample_module import GradSampleModule, wrap
 from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
@@ -220,9 +220,10 @@ class PrivacyEngine:
 
             return module
         else:
-            return GradSampleModule(
-                module, batch_first=batch_first, loss_reduction=loss_reduction
-            )
+            # return GradSampleModule(
+            #     module, batch_first=batch_first, loss_reduction=loss_reduction
+            # )
+            return wrap(module, batch_first=batch_first, loss_reduction=loss_reduction)
 
     def is_compatible(
         self,
