@@ -209,13 +209,13 @@ class BasePrivacyEngineTest(ABC):
                 continue
 
             self.assertEqual(
-                torch.allclose(vp, pp, atol=1e-8, rtol=1e-3),
+                torch.allclose(vp, pp, atol=1e-7, rtol=1e-3),
                 expected_match,
                 f"Unexpected private/vanilla weight match ({name})."
                 f"Should be: {expected_match}",
             )
             self.assertEqual(
-                torch.allclose(vp.grad, pp.grad, atol=1e-8, rtol=1e-3),
+                torch.allclose(vp.grad, pp.grad, atol=1e-7, rtol=1e-3),
                 expected_match,
                 f"Unexpected private/vanilla gradient match ({name})."
                 f"Should be: {expected_match}",
@@ -620,7 +620,7 @@ class BasePrivacyEngineTest(ABC):
             secure_mode=secure_mode,
         )
 
-    @unittest.skip("requires torchcsprng compatible with new pytorch versions")
+    # @unittest.skip("requires torchcsprng compatible with new pytorch versions")
     @patch("torch.normal", MagicMock(return_value=torch.Tensor([0.6])))
     def test_generate_noise_in_secure_mode(self):
         """
