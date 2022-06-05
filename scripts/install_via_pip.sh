@@ -69,3 +69,5 @@ fi
 if [[ $DEPLOY == true ]]; then
   pip install beautifulsoup4 ipython nbconvert
 fi
+
+pip install --upgrade git+https://github.com/pytorch/csprng.git

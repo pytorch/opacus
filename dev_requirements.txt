@@ -16,4 +16,3 @@ scikit-learn
 pytorch-lightning
 lightning-bolts
 jsonargparse[signatures]>=3.19.3 # required for Lightning CLI
-git+https://github.com/pytorch/csprng@master
