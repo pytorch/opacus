@@ -200,7 +200,9 @@ class GradSampleHooks_test(unittest.TestCase):
 
         opacus_grad_samples = {
             name: p.grad_sample
-            for name, p in trainable_parameters(grad_sample_module.wrapped_module._module)
+            for name, p in trainable_parameters(
+                grad_sample_module.wrapped_module._module
+            )
         }
 
         return opacus_grad_samples

@@ -66,21 +66,24 @@ def compute_conv_grad_sample(
             dilation=layer.dilation,
         )
     backprops = backprops.reshape(n, -1, activations.shape[-1])
-    # n=batch_sz; o=num_out_channels; p=(num_in_channels/groups)*kernel_sz
-    grad_sample = torch.einsum("noq,npq->nop", backprops, activations)
-    # rearrange the above tensor and extract diagonals.
-    grad_sample = grad_sample.view(
-        n,
-        layer.groups,
-        -1,
-        layer.groups,
-        int(layer.in_channels / layer.groups),
-        np.prod(layer.kernel_size),
-    )
-    grad_sample = torch.einsum("ngrg...->ngr...", grad_sample).contiguous()
-    shape = [n] + list(layer.weight.shape)
 
-    ret = {layer.weight: grad_sample.view(shape)}
+    ret = {}
+    if layer.weight.requires_grad:
+        # n=batch_sz; o=num_out_channels; p=(num_in_channels/groups)*kernel_sz
+        grad_sample = torch.einsum("noq,npq->nop", backprops, activations)
+        # rearrange the above tensor and extract diagonals.
+        grad_sample = grad_sample.view(
+            n,
+            layer.groups,
+            -1,
+            layer.groups,
+            int(layer.in_channels / layer.groups),
+            np.prod(layer.kernel_size),
+        )
+        grad_sample = torch.einsum("ngrg...->ngr...", grad_sample).contiguous()
+        shape = [n] + list(layer.weight.shape)
+        ret[layer.weight] = grad_sample.view(shape)
+
     if layer.bias is not None:
         ret[layer.bias] = torch.sum(backprops, dim=2)
 
