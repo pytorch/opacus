@@ -336,12 +336,12 @@ class PrivacyEngine:
                 unchanged. Technically this doesn't fit the assumptions made by
                 privacy accounting mechanism, but it can be a good approximation when
                 using Poisson sampling is unfeasible.
-            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer").
+            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer" or "adaptive").
                 Flat clipping calculates the norm of the entire gradient over
-                all parameters, while per layer clipping sets individual norms for
-                every parameter tensor. Flat clipping is usually preferred, but using
-                per layer clipping in combination with distributed training can provide
-                notable performance gains.
+                all parameters, per layer clipping sets individual norms for
+                every parameter tensor, and adaptive clipping updates clipping bound per iteration.
+                Flat clipping is usually preferred, but using per layer clipping in combination
+                with distributed training can provide notable performance gains.
             noise_generator: torch.Generator() object used as a source of randomness for
                 the noise
 
@@ -441,10 +441,10 @@ class PrivacyEngine:
                 using Poisson sampling is unfeasible.
             clipping: Per sample gradient clipping mechanism ("flat" or "per_layer").
                 Flat clipping calculates the norm of the entire gradient over
-                all parameters, while per layer clipping sets individual norms for
-                every parameter tensor. Flat clipping is usually preferred, but using
-                per layer clipping in combination with distributed training can provide
-                notable performance gains.
+                all parameters, per layer clipping sets individual norms for
+                every parameter tensor, and adaptive clipping updates clipping bound per iteration.
+                Flat clipping is usually preferred, but using per layer clipping in combination
+                with distributed training can provide notable performance gains.
 
         Returns:
             Tuple of (model, optimizer, data_loader).
