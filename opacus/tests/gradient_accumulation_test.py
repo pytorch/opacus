@@ -33,9 +33,13 @@ class SampleConvNet(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 16, 8, 3)
         self.conv2 = nn.Conv1d(16, 32, 3, 1)
+        # fully frozen layer
         self.convf = nn.Conv1d(32, 32, 1, 1)
         for p in self.convf.parameters():
             p.requires_grad = False
+        # partially frozen layer
+        self.convpf = nn.Conv1d(32, 32, 1, 1)
+        self.convpf.weight.requires_grad = False
         self.fc1 = nn.Linear(23, 17)
         self.fc2 = nn.Linear(32 * 17, 10)
 
@@ -46,6 +50,7 @@ class SampleConvNet(nn.Module):
         x = x.view(x.shape[0], x.shape[1], x.shape[2] * x.shape[3])  # -> [B, 16, 25]
         x = F.relu(self.conv2(x))  # -> [B, 32, 23]
         x = self.convf(x)  # -> [B, 32, 23]
+        x = self.convpf(x)  # -> [B, 32, 23]
         x = self.fc1(x)  # -> [B, 32, 17]
         x = x.view(-1, x.shape[-2] * x.shape[-1])  # -> [B, 32 * 17]
         x = self.fc2(x)  # -> [B, 10]
@@ -132,6 +137,7 @@ class GradientAccumulationTest(unittest.TestCase):
 
         for p in self.model.parameters():
             if not p.requires_grad:
+                self.assertFalse(hasattr(p, "grad_sample"))
                 continue
 
             self.assertTrue(isinstance(p.grad_sample, list))
