@@ -84,7 +84,7 @@ def compute_conv_grad_sample(
         shape = [n] + list(layer.weight.shape)
         ret[layer.weight] = grad_sample.view(shape)
 
-    if layer.bias is not None:
+    if layer.bias is not None and layer.bias.requires_grad:
         ret[layer.bias] = torch.sum(backprops, dim=2)
 
     return ret
