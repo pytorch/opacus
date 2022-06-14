@@ -37,8 +37,10 @@ def compute_group_norm_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
-    gs = F.group_norm(activations, layer.num_groups, eps=layer.eps) * backprops
-    ret = {layer.weight: torch.einsum("ni...->ni", gs)}
-    if layer.bias is not None:
+    ret = {}
+    if layer.weight.requires_grad:
+        gs = F.group_norm(activations, layer.num_groups, eps=layer.eps) * backprops
+        ret[layer.weight] = torch.einsum("ni...->ni", gs)
+    if layer.bias is not None and layer.bias.requires_grad:
         ret[layer.bias] = torch.einsum("ni...->ni", backprops)
     return ret

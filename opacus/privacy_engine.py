@@ -24,6 +24,7 @@ from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as D
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.scheduler import _NoiseScheduler
+from opacus.utils.module_utils import trainable_parameters
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -58,7 +59,7 @@ def forbid_accumulation_hook(
     if not module.training:
         return
 
-    for p in module.parameters():
+    for _, p in trainable_parameters(module):
         if p.grad_sample is not None:
             if isinstance(p.grad_sample, torch.Tensor):
                 accumulated_iterations = 1

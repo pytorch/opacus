@@ -22,7 +22,11 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
-from opacus.utils.module_utils import requires_grad, trainable_modules
+from opacus.utils.module_utils import (
+    requires_grad,
+    trainable_modules,
+    trainable_parameters,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -44,16 +48,16 @@ def create_or_accumulate_grad_sample(
             shape as ``param`` with extra batch dimension
         layer: nn.Module parameter belongs to
     """
-
-    if hasattr(param, "_current_grad_sample"):
-        param._current_grad_sample[: grad_sample.shape[0]] += grad_sample
-    else:
-        param._current_grad_sample = torch.zeros(
-            torch.Size([max_batch_len]) + grad_sample.shape[1:],
-            device=grad_sample.device,
-            dtype=grad_sample.dtype,
-        )
-        param._current_grad_sample[: grad_sample.shape[0]] = grad_sample
+    if param.requires_grad:
+        if hasattr(param, "_current_grad_sample"):
+            param._current_grad_sample[: grad_sample.shape[0]] += grad_sample
+        else:
+            param._current_grad_sample = torch.zeros(
+                torch.Size([max_batch_len]) + grad_sample.shape[1:],
+                device=grad_sample.device,
+                dtype=grad_sample.dtype,
+            )
+            param._current_grad_sample[: grad_sample.shape[0]] = grad_sample
 
 
 def promote_current_grad_sample(p: nn.Parameter) -> None:
@@ -122,7 +126,7 @@ class GradSampleModule(nn.Module):
         self.loss_reduction = loss_reduction
         self.add_hooks(loss_reduction=loss_reduction, batch_first=batch_first)
 
-        for p in self.parameters():
+        for _, p in trainable_parameters(self):
             p.grad_sample = None
             p._forward_counter = 0
 
@@ -168,14 +172,14 @@ class GradSampleModule(nn.Module):
         """
         Sets ``.grad_sample`` to None
         """
-        for p in self.parameters():
+        for _, p in trainable_parameters(self):
             p.grad_sample = None
 
     def del_grad_sample(self):
         """
         Deleted ``.grad_sample`` attribute from all model parameters
         """
-        for p in self.parameters():
+        for _, p in trainable_parameters(self):
             del p.grad_sample
 
     def to_standard_module(self) -> nn.Module:
@@ -303,7 +307,7 @@ class GradSampleModule(nn.Module):
             module.activations = []
         module.activations.append(forward_input[0].detach())  # pyre-ignore
 
-        for p in module.parameters():
+        for _, p in trainable_parameters(module):
             p._forward_counter += 1
 
     def capture_backprops_hook(
@@ -358,7 +362,7 @@ class GradSampleModule(nn.Module):
         # Detect end of current batch processing and switch accumulation
         # mode from sum to stacking. Used for RNNs and tied parameters
         # (See #417 for details)
-        for p in module.parameters():
+        for _, p in trainable_parameters(module):
             p._forward_counter -= 1
             if p._forward_counter == 0:
                 promote_current_grad_sample(p)

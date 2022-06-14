@@ -38,11 +38,13 @@ def compute_layer_norm_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
-    return {
-        layer.weight: sum_over_all_but_batch_and_last_n(
+    ret = {}
+    if layer.weight.requires_grad:
+        ret[layer.weight] = sum_over_all_but_batch_and_last_n(
             F.layer_norm(activations, layer.normalized_shape, eps=layer.eps)
             * backprops,
             layer.weight.dim(),
-        ),
-        layer.bias: sum_over_all_but_batch_and_last_n(backprops, layer.bias.dim()),
-    }
+        )
+    if layer.bias.requires_grad:
+        ret[layer.bias] = sum_over_all_but_batch_and_last_n(backprops, layer.bias.dim())
+    return ret

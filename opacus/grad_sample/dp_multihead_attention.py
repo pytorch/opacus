@@ -35,4 +35,7 @@ def compute_sequence_bias_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
-    return {layer.bias: backprops[:, -1]}
+    ret = {}
+    if layer.bias.requires_grad:
+        ret[layer.bias] = backprops[:, -1]
+    return ret

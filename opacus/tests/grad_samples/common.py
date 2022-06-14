@@ -22,6 +22,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus.grad_sample import GradSampleModule
+from opacus.utils.module_utils import trainable_parameters
 from opacus.utils.packed_sequences import compute_seq_lengths
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
 from torch.testing import assert_allclose
@@ -126,7 +127,7 @@ class GradSampleHooks_test(unittest.TestCase):
 
         module = ModelWithLoss(clone_module(module), loss_reduction)
 
-        for p in module.parameters():
+        for _, p in trainable_parameters(module):
             p.microbatch_grad_sample = []
 
         if not batch_first and type(x) is not list:
@@ -146,7 +147,7 @@ class GradSampleHooks_test(unittest.TestCase):
             for p in module.parameters():
                 p.microbatch_grad_sample.append(p.grad.detach().clone())
 
-        for p in module.parameters():
+        for _, p in trainable_parameters(module):
             if batch_first:
                 p.microbatch_grad_sample = torch.stack(
                     p.microbatch_grad_sample, dim=0  # [B, T, ...]
@@ -160,7 +161,7 @@ class GradSampleHooks_test(unittest.TestCase):
 
         microbatch_grad_samples = {
             name: p.microbatch_grad_sample
-            for name, p in module.wrapped_module.named_parameters()
+            for name, p in trainable_parameters(module.wrapped_module)
         }
         return microbatch_grad_samples
 
@@ -199,7 +200,9 @@ class GradSampleHooks_test(unittest.TestCase):
 
         opacus_grad_samples = {
             name: p.grad_sample
-            for name, p in grad_sample_module.wrapped_module._module.named_parameters()
+            for name, p in trainable_parameters(
+                grad_sample_module.wrapped_module._module
+            )
         }
 
         return opacus_grad_samples
