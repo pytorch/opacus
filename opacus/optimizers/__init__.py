@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .adaclipoptimizer import AdaClipDPOptimizer
 from .ddp_perlayeroptimizer import DistributedPerLayerOptimizer
 from .ddpoptimizer import DistributedDPOptimizer
 from .optimizer import DPOptimizer
@@ -19,6 +20,7 @@ from .perlayeroptimizer import DPPerLayerOptimizer
 
 
 __all__ = [
+    "AdaClipDPOptimizer",
     "DistributedPerLayerOptimizer",
     "DistributedDPOptimizer",
     "DPOptimizer",
@@ -35,7 +37,8 @@ def get_optimizer_class(clipping: str, distributed: bool):
         return DPPerLayerOptimizer
     elif clipping == "per_layer" and distributed is True:
         return DistributedPerLayerOptimizer
-
+    elif clipping == "adaptive" and distributed is False:
+        return AdaClipDPOptimizer
     raise ValueError(
         f"Unexpected optimizer parameters. Clipping: {clipping}, distributed: {distributed}"
     )

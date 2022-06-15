@@ -33,21 +33,23 @@ def compute_embedding_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
-    saved = torch.backends.cudnn.deterministic
-    torch.backends.cudnn.deterministic = True
+    ret = {}
+    if layer.weight.requires_grad:
+        saved = torch.backends.cudnn.deterministic
+        torch.backends.cudnn.deterministic = True
 
-    batch_size = activations.shape[0]
-    index = (
-        activations.unsqueeze(-1)
-        .expand(*activations.shape, layer.embedding_dim)
-        .reshape(batch_size, -1, layer.embedding_dim)
-    )
-    grad_sample = torch.zeros(
-        batch_size, *layer.weight.shape, device=layer.weight.device
-    )
-    grad_sample.scatter_add_(
-        1, index, backprops.reshape(batch_size, -1, layer.embedding_dim)
-    )
-    torch.backends.cudnn.deterministic = saved
-
-    return {layer.weight: grad_sample}
+        batch_size = activations.shape[0]
+        index = (
+            activations.unsqueeze(-1)
+            .expand(*activations.shape, layer.embedding_dim)
+            .reshape(batch_size, -1, layer.embedding_dim)
+        )
+        grad_sample = torch.zeros(
+            batch_size, *layer.weight.shape, device=layer.weight.device
+        )
+        grad_sample.scatter_add_(
+            1, index, backprops.reshape(batch_size, -1, layer.embedding_dim)
+        )
+        torch.backends.cudnn.deterministic = saved
+        ret[layer.weight] = grad_sample
+    return ret

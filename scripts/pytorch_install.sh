@@ -19,7 +19,6 @@ TORCH_VERSION=$1
 if [ "$TORCH_VERSION" = "1.8.0" ]
 then
     TORCHVISION_VERSION="0.9.0"
-    TORCHCSPRNG_VERSION="0.2.0"
 elif [ "$TORCH_VERSION" = "1.8.1" ]
 then
     TORCHVISION_VERSION="0.9.1"
@@ -34,10 +33,3 @@ fi
 pip install torch=="${TORCH_VERSION}"
 pip install torchvision==${TORCHVISION_VERSION}
 
-# torchcsprng
-if [ "$TORCH_VERSION" = "1.8.0" ]
-then
-    pip install torchcsprng==${TORCHCSPRNG_VERSION}
-else
-    echo "No torchcsprng"
-fi

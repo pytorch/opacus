@@ -2,7 +2,7 @@ import torch.nn as nn
 from abc import ABC, abstractmethod
 import logging
 from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
-from opacus.utils.module_utils import requires_grad, trainable_modules
+from opacus.utils.module_utils import requires_grad, trainable_modules, trainable_parameters
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class AbstractGradSampleModule(nn.Module, ABC):
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
 
-        for p in self.parameters():
+        for p in trainable_parameters(self):
             p.grad_sample = None
             p._forward_counter = 0
 

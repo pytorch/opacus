@@ -25,6 +25,12 @@ from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
 from opacus.utils.module_utils import requires_grad, trainable_modules
 from opacus.grad_sample.gsm_base import AbstractGradSampleModule
 from abc import ABC, abstractmethod
+from opacus.utils.module_utils import (
+    requires_grad,
+    trainable_modules,
+    trainable_parameters,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,16 +48,16 @@ def create_or_accumulate_grad_sample(
             shape as ``param`` with extra batch dimension
         layer: nn.Module parameter belongs to
     """
-
-    if hasattr(param, "_current_grad_sample"):
-        param._current_grad_sample[: grad_sample.shape[0]] += grad_sample
-    else:
-        param._current_grad_sample = torch.zeros(
-            torch.Size([max_batch_len]) + grad_sample.shape[1:],
-            device=grad_sample.device,
-            dtype=grad_sample.dtype,
-        )
-        param._current_grad_sample[: grad_sample.shape[0]] = grad_sample
+    if param.requires_grad:
+        if hasattr(param, "_current_grad_sample"):
+            param._current_grad_sample[: grad_sample.shape[0]] += grad_sample
+        else:
+            param._current_grad_sample = torch.zeros(
+                torch.Size([max_batch_len]) + grad_sample.shape[1:],
+                device=grad_sample.device,
+                dtype=grad_sample.dtype,
+            )
+            param._current_grad_sample[: grad_sample.shape[0]] = grad_sample
 
 
 def promote_current_grad_sample(p: nn.Parameter) -> None:
@@ -91,7 +97,7 @@ class GradSampleModule(AbstractGradSampleModule):
                 ``[K, batch_size, ...]``
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
-            strict: If set to ``True``, the input module will be validater to check that
+            strict: If set to ``True``, the input module will be validated to check that
                 ``GradSampleModule`` has grad sampler functions for all submodules of
                 the input module (i.e. if it knows how to calculate per sample gradients)
                 for all model parameters. If set to ``False``, per sample gradients will
@@ -228,7 +234,7 @@ class GradSampleModule(AbstractGradSampleModule):
             module.activations = []
         module.activations.append(forward_input[0].detach())  # pyre-ignore
 
-        for p in module.parameters():
+        for _, p in trainable_parameters(module):
             p._forward_counter += 1
 
     def capture_backprops_hook(
@@ -283,7 +289,7 @@ class GradSampleModule(AbstractGradSampleModule):
         # Detect end of current batch processing and switch accumulation
         # mode from sum to stacking. Used for RNNs and tied parameters
         # (See #417 for details)
-        for p in module.parameters():
+        for _, p in trainable_parameters(module):
             p._forward_counter -= 1
             if p._forward_counter == 0:
                 promote_current_grad_sample(p)
