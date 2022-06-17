@@ -445,10 +445,10 @@ def _get_batch_size(
 
 
 def wrap(module: nn.Module, **kwargs):
-    # try:
-    #     from opacus.grad_sample.gsm_exp_weights import GradSampleModuleExpandedWeights
-    #     return GradSampleModuleExpandedWeights(module, **kwargs)
-    # except ImportError:
-    #     return GradSampleModule(module, **kwargs)
-    return GradSampleModule(module, **kwargs)
+    try:
+        from opacus.grad_sample.gsm_exp_weights import GradSampleModuleExpandedWeights
+        return GradSampleModuleExpandedWeights(module, **kwargs)
+    except ImportError:
+        return GradSampleModule(module, **kwargs)
+    # return GradSampleModule(module, **kwargs)
 

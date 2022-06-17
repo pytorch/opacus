@@ -165,47 +165,6 @@ def _generate_noise(
         )
 
 
-def _get_flat_grad_sample(p: torch.Tensor):
-    """
-    Return parameter's per sample gradients as a single tensor.
-
-    By default, per sample gradients (``p.grad_sample``) are stored as one tensor per
-    batch basis. Therefore, ``p.grad_sample`` is a single tensor if holds results from
-    only one batch, and a list of tensors if gradients are accumulated over multiple
-    steps. This is done to provide visibility into which sample belongs to which batch,
-    and how many batches have been processed.
-
-    This method returns per sample gradients as a single concatenated tensor, regardless
-    of how many batches have been accumulated
-
-    Args:
-        p: Parameter tensor. Must have ``grad_sample`` attribute
-
-    Returns:
-        ``p.grad_sample`` if it's a tensor already, or a single tensor computed by
-        concatenating every tensor in ``p.grad_sample`` if it's a list
-
-    Raises:
-        ValueError
-            If ``p`` is missing ``grad_sample`` attribute
-    """
-
-    if not hasattr(p, "grad_sample"):
-        raise ValueError(
-            "Per sample gradient not found. Are you using GradSampleModule?"
-        )
-    if p.grad_sample is None:
-        raise ValueError(
-            "Per sample gradient is not initialized. Not updated in backward pass?"
-        )
-    if isinstance(p.grad_sample, torch.Tensor):
-        return p.grad_sample
-    elif isinstance(p.grad_sample, list):
-        return torch.cat(p.grad_sample, dim=0)
-    else:
-        raise ValueError(f"Unexpected grad_sample type: {type(p.grad_sample)}")
-
-
 class DPOptimizer(Optimizer):
     """
     ``torch.optim.Optimizer`` wrapper that adds additional functionality to clip per
@@ -244,6 +203,7 @@ class DPOptimizer(Optimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
+        ew_compatibility_mode = False
     ):
         """
 
@@ -285,9 +245,55 @@ class DPOptimizer(Optimizer):
         self.state = self.original_optimizer.state
         self._step_skip_queue = []
         self._is_last_step_skipped = False
+        self.ew_compatibility_mode = ew_compatibility_mode
 
         for p in self.params:
             p.summed_grad = None
+
+    def _get_flat_grad_sample(self, p: torch.Tensor):
+        """
+        Return parameter's per sample gradients as a single tensor.
+
+        By default, per sample gradients (``p.grad_sample``) are stored as one tensor per
+        batch basis. Therefore, ``p.grad_sample`` is a single tensor if holds results from
+        only one batch, and a list of tensors if gradients are accumulated over multiple
+        steps. This is done to provide visibility into which sample belongs to which batch,
+        and how many batches have been processed.
+
+        This method returns per sample gradients as a single concatenated tensor, regardless
+        of how many batches have been accumulated
+
+        Args:
+            p: Parameter tensor. Must have ``grad_sample`` attribute
+
+        Returns:
+            ``p.grad_sample`` if it's a tensor already, or a single tensor computed by
+            concatenating every tensor in ``p.grad_sample`` if it's a list
+
+        Raises:
+            ValueError
+                If ``p`` is missing ``grad_sample`` attribute
+        """
+
+        if not hasattr(p, "grad_sample"):
+            raise ValueError(
+                "Per sample gradient not found. Are you using GradSampleModule?"
+            )
+        if p.grad_sample is None:
+            raise ValueError(
+                "Per sample gradient is not initialized. Not updated in backward pass?"
+            )
+        if isinstance(p.grad_sample, torch.Tensor):
+            ret = p.grad_sample
+        elif isinstance(p.grad_sample, list):
+            ret = torch.cat(p.grad_sample, dim=0)
+        else:
+            raise ValueError(f"Unexpected grad_sample type: {type(p.grad_sample)}")
+
+        if self.ew_compatibility_mode:
+            return ret * len(ret)
+        else:
+            return ret
 
     def signal_skip_step(self, do_skip=True):
         """
@@ -340,7 +346,7 @@ class DPOptimizer(Optimizer):
         """
         ret = []
         for p in self.params:
-            ret.append(_get_flat_grad_sample(p))
+            ret.append(self._get_flat_grad_sample(p))
         return ret
 
     @property
@@ -393,7 +399,7 @@ class DPOptimizer(Optimizer):
         """
 
         per_param_norms = [
-            g.view(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
+            g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
         ]
         per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
         per_sample_clip_factor = (self.max_grad_norm / (per_sample_norms + 1e-6)).clamp(
@@ -403,7 +409,7 @@ class DPOptimizer(Optimizer):
         for p in self.params:
             _check_processed_flag(p.grad_sample)
 
-            grad_sample = _get_flat_grad_sample(p)
+            grad_sample = self._get_flat_grad_sample(p)
             grad = torch.einsum("i,i...", per_sample_clip_factor, grad_sample)
 
             if p.summed_grad is not None:

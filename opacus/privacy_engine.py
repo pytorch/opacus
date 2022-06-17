@@ -147,6 +147,7 @@ class PrivacyEngine:
         distributed: bool = False,
         clipping: str = "flat",
         noise_generator=None,
+        ew_compatibility_mode=False,
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             optimizer = optimizer.original_optimizer
@@ -167,6 +168,7 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=self.secure_mode,
+            ew_compatibility_mode=ew_compatibility_mode,
         )
 
     def _prepare_data_loader(
@@ -381,8 +383,9 @@ class PrivacyEngine:
             world_size = torch.distributed.get_world_size()
             expected_batch_size /= world_size
 
+        ew_compatibility_mode = False
         if type(module).__name__ == "GradSampleModuleExpandedWeights":
-            expected_batch_size = 1
+            ew_compatibility_mode = True
 
         optimizer = self._prepare_optimizer(
             optimizer,
@@ -393,6 +396,7 @@ class PrivacyEngine:
             noise_generator=noise_generator,
             distributed=distributed,
             clipping=clipping,
+            ew_compatibility_mode=ew_compatibility_mode,
         )
 
         optimizer.attach_step_hook(
