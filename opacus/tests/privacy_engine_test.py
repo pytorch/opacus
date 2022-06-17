@@ -18,7 +18,7 @@ import io
 import math
 import unittest
 from abc import ABC
-from typing import Optional, OrderedDict
+from typing import Optional, OrderedDict, Type
 from unittest.mock import MagicMock, patch
 
 import hypothesis.strategies as st
@@ -195,7 +195,7 @@ class BasePrivacyEngineTest(ABC):
         p_model, p_optimizer, p_dl, _ = self._init_private_training(
             poisson_sampling=False,
             noise_multiplier=1.0 if do_noise else 0.0,
-            max_grad_norm=1.0 if do_clip else 99999.0,
+            max_grad_norm=0.1 if do_clip else 99999.0,
         )
         if not use_closure:
             self._train_steps(p_model, p_optimizer, p_dl, max_steps=1)
@@ -261,21 +261,21 @@ class BasePrivacyEngineTest(ABC):
         Compare gradients and updated weights with vanilla model initialized
         with the same seed
         """
-        # for do_noise in (True, False):
-        #     for do_clip in (True, False):
-        #         for use_closure in (True, False):
-        #             with self.subTest(
-        #                 do_noise=do_noise, do_clip=do_clip, use_closure=use_closure
-        #             ):
-        do_noise = False
-        do_clip = False
-        use_closure = False
-        self._compare_to_vanilla(
-            do_noise=do_noise,
-            do_clip=do_clip,
-            expected_match=not (do_noise or do_clip),
-            use_closure=use_closure,
-        )
+        for do_noise in (True, False):
+            for do_clip in (True, False):
+                for use_closure in (True, False):
+                    with self.subTest(
+                        do_noise=do_noise, do_clip=do_clip, use_closure=use_closure
+                    ):
+        # do_noise = False
+        # do_clip = True
+        # use_closure = False
+                        self._compare_to_vanilla(
+                            do_noise=do_noise,
+                            do_clip=do_clip,
+                            expected_match=not (do_noise or do_clip),
+                            use_closure=use_closure,
+                        )
 
     def test_compare_to_vanilla_accumulated(self):
         """
@@ -469,7 +469,7 @@ class BasePrivacyEngineTest(ABC):
 
     @given(noise_scheduler=st.sampled_from([None, StepNoise]))
     @settings(deadline=None)
-    def test_checkpoints(self, noise_scheduler: Optional[_NoiseScheduler]):
+    def test_checkpoints(self, noise_scheduler: Optional[Type[StepNoise]]):
         # 1. Disable poisson sampling to avoid randomness in data loading caused by changing seeds.
         # 2. Use noise_multiplier=0.0 to avoid randomness in torch.normal()
         # create a set of components: set 1
@@ -653,7 +653,7 @@ class SampleConvNet(nn.Module):
         self.conv2 = nn.Conv1d(16, 32, 3, 1)
         self.lnorm1 = nn.LayerNorm((32, 23))
         self.conv3 = nn.Conv1d(32, 32, 3, 1, bias=False)
-        self.instnorm1 = nn.InstanceNorm1d(32, affine=True)
+        # self.instnorm1 = nn.InstanceNorm1d(32, affine=True)
         self.convf = nn.Conv1d(32, 32, 1, 1)
         for p in self.convf.parameters():
             p.requires_grad = False
@@ -678,7 +678,7 @@ class SampleConvNet(nn.Module):
         x = self.lnorm1(x)  # -> [B, 32, 23]
         x = F.relu(x)  # -> [B, 32, 23]
         x = self.conv3(x)  # -> [B, 32, 21]
-        x = self.instnorm1(x)  # -> [B, 32, 21]
+        # x = self.instnorm1(x)  # -> [B, 32, 21]
         x = self.convf(x)  # -> [B, 32, 21]
         x = self.fc1(x)  # -> [B, 32, 17]
         x = self.lnorm2(x)  # -> [B, 32, 17]

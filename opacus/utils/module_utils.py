@@ -17,7 +17,7 @@ import io
 import logging
 import sys
 from collections import OrderedDict
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Tuple, Dict
 
 import torch
 import torch.nn as nn
@@ -142,7 +142,7 @@ def get_submodule(module: nn.Module, target: str) -> nn.Module:
     return mod
 
 
-def are_state_dict_equal(sd1: OrderedDict, sd2: OrderedDict):
+def are_state_dict_equal(sd1: Dict, sd2: Dict):
     """
     Compares two state dicts, while logging discrepancies
     """

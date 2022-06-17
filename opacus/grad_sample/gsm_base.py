@@ -24,7 +24,7 @@ class AbstractGradSampleModule(nn.Module, ABC):
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
 
-        for p in trainable_parameters(self):
+        for _, p in trainable_parameters(self):
             p.grad_sample = None
             p._forward_counter = 0
 

@@ -381,6 +381,9 @@ class PrivacyEngine:
             world_size = torch.distributed.get_world_size()
             expected_batch_size /= world_size
 
+        if type(module).__name__ == "GradSampleModuleExpandedWeights":
+            expected_batch_size = 1
+
         optimizer = self._prepare_optimizer(
             optimizer,
             noise_multiplier=noise_multiplier,
