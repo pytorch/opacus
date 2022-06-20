@@ -360,6 +360,21 @@ class PrivacyEngine:
         if noise_generator and self.secure_mode:
             raise ValueError("Passing seed is prohibited in secure mode")
 
+        # compare module parameter with optimizer parameters
+        if not all(
+            torch.eq(i, j).all()
+            for i, j in zip(
+                list(module.parameters()),
+                sum(
+                    [param_group["params"] for param_group in optimizer.param_groups],
+                    [],
+                ),
+            )
+        ):
+            raise ValueError(
+                "Module parameters are different than optimizer Parameters"
+            )
+
         distributed = isinstance(module, (DPDDP, DDP))
 
         module = self._prepare_model(
