@@ -32,6 +32,7 @@ from opacus.optimizers.optimizer import _generate_noise
 from opacus.scheduler import StepNoise
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
+from opacus.validators.module_validator import ModuleValidator
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
@@ -523,6 +524,51 @@ class BasePrivacyEngineTest(ABC):
                 torch.allclose(p1, p2),
                 "Model parameters after deterministic run must match",
             )
+
+    @given(
+        grad_sample_mode=st.sampled_from(["ew", "hooks"]),
+    )
+    @settings(deadline=None)
+    def test_param_equal_module_optimizer(self, grad_sample_mode: str):
+        """Test that the privacy engine raises error if nn.Module parameters are not equal to optimizer parameters"""
+        if grad_sample_mode in self.UNSUPPORTED_GS_MODES:
+            return
+
+        model = models.densenet121(pretrained=True)
+        num_ftrs = model.classifier.in_features
+        model.classifier = nn.Sequential(nn.Linear(num_ftrs, 10), nn.Sigmoid())
+        optimizer = torch.optim.SGD(
+            model.parameters(), lr=0.01, momentum=0, weight_decay=0
+        )
+        dl = self._init_data()
+        model = ModuleValidator.fix(model)
+        privacy_engine = PrivacyEngine()
+        with self.assertRaisesRegex(
+            ValueError, "Module parameters are different than optimizer Parameters"
+        ):
+            _, _, _ = privacy_engine.make_private(
+                module=model,
+                optimizer=optimizer,
+                data_loader=dl,
+                noise_multiplier=1.1,
+                max_grad_norm=1.0,
+                grad_sample_mode=grad_sample_mode,
+            )
+
+        # if optimizer is defined after ModuleValidator.fix() then raise no error
+        optimizer = torch.optim.SGD(
+            model.parameters(), lr=0.01, momentum=0, weight_decay=0
+        )
+        _, _, _ = privacy_engine.make_private(
+            module=model,
+            optimizer=optimizer,
+            data_loader=dl,
+            noise_multiplier=1.1,
+            max_grad_norm=1.0,
+            grad_sample_mode=grad_sample_mode,
+        )
+        self.assertTrue(1, 1)
+
 
     @given(
         noise_scheduler=st.sampled_from([None, StepNoise]),
