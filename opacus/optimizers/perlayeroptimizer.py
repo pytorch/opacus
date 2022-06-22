@@ -52,14 +52,16 @@ class DPPerLayerOptimizer(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
-            ew_compatibility_mode=ew_compatibility_mode
+            ew_compatibility_mode=ew_compatibility_mode,
         )
 
     def clip_and_accumulate(self):
         for (p, max_grad_norm) in zip(self.params, self.max_grad_norms):
             _check_processed_flag(p.grad_sample)
 
-            per_sample_norms = p.grad_sample.reshape(len(p.grad_sample), -1).norm(2, dim=1)
+            per_sample_norms = p.grad_sample.reshape(len(p.grad_sample), -1).norm(
+                2, dim=1
+            )
             per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(
                 max=1.0
             )

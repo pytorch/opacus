@@ -34,6 +34,7 @@ from opacus.utils.module_utils import (
 
 logger = logging.getLogger(__name__)
 
+
 def create_or_accumulate_grad_sample(
     *, param: torch.Tensor, grad_sample: torch.Tensor, max_batch_len: int
 ) -> None:
@@ -442,13 +443,3 @@ def _get_batch_size(
 
     max_batch_len = max(max_batch_len, grad_sample.shape[batch_dim])
     return max_batch_len
-
-
-def wrap(module: nn.Module, **kwargs):
-    try:
-        from opacus.grad_sample.gsm_exp_weights import GradSampleModuleExpandedWeights
-        return GradSampleModuleExpandedWeights(module, **kwargs)
-    except ImportError:
-        return GradSampleModule(module, **kwargs)
-    # return GradSampleModule(module, **kwargs)
-

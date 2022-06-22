@@ -15,9 +15,11 @@
 
 from typing import Sequence, Type, Union
 
+import torch
 import torch.nn as nn
 
 from .grad_sample_module import GradSampleModule
+from .gsm_base import AbstractGradSampleModule
 
 
 def register_grad_sampler(
@@ -46,3 +48,39 @@ def register_grad_sampler(
         return f
 
     return decorator
+
+
+def wrap_model(model: nn.Module, grad_sample_mode: str, *args, **kwargs):
+    cls = get_gsm_class(grad_sample_mode)
+    return cls(model, *args, **kwargs)
+
+
+def get_gsm_class(grad_sample_mode: str) -> Type[AbstractGradSampleModule]:
+    """
+    Returns AbstractGradSampleModule subclass correspinding to the input mode.
+    See README for detailed comparison between grad sample modes.
+
+    :param grad_sample_mode:
+    :return:
+    """
+    if grad_sample_mode == "hooks":
+        return GradSampleModule
+    elif grad_sample_mode == "ew":
+        try:
+            from opacus.grad_sample.gsm_exp_weights import (
+                GradSampleModuleExpandedWeights,
+            )
+
+            return GradSampleModuleExpandedWeights
+        except ImportError:
+            raise ImportError(
+                f"Requested grad_sample_mode=ew, "
+                f"but found PyTorch version={torch.__version__}. "
+                f"ExpandedWeights available for torch>=1.12. "
+                f"Please install recent PyTorch or use grad_sample_mode=hooks"
+            )
+    else:
+        raise ValueError(
+            f"Unexpected grad_sample_mode: {grad_sample_mode}. "
+            f"Allowed values: hooks, ew"
+        )

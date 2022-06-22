@@ -1,16 +1,19 @@
+import torch
 import torch.nn as nn
 from abc import ABC, abstractmethod
 import logging
-from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
-from opacus.utils.module_utils import requires_grad, trainable_modules, trainable_parameters
-from typing import List
+from opacus.utils.module_utils import (
+    requires_grad,
+    trainable_modules,
+    trainable_parameters,
+)
 
 logger = logging.getLogger(__name__)
 
 OPACUS_PARAM_MONKEYPATCH_ATTRS = ["_forward_counter", "_current_grad_sample"]
 
-class AbstractGradSampleModule(nn.Module, ABC):
 
+class AbstractGradSampleModule(nn.Module, ABC):
     def __init__(
         self,
         m: nn.Module,
@@ -104,4 +107,3 @@ class AbstractGradSampleModule(nn.Module, ABC):
             for p in self.parameters():
                 if hasattr(p, attr):
                     delattr(p, attr)
-

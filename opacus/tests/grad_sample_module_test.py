@@ -21,6 +21,7 @@ import torch.nn.functional as F
 from opacus.grad_sample import GradSampleModule
 from opacus.grad_sample.linear import compute_linear_grad_sample
 from opacus.grad_sample.utils import register_grad_sampler
+from opacus.grad_sample.gsm_exp_weights import GradSampleModuleExpandedWeights
 from torch.testing import assert_allclose
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -52,6 +53,9 @@ class SampleConvNet(nn.Module):
 
 
 class GradSampleModuleTest(unittest.TestCase):
+
+    CLS = GradSampleModule
+
     def setUp(self):
         self.original_model = SampleConvNet()
         copy_of_original_model = SampleConvNet()
@@ -59,7 +63,7 @@ class GradSampleModuleTest(unittest.TestCase):
             self.original_model.state_dict(), strict=True
         )
 
-        self.grad_sample_module = GradSampleModule(
+        self.grad_sample_module = self.CLS(
             copy_of_original_model, batch_first=True, loss_reduction="mean"
         )
         self.DATA_SIZE = 8
@@ -249,3 +253,15 @@ class GradSampleModuleTest(unittest.TestCase):
             assert_allclose(
                 self.original_model.state_dict()[key], new_gs._module.state_dict()[key]
             )
+
+class EWGradSampleModuleTest(GradSampleModuleTest):
+    CLS = GradSampleModuleExpandedWeights
+
+    def test_remove_hooks(self):
+        pass
+
+    def test_enable_hooks(self):
+        pass
+
+    def test_disable_hooks(self):
+        pass

@@ -22,11 +22,14 @@ from .group_norm import compute_group_norm_grad_sample  # noqa
 from .instance_norm import compute_instance_norm_grad_sample  # noqa
 from .layer_norm import compute_layer_norm_grad_sample  # noqa
 from .linear import compute_linear_grad_sample  # noqa
-from .utils import register_grad_sampler
-
+from .utils import register_grad_sampler, wrap_model, get_gsm_class
+from .gsm_base import AbstractGradSampleModule
 
 __all__ = [
     "GradSampleModule",
+    "AbstractGradSampleModule",
     "register_grad_sampler",
     "create_or_accumulate_grad_sample",
+    "wrap_model",
+    "get_gsm_class",
 ]

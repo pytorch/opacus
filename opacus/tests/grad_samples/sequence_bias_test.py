@@ -42,4 +42,4 @@ class SequenceBias_test(GradSampleHooks_test):
             x = torch.randn([N, T, D])
         else:
             x = torch.randn([T, N, D])
-        self.run_test(x, seqbias, batch_first)
+        self.run_test(x, seqbias, batch_first, ew_compatible=False)

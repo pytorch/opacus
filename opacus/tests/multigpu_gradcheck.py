@@ -66,7 +66,7 @@ class ToyModel(nn.Module):
         return self.net2(self.relu(self.net1(x)))
 
 
-def demo_basic(rank, weight, world_size, dp, clipping):
+def demo_basic(rank, weight, world_size, dp, clipping, grad_sample_mode):
     torch.manual_seed(world_size)
     batch_size = 32
     setup(rank, world_size)
@@ -105,6 +105,7 @@ def demo_basic(rank, weight, world_size, dp, clipping):
             max_grad_norm=max_grad_norm,
             poisson_sampling=False,
             clipping=clipping,
+            grad_sample_mode=grad_sample_mode,
         )
         if clipping == "per_layer":
             assert isinstance(optimizer, DistributedPerLayerOptimizer)
@@ -123,9 +124,9 @@ def demo_basic(rank, weight, world_size, dp, clipping):
     cleanup()
 
 
-def run_demo(demo_fn, weight, world_size, dp, clipping):
+def run_demo(demo_fn, weight, world_size, dp, clipping, grad_sample_mode):
     mp.spawn(
-        demo_fn, args=(weight, world_size, dp, clipping), nprocs=world_size, join=True
+        demo_fn, args=(weight, world_size, dp, clipping, grad_sample_mode), nprocs=world_size, join=True
     )
 
 
@@ -138,11 +139,12 @@ class GradientComputationTest(unittest.TestCase):
         )
 
         for clipping in ["flat", "per_layer"]:
-            weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
+            for grad_sample_mode in ["hooks", "ew"]:
+                weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
 
-            run_demo(demo_basic, weight_dp, 2, dp=True, clipping=clipping)
-            run_demo(demo_basic, weight_nodp, 2, dp=False, clipping=clipping)
+                run_demo(demo_basic, weight_dp, 2, dp=True, clipping=clipping, grad_sample_mode=grad_sample_mode)
+                run_demo(demo_basic, weight_nodp, 2, dp=False, clipping=None, grad_sample_mode=None)
 
-            self.assertTrue(
-                torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3)
-            )
+                self.assertTrue(
+                    torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3)
+                )

@@ -203,7 +203,7 @@ class DPOptimizer(Optimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
-        ew_compatibility_mode = False
+        ew_compatibility_mode=False,
     ):
         """
 
@@ -290,7 +290,7 @@ class DPOptimizer(Optimizer):
         else:
             raise ValueError(f"Unexpected grad_sample type: {type(p.grad_sample)}")
 
-        if self.ew_compatibility_mode:
+        if self.ew_compatibility_mode and self.loss_reduction == "mean":
             return ret * len(ret)
         else:
             return ret

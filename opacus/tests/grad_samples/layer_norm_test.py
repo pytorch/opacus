@@ -64,4 +64,4 @@ class LayerNorm_test(GradSampleHooks_test):
 
         norm = nn.LayerNorm(normalized_shape, elementwise_affine=True)
         x = torch.randn(x_shape)
-        self.run_test(x, norm, batch_first=True)
+        self.run_test(x, norm, batch_first=True, ew_compatible=False)

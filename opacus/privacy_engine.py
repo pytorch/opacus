@@ -21,7 +21,12 @@ from opacus.accountants import create_accountant
 from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.grad_sample.grad_sample_module import GradSampleModule, wrap
+from opacus.grad_sample import (
+    GradSampleModule,
+    AbstractGradSampleModule,
+    get_gsm_class,
+    wrap_model,
+)
 from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.scheduler import _NoiseScheduler
 from opacus.utils.module_utils import trainable_parameters
@@ -32,7 +37,9 @@ from torch.utils.data import DataLoader
 
 
 def forbid_accumulation_hook(
-    module: GradSampleModule, _grad_input: torch.Tensor, _grad_output: torch.Tensor
+    module: AbstractGradSampleModule,
+    _grad_input: torch.Tensor,
+    _grad_output: torch.Tensor,
 ):
     """
     Model hook that detects repetitive forward/backward passes between optimizer steps.
@@ -205,30 +212,34 @@ class PrivacyEngine:
         *,
         batch_first: bool = True,
         loss_reduction: str = "mean",
-    ) -> GradSampleModule:
+        grad_sample_mode: str = "hooks",
+    ) -> AbstractGradSampleModule:
         # Ideally, validation should have been taken care of by calling
         # `get_compatible_module()`
         self.validate(module=module, optimizer=None, data_loader=None)
 
         # wrap
-        if isinstance(module, GradSampleModule):
+        if isinstance(module, AbstractGradSampleModule):
             if (
                 module.batch_first != batch_first
                 or module.loss_reduction != loss_reduction
+                or type(module) != get_gsm_class(grad_sample_mode)
             ):
                 raise ValueError(
                     f"Pre-existing GradSampleModule doesn't match new arguments."
-                    f"Got: module.batch_first: {module.batch_first}, module.loss_reduction: {module.loss_reduction}"
-                    f"Requested: batch_first:{batch_first}, loss_reduction: {loss_reduction}. "
+                    f"Got: module.batch_first: {module.batch_first}, module.loss_reduction: {module.loss_reduction}, type(module): {type(module)}"
+                    f"Requested: batch_first:{batch_first}, loss_reduction: {loss_reduction}, grad_sample_mode: {grad_sample_mode} "
                     f"Please pass vanilla nn.Module instead"
                 )
 
             return module
         else:
-            # return GradSampleModule(
-            #     module, batch_first=batch_first, loss_reduction=loss_reduction
-            # )
-            return wrap(module, batch_first=batch_first, loss_reduction=loss_reduction)
+            return wrap_model(
+                module,
+                grad_sample_mode=grad_sample_mode,
+                batch_first=batch_first,
+                loss_reduction=loss_reduction,
+            )
 
     def is_compatible(
         self,
@@ -304,6 +315,7 @@ class PrivacyEngine:
         poisson_sampling: bool = True,
         clipping: str = "flat",
         noise_generator=None,
+        grad_sample_mode: str = "hooks",
     ) -> Tuple[GradSampleModule, DPOptimizer, DataLoader]:
         """
         Add privacy-related responsibilites to the main PyTorch training objects:
@@ -348,6 +360,10 @@ class PrivacyEngine:
                 with distributed training can provide notable performance gains.
             noise_generator: torch.Generator() object used as a source of randomness for
                 the noise
+            grad_sample_mode: mode for computing per sample gradients. Determines the
+                implementation class for the wrapped ``module``. See
+                :class:`~opacus.grad_sample.gsm_base.AbstractGradSampleModule` for more
+                details
 
         Returns:
             Tuple of (model, optimizer, data_loader).
@@ -366,7 +382,10 @@ class PrivacyEngine:
         distributed = isinstance(module, (DPDDP, DDP))
 
         module = self._prepare_model(
-            module, batch_first=batch_first, loss_reduction=loss_reduction
+            module,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+            grad_sample_mode=grad_sample_mode,
         )
         if poisson_sampling:
             module.register_backward_hook(forbid_accumulation_hook)
@@ -383,10 +402,6 @@ class PrivacyEngine:
             world_size = torch.distributed.get_world_size()
             expected_batch_size /= world_size
 
-        ew_compatibility_mode = False
-        if type(module).__name__ == "GradSampleModuleExpandedWeights":
-            ew_compatibility_mode = True
-
         optimizer = self._prepare_optimizer(
             optimizer,
             noise_multiplier=noise_multiplier,
@@ -396,7 +411,7 @@ class PrivacyEngine:
             noise_generator=noise_generator,
             distributed=distributed,
             clipping=clipping,
-            ew_compatibility_mode=ew_compatibility_mode,
+            ew_compatibility_mode=(grad_sample_mode == "ew"),
         )
 
         optimizer.attach_step_hook(
@@ -418,6 +433,7 @@ class PrivacyEngine:
         batch_first: bool = True,
         loss_reduction: str = "mean",
         noise_generator=None,
+        grad_sample_mode="hooks",
         **kwargs,
     ):
         """
@@ -491,6 +507,7 @@ class PrivacyEngine:
             batch_first=batch_first,
             loss_reduction=loss_reduction,
             noise_generator=noise_generator,
+            grad_sample_mode=grad_sample_mode,
         )
 
     def get_epsilon(self, delta):

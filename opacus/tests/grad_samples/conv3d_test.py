@@ -68,4 +68,4 @@ class Conv3d_test(GradSampleHooks_test):
             dilation=dilation,
             groups=groups,
         )
-        self.run_test(x, conv, batch_first=True, atol=10e-5, rtol=10e-3)
+        self.run_test(x, conv, batch_first=True, atol=10e-5, rtol=10e-3, ew_compatible=False)
