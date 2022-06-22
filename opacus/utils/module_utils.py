@@ -16,8 +16,7 @@
 import io
 import logging
 import sys
-from collections import OrderedDict
-from typing import Iterable, List, Tuple, Dict
+from typing import Dict, Iterable, List, Tuple
 
 import torch
 import torch.nn as nn

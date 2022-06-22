@@ -1,12 +1,9 @@
-import torch
-import torch.nn as nn
-from abc import ABC, abstractmethod
 import logging
-from opacus.utils.module_utils import (
-    requires_grad,
-    trainable_modules,
-    trainable_parameters,
-)
+from abc import ABC, abstractmethod
+
+import torch.nn as nn
+from opacus.utils.module_utils import trainable_parameters
+
 
 logger = logging.getLogger(__name__)
 

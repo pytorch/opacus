@@ -29,7 +29,7 @@ from hypothesis import given, settings
 from opacus import PrivacyEngine
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
-from opacus.scheduler import StepNoise, _NoiseScheduler
+from opacus.scheduler import StepNoise
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from torch.utils.data import DataLoader, Dataset, TensorDataset
@@ -94,7 +94,7 @@ class BasePrivacyEngineTest(ABC):
         max_grad_norm: float = 1.0,
         poisson_sampling: bool = True,
         clipping: str = "flat",
-        grad_sample_mode = "hooks",
+        grad_sample_mode="hooks",
     ):
         model = self._init_model()
         model = PrivacyEngine.get_compatible_module(model)
@@ -183,13 +183,23 @@ class BasePrivacyEngineTest(ABC):
         )
         self._train_steps(model, optimizer, dl)
 
-    def _compare_to_vanilla(self, do_noise, do_clip, expected_match, grad_sample_mode, use_closure=False, max_steps=1):
+    def _compare_to_vanilla(
+        self,
+        do_noise,
+        do_clip,
+        expected_match,
+        grad_sample_mode,
+        use_closure=False,
+        max_steps=1,
+    ):
         torch.manual_seed(0)
         v_model, v_optimizer, v_dl = self._init_vanilla_training()
         if not use_closure:
             self._train_steps(v_model, v_optimizer, v_dl, max_steps=max_steps)
         else:
-            self._train_steps_with_closure(v_model, v_optimizer, v_dl, max_steps=max_steps)
+            self._train_steps_with_closure(
+                v_model, v_optimizer, v_dl, max_steps=max_steps
+            )
         vanilla_params = [
             (name, p) for name, p in v_model.named_parameters() if p.requires_grad
         ]
@@ -204,7 +214,9 @@ class BasePrivacyEngineTest(ABC):
         if not use_closure:
             self._train_steps(p_model, p_optimizer, p_dl, max_steps=max_steps)
         else:
-            self._train_steps_with_closure(p_model, p_optimizer, p_dl, max_steps=max_steps)
+            self._train_steps_with_closure(
+                p_model, p_optimizer, p_dl, max_steps=max_steps
+            )
         private_params = [p for p in p_model.parameters() if p.requires_grad]
 
         for (name, vp), pp in zip(vanilla_params, private_params):
@@ -239,7 +251,14 @@ class BasePrivacyEngineTest(ABC):
         grad_sample_mode=st.just("ew"),
     )
     @settings(deadline=None)
-    def test_compare_to_vanilla(self, do_clip: bool, do_noise: bool, use_closure: bool, max_steps: int, grad_sample_mode: str):
+    def test_compare_to_vanilla(
+        self,
+        do_clip: bool,
+        do_noise: bool,
+        use_closure: bool,
+        max_steps: int,
+        grad_sample_mode: str,
+    ):
         """
         Compare gradients and updated weights with vanilla model initialized
         with the same seed
@@ -253,7 +272,7 @@ class BasePrivacyEngineTest(ABC):
             expected_match=not (do_noise or do_clip),
             use_closure=use_closure,
             grad_sample_mode=grad_sample_mode,
-            max_steps=max_steps
+            max_steps=max_steps,
         )
 
     @given(
@@ -272,7 +291,7 @@ class BasePrivacyEngineTest(ABC):
             max_grad_norm=max_grad_norm,
             clipping="flat",
             poisson_sampling=False,
-            grad_sample_mode=grad_sample_mode
+            grad_sample_mode=grad_sample_mode,
         )
         self._train_steps(model, optimizer, dl, max_steps=1)
         clipped_grads = torch.cat(
@@ -292,7 +311,7 @@ class BasePrivacyEngineTest(ABC):
     @given(
         grad_sample_mode=st.sampled_from(["ew", "hooks"]),
     )
-    def test_per_layer_clipping(self, grad_sample_mode:str):
+    def test_per_layer_clipping(self, grad_sample_mode: str):
         if grad_sample_mode in self.UNSUPPORTED_GS_MODES:
             return
 
@@ -339,7 +358,7 @@ class BasePrivacyEngineTest(ABC):
             poisson_sampling=False,
             noise_multiplier=0.0,
             max_grad_norm=99999.0,
-            grad_sample_mode=grad_sample_mode
+            grad_sample_mode=grad_sample_mode,
         )
         self._train_steps(model, optimizer, dl, max_steps=1)
 
@@ -368,11 +387,15 @@ class BasePrivacyEngineTest(ABC):
         if grad_sample_mode in self.UNSUPPORTED_GS_MODES:
             return
 
-        model, optimizer, dl, _ = self._init_private_training(poisson_sampling=False, grad_sample_mode=grad_sample_mode)
+        model, optimizer, dl, _ = self._init_private_training(
+            poisson_sampling=False, grad_sample_mode=grad_sample_mode
+        )
         self._train_steps(model, optimizer, dl, max_steps=1)
         first_run_params = (p for p in model.parameters() if p.requires_grad)
 
-        model, optimizer, dl, _ = self._init_private_training(poisson_sampling=False, grad_sample_mode=grad_sample_mode)
+        model, optimizer, dl, _ = self._init_private_training(
+            poisson_sampling=False, grad_sample_mode=grad_sample_mode
+        )
         self._train_steps(model, optimizer, dl, max_steps=1)
         second_run_params = (p for p in model.parameters() if p.requires_grad)
 
@@ -482,12 +505,16 @@ class BasePrivacyEngineTest(ABC):
             return
 
         torch.manual_seed(0)
-        m1, opt1, dl1, _ = self._init_private_training(grad_sample_mode=grad_sample_mode)
+        m1, opt1, dl1, _ = self._init_private_training(
+            grad_sample_mode=grad_sample_mode
+        )
         self._train_steps(m1, opt1, dl1)
         params1 = [p for p in m1.parameters() if p.requires_grad]
 
         torch.manual_seed(0)
-        m2, opt2, dl2, _ = self._init_private_training(grad_sample_mode=grad_sample_mode)
+        m2, opt2, dl2, _ = self._init_private_training(
+            grad_sample_mode=grad_sample_mode
+        )
         self._train_steps(m2, opt2, dl2)
         params2 = [p for p in m2.parameters() if p.requires_grad]
 
@@ -499,10 +526,12 @@ class BasePrivacyEngineTest(ABC):
 
     @given(
         noise_scheduler=st.sampled_from([None, StepNoise]),
-        grad_sample_mode=st.sampled_from(["ew", "hooks"])
+        grad_sample_mode=st.sampled_from(["ew", "hooks"]),
     )
     @settings(deadline=None)
-    def test_checkpoints(self, noise_scheduler: Optional[Type[StepNoise]], grad_sample_mode: str):
+    def test_checkpoints(
+        self, noise_scheduler: Optional[Type[StepNoise]], grad_sample_mode: str
+    ):
         if grad_sample_mode in self.UNSUPPORTED_GS_MODES:
             return
 
@@ -511,7 +540,9 @@ class BasePrivacyEngineTest(ABC):
         # create a set of components: set 1
         torch.manual_seed(1)
         m1, opt1, dl1, pe1 = self._init_private_training(
-            noise_multiplier=0.0, poisson_sampling=False, grad_sample_mode=grad_sample_mode,
+            noise_multiplier=0.0,
+            poisson_sampling=False,
+            grad_sample_mode=grad_sample_mode,
         )
         s1 = (
             noise_scheduler(optimizer=opt1, step_size=1, gamma=1.0)
@@ -521,7 +552,9 @@ class BasePrivacyEngineTest(ABC):
         # create a different set of components: set 2
         torch.manual_seed(2)
         m2, opt2, _, pe2 = self._init_private_training(
-            noise_multiplier=2.0, poisson_sampling=False, grad_sample_mode=grad_sample_mode,
+            noise_multiplier=2.0,
+            poisson_sampling=False,
+            grad_sample_mode=grad_sample_mode,
         )
         s2 = (
             noise_scheduler(optimizer=opt2, step_size=1, gamma=2.0)
@@ -576,7 +609,9 @@ class BasePrivacyEngineTest(ABC):
         # recreate set 1 from scratch (set11) and check it is different from the trained set 2
         torch.manual_seed(1)
         m11, opt11, dl11, _ = self._init_private_training(
-            noise_multiplier=0.0, poisson_sampling=False, grad_sample_mode=grad_sample_mode,
+            noise_multiplier=0.0,
+            poisson_sampling=False,
+            grad_sample_mode=grad_sample_mode,
         )
         s11 = (
             noise_scheduler(optimizer=opt11, step_size=1, gamma=1.0)
@@ -602,11 +637,15 @@ class BasePrivacyEngineTest(ABC):
         noise_multiplier=st.floats(0.5, 5.0),
         max_steps=st.integers(8, 10),
         secure_mode=st.just(False),  # TODO: enable after fixing torchcsprng build
-        grad_sample_mode=st.sampled_from(["hooks", "ew"])
+        grad_sample_mode=st.sampled_from(["hooks", "ew"]),
     )
     @settings(deadline=None)
     def test_noise_level(
-        self, noise_multiplier: float, max_steps: int, secure_mode: bool, grad_sample_mode: str
+        self,
+        noise_multiplier: float,
+        max_steps: int,
+        secure_mode: bool,
+        grad_sample_mode: str,
     ):
         """
         Tests that the noise level is correctly set
@@ -622,7 +661,7 @@ class BasePrivacyEngineTest(ABC):
             model, optimizer, dl, _ = self._init_private_training(
                 noise_multiplier=noise_multiplier,
                 secure_mode=secure_mode,
-                grad_sample_mode=grad_sample_mode
+                grad_sample_mode=grad_sample_mode,
             )
             for p in model.parameters():
                 p.data.zero_()
@@ -857,7 +896,6 @@ class SampleTiedWeights(nn.Module):
 
 
 class PrivacyEngineTiedWeightsTest(BasePrivacyEngineTest, unittest.TestCase):
-
     def setUp(self):
         super().setUp()
         self.UNSUPPORTED_GS_MODES = ["ew"]

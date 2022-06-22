@@ -126,7 +126,10 @@ def demo_basic(rank, weight, world_size, dp, clipping, grad_sample_mode):
 
 def run_demo(demo_fn, weight, world_size, dp, clipping, grad_sample_mode):
     mp.spawn(
-        demo_fn, args=(weight, world_size, dp, clipping, grad_sample_mode), nprocs=world_size, join=True
+        demo_fn,
+        args=(weight, world_size, dp, clipping, grad_sample_mode),
+        nprocs=world_size,
+        join=True,
     )
 
 
@@ -142,8 +145,22 @@ class GradientComputationTest(unittest.TestCase):
             for grad_sample_mode in ["hooks", "ew"]:
                 weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
 
-                run_demo(demo_basic, weight_dp, 2, dp=True, clipping=clipping, grad_sample_mode=grad_sample_mode)
-                run_demo(demo_basic, weight_nodp, 2, dp=False, clipping=None, grad_sample_mode=None)
+                run_demo(
+                    demo_basic,
+                    weight_dp,
+                    2,
+                    dp=True,
+                    clipping=clipping,
+                    grad_sample_mode=grad_sample_mode,
+                )
+                run_demo(
+                    demo_basic,
+                    weight_nodp,
+                    2,
+                    dp=False,
+                    clipping=None,
+                    grad_sample_mode=None,
+                )
 
                 self.assertTrue(
                     torch.allclose(weight_dp, weight_nodp, atol=1e-5, rtol=1e-3)

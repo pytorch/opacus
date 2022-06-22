@@ -21,10 +21,8 @@ from typing import List, Tuple
 
 import torch
 import torch.nn as nn
-from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
-from opacus.utils.module_utils import requires_grad, trainable_modules
 from opacus.grad_sample.gsm_base import AbstractGradSampleModule
-from abc import ABC, abstractmethod
+from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
 from opacus.utils.module_utils import (
     requires_grad,
     trainable_modules,

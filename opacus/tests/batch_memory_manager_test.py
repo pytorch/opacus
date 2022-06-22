@@ -55,7 +55,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
     @given(
         num_workers=st.integers(0, 4),
         pin_memory=st.booleans(),
-        grad_sample_mode=st.sampled_from(["hooks", "ew"])
+        grad_sample_mode=st.sampled_from(["hooks", "ew"]),
     )
     @settings(deadline=10000)
     def test_basic(
@@ -113,9 +113,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
                     )
                     weights_before = torch.clone(model._module.fc.weight)
 
-    @given(
-        grad_sample_mode=st.sampled_from(["hooks", "ew"])
-    )
+    @given(grad_sample_mode=st.sampled_from(["hooks", "ew"]))
     def test_equivalent_to_one_batch(self, grad_sample_mode: str):
         torch.manual_seed(1337)
         model, optimizer, data_loader = self._init_training()

@@ -21,13 +21,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus.grad_sample import GradSampleModule
+from opacus.grad_sample import wrap_model
 from opacus.utils.module_utils import trainable_parameters
 from opacus.utils.packed_sequences import compute_seq_lengths
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
 from torch.testing import assert_allclose
-from opacus.grad_sample.gsm_exp_weights import GradSampleModuleExpandedWeights
-from opacus.grad_sample import wrap_model
 
 
 def expander(x, factor: int = 2):
@@ -220,7 +218,7 @@ class GradSampleHooks_test(unittest.TestCase):
         batch_first=True,
         atol=10e-6,
         rtol=10e-5,
-        ew_compatible=True
+        ew_compatible=True,
     ):
         self.run_test_with_reduction(
             x,
@@ -251,7 +249,6 @@ class GradSampleHooks_test(unittest.TestCase):
                 grad_sample_mode="ew",
             )
 
-
     def run_test_with_reduction(
         self,
         x: Union[torch.Tensor, PackedSequence],
@@ -260,7 +257,7 @@ class GradSampleHooks_test(unittest.TestCase):
         loss_reduction="mean",
         atol=10e-6,
         rtol=10e-5,
-        grad_sample_mode="hooks"
+        grad_sample_mode="hooks",
     ):
         if type(x) is PackedSequence:
             x_unpacked = _unpack_packedsequences(x)
@@ -276,7 +273,11 @@ class GradSampleHooks_test(unittest.TestCase):
             )
 
         opacus_grad_samples = self.compute_opacus_grad_sample(
-            x, module, batch_first=batch_first, loss_reduction=loss_reduction, grad_sample_mode=grad_sample_mode
+            x,
+            module,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+            grad_sample_mode=grad_sample_mode,
         )
 
         if microbatch_grad_samples.keys() != opacus_grad_samples.keys():

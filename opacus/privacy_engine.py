@@ -22,8 +22,8 @@ from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample import (
-    GradSampleModule,
     AbstractGradSampleModule,
+    GradSampleModule,
     get_gsm_class,
     wrap_model,
 )
