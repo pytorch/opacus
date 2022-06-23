@@ -255,6 +255,7 @@ class GradSampleModuleTest(unittest.TestCase):
             )
 
 
+@unittest.skipIf(torch.__version__ < (1, 12), "not supported in this torch version")
 class EWGradSampleModuleTest(GradSampleModuleTest):
     CLS = GradSampleModuleExpandedWeights
 
