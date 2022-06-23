@@ -141,8 +141,13 @@ class GradientComputationTest(unittest.TestCase):
             n_gpus >= 2, f"Need at least 2 gpus but was provided only {n_gpus}."
         )
 
+        if torch.__version__ < (1,12):
+            grad_sample_modes = ["hooks"]
+        else:
+            grad_sample_modes = ["hooks", "ew"]
+
         for clipping in ["flat", "per_layer"]:
-            for grad_sample_mode in ["hooks", "ew"]:
+            for grad_sample_mode in grad_sample_modes:
                 weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
 
                 run_demo(
