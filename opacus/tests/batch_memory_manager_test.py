@@ -167,6 +167,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
 
         self.assertTrue(torch.allclose(memory_manager_weights, vanilla_weights))
 
+
 @unittest.skipIf(torch.__version__ < (1, 12), "not supported in this torch version")
 class BatchMemoryManagerTestWithExpandedWeights(BatchMemoryManagerTest):
     GSM_MODE = "ew"

@@ -238,7 +238,7 @@ class GradSampleHooks_test(unittest.TestCase):
             rtol=rtol,
             grad_sample_mode="hooks",
         )
-        if ew_compatible and batch_first and torch.__version__ >= (1,12):
+        if ew_compatible and batch_first and torch.__version__ >= (1, 12):
             self.run_test_with_reduction(
                 x,
                 module,

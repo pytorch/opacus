@@ -16,6 +16,7 @@ class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
 
         try:
             from torch.nn.utils._per_sample_grad import call_for_per_sample_grads
+
             self.call_for_per_sample_grads = call_for_per_sample_grads
         except ImportError:
             raise ImportError(
@@ -32,4 +33,6 @@ class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
         )
 
     def forward(self, x: torch.Tensor, *args, **kwargs):
-        return self.call_for_per_sample_grads(self._module, x.shape[0], x, *args, **kwargs)
+        return self.call_for_per_sample_grads(
+            self._module, x.shape[0], x, *args, **kwargs
+        )

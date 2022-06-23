@@ -241,14 +241,14 @@ class BasePrivacyEngineTest(ABC):
             )
 
     @given(
-        # do_clip=st.booleans(),
-        # do_noise=st.booleans(),
-        # use_closure=st.booleans(),
-        # max_steps=st.sampled_from([1, 4]),
-        do_clip=st.just(False),
-        do_noise=st.just(False),
-        use_closure=st.just(False),
-        max_steps=st.sampled_from([4]),
+        do_clip=st.booleans(),
+        do_noise=st.booleans(),
+        use_closure=st.booleans(),
+        max_steps=st.sampled_from([1, 4]),
+        # do_clip=st.just(False),
+        # do_noise=st.just(False),
+        # use_closure=st.just(False),
+        # max_steps=st.sampled_from([4]),
     )
     @settings(deadline=None)
     def test_compare_to_vanilla(
@@ -344,10 +344,7 @@ class BasePrivacyEngineTest(ABC):
             if not p.requires_grad:
                 continue
 
-            summed_grad = p.grad_sample.sum(dim=0)
-            if type(model).__name__ != "GradSampleModuleExpandedWeights":
-                summed_grad = summed_grad / self.BATCH_SIZE
-
+            summed_grad = p.grad_sample.sum(dim=0) / self.BATCH_SIZE
             self.assertTrue(
                 torch.allclose(p.grad, summed_grad, atol=1e-8, rtol=1e-4),
                 f"Per sample gradients don't sum up to the final grad value."
@@ -507,14 +504,11 @@ class BasePrivacyEngineTest(ABC):
         )
         self.assertTrue(1, 1)
 
-
     @given(
         noise_scheduler=st.sampled_from([None, StepNoise]),
     )
     @settings(deadline=None)
-    def test_checkpoints(
-        self, noise_scheduler: Optional[Type[StepNoise]]
-    ):
+    def test_checkpoints(self, noise_scheduler: Optional[Type[StepNoise]]):
         # 1. Disable poisson sampling to avoid randomness in data loading caused by changing seeds.
         # 2. Use noise_multiplier=0.0 to avoid randomness in torch.normal()
         # create a set of components: set 1
@@ -628,6 +622,7 @@ class BasePrivacyEngineTest(ABC):
         """
         Tests that the noise level is correctly set
         """
+
         def helper_test_noise_level(
             noise_multiplier: float, max_steps: int, secure_mode: bool
         ):
@@ -761,14 +756,14 @@ class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
     ):
         return SampleConvNet()
 
+
 @unittest.skipIf(torch.__version__ < (1, 12), "not supported in this torch version")
 class PrivacyEngineConvNetTestExpandedWeights(PrivacyEngineConvNetTest):
-
     def setUp(self):
         super().setUp()
         self.GRAD_SAMPLE_MODE = "ew"
 
-    @unittest.skip("Grad aggregation is not currently supported by ExpandedWeights")
+    @unittest.skip("Original p.grad is not available in ExpandedWeights")
     def test_sample_grad_aggregation(self):
         pass
 
