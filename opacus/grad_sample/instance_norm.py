@@ -18,6 +18,7 @@ from typing import Dict, Union
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from opt_einsum import contract
 
 from .utils import register_grad_sampler
 
@@ -49,7 +50,7 @@ def compute_instance_norm_grad_sample(
     ret = {}
     if layer.weight.requires_grad:
         gs = F.instance_norm(activations, eps=layer.eps) * backprops
-        ret[layer.weight] = torch.einsum("ni...->ni", gs)
+        ret[layer.weight] = contract("ni...->ni", gs)
     if layer.bias is not None and layer.bias.requires_grad:
-        ret[layer.bias] = torch.einsum("ni...->ni", backprops)
+        ret[layer.bias] = contract("ni...->ni", backprops)
     return ret

@@ -18,6 +18,7 @@ from typing import List, Optional
 
 import torch
 from opacus.optimizers.utils import params
+from opt_einsum import contract
 from torch.optim import Optimizer
 
 from .optimizer import DPOptimizer, _check_processed_flag, _mark_as_processed
@@ -61,7 +62,7 @@ class DPPerLayerOptimizer(DPOptimizer):
             per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(
                 max=1.0
             )
-            grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
+            grad = contract("i,i...", per_sample_clip_factor, p.grad_sample)
 
             if p.summed_grad is not None:
                 p.summed_grad += grad
