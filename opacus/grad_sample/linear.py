@@ -17,6 +17,7 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
+from opt_einsum import contract
 
 from .utils import register_grad_sampler
 
@@ -35,8 +36,8 @@ def compute_linear_grad_sample(
     """
     ret = {}
     if layer.weight.requires_grad:
-        gs = torch.einsum("n...i,n...j->nij", backprops, activations)
+        gs = contract("n...i,n...j->nij", backprops, activations)
         ret[layer.weight] = gs
     if layer.bias is not None and layer.bias.requires_grad:
-        ret[layer.bias] = torch.einsum("n...k->nk", backprops)
+        ret[layer.bias] = contract("n...k->nk", backprops)
     return ret

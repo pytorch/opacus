@@ -33,6 +33,7 @@ from opacus.scheduler import StepNoise, _NoiseScheduler
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from opacus.validators.module_validator import ModuleValidator
+from opt_einsum import contract
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
@@ -48,7 +49,7 @@ def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
     if loss_type not in ("sum", "mean"):
         raise ValueError(f"loss_type = {loss_type}. Only 'sum' and 'mean' supported")
 
-    grad_sample_aggregated = torch.einsum("i...->...", tensor.grad_sample)
+    grad_sample_aggregated = contract("i...->...", tensor.grad_sample)
     if loss_type == "mean":
         b_sz = tensor.grad_sample.shape[0]
         grad_sample_aggregated /= b_sz
