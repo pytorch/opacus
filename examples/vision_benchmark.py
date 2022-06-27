@@ -34,7 +34,7 @@ from torchvision import models
 from tqdm import tqdm
 
 import torch.nn.functional as F
-from functorch import make_functional_with_buffers, vmap, grad
+from functorch import make_functional, vmap, grad
 
 
 def loss_fn(predictions, targets):
@@ -138,19 +138,18 @@ def main():  # noqa: C901
     print(type(model))
 
     # Setup per sample grad with functorch
-    fmodel, params, buffers = make_functional_with_buffers(model)
-    def compute_loss_stateless_model (params, buffers, sample, target):
+    fmodel, params = make_functional(model)
+    def compute_loss_stateless_model (params, sample, target):
         batch = sample.unsqueeze(0)
         targets = target.unsqueeze(0)
 
-        predictions = fmodel(params, buffers, batch) 
+        predictions = fmodel(params, batch) 
         loss = loss_fn(predictions, targets)
 
         return loss
 
     ft_compute_grad = grad(compute_loss_stateless_model)
-    ft_compute_sample_grad = vmap(ft_compute_grad, in_dims=(None, None, 0, 0))
-    
+    ft_compute_sample_grad = vmap(ft_compute_grad, in_dims=(None, 0, 0))
 
     if args.benchmark_data_loader:
         torch.cuda.synchronize()
@@ -175,7 +174,8 @@ def main():  # noqa: C901
         torch.cuda.synchronize()
         start = time.time()
         for _ in tqdm(range(args.steps)):
-            ft_per_sample_grads = ft_compute_sample_grad(params, buffers, images, target)
+            ft_per_sample_grads = ft_compute_sample_grad(params, images, target)
+            import pdb;pdb.set_trace()
             del ft_per_sample_grads
             # output = model(images)
             # loss = criterion(output, target)
