@@ -19,6 +19,7 @@ from typing import Callable, List, Optional, Union
 
 import torch
 from opacus.optimizers.utils import params
+from opt_einsum import contract
 from torch import nn
 from torch.optim import Optimizer
 
@@ -408,9 +409,8 @@ class DPOptimizer(Optimizer):
 
         for p in self.params:
             _check_processed_flag(p.grad_sample)
-
             grad_sample = self._get_flat_grad_sample(p)
-            grad = torch.einsum("i,i...", per_sample_clip_factor, grad_sample)
+            grad = contract("i,i...", per_sample_clip_factor, grad_sample)
 
             if p.summed_grad is not None:
                 p.summed_grad += grad

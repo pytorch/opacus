@@ -18,6 +18,7 @@ import logging
 from typing import Callable, Optional
 
 import torch
+from opt_einsum import contract
 from torch.optim import Optimizer
 
 from .optimizer import (
@@ -107,9 +108,8 @@ class AdaClipDPOptimizer(DPOptimizer):
 
         for p in self.params:
             _check_processed_flag(p.grad_sample)
-
             grad_sample = self._get_flat_grad_sample(p)
-            grad = torch.einsum("i,i...", per_sample_clip_factor, grad_sample)
+            grad = contract("i,i...", per_sample_clip_factor, grad_sample)
 
             if p.summed_grad is not None:
                 p.summed_grad += grad
