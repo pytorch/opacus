@@ -16,18 +16,21 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from functools import partial
 from typing import List, Tuple
 
 import torch
 import torch.nn as nn
 from opacus.grad_sample.gsm_base import AbstractGradSampleModule
-from opacus.layers.dp_rnn import DPRNNBase, DPRNNCellBase, RNNLinear
+from opacus.layers.dp_rnn import DPGRU, DPLSTM, DPRNN, RNNLinear
 from opacus.utils.module_utils import (
     requires_grad,
     trainable_modules,
     trainable_parameters,
 )
+
+from .functorch import ft_compute_per_sample_gradient, prepare_layer
 
 
 logger = logging.getLogger(__name__)
@@ -89,6 +92,7 @@ class GradSampleModule(AbstractGradSampleModule):
         batch_first=True,
         loss_reduction="mean",
         strict: bool = True,
+        force_functorch=False,
     ):
         """
 
@@ -108,6 +112,9 @@ class GradSampleModule(AbstractGradSampleModule):
                 possible and set to None otherwise. This is not recommended, because
                 some unsupported modules (e.g. BatchNorm) affect other parameters and
                 invalidate the concept of per sample gradients for the entire model.
+            force_functorch: If set to ``True``, will use functorch to compute
+                all per sample gradients. Otherwise, functorch will be used only
+                for layers without registered grad sampler methods.
 
         Raises:
             NotImplementedError
@@ -128,13 +135,24 @@ class GradSampleModule(AbstractGradSampleModule):
             )
 
         self.hooks_enabled = False
-        self.add_hooks(loss_reduction=loss_reduction, batch_first=batch_first)
+        self.batch_first = batch_first
+        self.loss_reduction = loss_reduction
+        self.force_functorch = force_functorch
+        self.add_hooks(
+            loss_reduction=loss_reduction,
+            batch_first=batch_first,
+            force_functorch=force_functorch,
+        )
 
     def forward(self, *args, **kwargs):
         return self._module(*args, **kwargs)
 
     def add_hooks(
-        self, *, loss_reduction: str = "mean", batch_first: bool = True
+        self,
+        *,
+        loss_reduction: str = "mean",
+        batch_first: bool = True,
+        force_functorch: bool = False,
     ) -> None:
         """
         Adds hooks to model to save activations and backprop values.
@@ -151,6 +169,8 @@ class GradSampleModule(AbstractGradSampleModule):
                 ``[K, batch_size, ...]``
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
+            force_functorch: If set to ``True``, will use functorch to compute all per sample gradients.
+                Otherwise, functorch will be used only for layers without registered grad sampler methods.
         """
         if hasattr(self._module, "autograd_grad_sample_hooks"):
             raise ValueError("Trying to add hooks twice to the same model")
@@ -159,20 +179,26 @@ class GradSampleModule(AbstractGradSampleModule):
             self.autograd_grad_sample_hooks = self._module.autograd_grad_sample_hooks
 
         for _module_name, module in trainable_modules(self._module):
-            if type(module) in self.GRAD_SAMPLERS:
-                self.autograd_grad_sample_hooks.append(
-                    module.register_forward_hook(self.capture_activations_hook)
-                )
+            if type(module) in [DPRNN, DPLSTM, DPGRU]:
+                continue
 
-                self.autograd_grad_sample_hooks.append(
-                    module.register_backward_hook(
-                        partial(
-                            self.capture_backprops_hook,
-                            loss_reduction=loss_reduction,
-                            batch_first=batch_first,
-                        )
+            if force_functorch or not type(module) in self.GRAD_SAMPLERS:
+                prepare_layer(module, batch_first=batch_first)
+
+            self.autograd_grad_sample_hooks.append(
+                module.register_forward_hook(self.capture_activations_hook)
+            )
+
+            self.autograd_grad_sample_hooks.append(
+                module.register_backward_hook(
+                    partial(
+                        self.capture_backprops_hook,
+                        loss_reduction=loss_reduction,
+                        batch_first=batch_first,
                     )
                 )
+            )
+
         self.enable_hooks()
 
     def remove_hooks(self) -> None:
@@ -196,6 +222,11 @@ class GradSampleModule(AbstractGradSampleModule):
                 handle.remove()
             delattr(self, "autograd_grad_sample_hooks")
             delattr(self._module, "autograd_grad_sample_hooks")
+
+        # Remove functorch hooks
+        for _module_name, module in trainable_modules(self._module):
+            if hasattr(module, "ft_compute_sample_grad"):
+                delattr(module, "ft_compute_sample_grad")
 
     def disable_hooks(self) -> None:
         r"""
@@ -282,7 +313,11 @@ class GradSampleModule(AbstractGradSampleModule):
             loss_reduction=loss_reduction,
             batch_first=batch_first,
         )
-        grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
+        if not self.force_functorch and type(module) in self.GRAD_SAMPLERS:
+            grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
+        else:
+            grad_sampler_fn = ft_compute_per_sample_gradient
+
         grad_samples = grad_sampler_fn(module, activations, backprops)
         for param, gs in grad_samples.items():
             create_or_accumulate_grad_sample(
@@ -374,9 +409,12 @@ class GradSampleModule(AbstractGradSampleModule):
         Returns:
             ``True`` if grad sampler is found, ``False`` otherwise
         """
-        return type(module) in cls.GRAD_SAMPLERS or isinstance(
-            module, (DPRNNBase, DPRNNCellBase)
+        warnings.warn(
+            "GradSampleModule.is_supported is deprecated, as all layers can now be used with functorch.",
+            DeprecationWarning,
         )
+
+        return True
 
     @classmethod
     def validate(
@@ -409,7 +447,7 @@ class GradSampleModule(AbstractGradSampleModule):
                     f"(See opacus.grad_sample.utils.register_grad_sampler)"
                 )
                 for m_name, m in trainable_modules(module)
-                if not cls.is_supported(m)
+                if len(list(m.buffers())) > 0
             ]
         )
         # raise or return errors as needed

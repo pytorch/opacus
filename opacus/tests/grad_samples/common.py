@@ -220,34 +220,23 @@ class GradSampleHooks_test(unittest.TestCase):
         rtol=10e-5,
         ew_compatible=True,
     ):
-        self.run_test_with_reduction(
-            x,
-            module,
-            batch_first=batch_first,
-            loss_reduction="mean",
-            atol=atol,
-            rtol=rtol,
-            grad_sample_mode="hooks",
-        )
-        self.run_test_with_reduction(
-            x,
-            module,
-            batch_first=batch_first,
-            loss_reduction="sum",
-            atol=atol,
-            rtol=rtol,
-            grad_sample_mode="hooks",
-        )
+
+        for grad_sample_mode in ["hooks", "functorch"]:
+            for loss_reduction in ["sum", "mean"]:
+
+                with self.subTest(
+                    grad_sample_mode=grad_sample_mode, loss_reduction=loss_reduction
+                ):
+                    self.run_test_with_reduction(
+                        x,
+                        module,
+                        batch_first=batch_first,
+                        loss_reduction=loss_reudction,
+                        atol=atol,
+                        rtol=rtol,
+                        grad_sample_mode=grad_sample_mode,
+                    )
         if ew_compatible and batch_first and torch.__version__ >= (1, 13):
-            self.run_test_with_reduction(
-                x,
-                module,
-                batch_first=batch_first,
-                loss_reduction="mean",
-                atol=atol,
-                rtol=rtol,
-                grad_sample_mode="ew",
-            )
             self.run_test_with_reduction(
                 x,
                 module,
@@ -264,6 +253,7 @@ class GradSampleHooks_test(unittest.TestCase):
         module: nn.Module,
         batch_first=True,
         loss_reduction="mean",
+        force_functorch=False,
         atol=10e-6,
         rtol=10e-5,
         grad_sample_mode="hooks",

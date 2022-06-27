@@ -1,3 +1,4 @@
+functorch
 numpy>=1.15
 torch>=1.8
 scipy>=1.2

@@ -212,8 +212,9 @@ class GradSampleModuleTest(unittest.TestCase):
             def forward(self, x: torch.Tensor):
                 return F.linear(x, self.p)
 
-        with self.assertRaises(NotImplementedError):
-            GradSampleModule(SimpleLinear(4, 2))
+        # Should be handled by functorch
+        gsm = GradSampleModule(SimpleLinear(4, 2))
+        self.assertTrue(hasattr(gsm._module, "ft_compute_sample_grad"))
 
         # Should not raise exception if strict=False
         GradSampleModule(SimpleLinear(4, 2), strict=False)
@@ -225,9 +226,6 @@ class GradSampleModuleTest(unittest.TestCase):
     def test_custom_module_validation(self):
         with self.assertRaises(NotImplementedError):
             GradSampleModule(mobilenet_v3_small())
-
-        # Should not raise exception if strict=False
-        GradSampleModule(mobilenet_v3_small(), strict=False)
 
     def test_submodule_access(self):
         _ = self.grad_sample_module.fc1
