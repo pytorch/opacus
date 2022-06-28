@@ -73,9 +73,13 @@ def promote_current_grad_sample(p: nn.Parameter) -> None:
 
 
 class GradSampleModule(AbstractGradSampleModule):
-    r"""
-    Extends nn.Module so that its parameter tensors have an extra field called .grad_sample.
     """
+    Hooks-based implementation of AbstractGradSampleModule
+
+    Computes per-sample gradients using custom-written methods for each layer.
+    See README.md for more details
+    """
+
     GRAD_SAMPLERS = {}
 
     def __init__(

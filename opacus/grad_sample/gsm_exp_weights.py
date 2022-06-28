@@ -4,6 +4,13 @@ from opacus.grad_sample.gsm_base import AbstractGradSampleModule
 
 
 class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
+    """
+    ExpandedWeights-based implementation of AbstractGradSampleModule
+
+    Computes per-sample gradients using PyTorch built-in mechanism of ExpandedWeights.
+    See README.md for more details
+    """
+
     def __init__(
         self,
         m: nn.Module,

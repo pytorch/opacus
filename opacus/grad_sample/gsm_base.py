@@ -11,6 +11,10 @@ OPACUS_PARAM_MONKEYPATCH_ATTRS = ["_forward_counter", "_current_grad_sample"]
 
 
 class AbstractGradSampleModule(nn.Module, ABC):
+    r"""
+    Extends nn.Module so that its parameter tensors have an extra field called .grad_sample.
+    """
+
     def __init__(
         self,
         m: nn.Module,
@@ -18,6 +22,22 @@ class AbstractGradSampleModule(nn.Module, ABC):
         batch_first=True,
         loss_reduction="mean",
     ):
+        """
+
+        Args:
+            m: nn.Module to be wrapped
+            batch_first: Flag to indicate if the input tensor to the corresponding module
+                has the first dimension representing the batch. If set to True, dimensions on
+                input tensor are expected be ``[batch_size, ...]``, otherwise
+                ``[K, batch_size, ...]``
+            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+                is a sum or a mean operation. Can take values "sum" or "mean"
+
+        Raises:
+            NotImplementedError
+                If ``strict`` is set to ``True`` and module ``m`` (or any of its
+                submodules) doesn't have a registered grad sampler function.
+        """
         super().__init__()
 
         self._module = m
@@ -97,7 +117,7 @@ class AbstractGradSampleModule(nn.Module, ABC):
         self._clean_up_attributes()
 
     def __repr__(self):
-        return f"GradSampleModule({self._module.__repr__()})"
+        return f"{type(self).__name__}({self._module.__repr__()})"
 
     def _clean_up_attributes(self):
         for attr in OPACUS_PARAM_MONKEYPATCH_ATTRS:

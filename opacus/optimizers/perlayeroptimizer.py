@@ -60,7 +60,9 @@ class DPPerLayerOptimizer(DPOptimizer):
         for (p, max_grad_norm) in zip(self.params, self.max_grad_norms):
             _check_processed_flag(p.grad_sample)
 
-            per_sample_norms = p.grad_sample.norm(2, dim=tuple(range(1, p.grad_sample.ndim)))
+            per_sample_norms = p.grad_sample.norm(
+                2, dim=tuple(range(1, p.grad_sample.ndim))
+            )
             per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(
                 max=1.0
             )
