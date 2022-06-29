@@ -22,7 +22,9 @@ from opt_einsum import contract
 from torch import nn
 from torch.optim import Optimizer
 
+from .ddpoptimizer import DistributedDPOptimizer
 from .optimizer import DPOptimizer, _generate_noise
+from .perlayeroptimizer import DPPerLayerOptimizer
 
 
 def _clip_and_accumulate_parameter(p: nn.Parameter, max_grad_norm: float):
@@ -34,6 +36,34 @@ def _clip_and_accumulate_parameter(p: nn.Parameter, max_grad_norm: float):
         p.summed_grad += grad
     else:
         p.summed_grad = grad
+
+
+class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptimizer):
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        *,
+        noise_multiplier: float,
+        max_grad_norm: float,
+        expected_batch_size: Optional[int],
+        loss_reduction: str = "mean",
+        generator=None,
+        secure_mode: bool = False,
+        ew_compatibility_mode=False,
+    ):
+        self.rank = torch.distributed.get_rank()
+        self.world_size = torch.distributed.get_world_size()
+
+        super().__init__(
+            optimizer,
+            noise_multiplier=noise_multiplier,
+            max_grad_norm=max_grad_norm,
+            expected_batch_size=expected_batch_size,
+            loss_reduction=loss_reduction,
+            generator=generator,
+            secure_mode=secure_mode,
+            ew_compatibility_mode=ew_compatibility_mode,
+        )
 
 
 class DistributedPerLayerOptimizer(DPOptimizer):

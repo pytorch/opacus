@@ -59,7 +59,7 @@ class DistributedDPOptimizer(DPOptimizer):
             super().add_noise()
         else:
             for p in self.params:
-                p.grad = p.summed_grad.view_as(p.grad)
+                p.grad = p.summed_grad.view_as(p)
 
     def reduce_gradients(self):
         for p in self.params:

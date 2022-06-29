@@ -60,13 +60,14 @@ class DPPerLayerOptimizer(DPOptimizer):
         for (p, max_grad_norm) in zip(self.params, self.max_grad_norms):
             _check_processed_flag(p.grad_sample)
 
-            per_sample_norms = p.grad_sample.norm(
-                2, dim=tuple(range(1, p.grad_sample.ndim))
+            grad_sample = self._get_flat_grad_sample(p)
+            per_sample_norms = grad_sample.norm(
+                2, dim=tuple(range(1, grad_sample.ndim))
             )
             per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(
                 max=1.0
             )
-            grad = contract("i,i...", per_sample_clip_factor, p.grad_sample)
+            grad = contract("i,i...", per_sample_clip_factor, grad_sample)
 
             if p.summed_grad is not None:
                 p.summed_grad += grad

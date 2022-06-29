@@ -24,7 +24,10 @@ import torch.nn as nn
 import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.optimizers.ddp_perlayeroptimizer import DistributedPerLayerOptimizer
+from opacus.optimizers.ddp_perlayeroptimizer import (
+    DistributedPerLayerOptimizer,
+    SimpleDistributedPerLayerOptimizer,
+)
 from opacus.optimizers.ddpoptimizer import DistributedDPOptimizer
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, TensorDataset
@@ -108,7 +111,10 @@ def demo_basic(rank, weight, world_size, dp, clipping, grad_sample_mode):
             grad_sample_mode=grad_sample_mode,
         )
         if clipping == "per_layer":
-            assert isinstance(optimizer, DistributedPerLayerOptimizer)
+            assert isinstance(
+                optimizer,
+                (DistributedPerLayerOptimizer, SimpleDistributedPerLayerOptimizer),
+            )
         else:
             assert isinstance(optimizer, DistributedDPOptimizer)
 

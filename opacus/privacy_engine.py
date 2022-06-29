@@ -154,7 +154,7 @@ class PrivacyEngine:
         distributed: bool = False,
         clipping: str = "flat",
         noise_generator=None,
-        ew_compatibility_mode=False,
+        grad_sample_mode="hooks",
     ) -> DPOptimizer:
         if isinstance(optimizer, DPOptimizer):
             optimizer = optimizer.original_optimizer
@@ -165,7 +165,11 @@ class PrivacyEngine:
         elif noise_generator is not None:
             generator = noise_generator
 
-        optim_class = get_optimizer_class(clipping=clipping, distributed=distributed)
+        optim_class = get_optimizer_class(
+            clipping=clipping,
+            distributed=distributed,
+            grad_sample_mode=grad_sample_mode,
+        )
 
         return optim_class(
             optimizer=optimizer,
@@ -175,7 +179,7 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=self.secure_mode,
-            ew_compatibility_mode=ew_compatibility_mode,
+            ew_compatibility_mode=(grad_sample_mode == "ew"),
         )
 
     def _prepare_data_loader(
@@ -426,7 +430,7 @@ class PrivacyEngine:
             noise_generator=noise_generator,
             distributed=distributed,
             clipping=clipping,
-            ew_compatibility_mode=(grad_sample_mode == "ew"),
+            grad_sample_mode=grad_sample_mode,
         )
 
         optimizer.attach_step_hook(
