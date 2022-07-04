@@ -15,14 +15,15 @@
 
 from typing import Callable
 
-import hypothesis.strategies as st
 import torch
 import torch.nn as nn
-from hypothesis import given, settings
+from opacus.utils.tensor_utils import unfold2d
 from torch.testing import assert_allclose
 
+import hypothesis.strategies as st
+from hypothesis import given, settings
+
 from .common import GradSampleHooks_test, expander, shrinker
-from opacus.utils.tensor_utils import unfold2d
 
 
 class Conv2d_test(GradSampleHooks_test):
