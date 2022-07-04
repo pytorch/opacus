@@ -115,7 +115,7 @@ class Conv2d_test(GradSampleHooks_test):
             kernel_size=(k_h, k_w),
             padding=(pad_h, pad_w),
             stride=(stride_w, stride_h),
-            dilation=(dilation_w, dilation_h)
+            dilation=(dilation_w, dilation_h),
         )
 
         assert_allclose(X_unfold_torch, X_unfold_opacus, atol=0, rtol=0)
