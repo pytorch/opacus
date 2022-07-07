@@ -102,7 +102,7 @@ Your model most likely contains modules that are not compatible with Opacus. The
 
 ## What is virtual batch size?
 
-Opacus computes and stores *per-sample* gradients under the hood. What this means is that, for every regular gradient expected by the optimizer, Opacus will store `batch_size` per-sample gradients on each step. To balance peak memory requirement, which is proportional to `batch_size` ^ 2, and training performance, we use virtual batches. With virtual batches we can separate physical steps (gradient computation) and logical steps (noise addition and parameter updates): use larger batches for training, while keeping memory footprint low.
+Opacus computes and stores *per-sample* gradients under the hood. What this means is that, for every regular gradient expected by the optimizer, Opacus will store `batch_size` per-sample gradients on each step. To balance peak memory requirement, which is proportional to `batch_size` ^ 2, and training performance, we use virtual batches. With virtual batches we can separate physical steps (gradient computation) and logical steps (noise addition and parameter updates): use larger batches for training, while keeping memory footprint low. See the [Batch Memory Manager](https://opacus.ai/api/batch_memory_manager.html) for seamless integration into your training code.
 
 ## What are `alphas`?
 
