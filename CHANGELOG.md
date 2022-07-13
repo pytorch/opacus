@@ -1,14 +1,24 @@
 # Changelog
 
+## v1.1.3
+### Bug fixes
+* Support layers with a mix of frozen and learnable parameters (#437)
+* Throw an error when params in optimizer are not the same as that of module's in make_private (#439)
+* Fix unfold2d and add test (#443)
+
+### Miscellaneous
+* Fix typos in DDP tutorial (#438)
+* Replace torch einsum with opt_einsum (#440)
+
 ## v1.1.2
 ### Bug fixes
 * Support tied parameters (#417)
 * Fix callsite sensitiveness of `zero_grad()` (#422, #423)
 * Improve microbenchmark argument parsing and tests (#425)
-* Fix opacus nn.functional import (#426) 
+* Fix opacus nn.functional import (#426)
 ### Miscellaneous
 * Add microbenchmarks (#412, #416)
-* Add more badges to readme (#424) 
+* Add more badges to readme (#424)
 
 ## v1.1.1
 ### Bug fixes

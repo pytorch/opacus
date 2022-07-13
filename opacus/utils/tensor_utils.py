@@ -130,7 +130,8 @@ def unfold2d(
     W_effective = (
         W + 2 * padding[1] - (kernel_size[1] + (kernel_size[1] - 1) * (dilation[1] - 1))
     ) // stride[1] + 1
-    input = F.pad(input, (padding[0], padding[0], padding[1], padding[1]))
+    # F.pad's first argument is the padding of the *last* dimension
+    input = F.pad(input, (padding[1], padding[1], padding[0], padding[0]))
     *shape_pad, H_pad, W_pad = input.shape
     strides = list(input.stride())
     strides = strides[:-2] + [
