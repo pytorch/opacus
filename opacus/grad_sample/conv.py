@@ -53,10 +53,10 @@ def compute_conv_grad_sample(
         # set arguments to tuples with appropriate second element
         activations = torch.nn.functional.unfold(
             activations,
-            kernel_size=(1, layer.kernel_size[0]),
-            padding=(0, layer.padding[0]),
-            stride=(1, layer.stride[0]),
-            dilation=(1, layer.dilation[0]),
+            kernel_size=layer.kernel_size,
+            padding=layer.padding,
+            stride=layer.stride,
+            dilation=layer.dilation,
         )
     elif type(layer) == nn.Conv3d:
         activations = unfold3d(
