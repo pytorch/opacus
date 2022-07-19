@@ -22,6 +22,7 @@ from opacus.accountants.utils import get_noise_multiplier
 from opacus.data_loader import DPDataLoader, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample import (
+    COMPATIBILITY_API_CUTOFF_VERSION,
     AbstractGradSampleModule,
     GradSampleModule,
     get_gsm_class,
@@ -34,6 +35,13 @@ from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
+
+
+def _is_ew_compatibility_required(grad_sample_mode: str):
+    return (
+        grad_sample_mode == "ew"
+        and torch.__version__ < COMPATIBILITY_API_CUTOFF_VERSION
+    )
 
 
 def forbid_accumulation_hook(
@@ -179,7 +187,7 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=self.secure_mode,
-            ew_compatibility_mode=(grad_sample_mode == "ew"),
+            ew_compatibility_mode=_is_ew_compatibility_required(grad_sample_mode),
         )
 
     def _prepare_data_loader(
