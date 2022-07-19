@@ -33,6 +33,8 @@ class Model(nn.Module):
 
 
 class BatchMemoryManagerTest(unittest.TestCase):
+    GSM_MODE = "hooks"
+
     def setUp(self) -> None:
         self.data_size = 100
         self.batch_size = 10
@@ -75,6 +77,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
             noise_multiplier=1.0,
             max_grad_norm=1.0,
             poisson_sampling=False,
+            grad_sample_mode=self.GSM_MODE,
         )
         max_physical_batch_size = 3
         with BatchMemoryManager(
@@ -122,6 +125,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
             noise_multiplier=1.0,
             max_grad_norm=1.0,
             poisson_sampling=False,
+            grad_sample_mode=self.GSM_MODE,
         )
 
         with BatchMemoryManager(
@@ -148,6 +152,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
             noise_multiplier=1.0,
             max_grad_norm=1.0,
             poisson_sampling=False,
+            grad_sample_mode=self.GSM_MODE,
         )
 
         for x, y in data_loader:
@@ -161,3 +166,8 @@ class BatchMemoryManagerTest(unittest.TestCase):
         vanilla_weights = model._module.fc.weight.detach()
 
         self.assertTrue(torch.allclose(memory_manager_weights, vanilla_weights))
+
+
+@unittest.skipIf(torch.__version__ < (1, 12), "not supported in this torch version")
+class BatchMemoryManagerTestWithExpandedWeights(BatchMemoryManagerTest):
+    GSM_MODE = "ew"

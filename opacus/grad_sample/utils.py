@@ -18,6 +18,8 @@ from typing import Sequence, Type, Union
 import torch.nn as nn
 
 from .grad_sample_module import GradSampleModule
+from .gsm_base import AbstractGradSampleModule
+from .gsm_exp_weights import GradSampleModuleExpandedWeights
 
 
 def register_grad_sampler(
@@ -46,3 +48,27 @@ def register_grad_sampler(
         return f
 
     return decorator
+
+
+def wrap_model(model: nn.Module, grad_sample_mode: str, *args, **kwargs):
+    cls = get_gsm_class(grad_sample_mode)
+    return cls(model, *args, **kwargs)
+
+
+def get_gsm_class(grad_sample_mode: str) -> Type[AbstractGradSampleModule]:
+    """
+    Returns AbstractGradSampleModule subclass correspinding to the input mode.
+    See README for detailed comparison between grad sample modes.
+
+    :param grad_sample_mode:
+    :return:
+    """
+    if grad_sample_mode == "hooks":
+        return GradSampleModule
+    elif grad_sample_mode == "ew":
+        return GradSampleModuleExpandedWeights
+    else:
+        raise ValueError(
+            f"Unexpected grad_sample_mode: {grad_sample_mode}. "
+            f"Allowed values: hooks, ew"
+        )

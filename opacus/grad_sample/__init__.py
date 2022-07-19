@@ -19,14 +19,20 @@ from .dp_rnn import compute_rnn_linear_grad_sample  # noqa
 from .embedding import compute_embedding_grad_sample  # noqa
 from .grad_sample_module import GradSampleModule, create_or_accumulate_grad_sample
 from .group_norm import compute_group_norm_grad_sample  # noqa
+from .gsm_base import AbstractGradSampleModule
+from .gsm_exp_weights import GradSampleModuleExpandedWeights
 from .instance_norm import compute_instance_norm_grad_sample  # noqa
 from .layer_norm import compute_layer_norm_grad_sample  # noqa
 from .linear import compute_linear_grad_sample  # noqa
-from .utils import register_grad_sampler
+from .utils import get_gsm_class, register_grad_sampler, wrap_model
 
 
 __all__ = [
     "GradSampleModule",
+    "GradSampleModuleExpandedWeights",
+    "AbstractGradSampleModule",
     "register_grad_sampler",
     "create_or_accumulate_grad_sample",
+    "wrap_model",
+    "get_gsm_class",
 ]

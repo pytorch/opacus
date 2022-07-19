@@ -92,4 +92,4 @@ class RNN_test(GradSampleHooks_test):
                 x = torch.randn([N, T, D])
             else:
                 x = torch.randn([T, N, D])
-        self.run_test(x, rnn, batch_first=batch_first)
+        self.run_test(x, rnn, batch_first=batch_first, ew_compatible=False)

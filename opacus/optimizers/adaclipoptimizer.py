@@ -25,7 +25,6 @@ from .optimizer import (
     DPOptimizer,
     _check_processed_flag,
     _generate_noise,
-    _get_flat_grad_sample,
     _mark_as_processed,
 )
 
@@ -55,6 +54,7 @@ class AdaClipDPOptimizer(DPOptimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
+        ew_compatibility_mode=False,
     ):
         super().__init__(
             optimizer,
@@ -64,6 +64,7 @@ class AdaClipDPOptimizer(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
+            ew_compatibility_mode=ew_compatibility_mode,
         )
         assert (
             max_clipbound > min_clipbound
@@ -107,8 +108,7 @@ class AdaClipDPOptimizer(DPOptimizer):
 
         for p in self.params:
             _check_processed_flag(p.grad_sample)
-
-            grad_sample = _get_flat_grad_sample(p)
+            grad_sample = self._get_flat_grad_sample(p)
             grad = contract("i,i...", per_sample_clip_factor, grad_sample)
 
             if p.summed_grad is not None:

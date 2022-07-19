@@ -21,7 +21,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus.grad_sample import GradSampleModule
+from opacus.grad_sample import wrap_model
 from opacus.utils.module_utils import trainable_parameters
 from opacus.utils.packed_sequences import compute_seq_lengths
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
@@ -171,6 +171,7 @@ class GradSampleHooks_test(unittest.TestCase):
         module: nn.Module,
         batch_first=True,
         loss_reduction="mean",
+        grad_sample_mode="hooks",
     ) -> Dict[str, torch.tensor]:
         """
         Runs Opacus to compute per-sample gradients and return them for testing purposes.
@@ -189,8 +190,11 @@ class GradSampleHooks_test(unittest.TestCase):
         torch.manual_seed(0)
         np.random.seed(0)
 
-        gs_module = GradSampleModule(
-            clone_module(module), batch_first=batch_first, loss_reduction=loss_reduction
+        gs_module = wrap_model(
+            model=clone_module(module),
+            grad_sample_mode=grad_sample_mode,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
         )
         grad_sample_module = ModelWithLoss(gs_module, loss_reduction)
 
@@ -214,6 +218,7 @@ class GradSampleHooks_test(unittest.TestCase):
         batch_first=True,
         atol=10e-6,
         rtol=10e-5,
+        ew_compatible=True,
     ):
         self.run_test_with_reduction(
             x,
@@ -222,6 +227,7 @@ class GradSampleHooks_test(unittest.TestCase):
             loss_reduction="mean",
             atol=atol,
             rtol=rtol,
+            grad_sample_mode="hooks",
         )
         self.run_test_with_reduction(
             x,
@@ -230,7 +236,18 @@ class GradSampleHooks_test(unittest.TestCase):
             loss_reduction="sum",
             atol=atol,
             rtol=rtol,
+            grad_sample_mode="hooks",
         )
+        if ew_compatible and batch_first and torch.__version__ >= (1, 12):
+            self.run_test_with_reduction(
+                x,
+                module,
+                batch_first=batch_first,
+                loss_reduction="sum",
+                atol=atol,
+                rtol=rtol,
+                grad_sample_mode="ew",
+            )
 
     def run_test_with_reduction(
         self,
@@ -240,6 +257,7 @@ class GradSampleHooks_test(unittest.TestCase):
         loss_reduction="mean",
         atol=10e-6,
         rtol=10e-5,
+        grad_sample_mode="hooks",
     ):
         if type(x) is PackedSequence:
             x_unpacked = _unpack_packedsequences(x)
@@ -255,7 +273,11 @@ class GradSampleHooks_test(unittest.TestCase):
             )
 
         opacus_grad_samples = self.compute_opacus_grad_sample(
-            x, module, batch_first=batch_first, loss_reduction=loss_reduction
+            x,
+            module,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+            grad_sample_mode=grad_sample_mode,
         )
 
         if microbatch_grad_samples.keys() != opacus_grad_samples.keys():

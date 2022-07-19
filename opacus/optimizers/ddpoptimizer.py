@@ -38,6 +38,7 @@ class DistributedDPOptimizer(DPOptimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
+        ew_compatibility_mode=False,
     ):
         super().__init__(
             optimizer,
@@ -47,6 +48,7 @@ class DistributedDPOptimizer(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
+            ew_compatibility_mode=ew_compatibility_mode,
         )
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
@@ -57,7 +59,7 @@ class DistributedDPOptimizer(DPOptimizer):
             super().add_noise()
         else:
             for p in self.params:
-                p.grad = p.summed_grad.view_as(p.grad)
+                p.grad = p.summed_grad.view_as(p)
 
     def reduce_gradients(self):
         for p in self.params:
