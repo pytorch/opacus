@@ -51,5 +51,5 @@ class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
             )(x, *args, **kwargs)
         else:
             return self.call_for_per_sample_grads(
-                self._module, x.shape[0], x, *args, **kwargs
+                module=self._module, batch_size=x.shape[0], args=(x, *args), **kwargs
             )
