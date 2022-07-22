@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 from typing import Dict, Union
 
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from opacus.utils.tensor_utils import unfold2d, unfold3d
 from opt_einsum import contract
 
@@ -51,15 +53,17 @@ def compute_conv_grad_sample(
     elif type(layer) == nn.Conv1d:
         activations = activations.unsqueeze(-2)  # add the H dimension
         # set arguments to tuples with appropriate second element
-        pad = layer.padding[0]
-        if layer.padding == 'same':
-            pad = layer.dilation[0] * (layer.kernel_size[0] - 1)
-        if layer.padding == 'valid':
-            pad = 0
+        if layer.padding == "same":
+            left_pad = math.floor(layer.dilation[0] * (layer.kernel_size[0] - 1) / 2)
+            right_pad = math.ceil(layer.dilation[0] * (layer.kernel_size[0] - 1) / 2)
+        elif layer.padding == "valid":
+            left_pad, right_pad = 0, 0
+        else:
+            left_pad, right_pad = layer.padding[0], layer.padding[0]
+        activations = F.pad(activations, (left_pad, right_pad))
         activations = torch.nn.functional.unfold(
             activations,
             kernel_size=(1, layer.kernel_size[0]),
-            padding=(0, pad),
             stride=(1, layer.stride[0]),
             dilation=(1, layer.dilation[0]),
         )
