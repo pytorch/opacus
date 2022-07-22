@@ -49,7 +49,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
+<span class="kn">from</span> <span class="nn">.ddpoptimizer</span> <span class="kn">import</span> <span class="n">DistributedDPOptimizer</span>
 <span class="kn">from</span> <span class="nn">.optimizer</span> <span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">_generate_noise</span>
+<span class="kn">from</span> <span class="nn">.perlayeroptimizer</span> <span class="kn">import</span> <span class="n">DPPerLayerOptimizer</span>
 
 
 <span class="k">def</span> <span class="nf">_clip_and_accumulate_parameter</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
@@ -61,6 +63,34 @@
         <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">+=</span> <span class="n">grad</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">=</span> <span class="n">grad</span>
+
+
+<div class="viewcode-block" id="SimpleDistributedPerLayerOptimizer"><a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.SimpleDistributedPerLayerOptimizer">[docs]</a><span class="k">class</span> <span class="nc">SimpleDistributedPerLayerOptimizer</span><span class="p">(</span><span class="n">DPPerLayerOptimizer</span><span class="p">,</span> <span class="n">DistributedDPOptimizer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">max_grad_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">expected_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+        <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">ew_compatibility_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_rank</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">world_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">noise_multiplier</span><span class="p">,</span>
+            <span class="n">max_grad_norm</span><span class="o">=</span><span class="n">max_grad_norm</span><span class="p">,</span>
+            <span class="n">expected_batch_size</span><span class="o">=</span><span class="n">expected_batch_size</span><span class="p">,</span>
+            <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+            <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
+            <span class="n">secure_mode</span><span class="o">=</span><span class="n">secure_mode</span><span class="p">,</span>
+            <span class="n">ew_compatibility_mode</span><span class="o">=</span><span class="n">ew_compatibility_mode</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="DistributedPerLayerOptimizer"><a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer">[docs]</a><span class="k">class</span> <span class="nc">DistributedPerLayerOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
@@ -79,6 +109,7 @@
         <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
         <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">ew_compatibility_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_rank</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">world_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
@@ -92,6 +123,7 @@
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
             <span class="n">secure_mode</span><span class="o">=</span><span class="n">secure_mode</span><span class="p">,</span>
+            <span class="n">ew_compatibility_mode</span><span class="o">=</span><span class="n">ew_compatibility_mode</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_register_hooks</span><span class="p">()</span>
 

@@ -48,7 +48,12 @@
 <span class="kn">from</span> <span class="nn">opacus.accountants.utils</span> <span class="kn">import</span> <span class="n">get_noise_multiplier</span>
 <span class="kn">from</span> <span class="nn">opacus.data_loader</span> <span class="kn">import</span> <span class="n">DPDataLoader</span><span class="p">,</span> <span class="n">switch_generator</span>
 <span class="kn">from</span> <span class="nn">opacus.distributed</span> <span class="kn">import</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span> <span class="k">as</span> <span class="n">DPDDP</span>
-<span class="kn">from</span> <span class="nn">opacus.grad_sample.grad_sample_module</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
+<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AbstractGradSampleModule</span><span class="p">,</span>
+    <span class="n">GradSampleModule</span><span class="p">,</span>
+    <span class="n">get_gsm_class</span><span class="p">,</span>
+    <span class="n">wrap_model</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">opacus.optimizers</span> <span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">get_optimizer_class</span>
 <span class="kn">from</span> <span class="nn">opacus.scheduler</span> <span class="kn">import</span> <span class="n">_NoiseScheduler</span>
 <span class="kn">from</span> <span class="nn">opacus.utils.module_utils</span> <span class="kn">import</span> <span class="n">trainable_parameters</span>
@@ -59,7 +64,9 @@
 
 
 <span class="k">def</span> <span class="nf">forbid_accumulation_hook</span><span class="p">(</span>
-    <span class="n">module</span><span class="p">:</span> <span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">_grad_input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">_grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">AbstractGradSampleModule</span><span class="p">,</span>
+    <span class="n">_grad_input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">_grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Model hook that detects repetitive forward/backward passes between optimizer steps.</span>
@@ -174,6 +181,7 @@
         <span class="n">distributed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">clipping</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"flat"</span><span class="p">,</span>
         <span class="n">noise_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">grad_sample_mode</span><span class="o">=</span><span class="s2">"hooks"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DPOptimizer</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">):</span>
             <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">original_optimizer</span>
@@ -184,7 +192,11 @@
         <span class="k">elif</span> <span class="n">noise_generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">generator</span> <span class="o">=</span> <span class="n">noise_generator</span>
 
-        <span class="n">optim_class</span> <span class="o">=</span> <span class="n">get_optimizer_class</span><span class="p">(</span><span class="n">clipping</span><span class="o">=</span><span class="n">clipping</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="n">distributed</span><span class="p">)</span>
+        <span class="n">optim_class</span> <span class="o">=</span> <span class="n">get_optimizer_class</span><span class="p">(</span>
+            <span class="n">clipping</span><span class="o">=</span><span class="n">clipping</span><span class="p">,</span>
+            <span class="n">distributed</span><span class="o">=</span><span class="n">distributed</span><span class="p">,</span>
+            <span class="n">grad_sample_mode</span><span class="o">=</span><span class="n">grad_sample_mode</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">optim_class</span><span class="p">(</span>
             <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
@@ -194,6 +206,7 @@
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
             <span class="n">secure_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">,</span>
+            <span class="n">ew_compatibility_mode</span><span class="o">=</span><span class="p">(</span><span class="n">grad_sample_mode</span> <span class="o">==</span> <span class="s2">"ew"</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_prepare_data_loader</span><span class="p">(</span>
@@ -230,28 +243,33 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GradSampleModule</span><span class="p">:</span>
+        <span class="n">grad_sample_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"hooks"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AbstractGradSampleModule</span><span class="p">:</span>
         <span class="c1"># Ideally, validation should have been taken care of by calling</span>
         <span class="c1"># `get_compatible_module()`</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_loader</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
         <span class="c1"># wrap</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">GradSampleModule</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">AbstractGradSampleModule</span><span class="p">):</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="n">module</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">!=</span> <span class="n">batch_first</span>
                 <span class="ow">or</span> <span class="n">module</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">!=</span> <span class="n">loss_reduction</span>
+                <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="o">!=</span> <span class="n">get_gsm_class</span><span class="p">(</span><span class="n">grad_sample_mode</span><span class="p">)</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Pre-existing GradSampleModule doesn't match new arguments."</span>
-                    <span class="sa">f</span><span class="s2">"Got: module.batch_first: </span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="n">batch_first</span><span class="si">}</span><span class="s2">, module.loss_reduction: </span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="n">loss_reduction</span><span class="si">}</span><span class="s2">"</span>
-                    <span class="sa">f</span><span class="s2">"Requested: batch_first:</span><span class="si">{</span><span class="n">batch_first</span><span class="si">}</span><span class="s2">, loss_reduction: </span><span class="si">{</span><span class="n">loss_reduction</span><span class="si">}</span><span class="s2">. "</span>
+                    <span class="sa">f</span><span class="s2">"Got: module.batch_first: </span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="n">batch_first</span><span class="si">}</span><span class="s2">, module.loss_reduction: </span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="n">loss_reduction</span><span class="si">}</span><span class="s2">, type(module): </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="sa">f</span><span class="s2">"Requested: batch_first:</span><span class="si">{</span><span class="n">batch_first</span><span class="si">}</span><span class="s2">, loss_reduction: </span><span class="si">{</span><span class="n">loss_reduction</span><span class="si">}</span><span class="s2">, grad_sample_mode: </span><span class="si">{</span><span class="n">grad_sample_mode</span><span class="si">}</span><span class="s2"> "</span>
                     <span class="sa">f</span><span class="s2">"Please pass vanilla nn.Module instead"</span>
                 <span class="p">)</span>
 
             <span class="k">return</span> <span class="n">module</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">GradSampleModule</span><span class="p">(</span>
-                <span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span>
+            <span class="k">return</span> <span class="n">wrap_model</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">,</span>
+                <span class="n">grad_sample_mode</span><span class="o">=</span><span class="n">grad_sample_mode</span><span class="p">,</span>
+                <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
+                <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="p">)</span>
 
 <div class="viewcode-block" id="PrivacyEngine.is_compatible"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.is_compatible">[docs]</a>    <span class="k">def</span> <span class="nf">is_compatible</span><span class="p">(</span>
@@ -328,6 +346,7 @@
         <span class="n">poisson_sampling</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">clipping</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"flat"</span><span class="p">,</span>
         <span class="n">noise_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">grad_sample_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"hooks"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">]:</span>
         <span class="sd">"""</span>
 <span class="sd">        Add privacy-related responsibilites to the main PyTorch training objects:</span>
@@ -372,6 +391,10 @@
 <span class="sd">                with distributed training can provide notable performance gains.</span>
 <span class="sd">            noise_generator: torch.Generator() object used as a source of randomness for</span>
 <span class="sd">                the noise</span>
+<span class="sd">            grad_sample_mode: mode for computing per sample gradients. Determines the</span>
+<span class="sd">                implementation class for the wrapped ``module``. See</span>
+<span class="sd">                :class:`~opacus.grad_sample.gsm_base.AbstractGradSampleModule` for more</span>
+<span class="sd">                details</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple of (model, optimizer, data_loader).</span>
@@ -405,7 +428,10 @@
         <span class="n">distributed</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">DPDDP</span><span class="p">,</span> <span class="n">DDP</span><span class="p">))</span>
 
         <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_model</span><span class="p">(</span>
-            <span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span>
+            <span class="n">module</span><span class="p">,</span>
+            <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
+            <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+            <span class="n">grad_sample_mode</span><span class="o">=</span><span class="n">grad_sample_mode</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">poisson_sampling</span><span class="p">:</span>
             <span class="n">module</span><span class="o">.</span><span class="n">register_backward_hook</span><span class="p">(</span><span class="n">forbid_accumulation_hook</span><span class="p">)</span>
@@ -431,6 +457,7 @@
             <span class="n">noise_generator</span><span class="o">=</span><span class="n">noise_generator</span><span class="p">,</span>
             <span class="n">distributed</span><span class="o">=</span><span class="n">distributed</span><span class="p">,</span>
             <span class="n">clipping</span><span class="o">=</span><span class="n">clipping</span><span class="p">,</span>
+            <span class="n">grad_sample_mode</span><span class="o">=</span><span class="n">grad_sample_mode</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">optimizer</span><span class="o">.</span><span class="n">attach_step_hook</span><span class="p">(</span>
@@ -452,6 +479,7 @@
         <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
         <span class="n">noise_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">grad_sample_mode</span><span class="o">=</span><span class="s2">"hooks"</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">"""</span>
@@ -525,6 +553,7 @@
             <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">noise_generator</span><span class="o">=</span><span class="n">noise_generator</span><span class="p">,</span>
+            <span class="n">grad_sample_mode</span><span class="o">=</span><span class="n">grad_sample_mode</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="PrivacyEngine.get_epsilon"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_epsilon">[docs]</a>    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>

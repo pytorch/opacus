@@ -193,47 +193,6 @@
         <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_get_flat_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-    <span class="sd">"""</span>
-<span class="sd">    Return parameter's per sample gradients as a single tensor.</span>
-
-<span class="sd">    By default, per sample gradients (``p.grad_sample``) are stored as one tensor per</span>
-<span class="sd">    batch basis. Therefore, ``p.grad_sample`` is a single tensor if holds results from</span>
-<span class="sd">    only one batch, and a list of tensors if gradients are accumulated over multiple</span>
-<span class="sd">    steps. This is done to provide visibility into which sample belongs to which batch,</span>
-<span class="sd">    and how many batches have been processed.</span>
-
-<span class="sd">    This method returns per sample gradients as a single concatenated tensor, regardless</span>
-<span class="sd">    of how many batches have been accumulated</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        p: Parameter tensor. Must have ``grad_sample`` attribute</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        ``p.grad_sample`` if it's a tensor already, or a single tensor computed by</span>
-<span class="sd">        concatenating every tensor in ``p.grad_sample`` if it's a list</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            If ``p`` is missing ``grad_sample`` attribute</span>
-<span class="sd">    """</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"grad_sample"</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">"Per sample gradient not found. Are you using GradSampleModule?"</span>
-        <span class="p">)</span>
-    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">"Per sample gradient is not initialized. Not updated in backward pass?"</span>
-        <span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unexpected grad_sample type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="DPOptimizer"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer">[docs]</a><span class="k">class</span> <span class="nc">DPOptimizer</span><span class="p">(</span><span class="n">Optimizer</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    ``torch.optim.Optimizer`` wrapper that adds additional functionality to clip per</span>
@@ -272,6 +231,7 @@
         <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
         <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">ew_compatibility_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">"""</span>
 
@@ -313,9 +273,55 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_last_step_skipped</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ew_compatibility_mode</span> <span class="o">=</span> <span class="n">ew_compatibility_mode</span>
 
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
             <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_flat_grad_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Return parameter's per sample gradients as a single tensor.</span>
+
+<span class="sd">        By default, per sample gradients (``p.grad_sample``) are stored as one tensor per</span>
+<span class="sd">        batch basis. Therefore, ``p.grad_sample`` is a single tensor if holds results from</span>
+<span class="sd">        only one batch, and a list of tensors if gradients are accumulated over multiple</span>
+<span class="sd">        steps. This is done to provide visibility into which sample belongs to which batch,</span>
+<span class="sd">        and how many batches have been processed.</span>
+
+<span class="sd">        This method returns per sample gradients as a single concatenated tensor, regardless</span>
+<span class="sd">        of how many batches have been accumulated</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            p: Parameter tensor. Must have ``grad_sample`` attribute</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``p.grad_sample`` if it's a tensor already, or a single tensor computed by</span>
+<span class="sd">            concatenating every tensor in ``p.grad_sample`` if it's a list</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError</span>
+<span class="sd">                If ``p`` is missing ``grad_sample`` attribute</span>
+<span class="sd">        """</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"grad_sample"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Per sample gradient not found. Are you using GradSampleModule?"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Per sample gradient is not initialized. Not updated in backward pass?"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unexpected grad_sample type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ew_compatibility_mode</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ret</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ret</span>
 
 <div class="viewcode-block" id="DPOptimizer.signal_skip_step"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.signal_skip_step">[docs]</a>    <span class="k">def</span> <span class="nf">signal_skip_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_skip</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">"""</span>
@@ -368,7 +374,7 @@
 <span class="sd">        """</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
-            <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_get_flat_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+            <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_flat_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">ret</span>
 
     <span class="nd">@property</span>
@@ -421,7 +427,7 @@
 <span class="sd">        """</span>
 
         <span class="n">per_param_norms</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">g</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad_samples</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">ndim</span><span class="p">)))</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad_samples</span>
         <span class="p">]</span>
         <span class="n">per_sample_norms</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">per_param_norms</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">per_sample_clip_factor</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span> <span class="o">/</span> <span class="p">(</span><span class="n">per_sample_norms</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">))</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
@@ -430,8 +436,7 @@
 
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
             <span class="n">_check_processed_flag</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>
-
-            <span class="n">grad_sample</span> <span class="o">=</span> <span class="n">_get_flat_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">grad_sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flat_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
             <span class="n">grad</span> <span class="o">=</span> <span class="n">contract</span><span class="p">(</span><span class="s2">"i,i..."</span><span class="p">,</span> <span class="n">per_sample_clip_factor</span><span class="p">,</span> <span class="n">grad_sample</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -455,7 +460,7 @@
                 <span class="n">generator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">,</span>
                 <span class="n">secure_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">+</span> <span class="n">noise</span><span class="p">)</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">+</span> <span class="n">noise</span><span class="p">)</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 
             <span class="n">_mark_as_processed</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span><span class="p">)</span></div>
 
