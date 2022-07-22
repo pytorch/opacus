@@ -37,7 +37,14 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 
 
-def _is_ew_compatibility_required(grad_sample_mode: str):
+def _is_ew_compatibility_check_required(grad_sample_mode: str):
+    """
+    ExpandedWeights is still in the experimental phase with a fast-evolving API.
+    For this reason (see #453 for details) we need different handling depending on the
+    PyTorch version.
+    Special handling only required for PyTorch < 1.13 and if `grad_sample_mode=ew`
+    is enabled
+    """
     return (
         grad_sample_mode == "ew"
         and torch.__version__ < COMPATIBILITY_API_CUTOFF_VERSION
@@ -187,7 +194,7 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=self.secure_mode,
-            ew_compatibility_mode=_is_ew_compatibility_required(grad_sample_mode),
+            ew_compatibility_mode=_is_ew_compatibility_check_required(grad_sample_mode),
         )
 
     def _prepare_data_loader(
