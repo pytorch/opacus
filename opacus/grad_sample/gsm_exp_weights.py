@@ -3,6 +3,9 @@ import torch.nn as nn
 from opacus.grad_sample.gsm_base import AbstractGradSampleModule
 
 
+COMPATIBILITY_API_CUTOFF_VERSION = "1.13.0.dev"
+
+
 class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
     """
     ExpandedWeights-based implementation of AbstractGradSampleModule
@@ -40,6 +43,13 @@ class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
         )
 
     def forward(self, x: torch.Tensor, *args, **kwargs):
-        return self.call_for_per_sample_grads(
-            self._module, x.shape[0], x, *args, **kwargs
-        )
+        if torch.__version__ >= COMPATIBILITY_API_CUTOFF_VERSION:
+            return self.call_for_per_sample_grads(
+                module=self._module,
+                batch_size=x.shape[0],
+                loss_reduction=self.loss_reduction,
+            )(x, *args, **kwargs)
+        else:
+            return self.call_for_per_sample_grads(
+                module=self._module, batch_size=x.shape[0], args=(x, *args), **kwargs
+            )
