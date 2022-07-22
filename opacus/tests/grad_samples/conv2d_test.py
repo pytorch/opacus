@@ -22,7 +22,7 @@ from hypothesis import given, settings
 from opacus.utils.tensor_utils import unfold2d
 from torch.testing import assert_allclose
 
-from .common import GradSampleHooks_test, expander, shrinker
+from .common import expander, GradSampleHooks_test, shrinker
 
 
 class Conv2d_test(GradSampleHooks_test):
@@ -34,7 +34,7 @@ class Conv2d_test(GradSampleHooks_test):
         out_channels_mapper=st.sampled_from([expander, shrinker]),
         kernel_size=st.integers(2, 3),
         stride=st.integers(1, 2),
-        padding=st.sampled_from([0, 2]),
+        padding=st.sampled_from([0, 2, 'same']),
         dilation=st.integers(1, 3),
         groups=st.integers(1, 16),
     )
@@ -52,7 +52,8 @@ class Conv2d_test(GradSampleHooks_test):
         dilation: int,
         groups: int,
     ):
-
+        if (padding == 'same' and stride != 1):
+            return
         out_channels = out_channels_mapper(C)
         if (
             C % groups != 0 or out_channels % groups != 0

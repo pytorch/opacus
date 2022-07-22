@@ -116,7 +116,7 @@ def unfold2d(
     input,
     *,
     kernel_size: Tuple[int, int],
-    padding: Tuple[int, int],
+    padding: Union[str, Tuple[int, int]],
     stride: Tuple[int, int],
     dilation: Tuple[int, int],
 ):
@@ -124,6 +124,10 @@ def unfold2d(
     See :meth:`~torch.nn.functional.unfold`
     """
     *shape, H, W = input.shape
+    if padding == 'same':
+        padding = (dilation[0] * (kernel_size[0] - 1) // 2, dilation[1] * (kernel_size[1] - 1) // 2)
+    if padding == 'valid':
+        padding = (0, 0)
     H_effective = (
         H + 2 * padding[0] - (kernel_size[0] + (kernel_size[0] - 1) * (dilation[0] - 1))
     ) // stride[0] + 1
@@ -195,6 +199,11 @@ def unfold3d(
 
     if isinstance(dilation, int):
         dilation = (dilation, dilation, dilation)
+
+    if padding == 'same':
+        padding = (dilation[0] * (kernel_size[0] - 1) // 2, dilation[1] * (kernel_size[1] - 1) // 2, dilation[2] * (kernel_size[2] - 1) // 2)
+    if padding == 'valid':
+        padding = (0, 0, 0)
 
     batch_size, channels, _, _, _ = tensor.shape
 
