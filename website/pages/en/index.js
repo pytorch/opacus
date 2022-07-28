@@ -62,13 +62,14 @@ class HomeSplash extends React.Component {
     );
 
     const Logo = props => (
-      <div className="splashLogo">
-        <img
-          src={props.img_src}
-          alt="Project Logo"
-          className="primaryLogoImage"
-        />
-      </div>
+        <div className="splashLogo">
+          <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+          <lottie-player
+            src="json/logo_data.json"
+            autoplay
+            className="primaryLogoImage"
+          ></lottie-player>
+        </div>
     );
 
     const ProjectTitle = () => (
