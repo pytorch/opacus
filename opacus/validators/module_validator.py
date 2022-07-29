@@ -17,7 +17,6 @@ import logging
 from typing import List
 
 import torch.nn as nn
-from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.utils.module_utils import clone_module, get_submodule, trainable_modules
 from opacus.validators.errors import (
     IllegalModuleConfigurationError,
@@ -59,9 +58,7 @@ class ModuleValidator:
             errors.append(
                 IllegalModuleConfigurationError("Model needs to be in training mode")
             )
-        # 2. validate that all trainable modules are supported by GradSampleModule.
-        errors.extend(GradSampleModule.validate(module=module, strict=False))
-        # 3. perform module specific validations for trainable modules.
+        # 2. perform module specific validations for trainable modules.
         # TODO: use module name here - it's useful part of error message
         for _, sub_module in trainable_modules(module):
             if type(sub_module) in ModuleValidator.VALIDATORS:
