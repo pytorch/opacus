@@ -54,7 +54,6 @@ class AdaClipDPOptimizer(DPOptimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
-        ew_compatibility_mode=False,
     ):
         super().__init__(
             optimizer,
@@ -64,7 +63,6 @@ class AdaClipDPOptimizer(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
-            ew_compatibility_mode=ew_compatibility_mode,
         )
         assert (
             max_clipbound > min_clipbound

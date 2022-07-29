@@ -21,7 +21,6 @@ from .grad_sample_module import GradSampleModule, create_or_accumulate_grad_samp
 from .group_norm import compute_group_norm_grad_sample  # noqa
 from .gsm_base import AbstractGradSampleModule
 from .gsm_exp_weights import (
-    COMPATIBILITY_API_CUTOFF_VERSION,
     GradSampleModuleExpandedWeights,
 )
 from .instance_norm import compute_instance_norm_grad_sample  # noqa
@@ -38,5 +37,4 @@ __all__ = [
     "create_or_accumulate_grad_sample",
     "wrap_model",
     "get_gsm_class",
-    "COMPATIBILITY_API_CUTOFF_VERSION",
 ]

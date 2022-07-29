@@ -49,7 +49,6 @@ class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptim
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
-        ew_compatibility_mode=False,
     ):
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
@@ -62,7 +61,6 @@ class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptim
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
-            ew_compatibility_mode=ew_compatibility_mode,
         )
 
 
@@ -82,7 +80,6 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
-        ew_compatibility_mode=False,
     ):
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
@@ -96,7 +93,6 @@ class DistributedPerLayerOptimizer(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
-            ew_compatibility_mode=ew_compatibility_mode,
         )
         self._register_hooks()
 
