@@ -26,6 +26,7 @@ class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
 
         if torch.__version__ >= API_CUTOFF_VERSION:
             from torch.nn.utils._per_sample_grad import call_for_per_sample_grads
+
             self.call_for_per_sample_grads = call_for_per_sample_grads
         else:
             raise ImportError(

@@ -20,9 +20,7 @@ from .embedding import compute_embedding_grad_sample  # noqa
 from .grad_sample_module import GradSampleModule, create_or_accumulate_grad_sample
 from .group_norm import compute_group_norm_grad_sample  # noqa
 from .gsm_base import AbstractGradSampleModule
-from .gsm_exp_weights import (
-    GradSampleModuleExpandedWeights,
-)
+from .gsm_exp_weights import GradSampleModuleExpandedWeights
 from .instance_norm import compute_instance_norm_grad_sample  # noqa
 from .layer_norm import compute_layer_norm_grad_sample  # noqa
 from .linear import compute_linear_grad_sample  # noqa
