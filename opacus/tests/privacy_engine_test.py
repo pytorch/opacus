@@ -27,6 +27,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
+from opacus.grad_sample.gsm_exp_weights import API_CUTOFF_VERSION
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
 from opacus.scheduler import StepNoise
@@ -758,7 +759,9 @@ class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
         return SampleConvNet()
 
 
-@unittest.skipIf(torch.__version__ < (1, 12), "not supported in this torch version")
+@unittest.skipIf(
+    torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
+)
 class PrivacyEngineConvNetTestExpandedWeights(PrivacyEngineConvNetTest):
     def setUp(self):
         super().setUp()
