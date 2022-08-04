@@ -27,8 +27,8 @@ class BasicSupportedModule(nn.Module):
 class CustomLinearModule(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
-        self._weight = nn.Parameter(torch.empty(out_features, in_features))
-        self._bias = nn.Parameter(torch.empty(out_features))
+        self._weight = nn.Parameter(torch.randn(out_features, in_features))
+        self._bias = nn.Parameter(torch.randn(out_features))
 
     def forward(self, x):
         return F.linear(x, self._weight, self._bias)
@@ -37,17 +37,17 @@ class CustomLinearModule(nn.Module):
 class MatmulModule(nn.Module):
     def __init__(self, input_features, output_features):
         super().__init__()
-        self.weight = nn.Parameter(torch.empty(input_features, output_features))
+        self.weight = nn.Parameter(torch.randn(input_features, output_features))
 
     def forward(self, x):
         return torch.matmul(x, self.weight)
 
 
 class LinearWithExtraParam(nn.Module):
-    def __init__(self):
+    def __init__(self, in_features, out_features):
         super().__init__()
-        self.fc = nn.Linear(5, 8)
-        self.extra_param = nn.Parameter(torch.empty(8, 2))
+        self.fc = nn.Linear(in_features, out_features)
+        self.extra_param = nn.Parameter(torch.randn(out_features, 2))
 
     def forward(self, x):
         x = self.fc(x)
@@ -65,17 +65,17 @@ class PrivacyEngineValidationTest(unittest.TestCase):
     def setUp(self) -> None:
         self.privacy_engine = PrivacyEngine()
 
-    def _init(self, module):
+    def _init(self, module, size, batch_size=10):
         optim = torch.optim.SGD(module.parameters(), lr=0.1)
         dl = DataLoader(
-            dataset=[torch.randn(16, 5) for _ in range(100)],
-            batch_size=10,
+            dataset=[torch.randn(*size) for _ in range(100)],
+            batch_size=batch_size,
         )
 
         return module, optim, dl
 
     def test_supported_hooks(self):
-        module, optim, dl = self._init(BasicSupportedModule())
+        module, optim, dl = self._init(BasicSupportedModule(), size=(16, 5))
 
         module, optim, dl = self.privacy_engine.make_private(
             module=module,
@@ -93,7 +93,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
     )
     def test_supported_ew(self):
-        module, optim, dl = self._init(BasicSupportedModule())
+        module, optim, dl = self._init(BasicSupportedModule(), size=(16, 5))
 
         module, optim, dl = self.privacy_engine.make_private(
             module=module,
@@ -108,7 +108,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
             module(x)
 
     def test_custom_linear_hooks(self):
-        module, optim, dl = self._init(CustomLinearModule(5, 8))
+        module, optim, dl = self._init(CustomLinearModule(5, 8), size=(16, 5))
 
         with self.assertRaises(NotImplementedError):
             self.privacy_engine.make_private(
@@ -124,7 +124,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
     )
     def test_custom_linear_ew(self):
-        module, optim, dl = self._init(CustomLinearModule(5, 8))
+        module, optim, dl = self._init(CustomLinearModule(5, 8), size=(16, 5))
 
         module, optim, dl = self.privacy_engine.make_private(
             module=module,
@@ -139,7 +139,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
             module(x)
 
     def test_unsupported_hooks(self):
-        module, optim, dl = self._init(MatmulModule(5, 8))
+        module, optim, dl = self._init(MatmulModule(5, 8), size=(16, 5))
 
         with self.assertRaises(NotImplementedError):
             self.privacy_engine.make_private(
@@ -155,7 +155,11 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
     )
     def test_unsupported_ew(self):
-        module, optim, dl = self._init(MatmulModule(5, 8))
+        module, optim, dl = self._init(
+            MatmulModule(input_features=5, output_features=10),
+            size=(16, 5),
+            batch_size=12,
+        )
 
         module, optim, dl = self.privacy_engine.make_private(
             module=module,
@@ -171,7 +175,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
                 module(x)
 
     def test_extra_param_hooks(self):
-        module, optim, dl = self._init(LinearWithExtraParam())
+        module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         with self.assertRaises(NotImplementedError):
             self.privacy_engine.make_private(
                 module=module,
@@ -199,7 +203,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
     )
     def test_extra_param_ew(self):
-        module, optim, dl = self._init(LinearWithExtraParam())
+        module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         module, optim, dl = self.privacy_engine.make_private(
             module=module,
             optimizer=optim,
@@ -216,7 +220,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
     )
     def test_extra_param_disabled_ew(self):
-        module, optim, dl = self._init(LinearWithExtraParam())
+        module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         module.extra_param.requires_grad = False
 
         module, optim, dl = self.privacy_engine.make_private(
