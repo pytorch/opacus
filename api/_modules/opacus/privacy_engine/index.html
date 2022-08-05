@@ -49,7 +49,6 @@
 <span class="kn">from</span> <span class="nn">opacus.data_loader</span> <span class="kn">import</span> <span class="n">DPDataLoader</span><span class="p">,</span> <span class="n">switch_generator</span>
 <span class="kn">from</span> <span class="nn">opacus.distributed</span> <span class="kn">import</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span> <span class="k">as</span> <span class="n">DPDDP</span>
 <span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">COMPATIBILITY_API_CUTOFF_VERSION</span><span class="p">,</span>
     <span class="n">AbstractGradSampleModule</span><span class="p">,</span>
     <span class="n">GradSampleModule</span><span class="p">,</span>
     <span class="n">get_gsm_class</span><span class="p">,</span>
@@ -62,20 +61,6 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
 <span class="kn">from</span> <span class="nn">torch.nn.parallel</span> <span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
-
-
-<span class="k">def</span> <span class="nf">_is_ew_compatibility_check_required</span><span class="p">(</span><span class="n">grad_sample_mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sd">"""</span>
-<span class="sd">    ExpandedWeights is still in the experimental phase with a fast-evolving API.</span>
-<span class="sd">    For this reason (see #453 for details) we need different handling depending on the</span>
-<span class="sd">    PyTorch version.</span>
-<span class="sd">    Special handling only required for PyTorch &lt; 1.13 and if `grad_sample_mode=ew`</span>
-<span class="sd">    is enabled</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="n">grad_sample_mode</span> <span class="o">==</span> <span class="s2">"ew"</span>
-        <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">__version__</span> <span class="o">&lt;</span> <span class="n">COMPATIBILITY_API_CUTOFF_VERSION</span>
-    <span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">forbid_accumulation_hook</span><span class="p">(</span>
@@ -221,7 +206,6 @@
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
             <span class="n">secure_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">,</span>
-            <span class="n">ew_compatibility_mode</span><span class="o">=</span><span class="n">_is_ew_compatibility_check_required</span><span class="p">(</span><span class="n">grad_sample_mode</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_prepare_data_loader</span><span class="p">(</span>
