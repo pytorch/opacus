@@ -40,7 +40,6 @@ class DPPerLayerOptimizer(DPOptimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
-        ew_compatibility_mode=False,
     ):
         assert len(max_grad_norm) == len(params(optimizer))
         self.max_grad_norms = max_grad_norm
@@ -53,7 +52,6 @@ class DPPerLayerOptimizer(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
-            ew_compatibility_mode=ew_compatibility_mode,
         )
 
     def clip_and_accumulate(self):

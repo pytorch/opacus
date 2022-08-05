@@ -49,7 +49,8 @@ class ModuleValidator_test(unittest.TestCase):
 
     def test_is_valid_unsupported_grdsample_module(self):
         unsupported_module = nn.Bilinear(2, 2, 2)  # currently not implemented
-        self.assertFalse(ModuleValidator.is_valid(unsupported_module))
+        # ModelValidator no longer checks for supported modules
+        self.assertTrue(ModuleValidator.is_valid(unsupported_module))
 
     def test_is_valid_extra_param(self):
         class SampleNetWithExtraParam(nn.Module):
@@ -64,7 +65,9 @@ class ModuleValidator_test(unittest.TestCase):
                 return x
 
         model = SampleNetWithExtraParam()
-        self.assertFalse(ModuleValidator.is_valid(model))
+
+        # ModelValidator no longer checks for supported modules
+        self.assertTrue(ModuleValidator.is_valid(model))
 
         model.extra_param.requires_grad = False
         self.assertTrue(ModuleValidator.is_valid(model))

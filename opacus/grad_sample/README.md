@@ -44,7 +44,7 @@ Please note that these are known limitations and we plan to improve Expanded Wei
 
 | xxx | Hooks | Expanded Weights |
 |:-----:|:-------:|:------------------:|
-| Required PyTorch version | 1.8+ | 1.12+ |
+| Required PyTorch version | 1.8+ | 1.13+ |
 | Development status | Underlying mechanism deprecated | Beta |
 | Performance | - | ✅ Likely up to 2.5x faster |
 | torchscript models | Not supported | ✅ Supported |
@@ -52,5 +52,3 @@ Please note that these are known limitations and we plan to improve Expanded Wei
 | `batch_first=False` | ✅ Supported | Not supported |
 | Most popular nn.* layers | ✅ Supported | ✅ Supported |
 | Recurrent networks | ✅ Supported | Not supported |
-| nn.LayerNorm | ✅ Supported | ⚠️ Unstable |
-| nn.Conv3d | ✅ Supported | Not supported |
