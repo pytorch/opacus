@@ -47,7 +47,7 @@ class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
             raise ImportError(
                 f"Requested grad_sample_mode=ew, "
                 f"but found PyTorch version={torch.__version__}. "
-                f"ExpandedWeights available for torch>=1.12. "
+                f"ExpandedWeights available for torch>={API_CUTOFF_VERSION} "
                 f"Please install recent PyTorch or use grad_sample_mode=hooks"
             )
 
