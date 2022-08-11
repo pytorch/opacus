@@ -179,7 +179,7 @@ class ConvBase(Layer):
         out_channels: int,
         kernel_size: Union[int, Tuple[int, ...]],
         stride: Union[int, Tuple[int, ...]] = 1,
-        padding: Union[int, Tuple[int, ...]] = 0,
+        padding: Union[str, int, Tuple[int, ...]] = 0,
         dilation: Union[int, Tuple[int, ...]] = 1,
         groups: int = 1,
         bias: bool = True,

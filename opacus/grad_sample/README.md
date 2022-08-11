@@ -3,26 +3,26 @@
 Computing per sample gradients is an integral part of Opacus framework. We strive to provide out-of-the-box support for
 wide range of models, while keeping computations efficient.
 
-We currently provide two independent approaches for computing per sample gradients: hooks-based ``GradSampleModule`` 
+We currently provide two independent approaches for computing per sample gradients: hooks-based ``GradSampleModule``
 (stable implementation, exists since the very first version of Opacus) and ``GradSampleModuleExpandedWeights``
 (based on a beta functionality available in PyTorch 1.12).
 
-Each of the two implementations comes with it's own set of limitations, and we leave the choice up to the client 
-which one to use. 
+Each of the two implementations comes with it's own set of limitations, and we leave the choice up to the client
+which one to use.
 
 ``GradSampleModuleExpandedWeights`` is currently in early beta and can produce unexpected errors, but potentially
 improves upon ``GradSampleModule`` on performance and functionality.
 
-**TL;DR:** If you want stable implementation, use ``GradSampleModule`` (`grad_sample_mode="hooks"`). 
-If you want to experiment with the new functionality - try ``GradSampleModuleExpandedWeights``(`grad_sample_mode="ew"`) 
-and switch back to ``GradSampleModule`` if you encounter strange errors or unexpexted behaviour. 
+**TL;DR:** If you want stable implementation, use ``GradSampleModule`` (`grad_sample_mode="hooks"`).
+If you want to experiment with the new functionality - try ``GradSampleModuleExpandedWeights``(`grad_sample_mode="ew"`)
+and switch back to ``GradSampleModule`` if you encounter strange errors or unexpexted behaviour.
 We'd also appreciate it if you report these to us
 
 ## Hooks-based approach
 - Model wrapping class: ``opacus.grad_sample.grad_sample_module.GradSampleModule``
 - Keyword argument for ``PrivacyEngine.make_private()``: `grad_sample_mode="hooks"`
 
-Computes per-sample gradients for a model using backward hooks. It requires custom grad sampler methods for every 
+Computes per-sample gradients for a model using backward hooks. It requires custom grad sampler methods for every
 trainable layer in the model. We provide such methods for most popular PyTorch layers. Additionally, client can
 provide their own grad sampler for any new unsupported layer (see [tutorial](https://github.com/pytorch/opacus/blob/main/tutorials/guide_to_grad_sampler.ipynb))
 
@@ -32,7 +32,7 @@ provide their own grad sampler for any new unsupported layer (see [tutorial](htt
 
 Computes per-sample gradients for a model using core functionality available in PyTorch 1.12+. Unlike hooks-based
 grad sampler, which works on a module level, ExpandedWeights work on the function level, i.e. if your layer is not
-explicitly supported, but only uses known operations, ExpandedWeights will support it out of the box. 
+explicitly supported, but only uses known operations, ExpandedWeights will support it out of the box.
 
 At the time of writing, the coverage for custom grad samplers between ``GradSampleModule`` and ``GradSampleModuleExpandedWeights``
 is roughly the same.
@@ -52,3 +52,4 @@ Please note that these are known limitations and we plan to improve Expanded Wei
 | `batch_first=False` | ✅ Supported | Not supported |
 | Most popular nn.* layers | ✅ Supported | ✅ Supported |
 | Recurrent networks | ✅ Supported | Not supported |
+| Padding `same` in Conv | ✅ Supported | Not supported |

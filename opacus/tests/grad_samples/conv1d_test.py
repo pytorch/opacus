@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 from hypothesis import given, settings
 
-from .common import GradSampleHooks_test, expander, shrinker
+from .common import expander, GradSampleHooks_test, shrinker
 
 
 class Conv1d_test(GradSampleHooks_test):
@@ -31,7 +31,7 @@ class Conv1d_test(GradSampleHooks_test):
         out_channels_mapper=st.sampled_from([expander, shrinker]),
         kernel_size=st.integers(2, 3),
         stride=st.integers(1, 2),
-        padding=st.integers(0, 2),
+        padding=st.sampled_from([0, 1, 2, 'same', 'valid']),
         dilation=st.integers(1, 2),
         groups=st.integers(1, 12),
     )
@@ -49,6 +49,8 @@ class Conv1d_test(GradSampleHooks_test):
         groups: int,
     ):
 
+        if (padding == 'same' and stride != 1):
+            return
         out_channels = out_channels_mapper(C)
         if (
             C % groups != 0 or out_channels % groups != 0

@@ -22,7 +22,7 @@ from hypothesis import given, settings
 from opacus.utils.tensor_utils import unfold2d
 from torch.testing import assert_allclose
 
-from .common import GradSampleHooks_test, expander, shrinker
+from .common import expander, GradSampleHooks_test, shrinker
 
 
 class Conv2d_test(GradSampleHooks_test):
@@ -34,7 +34,7 @@ class Conv2d_test(GradSampleHooks_test):
         out_channels_mapper=st.sampled_from([expander, shrinker]),
         kernel_size=st.integers(2, 3),
         stride=st.integers(1, 2),
-        padding=st.sampled_from([0, 2]),
+        padding=st.sampled_from([0, 2, 'same', 'valid']),
         dilation=st.integers(1, 3),
         groups=st.integers(1, 16),
     )
@@ -52,7 +52,8 @@ class Conv2d_test(GradSampleHooks_test):
         dilation: int,
         groups: int,
     ):
-
+        if (padding == 'same' and stride != 1):
+            return
         out_channels = out_channels_mapper(C)
         if (
             C % groups != 0 or out_channels % groups != 0
@@ -69,21 +70,29 @@ class Conv2d_test(GradSampleHooks_test):
             dilation=dilation,
             groups=groups,
         )
-        self.run_test(x, conv, batch_first=True, atol=10e-5, rtol=10e-4)
+        is_ew_compatible = padding != 'same'  # TODO add support for padding = 'same' with EW
+        self.run_test(
+            x,
+            conv,
+            batch_first=True,
+            atol=10e-5,
+            rtol=10e-3,
+            ew_compatible=is_ew_compatible,
+        )
 
     @given(
         B=st.integers(1, 4),
         C=st.sampled_from([1, 3, 32]),
         H=st.integers(11, 17),
         W=st.integers(11, 17),
-        k_w=st.integers(2, 3),
         k_h=st.integers(2, 3),
-        stride_w=st.integers(1, 2),
+        k_w=st.integers(2, 3),
         stride_h=st.integers(1, 2),
+        stride_w=st.integers(1, 2),
         pad_h=st.sampled_from([0, 2]),
         pad_w=st.sampled_from([0, 2]),
-        dilation_w=st.integers(1, 3),
         dilation_h=st.integers(1, 3),
+        dilation_w=st.integers(1, 3),
     )
     @settings(deadline=10000)
     def test_unfold2d(
@@ -92,14 +101,14 @@ class Conv2d_test(GradSampleHooks_test):
         C: int,
         H: int,
         W: int,
-        k_w: int,
         k_h: int,
-        pad_w: int,
+        k_w: int,
         pad_h: int,
-        stride_w: int,
+        pad_w: int,
         stride_h: int,
-        dilation_w: int,
+        stride_w: int,
         dilation_h: int,
+        dilation_w: int,
     ):
         X = torch.randn(B, C, H, W)
         X_unfold_torch = torch.nn.functional.unfold(

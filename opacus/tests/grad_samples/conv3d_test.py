@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 from hypothesis import given, settings
 
-from .common import GradSampleHooks_test, expander, shrinker
+from .common import expander, GradSampleHooks_test, shrinker
 
 
 class Conv3d_test(GradSampleHooks_test):
@@ -33,7 +33,7 @@ class Conv3d_test(GradSampleHooks_test):
         out_channels_mapper=st.sampled_from([expander, shrinker]),
         kernel_size=st.sampled_from([2, 3, (1, 2, 3)]),
         stride=st.sampled_from([1, 2, (1, 2, 3)]),
-        padding=st.sampled_from([0, 2, (1, 2, 3)]),
+        padding=st.sampled_from([0, 2, (1, 2, 3), 'same', 'valid']),
         dilation=st.sampled_from([1, (1, 2, 2)]),
         groups=st.integers(1, 16),
     )
@@ -53,6 +53,8 @@ class Conv3d_test(GradSampleHooks_test):
         groups: int,
     ):
 
+        if (padding == 'same' and stride != 1):
+            return
         out_channels = out_channels_mapper(C)
         if (
             C % groups != 0 or out_channels % groups != 0
@@ -68,7 +70,7 @@ class Conv3d_test(GradSampleHooks_test):
             dilation=dilation,
             groups=groups,
         )
-        is_ew_compatible = dilation == 1
+        is_ew_compatible = (dilation == 1 or padding != 'same')  # TODO add support for padding = 'same' with EW
         self.run_test(
             x,
             conv,
