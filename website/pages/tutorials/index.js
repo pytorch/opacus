@@ -71,6 +71,13 @@ class TutorialHome extends React.Component {
             <ol>
               <li>
                 <a
+                  href="https://www.youtube.com/watch?v=U1mszp8lzUI"
+                  target="_blank">
+                  PyTorch Developer Day 2021: Fast and Flexible Differential Privacy Framework for PyTorch
+                </a>
+              </li>
+              <li>
+                <a
                   href="https://www.youtube.com/watch?v=MWPwofiQMdE&list=PLUNOsx6Az_ZGKQd_p4StdZRFQkCBwnaY6&index=51"
                   target="_blank">
                   OpenMined PriCon 2020 Tutorial: DP Model Training with Opacus
