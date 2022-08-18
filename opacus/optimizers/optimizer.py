@@ -462,7 +462,7 @@ class DPOptimizer(Optimizer):
         """
 
         if set_to_none is False:
-            logger.info(
+            logger.debug(
                 "Despite set_to_none is set to False, "
                 "opacus will set p.grad_sample and p.summed_grad to None due to "
                 "non-trivial gradient accumulation behaviour"

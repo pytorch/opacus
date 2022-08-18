@@ -94,7 +94,7 @@ class AbstractGradSampleModule(nn.Module, ABC):
             affects regular gradients. Per sample gradients are always set to None)
         """
         if set_to_none is False:
-            logger.info(
+            logger.debug(
                 "Despite set_to_none is set to False, "
                 "opacus will set p.grad_sample to None due to "
                 "non-trivial gradient accumulation behaviour"
