@@ -52,6 +52,8 @@ def register_grad_sampler(
 
 def wrap_model(model: nn.Module, grad_sample_mode: str, *args, **kwargs):
     cls = get_gsm_class(grad_sample_mode)
+    if grad_sample_mode == "functorch":
+        kwargs["force_functorch"] = True
     return cls(model, *args, **kwargs)
 
 
@@ -63,7 +65,7 @@ def get_gsm_class(grad_sample_mode: str) -> Type[AbstractGradSampleModule]:
     :param grad_sample_mode:
     :return:
     """
-    if grad_sample_mode == "hooks":
+    if grad_sample_mode in ["hooks", "functorch"]:
         return GradSampleModule
     elif grad_sample_mode == "ew":
         return GradSampleModuleExpandedWeights

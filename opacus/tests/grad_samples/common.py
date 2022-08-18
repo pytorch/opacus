@@ -231,7 +231,7 @@ class GradSampleHooks_test(unittest.TestCase):
                         x,
                         module,
                         batch_first=batch_first,
-                        loss_reduction=loss_reudction,
+                        loss_reduction=loss_reduction,
                         atol=atol,
                         rtol=rtol,
                         grad_sample_mode=grad_sample_mode,
