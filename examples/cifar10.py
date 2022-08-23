@@ -262,7 +262,7 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=int(args.sample_rate * len(train_dataset)),
+        batch_size=args.batch_size,
         generator=generator,
         num_workers=args.workers,
         pin_memory=True,
@@ -421,11 +421,11 @@ def parse_args():
         "using Data Parallel or Distributed Data Parallel",
     )
     parser.add_argument(
-        "--sample-rate",
-        default=0.04,
+        "--batch-size",
+        default=2000,
         type=float,
-        metavar="SR",
-        help="sample rate used for batch construction (default: 0.005)",
+        metavar="N",
+        help="train bacth size",
     )
     parser.add_argument(
         "--lr",
