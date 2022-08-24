@@ -22,6 +22,7 @@ from typing import List, Tuple
 
 import torch
 import torch.nn as nn
+from opacus.grad_sample.functorch import ft_compute_per_sample_gradient, prepare_layer
 from opacus.grad_sample.gsm_base import AbstractGradSampleModule
 from opacus.layers.dp_rnn import DPGRU, DPLSTM, DPRNN, RNNLinear
 from opacus.utils.module_utils import (
@@ -29,8 +30,6 @@ from opacus.utils.module_utils import (
     trainable_modules,
     trainable_parameters,
 )
-
-from .functorch import ft_compute_per_sample_gradient, prepare_layer
 
 
 logger = logging.getLogger(__name__)
@@ -179,6 +178,7 @@ class GradSampleModule(AbstractGradSampleModule):
             self.autograd_grad_sample_hooks = self._module.autograd_grad_sample_hooks
 
         for _module_name, module in trainable_modules(self._module):
+            # Do not add hooks to DPRNN, DPLSTM or DPGRU as the hooks are handled by the `RNNLinear`
             if type(module) in [DPRNN, DPLSTM, DPGRU]:
                 continue
 
@@ -447,6 +447,9 @@ class GradSampleModule(AbstractGradSampleModule):
                     f"(See opacus.grad_sample.utils.register_grad_sampler)"
                 )
                 for m_name, m in trainable_modules(module)
+                # With functorch, all modules are trainable
+                # We still want to avoid module that have buffers (e.g. BatchNorm)
+                # as the buffers are not private
                 if len(list(m.buffers())) > 0
             ]
         )
