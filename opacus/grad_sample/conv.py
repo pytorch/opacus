@@ -18,6 +18,7 @@ from typing import Dict, Union
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from opacus.utils.tensor_utils import unfold2d, unfold3d
 from opt_einsum import contract
 
@@ -31,7 +32,7 @@ def compute_conv_grad_sample(
     backprops: torch.Tensor,
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
-    Computes per sample gradients for convolutional layers
+    Computes per sample gradients for convolutional layers.
 
     Args:
         layer: Layer
@@ -87,5 +88,77 @@ def compute_conv_grad_sample(
 
     if layer.bias is not None and layer.bias.requires_grad:
         ret[layer.bias] = torch.sum(backprops, dim=2)
+
+    return ret
+
+
+# @register_grad_sampler([nn.Conv2d])
+def convolution2d_backward_as_a_convolution(
+    layer: nn.Conv2d,
+    activations: torch.Tensor,
+    backprops: torch.Tensor,
+) -> Dict[nn.Parameter, torch.Tensor]:
+    """
+    Computes per sample gradients for Conv2d layers using backward.
+    This is an alternative implementation and is not used because it is slower in many contexts.
+
+    Args:
+        layer: Layer
+        activations: Activations
+        backprops: Backpropagations
+    """
+    batch_size = activations.shape[0]
+    input_size = activations.shape[1]
+    output_size = backprops.shape[1]
+
+    # activations has shape (B, I, H, W)
+    # backprops has shape (B, O, H, W)
+    activations_ = activations.view(
+        batch_size,
+        layer.groups,
+        input_size // layer.groups,
+        activations.shape[2],
+        activations.shape[3],
+    )  # (B, G, I/G, H, W)
+
+    activations_ = activations_.view(
+        activations_.shape[0] * activations_.shape[1],
+        activations_.shape[2],
+        activations_.shape[3],
+        activations_.shape[4],
+    )  # (B*G, I / G, H, W)
+    activations_ = activations_.transpose(0, 1)  # (I / G, B * G, H, W)
+    backprops_ = backprops.view(
+        backprops.shape[0] * backprops.shape[1],
+        1,
+        backprops.shape[2],
+        backprops.shape[3],
+    )  # (B*O, 1, H, W)
+
+    # Without groups (I, B, H, W) X (B*O, 1, H, W) -> (I, B*O, H, W)
+    # With groups (I / G, B*G, H, W) X (B*O, 1, H, W) -> (I / G, B * O, H, W)
+    weight_grad_sample = F.conv2d(
+        activations_,
+        backprops_,
+        bias=None,
+        dilation=layer.stride,
+        padding=layer.padding,
+        stride=layer.dilation,
+        groups=batch_size * layer.groups,
+    )
+    weight_grad_sample = weight_grad_sample.view(
+        input_size // layer.groups,
+        batch_size,
+        output_size,
+        *weight_grad_sample.shape[-2:]
+    )  # (I / G, B, O, H, W)
+    weight_grad_sample = weight_grad_sample.movedim(0, 2)  # (B, O, I/G, H, W)
+    weight_grad_sample = weight_grad_sample[
+        :, :, :, : layer.weight.shape[2], : layer.weight.shape[3]
+    ]
+
+    ret = {layer.weight: weight_grad_sample}
+    if layer.bias is not None:
+        ret[layer.bias] = torch.sum(backprops, dim=[-1, -2])
 
     return ret

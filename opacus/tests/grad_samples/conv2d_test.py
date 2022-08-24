@@ -19,6 +19,8 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
+from opacus.grad_sample.conv import convolution2d_backward_as_a_convolution
+from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.utils.tensor_utils import unfold2d
 from torch.testing import assert_allclose
 
@@ -32,7 +34,7 @@ class Conv2d_test(GradSampleHooks_test):
         H=st.integers(11, 17),
         W=st.integers(11, 17),
         out_channels_mapper=st.sampled_from([expander, shrinker]),
-        kernel_size=st.integers(2, 3),
+        kernel_size=st.integers(2, 4),
         stride=st.integers(1, 2),
         padding=st.sampled_from([0, 2]),
         dilation=st.integers(1, 3),
@@ -69,7 +71,15 @@ class Conv2d_test(GradSampleHooks_test):
             dilation=dilation,
             groups=groups,
         )
+        # Test regular GSM
         self.run_test(x, conv, batch_first=True, atol=10e-5, rtol=10e-4)
+        # Test 'convolution as a backward' GSM
+        conv2d_gsm = GradSampleModule.GRAD_SAMPLERS[nn.Conv2d]
+        GradSampleModule.GRAD_SAMPLERS[
+            nn.Conv2d
+        ] = convolution2d_backward_as_a_convolution
+        self.run_test(x, conv, batch_first=True, atol=10e-5, rtol=10e-4)
+        GradSampleModule.GRAD_SAMPLERS[nn.Conv2d] = conv2d_gsm
 
     @given(
         B=st.integers(1, 4),
@@ -119,3 +129,22 @@ class Conv2d_test(GradSampleHooks_test):
         )
 
         assert_allclose(X_unfold_torch, X_unfold_opacus, atol=0, rtol=0)
+
+    def test_asymetric_dilation_and_kernel_size(self):
+        """
+        This test is mainly for particular use cases and can be useful for future debugging
+        """
+        x = torch.randn(1, 1, 8, 1)
+        layer = nn.Conv2d(
+            1, 1, kernel_size=(3, 1), groups=1, dilation=(3, 1), bias=None
+        )
+
+        m = GradSampleModule(layer)
+
+        y = m(x)
+        backprops = torch.randn(*y.shape)
+        y.backward(backprops)
+
+        self.assertLess(
+            torch.norm(m._module.weight.grad_sample[0] - m._module.weight.grad), 1e-7
+        )
