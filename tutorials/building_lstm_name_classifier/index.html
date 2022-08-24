@@ -86,7 +86,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In this tutorial we will build a differentially-private LSTM model to classify names to their source languages, which is the same task as in the tutorial <strong>NLP From Scratch</strong> (<a href="https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html">https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html</a>). Since the objective of this tutorial is to demonstrate the effective use of an LSTM with privacy guarantees, we will be utilizing it in place of the bare-bones RNN model defined in the original tutorial. Specifically, we use the <code>DPLSTM</code> module from <code>opacus.layers.dp_lstm</code> to facilitate calculation of the per-example gradients, which are utilized in the addition of noise during application of differential privacy. <code>DPLSTM</code> has the same API and functionality as the <code>nn.LSTM</code>, with some restrictions (ex. we currently support single layers, the full list is given below).</p>
+<p>In this tutorial we will build a differentially-private LSTM model to classify names to their source languages, which is the same task as in the tutorial <strong>NLP From Scratch</strong> (https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html). Since the objective of this tutorial is to demonstrate the effective use of an LSTM with privacy guarantees, we will be utilizing it in place of the bare-bones RNN model defined in the original tutorial. Specifically, we use the <code>DPLSTM</code> module from <code>opacus.layers.dp_lstm</code> to facilitate calculation of the per-example gradients, which are utilized in the addition of noise during application of differential privacy. <code>DPLSTM</code> has the same API and functionality as the <code>nn.LSTM</code>, with some restrictions (ex. we currently support single layers, the full list is given below).</p>
 </div>
 </div>
 </div>
@@ -100,7 +100,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>First, let us download the dataset of names and their associated language labels as given in <a href="https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html">https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html</a>. We train our differentially-private LSTM on the same dataset as in that tutorial.</p>
+<p>First, let us download the dataset of names and their associated language labels as given in https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html. We train our differentially-private LSTM on the same dataset as in that tutorial.</p>
 </div>
 </div>
 </div>

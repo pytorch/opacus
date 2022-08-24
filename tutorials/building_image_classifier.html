@@ -79,7 +79,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><h1>Table of Contents<span class="tocSkip"></span></h1></p>
+<h1>Table of Contents<span class="tocSkip"></span></h1>
 <div class="toc"><ul class="toc-item"><li><span><a data-toc-modified-id="Building-an-Image-Classifier-with-Differential-Privacy-1" href="#Building-an-Image-Classifier-with-Differential-Privacy">Building an Image Classifier with Differential Privacy</a></span><ul class="toc-item"><li><span><a data-toc-modified-id="Overview-1.1" href="#Overview">Overview</a></span></li><li><span><a data-toc-modified-id="Hyper-parameters-1.2" href="#Hyper-parameters">Hyper-parameters</a></span></li><li><span><a data-toc-modified-id="Data-1.3" href="#Data">Data</a></span></li><li><span><a data-toc-modified-id="Model-1.4" href="#Model">Model</a></span></li><li><span><a data-toc-modified-id="Prepare-for-Training-1.5" href="#Prepare-for-Training">Prepare for Training</a></span></li><li><span><a data-toc-modified-id="Train-the-network-1.6" href="#Train-the-network">Train the network</a></span></li><li><span><a data-toc-modified-id="Test-the-network-on-test-data-1.7" href="#Test-the-network-on-test-data">Test the network on test data</a></span></li><li><span><a data-toc-modified-id="Tips-and-Tricks-1.8" href="#Tips-and-Tricks">Tips and Tricks</a></span></li><li><span><a data-toc-modified-id="Private-Model-vs-Non-Private-Model-Performance-1.9" href="#Private-Model-vs-Non-Private-Model-Performance">Private Model vs Non-Private Model Performance</a></span></li></ul></li></ul></div>
 </div>
 </div>
@@ -96,8 +96,8 @@
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Overview">Overview<a class="anchor-link" href="#Overview">¶</a></h2><p>In this tutorial we will learn to do the following:</p>
 <ol>
-<li>Learn about privacy specific hyper-parameters related to DP-SGD </li>
-<li>Learn about ModelInspector, incompatible layers, and use model rewriting utility. </li>
+<li>Learn about privacy specific hyper-parameters related to DP-SGD</li>
+<li>Learn about ModelInspector, incompatible layers, and use model rewriting utility.</li>
 <li>Train a differentially private ResNet18 for image classification.</li>
 </ol>
 </div>
@@ -676,26 +676,10 @@ You can see, that after this, no exception is raised</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<table>
-<thead><tr>
-<th>Model</th>
-<th>Top 1 Accuracy (%)</th>
-<th>ϵ</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ResNet</td>
-<td>76</td>
-<td>∞</td>
-</tr>
-<tr>
-<td>Private ResNet</td>
-<td>61</td>
-<td>47.21</td>
-</tr>
-</tbody>
-</table>
+<p>| Model          | Top 1 Accuracy (%) |  ϵ |
+|----------------|--------------------|---|
+| ResNet         | 76                 | ∞ |
+| Private ResNet |         61         |  47.21  |</p>
 </div>
 </div>
 </div>
