@@ -69,7 +69,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">UnsupportedModuleError</span><span class="p">]:</span>
         <span class="sd">"""</span>
 <span class="sd">        Validate module and sub_modules by running registered custom validators.</span>
-<span class="sd">        Returns or raises excpetions depending on ``strict`` flag.</span>
+<span class="sd">        Returns or raises exceptions depending on ``strict`` flag.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            module: The root module to validate.</span>
@@ -125,14 +125,14 @@
         <span class="n">module</span> <span class="o">=</span> <span class="n">clone_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
         <span class="c1"># iterate over all sub_modules</span>
         <span class="c1"># We have to get sub_module names in a list first as we will be</span>
-        <span class="c1"># changing the modules inside the the loop.</span>
+        <span class="c1"># changing the modules inside the loop.</span>
         <span class="n">sub_module_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
         <span class="k">for</span> <span class="n">sub_module_name</span> <span class="ow">in</span> <span class="n">sub_module_names</span><span class="p">:</span>
             <span class="c1"># get sub_module</span>
             <span class="n">sub_module</span> <span class="o">=</span> <span class="n">get_submodule</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">sub_module_name</span><span class="p">)</span>
             <span class="c1"># if sub_module has a registered fixer</span>
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">FIXERS</span><span class="p">:</span>
-                <span class="c1"># get a repalcement for sub_module</span>
+                <span class="c1"># get a replacement for sub_module</span>
                 <span class="n">sub_module_fixer</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">FIXERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">sub_module</span><span class="p">)]</span>
                 <span class="n">new_sub_module</span> <span class="o">=</span> <span class="n">sub_module_fixer</span><span class="p">(</span><span class="n">sub_module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
                 <span class="c1"># move new_sub_module to the same device as that of sub_module</span>
@@ -177,7 +177,7 @@
 <span class="sd">        Fix the module and sub_modules first, and then run validation.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            module: The root module to be fixed and validted</span>
+<span class="sd">            module: The root module to be fixed and validated</span>
 <span class="sd">            **kwargs: Arbitrary keyword arguments.</span>
 
 <span class="sd">        Returns:</span>

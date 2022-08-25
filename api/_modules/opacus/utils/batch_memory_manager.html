@@ -56,7 +56,7 @@
 <span class="sd">    Samples according to the underlying instance of ``Sampler``, but splits</span>
 <span class="sd">    the index sequences into smaller chunks.</span>
 
-<span class="sd">    Used to split large logical batches into physocal batches of a smaller size,</span>
+<span class="sd">    Used to split large logical batches into physical batches of a smaller size,</span>
 <span class="sd">    while coordinating with DPOptimizer when the logical batch has ended.</span>
 <span class="sd">    """</span>
 
@@ -144,7 +144,7 @@
 
 <span class="sd">    Allows setting hard limit on the physical batch size as a just one line code change.</span>
 <span class="sd">    Can be used both for simulating large logical batches with limited memory and for</span>
-<span class="sd">    safeguarding against occasinal large batches produced by</span>
+<span class="sd">    safeguarding against occasional large batches produced by</span>
 <span class="sd">    :class:`~opacus.utils.uniform_sampler.UniformWithReplacementSampler`.</span>
 
 <span class="sd">    Note that it doesn't modify the input DataLoader, you'd need to use new DataLoader</span>
@@ -152,8 +152,8 @@
 
 <span class="sd">    BatchSplittingSampler will split large logical batches into smaller sub-batches with</span>
 <span class="sd">    certain maximum size.</span>
-<span class="sd">    On every step optimzer will check if the batch was the last physical batch comprising</span>
-<span class="sd">    a logical one, and will change behaviour accordignly.</span>
+<span class="sd">    On every step optimizer will check if the batch was the last physical batch comprising</span>
+<span class="sd">    a logical one, and will change behaviour accordingly.</span>
 
 <span class="sd">    If it was not the last, ``optimizer.step()`` will only clip per sample gradients and</span>
 <span class="sd">    sum them into ``p.summed_grad`.` ``optimizer.zero_grad()`` will clear ``p.grad_sample``,</span>
@@ -163,8 +163,8 @@
 <span class="sd">    ``optimizer.step()`` and ``optimizer.zero_grad()`` will behave normally.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Assuming you've initialized you objects and passed them to PrivacyEngine.</span>
-<span class="sd">        &gt;&gt;&gt; # For this example we assume data_loader is initalized with batch_size=4</span>
+<span class="sd">        &gt;&gt;&gt; # Assuming you've initialized your objects and passed them to PrivacyEngine.</span>
+<span class="sd">        &gt;&gt;&gt; # For this example we assume data_loader is initialized with batch_size=4</span>
 <span class="sd">        &gt;&gt;&gt; model, optimizer, data_loader = _init_private_training()</span>
 <span class="sd">        &gt;&gt;&gt; criterion = nn.CrossEntropyLoss()</span>
 <span class="sd">        &gt;&gt;&gt; with BatchMemoryManager(</span>

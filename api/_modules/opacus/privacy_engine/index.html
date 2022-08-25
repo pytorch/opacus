@@ -348,7 +348,7 @@
         <span class="n">grad_sample_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"hooks"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        Add privacy-related responsibilites to the main PyTorch training objects:</span>
+<span class="sd">        Add privacy-related responsibilities to the main PyTorch training objects:</span>
 <span class="sd">        model, optimizer, and the data loader.</span>
 
 <span class="sd">        All of the returned objects act just like their non-private counterparts</span>
@@ -579,7 +579,7 @@
         <span class="n">torch_save_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        Saves the state_dict of module, optimzer, and accountant at path.</span>
+<span class="sd">        Saves the state_dict of module, optimizer, and accountant at path.</span>
 <span class="sd">        Args:</span>
 <span class="sd">            path: Path to save the state dict objects.</span>
 <span class="sd">            module: GradSampleModule to save; wrapped module's state_dict is saved.</span>
