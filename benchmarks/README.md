@@ -33,7 +33,7 @@ Do this num_runs times:
         loss.backward()
 
     Stop timer
-    
+
     Return elapsed time / num_repeats and memory statistics
 ```
 
@@ -107,6 +107,19 @@ optional arguments:
   -v, --verbose
 ```
 
+`generate_report.py` will take as an input the path where `run_benchmarks.py` has written the results and it will generate an CSV report.
+```
+usage: generate_report.py [-h] [--path-to-results PATH_TO_RESULTS]
+                          [--save-path SAVE_PATH]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --path-to-results PATH_TO_RESULTS
+                        the path that `run_benchmarks.py` has saved results
+                        to.
+  --save-path SAVE_PATH
+                        path to save the CSV output.
+```
 ## Tests
 
 ```python -m pytest tests/```

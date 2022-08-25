@@ -238,6 +238,35 @@ commands:
       - store_artifacts:
           path: runs/charlstm/test-reports
 
+  benchmark_layers_integration_test:
+    description: "Runs benchmark end to end"
+    parameters:
+      device:
+        default: "cpu"
+        type: string
+      layers:
+        default: "mha dpmha gsm_dpmha embedding gsm_embedding instancenorm gsm_instancenorm groupnorm gsm_groupnorm layernorm gsm_layernorm lstm dplstm gsm_dplstm rnn dprnn gsm_dprnn linear gsm_linear gru dpgru gsm_dpgru"
+        type: string
+      runtime_ratio_threshold:
+        default: "7.0"
+        type: string
+      memory_ratio_threshold:
+        default: "2.0"
+        type: string
+    steps:
+      - run:
+          name: benchmarks
+          command: |
+            mkdir -p benchmarks/results/raw
+            echo "Using $(python -V) ($(which python))"
+            echo "Using $(pip -V) ($(which pip))"
+            python benchmarks/run_benchmarks.py --batch_size 16 --layers <<parameters.layers>> --config_file ./benchmarks/config.json --root ./benchmarks/results/raw/ --cont
+            layers<<parameters.layers>>; layers_list=(${(@s: :)layers}); mkdir /tmp/report_layers; cp -v ${:-${^layers_list}*} /tmp/report_layers
+            python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report.csv
+            python -c "import pandas as pd; r = pd.read_csv('.benchmarks/results/report.csv').fillna(0); th="<<parameters.runtime_ratio_threshold>>"; exit(0) if (r.loc[:, ('runtime', 'dp/control')] < th).all() and (r.loc[:, ('runtime', 'gsm/control')] < th).all() else exit(1)"
+          when: always
+      - store_artifacts:
+          path: benchmarks/results/
 # -------------------------------------------------------------------------------------
 # Jobs
 # -------------------------------------------------------------------------------------
@@ -315,6 +344,26 @@ jobs:
           device: "cuda"
       - dcgan_integration_test:
           device: "cuda"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "groupnorm gsm_groupnorm gru dp_gru instancenorm gsm_instancenorm layernorm gsm_layernorm lstm dplstm mha dpmha gsm_dpmha rnn dprnn"
+          runtime_ratio_threshold: "2.5"
+          memory_ratio_threshold: "1.6"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: linear gsm_linear
+          runtime_ratio_threshold: "3.3"
+          memory_ratio_threshold: "13.0"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "gru gsm_dpgru lstm gsm_dplstm rnn gsm_dprnn"
+          runtime_ratio_threshold: "7.0"
+          memory_ratio_threshold: "1.5"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "embedding gsm_embedding"
+          runtime_ratio_threshold: "6.0"
+          memory_ratio_threshold: "15.0"
 
   unittest_multi_gpu:
     machine:
