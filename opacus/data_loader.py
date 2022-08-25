@@ -46,7 +46,7 @@ def wrap_collate_with_empty(
     """
 
     def collate(batch):
-        if len(batch) > 0:
+        if len(batch) > 1:
             return collate_fn(batch)
         else:
             return [torch.zeros(x) for x in sample_empty_shapes]
