@@ -220,8 +220,13 @@ class GradSampleHooks_test(unittest.TestCase):
         rtol=10e-5,
         ew_compatible=True,
     ):
+        grad_sample_modes = ["hooks", "functorch"]
+        try:
+            import functorch
+        except ImportError:
+            grad_sample_modes = ["hooks"]
 
-        for grad_sample_mode in ["hooks", "functorch"]:
+        for grad_sample_mode in grad_sample_modes:
             for loss_reduction in ["sum", "mean"]:
 
                 with self.subTest(
@@ -253,7 +258,6 @@ class GradSampleHooks_test(unittest.TestCase):
         module: nn.Module,
         batch_first=True,
         loss_reduction="mean",
-        force_functorch=False,
         atol=10e-6,
         rtol=10e-5,
         grad_sample_mode="hooks",

@@ -1,4 +1,3 @@
-from functorch import grad, make_functional, vmap
 from opacus.layers.dp_rnn import RNNLinear
 
 
@@ -12,6 +11,8 @@ def prepare_layer(layer, batch_first=True):
         layer: the layer to prepare
         batch_first: whether the input is batch_first or not
     """
+    from functorch import grad, make_functional, vmap
+
     if len(list(layer.buffers())) > 0:
         raise NotImplementedError(
             "This layer has buffers and is not supported by Opacus"

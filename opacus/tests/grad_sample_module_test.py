@@ -213,11 +213,17 @@ class GradSampleModuleTest(unittest.TestCase):
                 return F.linear(x, self.p)
 
         # Should be handled by functorch
-        gsm = GradSampleModule(SimpleLinear(4, 2))
-        self.assertTrue(hasattr(gsm._module, "ft_compute_sample_grad"))
+        try:
+            gsm = GradSampleModule(SimpleLinear(4, 2))
+            self.assertTrue(hasattr(gsm._module, "ft_compute_sample_grad"))
+        except ImportError:
+            print("Test could not be ran because functorch not available")
 
         # Should not raise exception if strict=False
-        GradSampleModule(SimpleLinear(4, 2), strict=False)
+        try:
+            GradSampleModule(SimpleLinear(4, 2), strict=False)
+        except ImportError:
+            print("Test could not be ran because functorch not available")
 
         # Should not fail after relevant grad sampler has been registered
         register_grad_sampler(SimpleLinear)(compute_linear_grad_sample)

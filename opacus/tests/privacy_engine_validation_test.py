@@ -109,9 +109,8 @@ class PrivacyEngineValidationTest(unittest.TestCase):
 
     def test_custom_linear_hooks(self):
         module, optim, dl = self._init(CustomLinearModule(5, 8), size=(16, 5))
-
-        with self.assertRaises(NotImplementedError):
-            self.privacy_engine.make_private(
+        try:
+            gsm, _, _ = self.privacy_engine.make_private(
                 module=module,
                 optimizer=optim,
                 data_loader=dl,
@@ -119,6 +118,9 @@ class PrivacyEngineValidationTest(unittest.TestCase):
                 max_grad_norm=1.0,
                 grad_sample_mode="hooks",
             )
+            self.assertTrue(hasattr(gsm._module, "ft_compute_sample_grad"))
+        except ImportError:
+            print("Test not ran because functorch not imported")
 
     @unittest.skipIf(
         torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
@@ -139,10 +141,10 @@ class PrivacyEngineValidationTest(unittest.TestCase):
             module(x)
 
     def test_unsupported_hooks(self):
-        module, optim, dl = self._init(MatmulModule(5, 8), size=(16, 5))
+        try:
+            module, optim, dl = self._init(MatmulModule(5, 8), size=(16, 5))
 
-        with self.assertRaises(NotImplementedError):
-            self.privacy_engine.make_private(
+            gsm, _, _ = self.privacy_engine.make_private(
                 module=module,
                 optimizer=optim,
                 data_loader=dl,
@@ -150,6 +152,9 @@ class PrivacyEngineValidationTest(unittest.TestCase):
                 max_grad_norm=1.0,
                 grad_sample_mode="hooks",
             )
+            self.assertTrue(hasattr(gsm._module, "ft_compute_sample_grad"))
+        except ImportError:
+            print("Test not ran because functorch not imported")
 
     @unittest.skipIf(
         torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
@@ -174,10 +179,10 @@ class PrivacyEngineValidationTest(unittest.TestCase):
             for x in dl:
                 module(x)
 
-    def test_extra_param_hooks(self):
+    def test_extra_param_hooks_requires_grad(self):
         module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
-        with self.assertRaises(NotImplementedError):
-            self.privacy_engine.make_private(
+        try:
+            gsm, _, _ = self.privacy_engine.make_private(
                 module=module,
                 optimizer=optim,
                 data_loader=dl,
@@ -185,7 +190,13 @@ class PrivacyEngineValidationTest(unittest.TestCase):
                 max_grad_norm=1.0,
                 grad_sample_mode="hooks",
             )
+            self.assertTrue(hasattr(gsm._module, "ft_compute_sample_grad"))
+            gsm._close()
+        except ImportError:
+            print("Test not ran because functorch not imported")
 
+    def test_extra_param_hooks_no_requires_grad(self):
+        module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         module.extra_param.requires_grad = False
         module, optim, dl = self.privacy_engine.make_private(
             module=module,
