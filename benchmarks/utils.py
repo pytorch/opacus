@@ -13,12 +13,14 @@
 # limitations under the License.
 
 import pickle
+import glob
 from collections import namedtuple
 from typing import Any, Dict, List, Optional
 
 import torch
 from layers import LayerType
-
+import numpy as np
+import pandas as pd
 
 Memory = namedtuple("Memory", "prev_max_mem, cur_mem")
 
@@ -163,3 +165,74 @@ def save_results(
             handle,
             protocol=pickle.HIGHEST_PROTOCOL,
         )
+
+
+def generate_report(path_to_results: str, save_path: str) -> None:
+    """Generate a report from the benchamrks outcome.
+    The output is a csv file whic contains the runtime and memory of each layer.
+    If multiple layer variants were run (pytorch nn, DP, or GSM).
+    Then we will compare the performance of both DP and GSM to pytorch.nn.
+
+    Args:
+        path_to_results: the path that `run_benchmarks.py` has saved results to.
+        save_path: path to save the CSV output.
+
+    """
+    path_to_results = (
+        path_to_results if path_to_results[-1] != "/" else path_to_results[:-1]
+    )
+    files = glob.glob(f"{path_to_results}/*")
+
+    if len(files) == 0:
+        raise Exception(f"There were no result files in the path {path_to_results}")
+
+    raw_results = []
+    for result_file in files:
+        with open(result_file, "rb") as handle:
+            raw_results.append(pickle.load(handle))
+
+    results_dict = []
+    for raw in raw_results:
+        runtime = np.mean([i["runtime"] for i in raw["results"]])
+        memory = np.mean([i["memory_stats"]["max_memory"] for i in raw["results"]])
+        result = {
+            "layer": raw["layer"],
+            "batch_size": raw["batch_size"],
+            "num_runs": raw["num_runs"],
+            "num_repeats": raw["num_repeats"],
+            "forward_only": raw["forward_only"],
+            "runtime": runtime,
+            "memory": memory,
+        }
+        results_dict.append(result)
+
+    results = pd.DataFrame(results_dict)
+    results["variant"] = "control"
+    results["variant"][results["layer"].str.startswith("gsm")] = "gsm"
+    results["variant"][results["layer"].str.startswith("dp")] = "dp"
+    results["base_layer"] = results["layer"].str.replace("(gsm_)|(dp)", "")
+
+    pivot = results.pivot_table(
+        index=["batch_size", "num_runs", "num_repeats", "forward_only", "base_layer"],
+        columns=["variant"],
+        values=["runtime", "memory"],
+    )
+
+    if "control" in results["variant"].tolist():
+        pivot.columns = pivot.columns.set_names("value", level=1)
+        pivot[("runtime", "gsm/control")] = (
+            pivot.loc[:, ("runtime", "gsm")] / pivot.loc[:, ("runtime", "control")]
+        )
+        pivot[("runtime", "dp/control")] = (
+            pivot.loc[:, ("runtime", "dp")] / pivot.loc[:, ("runtime", "control")]
+        )
+        pivot[("memory", "gsm/control")] = (
+            pivot.loc[:, ("memory", "gsm")] / pivot.loc[:, ("memory", "control")]
+        )
+        pivot[("memory", "dp/control")] = (
+            pivot.loc[:, ("memory", "dp")] / pivot.loc[:, ("memory", "control")]
+        )
+
+    pivot.sort_index(axis=1).sort_values(
+        ["batch_size", "num_runs", "num_repeats", "forward_only"]
+    ).to_csv(save_path)
