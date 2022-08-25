@@ -321,7 +321,7 @@ class PrivacyEngine:
         grad_sample_mode: str = "hooks",
     ) -> Tuple[GradSampleModule, DPOptimizer, DataLoader]:
         """
-        Add privacy-related responsibilites to the main PyTorch training objects:
+        Add privacy-related responsibilities to the main PyTorch training objects:
         model, optimizer, and the data loader.
 
         All of the returned objects act just like their non-private counterparts
@@ -552,7 +552,7 @@ class PrivacyEngine:
         torch_save_kwargs: Optional[Dict[str, Any]] = None,
     ):
         """
-        Saves the state_dict of module, optimzer, and accountant at path.
+        Saves the state_dict of module, optimizer, and accountant at path.
         Args:
             path: Path to save the state dict objects.
             module: GradSampleModule to save; wrapped module's state_dict is saved.
