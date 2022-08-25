@@ -222,7 +222,7 @@ class GradSampleHooks_test(unittest.TestCase):
     ):
         grad_sample_modes = ["hooks", "functorch"]
         try:
-            import functorch
+            import functorch  # noqa
         except ImportError:
             grad_sample_modes = ["hooks"]
 
