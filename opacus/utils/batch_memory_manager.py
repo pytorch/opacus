@@ -29,7 +29,7 @@ class BatchSplittingSampler(Sampler[List[int]]):
     Samples according to the underlying instance of ``Sampler``, but splits
     the index sequences into smaller chunks.
 
-    Used to split large logical batches into physocal batches of a smaller size,
+    Used to split large logical batches into physical batches of a smaller size,
     while coordinating with DPOptimizer when the logical batch has ended.
     """
 
@@ -117,7 +117,7 @@ class BatchMemoryManager(object):
 
     Allows setting hard limit on the physical batch size as a just one line code change.
     Can be used both for simulating large logical batches with limited memory and for
-    safeguarding against occasinal large batches produced by
+    safeguarding against occasional large batches produced by
     :class:`~opacus.utils.uniform_sampler.UniformWithReplacementSampler`.
 
     Note that it doesn't modify the input DataLoader, you'd need to use new DataLoader
@@ -125,8 +125,8 @@ class BatchMemoryManager(object):
 
     BatchSplittingSampler will split large logical batches into smaller sub-batches with
     certain maximum size.
-    On every step optimzer will check if the batch was the last physical batch comprising
-    a logical one, and will change behaviour accordignly.
+    On every step optimizer will check if the batch was the last physical batch comprising
+    a logical one, and will change behaviour accordingly.
 
     If it was not the last, ``optimizer.step()`` will only clip per sample gradients and
     sum them into ``p.summed_grad`.` ``optimizer.zero_grad()`` will clear ``p.grad_sample``,
@@ -136,8 +136,8 @@ class BatchMemoryManager(object):
     ``optimizer.step()`` and ``optimizer.zero_grad()`` will behave normally.
 
     Example:
-        >>> # Assuming you've initialized you objects and passed them to PrivacyEngine.
-        >>> # For this example we assume data_loader is initalized with batch_size=4
+        >>> # Assuming you've initialized your objects and passed them to PrivacyEngine.
+        >>> # For this example we assume data_loader is initialized with batch_size=4
         >>> model, optimizer, data_loader = _init_private_training()
         >>> criterion = nn.CrossEntropyLoss()
         >>> with BatchMemoryManager(

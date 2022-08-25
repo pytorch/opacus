@@ -42,7 +42,7 @@ class ModuleValidator:
     ) -> List[UnsupportedModuleError]:
         """
         Validate module and sub_modules by running registered custom validators.
-        Returns or raises excpetions depending on ``strict`` flag.
+        Returns or raises exceptions depending on ``strict`` flag.
 
         Args:
             module: The root module to validate.
@@ -98,14 +98,14 @@ class ModuleValidator:
         module = clone_module(module)
         # iterate over all sub_modules
         # We have to get sub_module names in a list first as we will be
-        # changing the modules inside the the loop.
+        # changing the modules inside the loop.
         sub_module_names = [name for name, _ in trainable_modules(module)]
         for sub_module_name in sub_module_names:
             # get sub_module
             sub_module = get_submodule(module, sub_module_name)
             # if sub_module has a registered fixer
             if type(sub_module) in ModuleValidator.FIXERS:
-                # get a repalcement for sub_module
+                # get a replacement for sub_module
                 sub_module_fixer = ModuleValidator.FIXERS[type(sub_module)]
                 new_sub_module = sub_module_fixer(sub_module, **kwargs)
                 # move new_sub_module to the same device as that of sub_module
@@ -150,7 +150,7 @@ class ModuleValidator:
         Fix the module and sub_modules first, and then run validation.
 
         Args:
-            module: The root module to be fixed and validted
+            module: The root module to be fixed and validated
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
