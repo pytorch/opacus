@@ -138,7 +138,7 @@
                 <span class="c1"># move new_sub_module to the same device as that of sub_module</span>
                 <span class="n">new_sub_module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">sub_module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
                 <span class="c1"># get module after replacement.</span>
-                <span class="n">module</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_repalce_sub_module</span><span class="p">(</span>
+                <span class="n">module</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_replace_sub_module</span><span class="p">(</span>
                     <span class="n">root</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
                     <span class="n">sub_module_name</span><span class="o">=</span><span class="n">sub_module_name</span><span class="p">,</span>
                     <span class="n">new_sub_module</span><span class="o">=</span><span class="n">new_sub_module</span><span class="p">,</span>
@@ -152,7 +152,7 @@
         <span class="k">return</span> <span class="n">module</span></div>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_repalce_sub_module</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">_replace_sub_module</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -164,7 +164,7 @@
             <span class="nb">len</span><span class="p">(</span><span class="n">sub_module_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">sub_module_path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">""</span>
         <span class="p">):</span>  <span class="c1"># root is the only sub_module of root</span>
             <span class="k">return</span> <span class="n">new_sub_module</span>
-        <span class="k">else</span><span class="p">:</span>  <span class="c1"># repalce root's descendant</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># replace root's descendant</span>
             <span class="n">sub_module_parent</span> <span class="o">=</span> <span class="n">root</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sub_module_path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>  <span class="c1"># descend down to sub_module</span>
                 <span class="n">sub_module_parent</span> <span class="o">=</span> <span class="n">sub_module_parent</span><span class="o">.</span><span class="n">_modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
