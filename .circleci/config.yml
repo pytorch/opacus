@@ -341,7 +341,7 @@ jobs:
       - run_nvidia_smi
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "groupnorm gsm_groupnorm gru dpgru instancenorm gsm_instancenorm layernorm gsm_layernorm lstm dplstm mha dpmha gsm_dpmha rnn dprnn"
+          layers: "groupnorm gsm_groupnorm instancenorm gsm_instancenorm layernorm gsm_layernorm"
           runtime_ratio_threshold: "2.5"
           memory_ratio_threshold: "1.6"
       - benchmark_layers_integration_test:
@@ -351,9 +351,24 @@ jobs:
           memory_ratio_threshold: "13.0"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "gru gsm_dpgru lstm gsm_dplstm rnn gsm_dprnn"
-          runtime_ratio_threshold: "7.0"
+          layers: "mha gsm_dpmha"
+          runtime_ratio_threshold: "3.5"
+          memory_ratio_threshold: "2.0"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "gru dpgru gsm_dpgru"
+          runtime_ratio_threshold: "18.5"
           memory_ratio_threshold: "1.5"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "lstm dplstm gsm_dplstm"
+          runtime_ratio_threshold: "16.5"
+          memory_ratio_threshold: "1.5"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "rnn dprnn gsm_dprnn"
+          runtime_ratio_threshold: "16.5"
+          memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "embedding gsm_embedding"
