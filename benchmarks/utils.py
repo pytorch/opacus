@@ -220,12 +220,13 @@ def generate_report(path_to_results: str, save_path: str, format: str) -> None:
     )
 
     def add_ratio(df, metric, variant):
-        if variant in df.columns.get_level_values("variant"):
-            df[(metric, f"{variant}/control")] = (
-                df.loc[:, (metric, variant)] / df.loc[:, (metric, "control")]
-            )
-        else:
-            df[(metric, f"{variant}/control")] = np.nan
+        if variant not in df.columns.get_level_values("variant"):
+            for ametric in df.columns.get_level_values(0):
+                df[(ametric, variant)] = np.nan
+
+        df[(metric, f"{variant}/control")] = (
+            df.loc[:, (metric, variant)] / df.loc[:, (metric, "control")]
+        )
 
     if "control" in results["variant"].tolist():
         add_ratio(pivot, "runtime", "dp")

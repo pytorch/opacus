@@ -341,12 +341,12 @@ jobs:
       - run_nvidia_smi
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "groupnorm gsm_groupnorm instancenorm gsm_instancenorm layernorm gsm_layernorm"
-          runtime_ratio_threshold: "2.5"
+          layers: "groupnorm gsm_groupnorm instancenorm gsm_instancenorm layernorm gsm_layernorm mha dpmha"
+          runtime_ratio_threshold: "2.6"
           memory_ratio_threshold: "1.6"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: linear gsm_linear
+          layers: "linear gsm_linear"
           runtime_ratio_threshold: "3.6"
           memory_ratio_threshold: "13.0"
       - benchmark_layers_integration_test:
