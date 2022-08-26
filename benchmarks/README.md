@@ -107,10 +107,10 @@ optional arguments:
   -v, --verbose
 ```
 
-`generate_report.py` will take as an input the path where `run_benchmarks.py` has written the results and it will generate an CSV report.
+`generate_report.py` will take as an input the path where `run_benchmarks.py` has written the results and it will generate a report.
 ```
 usage: generate_report.py [-h] [--path-to-results PATH_TO_RESULTS]
-                          [--save-path SAVE_PATH]
+                          [--save-path SAVE_PATH] [--format {csv,pkl}]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -118,7 +118,8 @@ optional arguments:
                         the path that `run_benchmarks.py` has saved results
                         to.
   --save-path SAVE_PATH
-                        path to save the CSV output.
+                        path to save the output.
+  --format {csv,pkl}    output format
 ```
 ## Tests
 

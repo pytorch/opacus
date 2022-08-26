@@ -29,8 +29,16 @@ if __name__ == "__main__":
         "--save-path",
         default="./results/report.csv",
         type=str,
-        help="path to save the CSV output.",
+        help="path to save the output.",
+    )
+
+    parser.add_argument(
+        "--format",
+        default="csv",
+        type=str,
+        help="output format",
+        choices=["csv", "pkl"],
     )
     args = parser.parse_args()
 
-    generate_report(args.path_to_results, args.save_path)
+    generate_report(args.path_to_results, args.save_path, args.format)
