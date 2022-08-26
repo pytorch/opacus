@@ -261,7 +261,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             python benchmarks/run_benchmarks.py --batch_size 16 --layers <<parameters.layers>> --config_file ./benchmarks/config.json --root ./benchmarks/results/raw/ --cont
-            IFS=$' ';layers=(<<parameters.layers>>); mkdir -p /tmp/report_layers; IFS=$'\n'; files=`( echo "${layers[*]}" ) | sed 's/.*/.\/benchmarks\/results\/raw\/&*/'`
+            IFS=$' ';layers=(<<parameters.layers>>); rm -rf /tmp/report_layers; mkdir -p /tmp/report_layers; IFS=$'\n'; files=`( echo "${layers[*]}" ) | sed 's/.*/.\/benchmarks\/results\/raw\/&*/'`
             cp -v ${files[@]} /tmp/report_layers
             report_id=`IFS=$'-'; echo "${layers[*]}"`
             python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report-${report_id}.csv --format csv
@@ -339,16 +339,6 @@ jobs:
       - py_3_7_setup
       - pip_dev_install
       - run_nvidia_smi
-      - mnist_integration_test:
-          device: "cuda"
-      - cifar10_integration_test:
-          device: "cuda"
-      - imdb_integration_test:
-          device: "cuda"
-      - charlstm_integration_test:
-          device: "cuda"
-      - dcgan_integration_test:
-          device: "cuda"
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "groupnorm gsm_groupnorm gru dpgru instancenorm gsm_instancenorm layernorm gsm_layernorm lstm dplstm mha dpmha gsm_dpmha rnn dprnn"
@@ -369,6 +359,16 @@ jobs:
           layers: "embedding gsm_embedding"
           runtime_ratio_threshold: "6.0"
           memory_ratio_threshold: "15.0"
+      - mnist_integration_test:
+          device: "cuda"
+      - cifar10_integration_test:
+          device: "cuda"
+      - imdb_integration_test:
+          device: "cuda"
+      - charlstm_integration_test:
+          device: "cuda"
+      - dcgan_integration_test:
+          device: "cuda"
 
   unittest_multi_gpu:
     machine:
