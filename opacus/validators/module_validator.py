@@ -111,7 +111,7 @@ class ModuleValidator:
                 # move new_sub_module to the same device as that of sub_module
                 new_sub_module.to(next(sub_module.parameters()).device)
                 # get module after replacement.
-                module = cls._repalce_sub_module(
+                module = cls._replace_sub_module(
                     root=module,
                     sub_module_name=sub_module_name,
                     new_sub_module=new_sub_module,
@@ -125,7 +125,7 @@ class ModuleValidator:
         return module
 
     @classmethod
-    def _repalce_sub_module(
+    def _replace_sub_module(
         cls,
         *,
         root: nn.Module,
@@ -137,7 +137,7 @@ class ModuleValidator:
             len(sub_module_path) == 1 and sub_module_path[0] == ""
         ):  # root is the only sub_module of root
             return new_sub_module
-        else:  # repalce root's descendant
+        else:  # replace root's descendant
             sub_module_parent = root
             for name in sub_module_path[:-1]:  # descend down to sub_module
                 sub_module_parent = sub_module_parent._modules[name]
