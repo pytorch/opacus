@@ -1,4 +1,4 @@
-torch==1.8.1
+torch
 torchvision>=0.9.1
 tqdm>=4.40
 requests>=2.25.1

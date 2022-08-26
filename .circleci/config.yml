@@ -204,7 +204,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             pip install --user datasets transformers
-            python examples/imdb.py --lr 0.02 --sigma 0.56 -c 1.0 --batch-size 32 --max-sequence-length 256 --epochs 1 --data-root runs/imdb/data --device <<parameters.device>>
+            python examples/imdb.py --lr 0.02 --sigma 1.0 -c 1.0 --batch-size 64 --max-sequence-length 256 --epochs 2 --data-root runs/imdb/data --device <<parameters.device>>
             python -c "import torch; accuracy = torch.load('run_results_imdb_classification.pt'); exit(0) if (accuracy>0.54 and accuracy<0.66) else exit(1)"
           when: always
       - store_test_results:

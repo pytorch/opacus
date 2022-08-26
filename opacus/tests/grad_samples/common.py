@@ -220,34 +220,28 @@ class GradSampleHooks_test(unittest.TestCase):
         rtol=10e-5,
         ew_compatible=True,
     ):
-        self.run_test_with_reduction(
-            x,
-            module,
-            batch_first=batch_first,
-            loss_reduction="mean",
-            atol=atol,
-            rtol=rtol,
-            grad_sample_mode="hooks",
-        )
-        self.run_test_with_reduction(
-            x,
-            module,
-            batch_first=batch_first,
-            loss_reduction="sum",
-            atol=atol,
-            rtol=rtol,
-            grad_sample_mode="hooks",
-        )
+        grad_sample_modes = ["hooks", "functorch"]
+        try:
+            import functorch  # noqa
+        except ImportError:
+            grad_sample_modes = ["hooks"]
+
+        for grad_sample_mode in grad_sample_modes:
+            for loss_reduction in ["sum", "mean"]:
+
+                with self.subTest(
+                    grad_sample_mode=grad_sample_mode, loss_reduction=loss_reduction
+                ):
+                    self.run_test_with_reduction(
+                        x,
+                        module,
+                        batch_first=batch_first,
+                        loss_reduction=loss_reduction,
+                        atol=atol,
+                        rtol=rtol,
+                        grad_sample_mode=grad_sample_mode,
+                    )
         if ew_compatible and batch_first and torch.__version__ >= (1, 13):
-            self.run_test_with_reduction(
-                x,
-                module,
-                batch_first=batch_first,
-                loss_reduction="mean",
-                atol=atol,
-                rtol=rtol,
-                grad_sample_mode="ew",
-            )
             self.run_test_with_reduction(
                 x,
                 module,

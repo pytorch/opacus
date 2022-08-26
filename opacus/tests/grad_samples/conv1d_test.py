@@ -48,7 +48,6 @@ class Conv1d_test(GradSampleHooks_test):
         dilation: int,
         groups: int,
     ):
-
         out_channels = out_channels_mapper(C)
         if (
             C % groups != 0 or out_channels % groups != 0

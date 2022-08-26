@@ -65,7 +65,6 @@ class ModuleValidator_test(unittest.TestCase):
                 return x
 
         model = SampleNetWithExtraParam()
-
         # ModelValidator no longer checks for supported modules
         self.assertTrue(ModuleValidator.is_valid(model))
 
