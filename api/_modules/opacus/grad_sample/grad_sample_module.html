@@ -43,13 +43,15 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">from</span> <span class="nn">opacus.grad_sample.functorch</span> <span class="kn">import</span> <span class="n">ft_compute_per_sample_gradient</span><span class="p">,</span> <span class="n">prepare_layer</span>
 <span class="kn">from</span> <span class="nn">opacus.grad_sample.gsm_base</span> <span class="kn">import</span> <span class="n">AbstractGradSampleModule</span>
-<span class="kn">from</span> <span class="nn">opacus.layers.dp_rnn</span> <span class="kn">import</span> <span class="n">DPRNNBase</span><span class="p">,</span> <span class="n">DPRNNCellBase</span><span class="p">,</span> <span class="n">RNNLinear</span>
+<span class="kn">from</span> <span class="nn">opacus.layers.dp_rnn</span> <span class="kn">import</span> <span class="n">DPGRU</span><span class="p">,</span> <span class="n">DPLSTM</span><span class="p">,</span> <span class="n">DPRNN</span><span class="p">,</span> <span class="n">RNNLinear</span>
 <span class="kn">from</span> <span class="nn">opacus.utils.module_utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">requires_grad</span><span class="p">,</span>
     <span class="n">trainable_modules</span><span class="p">,</span>
@@ -116,6 +118,7 @@
         <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">loss_reduction</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">,</span>
         <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">force_functorch</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">"""</span>
 
@@ -135,6 +138,9 @@
 <span class="sd">                possible and set to None otherwise. This is not recommended, because</span>
 <span class="sd">                some unsupported modules (e.g. BatchNorm) affect other parameters and</span>
 <span class="sd">                invalidate the concept of per sample gradients for the entire model.</span>
+<span class="sd">            force_functorch: If set to ``True``, will use functorch to compute</span>
+<span class="sd">                all per sample gradients. Otherwise, functorch will be used only</span>
+<span class="sd">                for layers without registered grad sampler methods.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError</span>
@@ -155,13 +161,24 @@
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">hooks_enabled</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_hooks</span><span class="p">(</span><span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">=</span> <span class="n">loss_reduction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">force_functorch</span> <span class="o">=</span> <span class="n">force_functorch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_hooks</span><span class="p">(</span>
+            <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+            <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
+            <span class="n">force_functorch</span><span class="o">=</span><span class="n">force_functorch</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="GradSampleModule.forward"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="GradSampleModule.add_hooks"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.add_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">add_hooks</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span> <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+        <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">force_functorch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">"""</span>
 <span class="sd">        Adds hooks to model to save activations and backprop values.</span>
@@ -178,6 +195,8 @@
 <span class="sd">                ``[K, batch_size, ...]``</span>
 <span class="sd">            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
 <span class="sd">                is a sum or a mean operation. Can take values "sum" or "mean"</span>
+<span class="sd">            force_functorch: If set to ``True``, will use functorch to compute all per sample gradients.</span>
+<span class="sd">                Otherwise, functorch will be used only for layers without registered grad sampler methods.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Trying to add hooks twice to the same model"</span><span class="p">)</span>
@@ -186,20 +205,27 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span>
 
         <span class="k">for</span> <span class="n">_module_name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">module</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capture_activations_hook</span><span class="p">)</span>
-                <span class="p">)</span>
+            <span class="c1"># Do not add hooks to DPRNN, DPLSTM or DPGRU as the hooks are handled by the `RNNLinear`</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="n">DPRNN</span><span class="p">,</span> <span class="n">DPLSTM</span><span class="p">,</span> <span class="n">DPGRU</span><span class="p">]:</span>
+                <span class="k">continue</span>
 
-                <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">module</span><span class="o">.</span><span class="n">register_backward_hook</span><span class="p">(</span>
-                        <span class="n">partial</span><span class="p">(</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">capture_backprops_hook</span><span class="p">,</span>
-                            <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
-                            <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
-                        <span class="p">)</span>
+            <span class="k">if</span> <span class="n">force_functorch</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">:</span>
+                <span class="n">prepare_layer</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">module</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capture_activations_hook</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">module</span><span class="o">.</span><span class="n">register_backward_hook</span><span class="p">(</span>
+                    <span class="n">partial</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">capture_backprops_hook</span><span class="p">,</span>
+                        <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+                        <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
+            <span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">enable_hooks</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="GradSampleModule.remove_hooks"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.remove_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">remove_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -222,7 +248,12 @@
                 <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
                 <span class="n">handle</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
             <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">)</span>
-            <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">)</span></div>
+            <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="s2">"autograd_grad_sample_hooks"</span><span class="p">)</span>
+
+        <span class="c1"># Remove functorch hooks</span>
+        <span class="k">for</span> <span class="n">_module_name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"ft_compute_sample_grad"</span><span class="p">):</span>
+                <span class="nb">delattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"ft_compute_sample_grad"</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="GradSampleModule.disable_hooks"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.disable_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">disable_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
@@ -309,7 +340,11 @@
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">grad_sampler_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_functorch</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">:</span>
+            <span class="n">grad_sampler_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">grad_sampler_fn</span> <span class="o">=</span> <span class="n">ft_compute_per_sample_gradient</span>
+
         <span class="n">grad_samples</span> <span class="o">=</span> <span class="n">grad_sampler_fn</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">activations</span><span class="p">,</span> <span class="n">backprops</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">gs</span> <span class="ow">in</span> <span class="n">grad_samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">create_or_accumulate_grad_sample</span><span class="p">(</span>
@@ -401,9 +436,12 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            ``True`` if grad sampler is found, ``False`` otherwise</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">DPRNNBase</span><span class="p">,</span> <span class="n">DPRNNCellBase</span><span class="p">)</span>
-        <span class="p">)</span></div>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"GradSampleModule.is_supported is deprecated, as all layers can now be used with functorch."</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="GradSampleModule.validate"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.validate">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
@@ -436,7 +474,10 @@
                     <span class="sa">f</span><span class="s2">"(See opacus.grad_sample.utils.register_grad_sampler)"</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">m_name</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_supported</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+                <span class="c1"># With functorch, all modules are trainable</span>
+                <span class="c1"># We still want to avoid module that have buffers (e.g. BatchNorm)</span>
+                <span class="c1"># as the buffers are not private</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">buffers</span><span class="p">()))</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="p">]</span>
         <span class="p">)</span>
         <span class="c1"># raise or return errors as needed</span>
