@@ -14,8 +14,8 @@
 
 import argparse
 
-
 from utils import generate_report
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

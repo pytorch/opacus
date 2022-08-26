@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pickle
 import glob
+import pickle
 from collections import namedtuple
 from typing import Any, Dict, List, Optional
 
-import torch
-from layers import LayerType
 import numpy as np
 import pandas as pd
+import torch
+
+from layers import LayerType
+
 
 Memory = namedtuple("Memory", "prev_max_mem, cur_mem")
 

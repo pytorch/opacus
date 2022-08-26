@@ -261,7 +261,7 @@ commands:
             echo "Using $(python -V) ($(which python))"
             echo "Using $(pip -V) ($(which pip))"
             python benchmarks/run_benchmarks.py --batch_size 16 --layers <<parameters.layers>> --config_file ./benchmarks/config.json --root ./benchmarks/results/raw/ --cont
-            IFS=$' ';layers=(<<parameters.layers>>); mkdir /tmp/report_layers; IFS=$'\n'; files=`( echo "${layers[*]}" ) | sed 's/.*/.\/benchmarks\/results\/raw\/&*/'`
+            IFS=$' ';layers=(<<parameters.layers>>); mkdir -p /tmp/report_layers; IFS=$'\n'; files=`( echo "${layers[*]}" ) | sed 's/.*/.\/benchmarks\/results\/raw\/&*/'`
             cp -v ${files[@]} /tmp/report_layers
             report_id=`IFS=$'-'; echo "${layers[*]}"`
             python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report-${report_id}.csv --format csv
