@@ -95,6 +95,32 @@ Run following command from `website` folder. It will build the docs and serve th
 ./scripts/build_website.sh
 ```
 
+You can also perform spell checks on documentation automatically (besides IDEs) using [```sphinxcontrib-spelling```](https://sphinxcontrib-spelling.readthedocs.io/en/latest/install.html)
+Note that you will also need [```PyEchant```](https://pyenchant.github.io/pyenchant/) to run ```sphinxcontrib-spelling```, and the Enchant C library. Use this guide for ```PyEchant```. 
+
+Steps:
+1. Install the extension with pip: ```pip install sphinxcontrib-spelling```
+2. Add ```sphinxcontrib.spelling``` to the extensions list in ```conf.py```.
+3. Install ```PyEchant```. Please follow the [installation guide](https://pyenchant.github.io/pyenchant/install.html). Noticed that Apple Silicons may require a way around under section "Apple Silicon related errors".
+4. Make sure you have a ```source``` and ```build``` folder. Pass "spelling" as the builder argument to ```sphinx-build```.
+   ```
+   cd website/sphnix
+   mkdir build  # if you do not already have one
+   sphinx-build -b spelling source build
+   ```
+5. Find files with spelling errors in ```build``` (remember to check each folder). A file will be generated for each source file that contains spelling error. Example:
+   * File name: ```batch_memory_manager.spelling```
+   * File content:
+   ```
+   ../../opacus/utils/batch_memory_manager.py:docstring of opacus.utils.batch_memory_manager.BatchMemoryManager:5: (occasinal)  safeguarding against occasinal large batches produced by
+   ../../opacus/utils/batch_memory_manager.py:docstring of opacus.utils.batch_memory_manager.BatchMemoryManager:13: (optimzer)  On every step optimzer will check if the batch was the last physical batch comprising
+   ../../opacus/utils/batch_memory_manager.py:docstring of opacus.utils.batch_memory_manager.BatchMemoryManager:14: (behaviour)  a logical one, and will change behaviour accordignly.
+   ../../opacus/utils/batch_memory_manager.py:docstring of opacus.utils.batch_memory_manager.BatchMemoryManager:14: (accordignly)  a logical one, and will change behaviour accordignly.
+   ../../opacus/utils/batch_memory_manager.py:docstring of opacus.utils.batch_memory_manager.BatchSplittingSampler:4: (physocal)  Used to split large logical batches into physocal batches of a smaller size,
+   ```
+6. Manually review the spelling files and make changes in source files accordingly. Some detections are not perfect. For example, "nn" (from torch.nn) can be detected as a spelling error.
+
+
 ## Pull Requests
 We actively welcome your pull requests.
 
