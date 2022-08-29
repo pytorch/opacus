@@ -86,7 +86,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In this tutorial we'll dive deeper into Opacus architecture, explore what's happening under the hood of <code>PrivacyEngine</code> and see how you can adapt if the basic API provided by the <code>PrivacyEngine</code> doesn't satisfy your need.</p>
+<p>In this tutorial, we'll dive deeper into Opacus architecture, explore what's happening under the hood of <code>PrivacyEngine</code>, and see how you can adapt if the basic API provided by the <code>PrivacyEngine</code> doesn't satisfy your need.</p>
 <p>We'll talk about core abstractions introduced by Opacus, how <code>PrivacyEngine</code> ties them together and learn how you can extend them for your use case.</p>
 <p>This tutorial is aimed at advanced users - if you're still learning about Opacus and differential privacy in general, consider starting with other tutorials, for example <a href="https://github.com/pytorch/opacus/blob/main/tutorials/building_text_classifier.ipynb">this one</a></p>
 </div>
@@ -102,7 +102,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>First, we'll need to prepare a toy model and a dataset to work with. We'll keep it simple and just throw bunch of random numbers into some linear layers</p>
+<p>First, we'll need to prepare a toy model and a dataset to work with. We'll keep it simple and just throw a bunch of random numbers into some linear layers</p>
 </div>
 </div>
 </div>
@@ -249,7 +249,7 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In short, each of these Opacus classes wrap the underlying object and assign additional responsibilities:</p>
+<p>In short, each of these Opacus classes wraps the underlying object and assigns additional responsibilities:</p>
 <ul>
 <li><code>GradSampleModule</code> acts like an underlying <code>nn.Module</code>, and additionally computes per sample gradient tensor (<code>p.grad_sample</code>) for its parameters</li>
 <li><code>DPOptimizer</code> takes parameters with <code>p.grad_sample</code> computed and performs clipping and noise addition</li>
@@ -269,7 +269,7 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We'll talk more about each of the returned objects later. Now let's focus on what happens inside <code>make_private</code> (and what you need to do if you want to wrap the training objects yourself).</p>
-<p>First we need to re-initialize our client-provided training objects.</p>
+<p>First, we need to re-initialize our client-provided training objects.</p>
 </div>
 </div>
 </div>
@@ -384,7 +384,7 @@ Average grad_sample over 1st dimension. Equal to original:  True
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We now continue with re-implementing <code>make_private()</code></p>
-<p>One tricky thing about Poisson sampling is that concatenating two small Poisson batches does not result in a large Poisson batch. With sequential sampling you can easily simulate large batches by setting a smaller batch size and executing the optimization step every N steps. This trick, however, doesn't work with Poisson sampling.</p>
+<p>One tricky thing about Poisson sampling is that concatenating two small Poisson batches does not result in a large Poisson batch. With sequential sampling, you can easily simulate large batches by setting a smaller batch size and executing the optimization step every N steps. This trick, however, doesn't work with Poisson sampling.</p>
 <p>Therefore, if we're using Poisson sampling, we have to forbid gradient accumulation: you'd have to call <code>optimizer.step()</code> and <code>zero_grad()</code> after every forward/backward pass.</p>
 </div>
 </div>
@@ -579,7 +579,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>And now the final piece of the puzzle - privacy accounting.</p>
-<p>There are multiple ways to calculate privacy budget based on the training parameters. By default opacus uses Rényi Differential Privacy accountant (it has direct translation into (eps, delta)-DP guarantees).</p>
+<p>There are multiple ways to calculate privacy budget based on the training parameters. By default, opacus uses Rényi Differential Privacy accountant (it has direct translation into (eps, delta)-DP guarantees).</p>
 <p>What we need to do is to initialize the accountant object and attach it to track <code>DPOptimizer</code></p>
 </div>
 </div>
@@ -661,13 +661,13 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Above is the simplified diagram of DPOptimizer's flow. The main thing to learn from it is how DPOptimizer uses different attributed in <code>nn.Parameter</code> to store gradients at different stages of processing.</p>
+<p>Above is the simplified diagram of DPOptimizer's flow. The main thing to learn from it is how DPOptimizer uses different attributes in <code>nn.Parameter</code> to store gradients at different stages of processing.</p>
 <ul>
 <li><code>grad_sample</code> is raw per sample gradients, output from <code>GradSampleModule</code></li>
 <li><code>summed_grad</code> is the sum of clipped gradients (no noise yet)</li>
 <li><code>grad</code> are the final gradients. <code>add_noise()</code> method is responsible for overriding <code>grad</code> attribute set by standard PyTorch autograd with the ones calculated by Opacus</li>
 </ul>
-<p>Custom behaviour can be implemented in subclasses by overriding methods above.
+<p>Custom behaviour can be implemented in subclasses by overriding the methods above.
 For example, <code>DPPerLayerOptimizer</code> overrides <code>clip_and_accumulate</code> to adjust the way clipping coefficients are computed.</p>
 </div>
 </div>

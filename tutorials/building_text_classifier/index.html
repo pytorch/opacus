@@ -86,11 +86,11 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In this tutorial we will train a text classifier with Differential Privacy by taking a model pre-trained on public text data and fine-tuning it for a different task.</p>
-<p>When training a model with differential privacy, we almost always face a trade-off between model size and accuracy on the task. The exact details depend on the problem, but a rule of thumb is that the fewer parameters the model has, the easier it is to get a good performance with DP.</p>
-<p>Most state-of-the-art NLP models are quite deep and large (e.g. <a href="https://github.com/google-research/bert">BERT-base</a> has over 100M parameters), which makes task of training text model on a private datasets rather challenging.</p>
+<p>In this tutorial, we will train a text classifier with Differential Privacy by taking a model pre-trained on public text data and fine-tuning it for a different task.</p>
+<p>When training a model with differential privacy, we almost always face a trade-off between model size and accuracy on the task. The exact details depend on the problem, but a rule of thumb is that the fewer parameters the model has, the easier it is to get good performance with DP.</p>
+<p>Most state-of-the-art NLP models are quite deep and large (e.g. <a href="https://github.com/google-research/bert">BERT-base</a> has over 100M parameters), which makes the task of training text models on private datasets rather challenging.</p>
 <p>One way of addressing this problem is to divide the training process into two stages. First, we will pre-train the model on a public dataset, exposing the model to generic text data. Assuming that the generic text data is public, we will not be using differential privacy at this step. Then, we freeze most of the layers, leaving only a few upper layers to be trained on the private dataset using DP-SGD. This way we can get the best of both worlds - we have a deep and powerful text understanding model, while only training a small number of parameters with differentially private algorithm.</p>
-<p>In this tutorial we will take the pre-trained <a href="https://github.com/google-research/bert">BERT-base</a> model and fine-tune it to recognize textual entailment on the <a href="https://nlp.stanford.edu/projects/snli/">SNLI</a> dataset.</p>
+<p>In this tutorial, we will take the pre-trained <a href="https://github.com/google-research/bert">BERT-base</a> model and fine-tune it to recognize textual entailment on the <a href="https://nlp.stanford.edu/projects/snli/">SNLI</a> dataset.</p>
 </div>
 </div>
 </div>
@@ -104,7 +104,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>First, we need to download the dataset (we'll user Stanford NLP mirror)</p>
+<p>First, we need to download the dataset (we'll use Stanford NLP mirror)</p>
 </div>
 </div>
 </div>
@@ -199,8 +199,8 @@ Completed!
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Let's now take a look inside. <a href="https://nlp.stanford.edu/projects/snli/">SNLI dataset</a> provides ample syntactic metadata, but we'll only use raw input text. Therefore, the only fields we're interested in are <strong>sentence1</strong> (premise), <strong>sentence2</strong> (hypothesis) and <strong>gold_label</strong> (label chosen by the majority of annotators).</p>
-<p>Label defines the relation between premise and hypothesis: either <em>contradiction</em>, <em>neutral</em> or <em>entailment</em>.</p>
+<p>Let's now take a look inside. <a href="https://nlp.stanford.edu/projects/snli/">SNLI dataset</a> provides ample syntactic metadata, but we'll only use raw input text. Therefore, the only fields we're interested in are <strong>sentence1</strong> (premise), <strong>sentence2</strong> (hypothesis), and <strong>gold_label</strong> (label chosen by the majority of annotators).</p>
+<p>The label defines the relation between premise and hypothesis: either <em>contradiction</em>, <em>neutral</em>, or <em>entailment</em>.</p>
 </div>
 </div>
 </div>
@@ -296,10 +296,10 @@ Completed!
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>BERT (Bidirectional Encoder Representations from Transformers) is a state of the art approach to various NLP tasks. It uses a Transformer architecture and relies heavily on the concept of pre-training.</p>
-<p>We'll use a pre-trained BERT-base model, provided in huggingface <a href="https://github.com/huggingface/transformers">transformers</a> repo.
-It gives us a pytorch implementation for the classic BERT architecture, as well as a tokenizer and weights pre-trained on a public English corpus (Wikipedia).</p>
-<p>Please follow these <a href="https://github.com/huggingface/transformers#installation">installation instrucitons</a> before proceeding.</p>
+<p>BERT (Bidirectional Encoder Representations from Transformers) is a state-of-the-art approach to various NLP tasks. It uses a Transformer architecture and relies heavily on the concept of pre-training.</p>
+<p>We'll use a pre-trained BERT-base model, provided in the huggingface <a href="https://github.com/huggingface/transformers">transformers</a> repo.
+It gives us a PyTorch implementation for the classic BERT architecture, as well as a tokenizer and weights, pre-trained on a public English corpus (Wikipedia).</p>
+<p>Please follow these <a href="https://github.com/huggingface/transformers#installation">installation instructions</a> before proceeding.</p>
 </div>
 </div>
 </div>
@@ -413,7 +413,7 @@ Trainable parameters count: 7680771
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Thus, by using a pre-trained model we reduce the number of trainable params from over 100 millions to just above 7.5 millions. This will help both performance and convergence with added noise.</p>
+<p>Thus, by using a pre-trained model we reduce the number of trainable params from over 100 million to just above 7.5 million. This will help both performance and convergence with added noise.</p>
 </div>
 </div>
 </div>
@@ -526,9 +526,9 @@ Trainable parameters count: 7680771
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Choosing-batch-size">Choosing batch size<a class="anchor-link" href="#Choosing-batch-size">¶</a></h2><p>Let's talk about batch sizes for a bit.</p>
-<p>In addition to all the considerations you normally take into account when choosing batch size, training model with DP adds another one - privacy cost.</p>
+<p>In addition to all the considerations you normally take into account when choosing batch size, training models with DP adds another one - privacy cost.</p>
 <p>Because of the threat model we assume and the way we add noise to the gradients, larger batch sizes (to a certain extent) generally help convergence. We add the same amount of noise to each gradient update (scaled to the norm of one sample in the batch) regardless of the batch size. What this means is that as the batch size increases, the relative amount of noise added decreases. while preserving the same epsilon guarantee.</p>
-<p>You should, however, keep in mind that increasing batch size has its price in terms of epsilon, which grows at <code>O(sqrt(batch_size))</code> as we train (therefore larger batches make it grow faster). The good strategy here is to experiment with multiple combinations of <code>batch_size</code> and <code>noise_multiplier</code> to find the one that provides best possible quality at acceptable privacy guarantee.</p>
+<p>You should, however, keep in mind that increasing batch size has its price in terms of epsilon, which grows at <code>O(sqrt(batch_size))</code> as we train (therefore larger batches make it grow faster). The good strategy here is to experiment with multiple combinations of <code>batch_size</code> and <code>noise_multiplier</code> to find the one that provides the best possible quality at acceptable privacy guarantee.</p>
 <p>There's another side to this - memory. Opacus computes and stores <em>per sample</em> gradients, so for every normal gradient, Opacus will store <code>n=batch_size</code> per-sample gradients on each step, thus increasing the memory footprint by at least <code>O(batch_size)</code>. In reality, however, the peak memory requirement is <code>O(batch_size^2)</code> compared to a non-private model. This is because some intermediate steps in per sample gradient computation involve operations on two matrices, each with batch_size as one of the dimensions.</p>
 <p>The good news is, we can pick the most appropriate batch size, regardless of memory constraints. Opacus has built-in support for <em>virtual</em> batches. Using it we can separate physical steps (gradient computation) and logical steps (noise addition and parameter updates): use larger batches for training, while keeping memory footprint low. Below we will specify two constants:</p>
 <ul>
@@ -596,7 +596,7 @@ Trainable parameters count: 7680771
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>First we specify some training parameters ready to run the training loop for three epochs</p>
+<p>First, we specify some training parameters ready to run the training loop for three epochs</p>
 </div>
 </div>
 </div>
@@ -667,9 +667,9 @@ Trainable parameters count: 7680771
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Next we will define and attach PrivacyEngine. There are two parameters you need to consider here:</p>
+<p>Next, we will define and attach PrivacyEngine. There are two parameters you need to consider here:</p>
 <ul>
-<li><code>noise_multiplier</code>. It defines the trade-off between privacy and accuracy. Adding more noise will provide stronger privacy guarantees, but will also hurt model quality.  In this run, the PrivacyEngine will determine this value based on the target values of <code>EPSILON</code>, <code>DELTA</code> and <code>EPOCHS</code>.  For the default settings, this will set <code>noise_multiplier</code> to about 0.4.</li>
+<li><code>noise_multiplier</code>. It defines the trade-off between privacy and accuracy. Adding more noise will provide stronger privacy guarantees, but will also hurt model quality.  In this run, the PrivacyEngine will determine this value based on the target values of <code>EPSILON</code>, <code>DELTA</code>, and <code>EPOCHS</code>.  For the default settings, this will set <code>noise_multiplier</code> to about 0.4.</li>
 <li><code>max_grad_norm</code>. Defines the maximum magnitude of L2 norms to which we clip per sample gradients. There is a bit of tug of war with this threshold: on the one hand, a low threshold means that we will clip many gradients, hurting convergence, so we might be tempted to raise it. However, recall that we add noise with <code>std=noise_multiplier * max_grad_norm</code> so we will pay for the increased threshold with more noise. In most cases you can rely on the model being quite resilient to clipping (after the first few iterations your model will tend to adjust so that its gradients stay below the clipping threshold), so you can often just keep the default value (<code>=1.0</code>) and focus on tuning <code>batch_size</code> and <code>noise_multiplier</code> instead. That being said, sometimes clipping hurts the model so it may be worth experimenting with different clipping thresholds, like we are doing in this tutorial.</li>
 </ul>
 <p>These two parameters define the scale of the noise we add to gradients: the noise will be sampled from a Gaussian distribution with <code>std=noise_multiplier * max_grad_norm</code>.</p>

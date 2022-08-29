@@ -86,7 +86,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>DP-SGD guarantees privacy of every sample used in the training. In order to realize this, we have to bound the sensitivity of every sample, and in order to do that we have to clip the gradient of every sample. Unfortunately, pytorch doesn't maintain the gradients of individual samples in a batch and only exposes the aggregated gradients of all the samples in a batch via the <a href="https://pytorch.org/docs/stable/generated/torch.Tensor.grad.html"><code>.grad</code> attribute</a>.</p>
+<p>DP-SGD guarantees privacy of every sample used in the training. In order to realize this, we have to bound the sensitivity of every sample, and in order to do that, we have to clip the gradient of every sample. Unfortunately, pytorch doesn't maintain the gradients of individual samples in a batch and only exposes the aggregated gradients of all the samples in a batch via the <a href="https://pytorch.org/docs/stable/generated/torch.Tensor.grad.html"><code>.grad</code> attribute</a>.</p>
 </div>
 </div>
 </div>
@@ -140,7 +140,7 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="GradSampleModule-internals"><code>GradSampleModule</code> internals<a class="anchor-link" href="#GradSampleModule-internals">¶</a></h2><p>For most modules, Opacus provides a function (aka grad_sampler) that essentially computes the per-sample-gradients of a batch by -- more or less -- doing the backpropagation "by hand".</p>
-<p><code>GradSampleModule</code> is a wrapper around the existing <code>nn.Module</code>s. It attaches the above function to the modules it wraps using <a href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html?#torch.nn.Module.register_backward_hook">backward hooks</a>. It also provides a other auxiliary methods such as validation, utilities to add/remove/set/reset <code>grad_sample</code>, utilities to <code>attach/remove</code> hooks, etc.</p>
+<p><code>GradSampleModule</code> is a wrapper around the existing <code>nn.Module</code>s. It attaches the above function to the modules it wraps using <a href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html?#torch.nn.Module.register_backward_hook">backward hooks</a>. It also provides other auxiliary methods such as validation, utilities to add/remove/set/reset <code>grad_sample</code>, utilities to <code>attach/remove</code> hooks, etc.</p>
 <p>TL;DR: grad_samplers contain the logic to compute the gradients given the activations and backpropagated gradients, and the <code>GradSampleModule</code> takes care of everything else by attaching the grad_samplers to the right modules and exposes a simple/minimal interface to the user.</p>
 </div>
 </div>
@@ -186,7 +186,7 @@ After wrapping : GradSample(Linear(in_features=42, out_features=2, bias=True))
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>That's it!
-<code>GradSampleModule</code> wraps your linear module with all the goodies and you can use this module as a drop in replacement.</p>
+<code>GradSampleModule</code> wraps your linear module with all the goodies and you can use this module as a drop-in replacement.</p>
 </div>
 </div>
 </div>
@@ -281,7 +281,7 @@ This <a href="https://medium.com/pytorch/differential-privacy-series-part-2-effi
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Supported-modules">Supported modules<a class="anchor-link" href="#Supported-modules">¶</a></h3><p>Opacus offers grad_samplers for most common modules; you can see the full list <a href="https://github.com/pytorch/opacus/tree/main/opacus/grad_sample">here</a>. As you can see, this list is not at all exhaustive; we wholeheartedly welcome your contributions.</p>
-<p>By design, the <code>GradSampleModule</code> just does that - computes grad samples. While is is built for use with Opacus, it certainly isn't restricted to DP usecases and can be used for any task that needs per-sample-gradients.</p>
+<p>By design, the <code>GradSampleModule</code> just does that - computes grad samples. While it is built for use with Opacus, it certainly isn't restricted to DP use cases and can be used for any task that needs per-sample-gradients.</p>
 <p>If you have any questions or comments, please don't hesitate to post them on our <a href="https://discuss.pytorch.org/c/opacus/29">forum</a>.</p>
 </div>
 </div>

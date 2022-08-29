@@ -86,9 +86,9 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In this tutorial we'll go over the basics you need to know to start using Opacus in your distributed model training pipeline. As the state-of-the-art models and datasets get bigger, multi-GPU training became the norm and Opacus comes with seamless, out-of-the box support for Distributed Data Parallel (DDP).</p>
-<p>This tutorial requires basic knowledge of Opacus and DDP. If you're new to either of these tools, we suggest to start with the following tutorials: <a href="https://opacus.ai/tutorials/building_image_classifier">Building an Image Classifier with Differential Privacy</a> and <a href="https://pytorch.org/tutorials/intermediate/ddp_tutorial.html">Getting Started with Distributed Data Parallel</a></p>
-<p>In Chapter 1 we'll start with a mininmal working example to demonstrate what exactly do you need to do in order to make Opacus work in a distributed setting. This should be enough to get started for most common scenarios.</p>
+<p>In this tutorial we'll go over the basics you need to know to start using Opacus in your distributed model training pipeline. As the state-of-the-art models and datasets get bigger, multi-GPU training became the norm and Opacus comes with seamless, out-of-the-box support for Distributed Data Parallel (DDP).</p>
+<p>This tutorial requires basic knowledge of Opacus and DDP. If you're new to either of these tools, we suggest starting with the following tutorials: <a href="https://opacus.ai/tutorials/building_image_classifier">Building an Image Classifier with Differential Privacy</a> and <a href="https://pytorch.org/tutorials/intermediate/ddp_tutorial.html">Getting Started with Distributed Data Parallel</a></p>
+<p>In Chapter 1 we'll start with a minimal working example to demonstrate what exactly you need to do in order to make Opacus work in a distributed setting. This should be enough to get started for most common scenarios.</p>
 <p>In Chapters 2 and 3 we'll take a closer look at the implementation and talk about technical details. We'll see what are the differences between private DDP and regular DDP and why we need to introduce them.</p>
 </div>
 </div>
@@ -105,7 +105,7 @@
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Before we begin, there are a few things we need to mention.</p>
 <p>First, this tutorial is written to be executed on a single Linux machine with at least 2 GPUs. The general principles remain the same for Windows environment and/or multi-node training, but you'll need to slightly modify the DDP code to make it work.</p>
-<p>Second, Jupyter notebooks are <a href="https://discuss.pytorch.org/t/distributeddataparallel-on-terminal-vs-jupyter-notebook/101404">known</a> not to support DDP training. Throughout the tutorial we'll use <code>%%writefile</code> magic command to write code to a separate file and later execute it via the terminal. These files will be cleaned up in the last cell of this notebook.</p>
+<p>Second, Jupyter notebooks are <a href="https://discuss.pytorch.org/t/distributeddataparallel-on-terminal-vs-jupyter-notebook/101404">known</a> not to support DDP training. Throughout the tutorial, we'll use <code>%%writefile</code> magic command to write code to a separate file and later execute it via the terminal. These files will be cleaned up in the last cell of this notebook.</p>
 </div>
 </div>
 </div>
@@ -119,7 +119,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>First, let's initialise distributed environment</p>
+<p>First, let's initialise the distributed environment</p>
 </div>
 </div>
 </div>
@@ -271,12 +271,12 @@
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Coming next is the key bit - and the only one that's different from non-private DDP.</p>
 <p>First, instead of wrapping the model with <code>DistributedDataParallel</code> we'll wrap it with <code>DifferentiallyPrivateDistributedDataParallel</code> from <code>opacus.distributed</code> package. Simple as that.</p>
-<p>Second difference comes when itinializing the <code>DataLoader</code>. Normally, for ditributed training you would initialize data loader specific to your distributed setup. It affects two parameters:</p>
+<p>Second difference comes when initializing the <code>DataLoader</code>. Normally, for distributed training you would initialize data loader specific to your distributed setup. It affects two parameters:</p>
 <ul>
 <li>Batch size denotes the per-GPU batch size. That is, your logical batch size (one that matters for convergence) is equal to <code>local_batch_size*num_gpus</code>.</li>
 <li>You need to specify <code>sampler=DistributedSampler(dataset)</code> to distribute the training dataset across GPUs.</li>
 </ul>
-<p>With Opacus you don't need to do either of those things. <code>make_private</code> method expects user-provided <code>DataLoader</code> to be non-distributed, initalized as if you're training on a single GPU.</p>
+<p>With Opacus you don't need to do either of those things. <code>make_private</code> method expects user-provided <code>DataLoader</code> to be non-distributed, initialized as if you're training on a single GPU.</p>
 <p>The code below highlights changes you need to make to a normal DDP training pipeline by commenting out lines you need to replace or remove.</p>
 </div>
 </div>
@@ -711,7 +711,7 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>One significant difference between <code>DDP</code> and <code>DPDDP</code> is how it approaches synchronisation.</p>
 <p>Normally with Distributed Data Parallel forward and backward passes are synchronisation points, and <code>DDP</code> wrapper ensures that the gradients are synchronised across workers at the end of the backward pass.</p>
-<p>Opacus, however, need a later synchronisation point. Before we can use the gradients, we need to clip them add noise. This is done in the optimizer, which moves the synchronisation point from the backward pass to the optimization step.
+<p>Opacus, however, need a later synchronisation point. Before we can use the gradients, we need to clip them and add noise. This is done in the optimizer, which moves the synchronisation point from the backward pass to the optimization step.
 Additionally, to simplify the calculations, we only add noise on worker with <code>rank=0</code>, and use the noise scale calibrated to the combined batch across all workers.</p>
 </div>
 </div>
@@ -900,7 +900,7 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>When we run the code, notice that the gradients are not synchronised after <code>loss.backward()</code>, but only after <code>optimizer.step()</code>. For this example we've set privacy parameters to effectively disable noise and clipping, so the synchronised gradient is indeed the average between individual worker's gradients.</p>
+<p>When we run the code, notice that the gradients are not synchronised after <code>loss.backward()</code>, but only after <code>optimizer.step()</code>. For this example, we've set privacy parameters to effectively disable noise and clipping, so the synchronised gradient is indeed the average between individual worker's gradients.</p>
 </div>
 </div>
 </div>

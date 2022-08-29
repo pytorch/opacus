@@ -96,7 +96,7 @@
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Overview">Overview<a class="anchor-link" href="#Overview">¶</a></h2><p>In this tutorial we will learn to do the following:</p>
 <ol>
-<li>Learn about privacy specific hyper-parameters related to DP-SGD</li>
+<li>Learn about privacy-specific hyper-parameters related to DP-SGD</li>
 <li>Learn about ModelInspector, incompatible layers, and use model rewriting utility.</li>
 <li>Train a differentially private ResNet18 for image classification.</li>
 </ol>
@@ -145,8 +145,8 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>There's another constraint we should be mindful of—memory. To balance peak memory requirement, which is proportional to <code>batch_size^2</code>, and training performance, we will be using BatchMemoryManager. It separates the logical batch size (which defines how often the model is updated and how much DP noise is added), and a physical batch size (which defines how many samples do we process at a time).</p>
-<p>With BatchMemoryManager you will create your DataLoader with a logical batch size, and then provide maximum physical batch size to the memory manager.</p>
+<p>There's another constraint we should be mindful of—memory. To balance peak memory requirement, which is proportional to <code>batch_size^2</code>, and training performance, we will be using BatchMemoryManager. It separates the logical batch size (which defines how often the model is updated and how much DP noise is added), and a physical batch size (which defines how many samples we process at a time).</p>
+<p>With BatchMemoryManager you will create your DataLoader with a logical batch size, and then provide the maximum physical batch size to the memory manager.</p>
 </div>
 </div>
 </div>
@@ -186,7 +186,7 @@
 <span class="kn">import</span> <span class="nn">torchvision.transforms</span> <span class="k">as</span> <span class="nn">transforms</span>
 
 <span class="c1"># These values, specific to the CIFAR10 dataset, are assumed to be known.</span>
-<span class="c1"># If necessary, they can be computed with modest privacy budget.</span>
+<span class="c1"># If necessary, they can be computed with modest privacy budgets.</span>
 <span class="n">CIFAR10_MEAN</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.4914</span><span class="p">,</span> <span class="mf">0.4822</span><span class="p">,</span> <span class="mf">0.4465</span><span class="p">)</span>
 <span class="n">CIFAR10_STD_DEV</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.2023</span><span class="p">,</span> <span class="mf">0.1994</span><span class="p">,</span> <span class="mf">0.2010</span><span class="p">)</span>
 

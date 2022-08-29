@@ -86,7 +86,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In this tutorial we will build a differentially-private LSTM model to classify names to their source languages, which is the same task as in the tutorial <strong>NLP From Scratch</strong> (https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html). Since the objective of this tutorial is to demonstrate the effective use of an LSTM with privacy guarantees, we will be utilizing it in place of the bare-bones RNN model defined in the original tutorial. Specifically, we use the <code>DPLSTM</code> module from <code>opacus.layers.dp_lstm</code> to facilitate calculation of the per-example gradients, which are utilized in the addition of noise during application of differential privacy. <code>DPLSTM</code> has the same API and functionality as the <code>nn.LSTM</code>, with some restrictions (ex. we currently support single layers, the full list is given below).</p>
+<p>In this tutorial, we will build a differentially-private LSTM model to classify names to their source languages, which is the same task as in the tutorial <strong>NLP From Scratch</strong> (https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html). Since the objective of this tutorial is to demonstrate the effective use of an LSTM with privacy guarantees, we will be utilizing it in place of the bare-bones RNN model defined in the original tutorial. Specifically, we use the <code>DPLSTM</code> module from <code>opacus.layers.dp_lstm</code> to facilitate the calculation of the per-example gradients, which are utilized in the addition of noise during the application of differential privacy. <code>DPLSTM</code> has the same API and functionality as the <code>nn.LSTM</code>, with some restrictions (ex. we currently support single layers, the full list is given below).</p>
 </div>
 </div>
 </div>
@@ -228,7 +228,7 @@ Completed!
 
     <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char_ids_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        The inverse of `forward`. Keeps the start, end and pad indices.</span>
+<span class="sd">        The inverse of `forward`. Keeps the start, end, and pad indices.</span>
 <span class="sd">        """</span>
         <span class="n">char_ids</span> <span class="o">=</span> <span class="n">char_ids_tensor</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
@@ -667,7 +667,7 @@ Completed!
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Finally we can start training! We will be training for 50 epochs iterations (where each epoch corresponds to a pass over the whole dataset). We will be reporting the privacy epsilon every <code>test_every</code> epochs. We will also benchmark this differentially-private model against a model without privacy and obtain almost identical performance. Further, the private model trained with Opacus incurs only minimal overhead in training time, with the differentially-private classifier only slightly slower (by a couple of minutes) than the non-private model.</p>
+<p>Finally, we can start training! We will be training for 50 epochs iterations (where each epoch corresponds to a pass over the whole dataset). We will be reporting the privacy epsilon every <code>test_every</code> epoch. We will also benchmark this differentially-private model against a model without privacy and obtain almost identical performance. Further, the private model trained with Opacus incurs only minimal overhead in training time, with the differentially-private classifier only slightly slower (by a couple of minutes) than the non-private model.</p>
 </div>
 </div>
 </div>
@@ -809,7 +809,7 @@ Test Accuracy: 0.752090 (ε = 11.93, δ = 8e-05)
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The differentially-private name classification model obtains a test accuracy of 0.75 with an epsilon of just under 12. This shows that we can achieve a good accuracy on this task, with minimal loss of privacy.</p>
+<p>The differentially-private name classification model obtains a test accuracy of 0.75 with an epsilon of just under 12. This shows that we can achieve good accuracy on this task, with minimal loss of privacy.</p>
 </div>
 </div>
 </div>
