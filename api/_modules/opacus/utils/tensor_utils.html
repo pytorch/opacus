@@ -57,7 +57,7 @@
 <span class="sd">    Calculates the norm of the given tensors for each sample.</span>
 
 <span class="sd">    This function calculates the overall norm of the given tensors for each sample,</span>
-<span class="sd">    assuming the each batch's dim is zero.</span>
+<span class="sd">    assuming each batch's dim is zero.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        named_params: An iterator of tuples &lt;name, param&gt; with name being a</span>
@@ -88,7 +88,7 @@
 <span class="sd">    Calculates the norm of the given tensor (a single parameter) for each sample.</span>
 
 <span class="sd">    This function calculates the overall norm of the given tensor for each sample,</span>
-<span class="sd">    assuming the each batch's dim is zero.</span>
+<span class="sd">    assuming each batch's dim is zero.</span>
 
 <span class="sd">    It is equivalent to:</span>
 <span class="sd">    `calc_sample_norms(named_params=((None, param),))[0]`</span>
@@ -117,7 +117,7 @@
 <span class="sd">    Calculates the sum over all dimensions, except the first</span>
 <span class="sd">    (batch dimension), and excluding the last n_dims.</span>
 
-<span class="sd">    This function will ignore the first dimension and it will</span>
+<span class="sd">    This function will ignore the first dimension, and it will</span>
 <span class="sd">    not aggregate over the last n_dims dimensions.</span>
 
 <span class="sd">    Args:</span>

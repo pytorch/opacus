@@ -140,7 +140,7 @@
 <span class="sd">        reference: The reference Tensor to get the appropriate shape and device</span>
 <span class="sd">            for generating the noise</span>
 <span class="sd">        generator: The PyTorch noise generator</span>
-<span class="sd">        secure_mode: boolean showing if "secure" noise need to be generate</span>
+<span class="sd">        secure_mode: boolean showing if "secure" noise need to be generated</span>
 <span class="sd">            (see the notes)</span>
 
 <span class="sd">    Notes:</span>
@@ -213,7 +213,7 @@
 <span class="sd">    Examples:</span>
 <span class="sd">        &gt;&gt;&gt; module = MyCustomModel()</span>
 <span class="sd">        &gt;&gt;&gt; optimizer = torch.optim.SGD(module.parameters(), lr=0.1)</span>
-<span class="sd">        &gt;&gt;&gt; dp_optimzer = DPOptimizer(</span>
+<span class="sd">        &gt;&gt;&gt; dp_optimizer = DPOptimizer(</span>
 <span class="sd">        ...     optimizer=optimizer,</span>
 <span class="sd">        ...     noise_multiplier=1.0,</span>
 <span class="sd">        ...     max_grad_norm=1.0,</span>

@@ -99,7 +99,7 @@
         <span class="sd">"""</span>
 <span class="sd">        Returns a callback function which can be used to attach to DPOptimizer</span>
 <span class="sd">        Args:</span>
-<span class="sd">            sample_rate: Expected samping rate used for accounting</span>
+<span class="sd">            sample_rate: Expected sampling rate used for accounting</span>
 <span class="sd">        """</span>
 
         <span class="k">def</span> <span class="nf">hook_fn</span><span class="p">(</span><span class="n">optim</span><span class="p">:</span> <span class="n">DPOptimizer</span><span class="p">):</span>
@@ -115,7 +115,7 @@
 
 <div class="viewcode-block" id="IAccountant.state_dict"><a class="viewcode-back" href="../../../accounting/iaccountant.html#opacus.accountants.accountant.IAccountant.state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="n">T_state_dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T_state_dict</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        Retruns a dictionary containing the state of the accountant.</span>
+<span class="sd">        Returns a dictionary containing the state of the accountant.</span>
 <span class="sd">        Args:</span>
 <span class="sd">            destination: a mappable object to populate the current state_dict into.</span>
 <span class="sd">                If this arg is None, an OrderedDict is created and populated.</span>
