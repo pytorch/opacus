@@ -96,7 +96,7 @@ Run following command from `website` folder. It will build the docs and serve th
 ```
 
 You can also perform spell checks on documentation automatically (besides IDEs) using [```sphinxcontrib-spelling```](https://sphinxcontrib-spelling.readthedocs.io/en/latest/install.html)
-Note that you will also need [```PyEnchant```](https://pyenchant.github.io/pyenchant/) to run ```sphinxcontrib-spelling```, and the Enchant C library. Use this guide for ```PyEnchant```. 
+Note that you will also need [```PyEnchant```](https://pyenchant.github.io/pyenchant/) to run ```sphinxcontrib-spelling```, and thus the Enchant C library. Use this guide for ```PyEnchant```. 
 
 Steps:
 1. Install the extension with pip: ```pip install sphinxcontrib-spelling```
