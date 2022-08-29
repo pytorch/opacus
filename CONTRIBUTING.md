@@ -101,7 +101,7 @@ Note that you will also need [```PyEnchant```](https://pyenchant.github.io/pyenc
 Steps:
 1. Install the extension with pip: ```pip install sphinxcontrib-spelling```
 2. Add ```sphinxcontrib.spelling``` to the extensions list in ```conf.py```.
-3. Install ```PyEchant```. Please follow the [installation guide](https://pyenchant.github.io/pyenchant/install.html). Noticed that Apple Silicons may require a way around under section "Apple Silicon related errors".
+3. Install ```PyEnchant```. Please follow the [installation guide](https://pyenchant.github.io/pyenchant/install.html). Noticed that Apple Silicons may require a way around under section "Apple Silicon related errors".
 4. Make sure you have a ```source``` and ```build``` folder. Pass "spelling" as the builder argument to ```sphinx-build```.
    ```
    cd website/sphnix
