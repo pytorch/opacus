@@ -72,7 +72,7 @@ def requires_grad(module: nn.Module, *, recurse: bool = False) -> bool:
     Args:
         module: PyTorch module whose parameters are to be examined.
         recurse: Flag specifying if the gradient requirement check should
-            be applied recursively to sub-modules of the specified module
+            be applied recursively to submodules of the specified module
 
     Returns:
         Flag indicate if any parameters require gradients
