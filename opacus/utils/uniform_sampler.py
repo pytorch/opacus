@@ -68,7 +68,7 @@ class DistributedUniformWithReplacementSampler(Sampler):
            (plus or minus one sample)
         3. Each replica selects each sample of its chunk independently
            with probability `sample_rate`
-        4. Each replica ouputs the selected samples, which form a local batch
+        4. Each replica outputs the selected samples, which form a local batch
 
     The sum of the lengths of the local batches follows a Poisson distribution.
     In particular, the expected length of each local batch is:

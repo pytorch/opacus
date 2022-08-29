@@ -113,7 +113,7 @@ def _generate_noise(
         reference: The reference Tensor to get the appropriate shape and device
             for generating the noise
         generator: The PyTorch noise generator
-        secure_mode: boolean showing if "secure" noise need to be generate
+        secure_mode: boolean showing if "secure" noise need to be generated
             (see the notes)
 
     Notes:
@@ -186,7 +186,7 @@ class DPOptimizer(Optimizer):
     Examples:
         >>> module = MyCustomModel()
         >>> optimizer = torch.optim.SGD(module.parameters(), lr=0.1)
-        >>> dp_optimzer = DPOptimizer(
+        >>> dp_optimizer = DPOptimizer(
         ...     optimizer=optimizer,
         ...     noise_multiplier=1.0,
         ...     max_grad_norm=1.0,
