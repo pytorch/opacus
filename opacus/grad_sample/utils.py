@@ -20,6 +20,7 @@ import torch.nn as nn
 from .grad_sample_module import GradSampleModule
 from .gsm_base import AbstractGradSampleModule
 from .gsm_exp_weights import GradSampleModuleExpandedWeights
+from .gsm_no_op import GradSampleModuleNoOp
 
 
 def register_grad_sampler(
@@ -69,6 +70,8 @@ def get_gsm_class(grad_sample_mode: str) -> Type[AbstractGradSampleModule]:
         return GradSampleModule
     elif grad_sample_mode == "ew":
         return GradSampleModuleExpandedWeights
+    elif grad_sample_mode == "no_op":
+        return GradSampleModuleNoOp
     else:
         raise ValueError(
             f"Unexpected grad_sample_mode: {grad_sample_mode}. "
