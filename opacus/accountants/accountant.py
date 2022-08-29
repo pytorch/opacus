@@ -72,7 +72,7 @@ class IAccountant(abc.ABC):
         """
         Returns a callback function which can be used to attach to DPOptimizer
         Args:
-            sample_rate: Expected samping rate used for accounting
+            sample_rate: Expected sampling rate used for accounting
         """
 
         def hook_fn(optim: DPOptimizer):
@@ -88,7 +88,7 @@ class IAccountant(abc.ABC):
 
     def state_dict(self, destination: T_state_dict = None) -> T_state_dict:
         """
-        Retruns a dictionary containing the state of the accountant.
+        Returns a dictionary containing the state of the accountant.
         Args:
             destination: a mappable object to populate the current state_dict into.
                 If this arg is None, an OrderedDict is created and populated.

@@ -30,7 +30,7 @@ def calc_sample_norms(
     Calculates the norm of the given tensors for each sample.
 
     This function calculates the overall norm of the given tensors for each sample,
-    assuming the each batch's dim is zero.
+    assuming each batch's dim is zero.
 
     Args:
         named_params: An iterator of tuples <name, param> with name being a
@@ -61,7 +61,7 @@ def calc_sample_norms_one_layer(param: torch.Tensor) -> torch.Tensor:
     Calculates the norm of the given tensor (a single parameter) for each sample.
 
     This function calculates the overall norm of the given tensor for each sample,
-    assuming the each batch's dim is zero.
+    assuming each batch's dim is zero.
 
     It is equivalent to:
     `calc_sample_norms(named_params=((None, param),))[0]`
@@ -90,7 +90,7 @@ def sum_over_all_but_batch_and_last_n(
     Calculates the sum over all dimensions, except the first
     (batch dimension), and excluding the last n_dims.
 
-    This function will ignore the first dimension and it will
+    This function will ignore the first dimension, and it will
     not aggregate over the last n_dims dimensions.
 
     Args:

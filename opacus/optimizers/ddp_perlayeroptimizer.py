@@ -67,7 +67,7 @@ class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptim
 class DistributedPerLayerOptimizer(DPOptimizer):
     """
     :class:`~opacus.optimizers.optimizer.DPOptimizer` that implements
-    per layer clipping strategy and is compatible with distibured data parallel
+    per layer clipping strategy and is compatible with distributed data parallel
     """
 
     def __init__(
