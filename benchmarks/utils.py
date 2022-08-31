@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import glob
 import pickle
 from collections import namedtuple
 from typing import Any, Dict, List, Optional
 
+import numpy as np
+import pandas as pd
 import torch
 from layers import LayerType
 
@@ -163,3 +166,79 @@ def save_results(
             handle,
             protocol=pickle.HIGHEST_PROTOCOL,
         )
+
+
+def generate_report(path_to_results: str, save_path: str, format: str) -> None:
+    """Generate a report from the benchamrks outcome.
+    The output is a file whic contains the runtime and memory of each layer.
+    If multiple layer variants were run (pytorch nn, DP, or GSM).
+    Then we will compare the performance of both DP and GSM to pytorch.nn.
+
+    Args:
+        path_to_results: the path that `run_benchmarks.py` has saved results to.
+        save_path: path to save the output.
+        format: output format : csv or pkl.
+    """
+    path_to_results = (
+        path_to_results if path_to_results[-1] != "/" else path_to_results[:-1]
+    )
+    files = glob.glob(f"{path_to_results}/*")
+
+    if len(files) == 0:
+        raise Exception(f"There were no result files in the path {path_to_results}")
+
+    raw_results = []
+    for result_file in files:
+        with open(result_file, "rb") as handle:
+            raw_results.append(pickle.load(handle))
+
+    results_dict = []
+    for raw in raw_results:
+        runtime = np.mean([i["runtime"] for i in raw["results"]])
+        memory = np.mean([i["memory_stats"]["max_memory"] for i in raw["results"]])
+        result = {
+            "layer": raw["layer"],
+            "batch_size": raw["batch_size"],
+            "num_runs": raw["num_runs"],
+            "num_repeats": raw["num_repeats"],
+            "forward_only": raw["forward_only"],
+            "runtime": runtime,
+            "memory": memory,
+        }
+        results_dict.append(result)
+
+    results = pd.DataFrame(results_dict)
+    results["variant"] = "control"
+    results["variant"][results["layer"].str.startswith("gsm")] = "gsm"
+    results["variant"][results["layer"].str.startswith("dp")] = "dp"
+    results["base_layer"] = results["layer"].str.replace("(gsm_)|(dp)", "")
+
+    pivot = results.pivot_table(
+        index=["batch_size", "num_runs", "num_repeats", "forward_only", "base_layer"],
+        columns=["variant"],
+        values=["runtime", "memory"],
+    )
+
+    def add_ratio(df, metric, variant):
+        if variant not in df.columns.get_level_values("variant"):
+            for ametric in df.columns.get_level_values(0):
+                df[(ametric, variant)] = np.nan
+
+        df[(metric, f"{variant}/control")] = (
+            df.loc[:, (metric, variant)] / df.loc[:, (metric, "control")]
+        )
+
+    if "control" in results["variant"].tolist():
+        add_ratio(pivot, "runtime", "dp")
+        add_ratio(pivot, "memory", "dp")
+        add_ratio(pivot, "runtime", "gsm")
+        add_ratio(pivot, "memory", "gsm")
+        pivot.columns = pivot.columns.set_names("value", level=1)
+
+    output = pivot.sort_index(axis=1).sort_values(
+        ["batch_size", "num_runs", "num_repeats", "forward_only"]
+    )
+    if format == "csv":
+        output.to_csv(save_path)
+    else:
+        output.to_pickle(save_path)
