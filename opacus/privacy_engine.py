@@ -14,6 +14,7 @@
 # limitations under the License.
 import os
 import warnings
+from itertools import chain
 from typing import IO, Any, BinaryIO, Dict, List, Optional, Tuple, Union
 
 import torch
@@ -383,19 +384,14 @@ class PrivacyEngine:
             raise ValueError("Passing seed is prohibited in secure mode")
 
         # compare module parameter with optimizer parameters
-        if not all(
-            torch.eq(i, j).all()
-            for i, j in zip(
-                list(module.parameters()),
-                sum(
-                    [param_group["params"] for param_group in optimizer.param_groups],
-                    [],
-                ),
-            )
+        model_parameters = set(module.parameters())
+        for p in chain.from_iterable(
+            [param_group["params"] for param_group in optimizer.param_groups]
         ):
-            raise ValueError(
-                "Module parameters are different than optimizer Parameters"
-            )
+            if p not in model_parameters:
+                raise ValueError(
+                    "Module parameters are different than optimizer Parameters"
+                )
 
         distributed = isinstance(module, (DPDDP, DDP))
 
