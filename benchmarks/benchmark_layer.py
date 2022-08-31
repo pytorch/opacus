@@ -62,15 +62,12 @@ def run_layer_benchmark(
     )
 
     # benchmark.Timer performs its own warmups
-    try:
-        timer = benchmark.Timer(
-            stmt="benchmark_fun()",
-            globals={"benchmark_fun": benchmark_fun},
-            num_threads=1,
-        )
-        runtime = timer.timeit(num_repeats).mean
-    except RuntimeError:
-        runtime = float("nan")
+    timer = benchmark.Timer(
+        stmt="benchmark_fun()",
+        globals={"benchmark_fun": benchmark_fun},
+        num_threads=1,
+    )
+    runtime = timer.timeit(num_repeats).mean
 
     # get max memory allocated and reset memory statistics
     memory_stats["max_memory"] = reset_peak_memory_stats(device).prev_max_mem
