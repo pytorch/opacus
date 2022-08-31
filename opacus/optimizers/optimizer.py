@@ -19,7 +19,7 @@ from typing import Callable, List, Optional, Union
 
 import torch
 from opacus.optimizers.utils import params
-from opt_einsum import contract
+from opt_einsum.contract import contract
 from torch import nn
 from torch.optim import Optimizer
 
