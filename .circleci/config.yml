@@ -339,6 +339,26 @@ jobs:
       - py_3_7_setup
       - pip_dev_install
       - run_nvidia_smi
+      - mnist_integration_test:
+          device: "cuda"
+      - cifar10_integration_test:
+          device: "cuda"
+      - imdb_integration_test:
+          device: "cuda"
+      - charlstm_integration_test:
+          device: "cuda"
+      - dcgan_integration_test:
+          device: "cuda"
+
+  micro_benchmarks_py37_torch_release_cuda:
+    machine:
+      resource_class: gpu.nvidia.small.multi
+      image: ubuntu-2004-cuda-11.4:202110-01
+    steps:
+      - checkout
+      - py_3_7_setup
+      - pip_dev_install
+      - run_nvidia_smi
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "groupnorm gsm_groupnorm instancenorm gsm_instancenorm layernorm gsm_layernorm mha dpmha"
@@ -356,34 +376,39 @@ jobs:
           memory_ratio_threshold: "2.0"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "gru dpgru gsm_dpgru"
+          layers: "gru dpgru"
           runtime_ratio_threshold: "18.5"
-          memory_ratio_threshold: "1.5"
+          memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "lstm dplstm gsm_dplstm"
-          runtime_ratio_threshold: "16.5"
-          memory_ratio_threshold: "1.5"
+          layers: "gru gsm_dpgru"
+          runtime_ratio_threshold: "40"
+          memory_ratio_threshold: "1.6"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "rnn dprnn gsm_dprnn"
+          layers: "lstm dplstm"
           runtime_ratio_threshold: "16.5"
           memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
+          layers: "lstm gsm_dplstm"
+          runtime_ratio_threshold: "38.0"
+          memory_ratio_threshold: "1.8"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "rnn dprnn"
+          runtime_ratio_threshold: "10.0"
+          memory_ratio_threshold: "1.2"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "rnn gsm_dprnn"
+          runtime_ratio_threshold: "33.0"
+          memory_ratio_threshold: "1.2"
+      - benchmark_layers_integration_test:
+          device: "cuda"
           layers: "embedding gsm_embedding"
-          runtime_ratio_threshold: "6.0"
+          runtime_ratio_threshold: "8.0"
           memory_ratio_threshold: "15.0"
-      - mnist_integration_test:
-          device: "cuda"
-      - cifar10_integration_test:
-          device: "cuda"
-      - imdb_integration_test:
-          device: "cuda"
-      - charlstm_integration_test:
-          device: "cuda"
-      - dcgan_integration_test:
-          device: "cuda"
 
   unittest_multi_gpu:
     machine:
@@ -448,6 +473,8 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
+      - micro_benchmarks_py37_torch_release_cuda:
+          filters: *exclude_ghpages
 
   nightly:
     when:
@@ -460,6 +487,8 @@ workflows:
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
       - lint_py37_torch_release:
+          filters: *exclude_ghpages
+      - micro_benchmarks_py37_torch_release_cuda:
           filters: *exclude_ghpages
 
   website_deployment:
