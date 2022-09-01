@@ -15,6 +15,7 @@
 
 import abc
 import io
+import itertools
 import math
 import unittest
 from abc import ABC
@@ -81,9 +82,16 @@ class BasePrivacyEngineTest(ABC):
     def _init_vanilla_training(
         self,
         state_dict: Optional[OrderedDict[str, torch.Tensor]] = None,
+        opt_exclude_frozen=False,
     ):
         model = self._init_model()
-        optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
+        optimizer = torch.optim.SGD(
+            model.parameters()
+            if not opt_exclude_frozen
+            else [p for p in model.parameters() if p.requires_grad],
+            lr=self.LR,
+            momentum=0,
+        )
         if state_dict:
             model.load_state_dict(state_dict)
         dl = self._init_data()
@@ -98,10 +106,17 @@ class BasePrivacyEngineTest(ABC):
         poisson_sampling: bool = True,
         clipping: str = "flat",
         grad_sample_mode="hooks",
+        opt_exclude_frozen=False,
     ):
         model = self._init_model()
         model = PrivacyEngine.get_compatible_module(model)
-        optimizer = torch.optim.SGD(model.parameters(), lr=self.LR, momentum=0)
+        optimizer = torch.optim.SGD(
+            model.parameters()
+            if not opt_exclude_frozen
+            else [p for p in model.parameters() if p.requires_grad],
+            lr=self.LR,
+            momentum=0,
+        )
 
         if state_dict:
             model.load_state_dict(state_dict)
@@ -179,13 +194,16 @@ class BasePrivacyEngineTest(ABC):
                     break
 
     def test_basic(self):
-        model, optimizer, dl, _ = self._init_private_training(
-            noise_multiplier=1.0,
-            max_grad_norm=1.0,
-            poisson_sampling=True,
-            grad_sample_mode=self.GRAD_SAMPLE_MODE,
-        )
-        self._train_steps(model, optimizer, dl)
+        for opt_exclude_frozen in [True, False]:
+            with self.subTest(opt_exclude_frozen=opt_exclude_frozen):
+                model, optimizer, dl, _ = self._init_private_training(
+                    noise_multiplier=1.0,
+                    max_grad_norm=1.0,
+                    poisson_sampling=True,
+                    grad_sample_mode=self.GRAD_SAMPLE_MODE,
+                    opt_exclude_frozen=opt_exclude_frozen,
+                )
+                self._train_steps(model, optimizer, dl)
 
     def _compare_to_vanilla(
         self,
@@ -469,8 +487,11 @@ class BasePrivacyEngineTest(ABC):
                 "Model parameters after deterministic run must match",
             )
 
-    def test_param_equal_module_optimizer(self):
-        """Test that the privacy engine raises error if nn.Module parameters are not equal to optimizer parameters"""
+    def test_validator_weight_update_check(self):
+        """
+        Test that the privacy engine raises error if ModuleValidator.fix(model) is
+        called after the optimizer is created
+        """
         model = models.densenet121(pretrained=True)
         num_ftrs = model.classifier.in_features
         model.classifier = nn.Sequential(nn.Linear(num_ftrs, 10), nn.Sigmoid())
@@ -504,7 +525,32 @@ class BasePrivacyEngineTest(ABC):
             max_grad_norm=1.0,
             grad_sample_mode=self.GRAD_SAMPLE_MODE,
         )
-        self.assertTrue(1, 1)
+
+    def test_parameters_match(self):
+        dl = self._init_data()
+
+        m1 = self._init_model()
+        m2 = self._init_model()
+        m2.load_state_dict(m1.state_dict())
+        # optimizer is initialized with m2 parameters
+        opt = torch.optim.SGD(m2.parameters(), lr=0.1)
+
+        # the values are the identical
+        for p1, p2 in zip(m1.parameters(), m2.parameters()):
+            self.assertTrue(torch.allclose(p1, p2))
+
+        privacy_engine = PrivacyEngine()
+        # but model parameters and optimzier parameters must be the same object,
+        # not just same values
+        with self.assertRaises(ValueError):
+            privacy_engine.make_private(
+                module=m1,
+                optimizer=opt,
+                data_loader=dl,
+                noise_multiplier=1.1,
+                max_grad_norm=1.0,
+                grad_sample_mode=self.GRAD_SAMPLE_MODE,
+            )
 
     @given(
         noise_scheduler=st.sampled_from([None, StepNoise]),
@@ -757,6 +803,28 @@ class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
         self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
     ):
         return SampleConvNet()
+
+
+class PrivacyEngineConvNetFrozenTest(BasePrivacyEngineTest, unittest.TestCase):
+    def _init_data(self):
+        ds = FakeData(
+            size=self.DATA_SIZE,
+            image_size=(1, 35, 35),
+            num_classes=10,
+            transform=transforms.Compose(
+                [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+            ),
+        )
+        return DataLoader(ds, batch_size=self.BATCH_SIZE, drop_last=False)
+
+    def _init_model(
+        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
+    ):
+        m = SampleConvNet()
+        for p in itertools.chain(m.conv1.parameters(), m.gnorm1.parameters()):
+            p.requires_grad = False
+
+        return m
 
 
 @unittest.skipIf(
