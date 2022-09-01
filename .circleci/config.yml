@@ -362,7 +362,7 @@ jobs:
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "groupnorm gsm_groupnorm instancenorm gsm_instancenorm layernorm gsm_layernorm mha dpmha"
-          runtime_ratio_threshold: "2.6"
+          runtime_ratio_threshold: "3.0"
           memory_ratio_threshold: "1.6"
       - benchmark_layers_integration_test:
           device: "cuda"
