@@ -12,40 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import Callable, Dict, Optional, Tuple, Union, Type
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus.grad_sample import GradSampleModule
+from opacus.grad_sample.utils import wrap_model
 from opacus.layers import DPGRU, DPLSTM, DPRNN, DPMultiheadAttention
-
+from opacus.layers.dp_rnn import DPRNNBase
+from enum import Enum
 
 class LayerType:
     LINEAR: str = "linear"
-    GSM_LINEAR: str = "gsm_linear"
     CONV: str = "conv"
-    GSM_CONV: str = "gsm_conv"
     LAYERNORM: str = "layernorm"
-    GSM_LAYERNORM: str = "gsm_layernorm"
     INSTANCENORM: str = "instancenorm"
-    GSM_INSTANCENORM: str = "gsm_instancenorm"
     GROUPNORM: str = "groupnorm"
-    GSM_GROUPNORM: str = "gsm_groupnorm"
     EMBEDDING: str = "embedding"
-    GSM_EMBEDDING: str = "gsm_embedding"
     MHA: str = "mha"
     DPMHA: str = "dpmha"
-    GSM_DPMHA: str = "gsm_dpmha"
     RNN: str = "rnn"
     DPRNN: str = "dprnn"
-    GSM_DPRNN: str = "gsm_dprnn"
     GRU: str = "gru"
     DPGRU: str = "dpgru"
-    GSM_DPGRU: str = "gsm_dpgru"
     LSTM: str = "lstm"
     DPLSTM: str = "dplstm"
-    GSM_DPLSTM: str = "gsm_dplstm"
 
 
 class Layer:
@@ -136,8 +128,8 @@ class Layer:
         loss.backward()
         self._module.zero_grad()
 
-    def make_private(self) -> None:
-        self._module = GradSampleModule(self._module)
+    def make_private(self, gsm_mode: str = "hooks") -> None:
+        self._module = wrap_model(self._module, grad_sample_mode=gsm_mode)
 
     @property
     def module(self):
@@ -335,7 +327,7 @@ class MHABase(Layer):
     def __init__(
         self,
         *,
-        layer: nn.Module,
+        layer: Union[Type[nn.MultiheadAttention], Type[DPMultiheadAttention]],
         batch_size: int,
         source_seq_len: int,
         targ_seq_len: int,
@@ -412,7 +404,7 @@ class RNNBase(Layer):
     def __init__(
         self,
         *,
-        layer: nn.Module,
+        layer: Union[Type[DPRNNBase], Type[nn.RNNBase]],
         batch_size: int,
         seq_len: int,
         input_size: int,
@@ -481,7 +473,7 @@ class LSTMBase(RNNBase):
     def __init__(
         self,
         *,
-        layer: nn.Module,
+        layer: Union[Type[nn.LSTM], Type[DPLSTM]],
         batch_size: int,
         seq_len: int,
         input_size: int,
@@ -545,63 +537,30 @@ class LSTMBase(RNNBase):
 
 
 class LayerFactory:
-    @staticmethod
-    def make_private(layer: Layer) -> Layer:
-        layer.make_private()
-        return layer
 
     @staticmethod
     # flake8: noqa C901
-    def create(layer_name: str, **kwargs) -> Layer:
-        if layer_name == LayerType.LINEAR:
-            return LinearBase(**kwargs)
-        elif layer_name == LayerType.GSM_LINEAR:
-            return LayerFactory.make_private(LinearBase(**kwargs))
-        elif layer_name == LayerType.CONV:
-            return ConvBase(**kwargs)
-        elif layer_name == LayerType.GSM_CONV:
-            return LayerFactory.make_private(ConvBase(**kwargs))
-        elif layer_name == LayerType.LAYERNORM:
-            return LayerNormBase(**kwargs)
-        elif layer_name == LayerType.GSM_LAYERNORM:
-            return LayerFactory.make_private(LayerNormBase(**kwargs))
-        elif layer_name == LayerType.INSTANCENORM:
-            return InstanceNormBase(**kwargs)
-        elif layer_name == LayerType.GSM_INSTANCENORM:
-            return LayerFactory.make_private(InstanceNormBase(**kwargs))
-        elif layer_name == LayerType.GROUPNORM:
-            return GroupNormBase(**kwargs)
-        elif layer_name == LayerType.GSM_GROUPNORM:
-            return LayerFactory.make_private(GroupNormBase(**kwargs))
-        elif layer_name == LayerType.EMBEDDING:
-            return EmbeddingBase(**kwargs)
-        elif layer_name == LayerType.GSM_EMBEDDING:
-            return LayerFactory.make_private(EmbeddingBase(**kwargs))
-        elif layer_name == LayerType.RNN:
-            return RNNBase(layer=nn.RNN, **kwargs)
-        elif layer_name == LayerType.DPRNN:
-            return RNNBase(layer=DPRNN, **kwargs)
-        elif layer_name == LayerType.GSM_DPRNN:
-            return LayerFactory.make_private(RNNBase(layer=DPRNN, **kwargs))
-        elif layer_name == LayerType.GRU:
-            return RNNBase(layer=nn.GRU, **kwargs)
-        elif layer_name == LayerType.DPGRU:
-            return RNNBase(layer=DPGRU, **kwargs)
-        elif layer_name == LayerType.GSM_DPGRU:
-            return LayerFactory.make_private(RNNBase(layer=DPGRU, **kwargs))
-        elif layer_name == LayerType.LSTM:
-            return LSTMBase(layer=nn.LSTM, **kwargs)
-        elif layer_name == LayerType.DPLSTM:
-            return LSTMBase(layer=DPLSTM, **kwargs)
-        elif layer_name == LayerType.GSM_DPLSTM:
-            return LayerFactory.make_private(LSTMBase(layer=DPLSTM, **kwargs))
-        elif layer_name == LayerType.MHA:
-            return MHABase(layer=nn.MultiheadAttention, **kwargs)
-        elif layer_name == LayerType.DPMHA:
-            return MHABase(layer=DPMultiheadAttention, **kwargs)
-        elif layer_name == LayerType.GSM_DPMHA:
-            return LayerFactory.make_private(
-                MHABase(layer=DPMultiheadAttention, **kwargs)
-            )
-        else:
-            raise Exception(f"Invalid layer type: {layer_name}.")
+    def create(layer_name: str, gsm_mode: str = "baseline", **kwargs) -> Layer:
+        if gsm_mode not in ("baseline", "hooks", "ew", "functorch"):
+            raise ValueError(f"Unexpected grad_sample_mode={gsm_mode}")
+
+        if layer_name == LayerType.LINEAR: module = LinearBase(**kwargs)
+        elif layer_name == LayerType.CONV: module = ConvBase(**kwargs)
+        elif layer_name == LayerType.LAYERNORM: module = LayerNormBase(**kwargs)
+        elif layer_name == LayerType.INSTANCENORM: module = InstanceNormBase(**kwargs)
+        elif layer_name == LayerType.GROUPNORM: module = GroupNormBase(**kwargs)
+        elif layer_name == LayerType.EMBEDDING: module = EmbeddingBase(**kwargs)
+        elif layer_name == LayerType.RNN: module = RNNBase(layer=nn.RNN, **kwargs)
+        elif layer_name == LayerType.DPRNN:module = RNNBase(layer=DPRNN, **kwargs)
+        elif layer_name == LayerType.GRU: module = RNNBase(layer=nn.GRU, **kwargs)
+        elif layer_name == LayerType.DPGRU: module = RNNBase(layer=DPGRU, **kwargs)
+        elif layer_name == LayerType.LSTM: module = LSTMBase(layer=nn.LSTM, **kwargs)
+        elif layer_name == LayerType.DPLSTM: module = LSTMBase(layer=DPLSTM, **kwargs)
+        elif layer_name == LayerType.MHA: module = MHABase(layer=nn.MultiheadAttention, **kwargs)
+        elif layer_name == LayerType.DPMHA:module = MHABase(layer=DPMultiheadAttention, **kwargs)
+        else: raise Exception(f"Invalid layer type: {layer_name}.")
+
+        if gsm_mode != "baseline":
+            module.make_private(gsm_mode=gsm_mode)
+
+        return module

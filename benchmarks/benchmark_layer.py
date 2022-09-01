@@ -25,6 +25,7 @@ from utils import get_layer_set, reset_peak_memory_stats
 def run_layer_benchmark(
     num_repeats: int,
     forward_only: bool = False,
+    gsm_mode: str = "baseline",
     create_layer: Callable = LayerFactory.create,
     **kwargs,
 ) -> Tuple[float, Dict[str, int]]:
@@ -46,7 +47,7 @@ def run_layer_benchmark(
         assert reset_peak_memory_stats(device).cur_mem == 0
 
     # setup layer
-    layer_fun = create_layer(**kwargs)
+    layer_fun = create_layer(gsm_mode=gsm_mode, **kwargs)
 
     if forward_only:
         layer_fun.module.eval()
@@ -86,6 +87,7 @@ def main(args) -> None:
         layer_name=args.layer,
         batch_size=args.batch_size,
         random_seed=args.random_seed,
+        gsm_mode = args.gsm_mode,
         **config[get_layer_set(args.layer)],
     )
     print(f"Runtime (seconds): {runtime}")
@@ -116,6 +118,13 @@ if __name__ == "__main__":
         default="config.json",
         type=str,
         help="path to config file with settings for each layer",
+    )
+    parser.add_argument(
+        "gsm_mode",
+        type=str,
+        choices=["baseline", "hooks", "ew", "functorch"],
+        default="baseline",
+        help="Mode to compute per sample gradinets: Non-private(baseline), Classic (hooks), Functorch(functorch), ExpandedWeights(ew)"
     )
     args = parser.parse_args()
     main(args)

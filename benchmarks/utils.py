@@ -82,6 +82,7 @@ def get_path(
     batch_size: int,
     num_runs: int,
     num_repeats: int,
+    gsm_mode: str,
     random_seed: Optional[int] = None,
     forward_only: bool = False,
     root: str = "./results/raw/",
@@ -103,7 +104,7 @@ def get_path(
     Returns:
         Path to results pickle file
     """
-    pickle_name = f"{layer}_bs_{batch_size}_runs_{num_runs}_repeats_{num_repeats}_seed_{random_seed}"
+    pickle_name = f"{layer}_mode_{gsm_mode}_bs_{batch_size}_runs_{num_runs}_repeats_{num_repeats}_seed_{random_seed}"
     if forward_only:
         pickle_name += "_forward_only"
 
@@ -118,6 +119,7 @@ def save_results(
     batch_size: int,
     num_runs: int,
     num_repeats: int,
+    gsm_mode: Optional[str],
     results: List[Dict[str, Any]],
     config: Dict[str, Any],
     random_seed: Optional[int] = None,
@@ -147,6 +149,7 @@ def save_results(
         num_repeats=num_repeats,
         random_seed=random_seed,
         forward_only=forward_only,
+        gsm_mode=gsm_mode,
         root=root,
         suffix=suffix,
     )
@@ -160,6 +163,7 @@ def save_results(
                 "num_repeats": num_repeats,
                 "random_seed": random_seed,
                 "forward_only": forward_only,
+                "gsm_mode": gsm_mode,
                 "results": results,
                 "config": config,
             },
@@ -202,37 +206,34 @@ def generate_report(path_to_results: str, save_path: str, format: str) -> None:
             "num_runs": raw["num_runs"],
             "num_repeats": raw["num_repeats"],
             "forward_only": raw["forward_only"],
+            "gsm_mode": raw["gsm_mode"],
             "runtime": runtime,
             "memory": memory,
+
         }
         results_dict.append(result)
 
     results = pd.DataFrame(results_dict)
-    results["variant"] = "control"
-    results["variant"][results["layer"].str.startswith("gsm")] = "gsm"
-    results["variant"][results["layer"].str.startswith("dp")] = "dp"
-    results["base_layer"] = results["layer"].str.replace("(gsm_)|(dp)", "")
 
     pivot = results.pivot_table(
-        index=["batch_size", "num_runs", "num_repeats", "forward_only", "base_layer"],
-        columns=["variant"],
+        index=["batch_size", "num_runs", "num_repeats", "forward_only", "layer"],
+        columns=["gsm_mode"],
         values=["runtime", "memory"],
     )
 
     def add_ratio(df, metric, variant):
-        if variant not in df.columns.get_level_values("variant"):
+        if variant not in df.columns.get_level_values("gsm_mode"):
             for ametric in df.columns.get_level_values(0):
                 df[(ametric, variant)] = np.nan
 
-        df[(metric, f"{variant}/control")] = (
-            df.loc[:, (metric, variant)] / df.loc[:, (metric, "control")]
+        df[(metric, f"{variant}/baseline")] = (
+            df.loc[:, (metric, variant)] / df.loc[:, (metric, "baseline")]
         )
 
-    if "control" in results["variant"].tolist():
-        add_ratio(pivot, "runtime", "dp")
-        add_ratio(pivot, "memory", "dp")
-        add_ratio(pivot, "runtime", "gsm")
-        add_ratio(pivot, "memory", "gsm")
+    if "baseline" in results["gsm_mode"].tolist():
+        for m in set(results["gsm_mode"].tolist()) - {"baseline"}:
+            add_ratio(pivot, "runtime", m)
+            add_ratio(pivot, "memory", m)
         pivot.columns = pivot.columns.set_names("value", level=1)
 
     output = pivot.sort_index(axis=1).sort_values(
