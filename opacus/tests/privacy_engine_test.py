@@ -86,11 +86,9 @@ class BasePrivacyEngineTest(ABC):
     ):
         model = self._init_model()
         optimizer = torch.optim.SGD(
-            [
-                p
-                for p in model.parameters()
-                if p.requires_grad or (not opt_exclude_frozen)
-            ],
+            model.parameters()
+            if not opt_exclude_frozen
+            else [p for p in model.parameters() if p.requires_grad],
             lr=self.LR,
             momentum=0,
         )
@@ -113,11 +111,9 @@ class BasePrivacyEngineTest(ABC):
         model = self._init_model()
         model = PrivacyEngine.get_compatible_module(model)
         optimizer = torch.optim.SGD(
-            [
-                p
-                for p in model.parameters()
-                if p.requires_grad or (not opt_exclude_frozen)
-            ],
+            model.parameters()
+            if not opt_exclude_frozen
+            else [p for p in model.parameters() if p.requires_grad],
             lr=self.LR,
             momentum=0,
         )
