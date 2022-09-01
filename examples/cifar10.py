@@ -31,6 +31,7 @@ import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
+from functorch import grad_and_value, make_functional, vmap
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -138,6 +139,24 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
     losses = []
     top1_acc = []
 
+    if args.grad_sample_mode == "no_op":
+        # Functorch prepare
+        fmodel, _fparams = make_functional(model)
+
+        def compute_loss_stateless_model(params, sample, target):
+            batch = sample.unsqueeze(0)
+            targets = target.unsqueeze(0)
+
+            predictions = fmodel(params, batch)
+            loss = criterion(predictions, targets)
+            return loss
+
+        ft_compute_grad = grad_and_value(compute_loss_stateless_model)
+        ft_compute_sample_grad = vmap(ft_compute_grad, in_dims=(None, 0, 0))
+        # Using model.parameters() instead of fparams
+        # as fparams seems to not point to the dynamically updated parameters
+        params = list(model.parameters())
+
     for i, (images, target) in enumerate(tqdm(train_loader)):
 
         images = images.to(device)
@@ -145,18 +164,28 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
 
         # compute output
         output = model(images)
-        loss = criterion(output, target)
-        preds = np.argmax(output.detach().cpu().numpy(), axis=1)
-        labels = target.detach().cpu().numpy()
 
-        # measure accuracy and record loss
-        acc1 = accuracy(preds, labels)
+        if args.grad_sample_mode == "no_op":
+            per_sample_grads, per_sample_losses = ft_compute_sample_grad(
+                params, images, target
+            )
+            per_sample_grads = [g.detach() for g in per_sample_grads]
+            loss = torch.mean(per_sample_losses)
+            for (p, g) in zip(params, per_sample_grads):
+                p.grad_sample = g
+        else:
+            loss = criterion(output, target)
+            preds = np.argmax(output.detach().cpu().numpy(), axis=1)
+            labels = target.detach().cpu().numpy()
+
+            # measure accuracy and record loss
+            acc1 = accuracy(preds, labels)
+            top1_acc.append(acc1)
+
+            # compute gradient and do SGD step
+            loss.backward()
 
         losses.append(loss.item())
-        top1_acc.append(acc1)
-
-        # compute gradient and do SGD step
-        loss.backward()
 
         # make sure we take a step after processing the last mini-batch in the
         # epoch to ensure we start the next epoch with a clean state
@@ -331,6 +360,7 @@ def main():
             noise_multiplier=args.sigma,
             max_grad_norm=max_grad_norm,
             clipping=clipping,
+            grad_sample_mode=args.grad_sample_mode,
         )
 
     # Store some logs
@@ -388,6 +418,7 @@ def main():
 
 def parse_args():
     parser = argparse.ArgumentParser(description="PyTorch CIFAR10 DP Training")
+    parser.add_argument("--grad_sample_mode", type=str, default="hooks")
     parser.add_argument(
         "-j",
         "--workers",
