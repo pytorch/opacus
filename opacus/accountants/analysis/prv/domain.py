@@ -58,7 +58,7 @@ class Domain:
 
 
 def compute_safe_domain_size(
-    prvs: Sequence["PoissonSubsampledGaussianPRV"],
+    prvs,
     max_self_compositions: Sequence[int],
     eps_error: float,
     delta_error: float,

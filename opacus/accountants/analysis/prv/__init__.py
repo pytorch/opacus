@@ -13,6 +13,7 @@ __all__ = [
     "Domain",
     "PoissonSubsampledGaussianPRV",
     "TruncatedPrivacyRandomVariable",
+    "compose_heterogeneous",
     "compute_safe_domain_size",
     "discretize",
 ]
