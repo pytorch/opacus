@@ -16,6 +16,7 @@
 """
 Utils for generating stats from torch tensors.
 """
+import math
 from typing import Iterator, List, Tuple, Union
 
 import numpy as np
@@ -116,7 +117,7 @@ def unfold2d(
     input,
     *,
     kernel_size: Tuple[int, int],
-    padding: Tuple[int, int],
+    padding: Union[str, Tuple[int, int]],
     stride: Tuple[int, int],
     dilation: Tuple[int, int],
 ):
@@ -124,14 +125,38 @@ def unfold2d(
     See :meth:`~torch.nn.functional.unfold`
     """
     *shape, H, W = input.shape
+    if padding == "same":
+        total_pad_H = dilation[0] * (kernel_size[0] - 1)
+        total_pad_W = dilation[1] * (kernel_size[1] - 1)
+        pad_H_left = math.floor(total_pad_H / 2)
+        pad_H_right = total_pad_H - pad_H_left
+        pad_W_left = math.floor(total_pad_W / 2)
+        pad_W_right = total_pad_W - pad_W_left
+
+    elif padding == "valid":
+        pad_W_left, pad_W_right, pad_H_left, pad_H_right = (0, 0, 0, 0)
+    else:
+        pad_H_left, pad_H_right, pad_W_left, pad_W_right = (
+            padding[0],
+            padding[0],
+            padding[1],
+            padding[1],
+        )
+
     H_effective = (
-        H + 2 * padding[0] - (kernel_size[0] + (kernel_size[0] - 1) * (dilation[0] - 1))
+        H
+        + pad_H_left
+        + pad_H_right
+        - (kernel_size[0] + (kernel_size[0] - 1) * (dilation[0] - 1))
     ) // stride[0] + 1
     W_effective = (
-        W + 2 * padding[1] - (kernel_size[1] + (kernel_size[1] - 1) * (dilation[1] - 1))
+        W
+        + pad_W_left
+        + pad_W_right
+        + -(kernel_size[1] + (kernel_size[1] - 1) * (dilation[1] - 1))
     ) // stride[1] + 1
     # F.pad's first argument is the padding of the *last* dimension
-    input = F.pad(input, (padding[1], padding[1], padding[0], padding[0]))
+    input = F.pad(input, (pad_W_left, pad_W_right, pad_H_left, pad_H_right))
     *shape_pad, H_pad, W_pad = input.shape
     strides = list(input.stride())
     strides = strides[:-2] + [
@@ -196,13 +221,44 @@ def unfold3d(
     if isinstance(dilation, int):
         dilation = (dilation, dilation, dilation)
 
+    if padding == "same":
+        total_pad_D = dilation[0] * (kernel_size[0] - 1)
+        total_pad_H = dilation[1] * (kernel_size[1] - 1)
+        total_pad_W = dilation[2] * (kernel_size[2] - 1)
+        pad_D_left = math.floor(total_pad_D / 2)
+        pad_D_right = total_pad_D - pad_D_left
+        pad_H_left = math.floor(total_pad_H / 2)
+        pad_H_right = total_pad_H - pad_H_left
+        pad_W_left = math.floor(total_pad_W / 2)
+        pad_W_right = total_pad_W - pad_W_left
+
+    elif padding == "valid":
+        pad_D_left, pad_D_right, pad_W_left, pad_W_right, pad_H_left, pad_H_right = (
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+    else:
+        pad_D_left, pad_D_right, pad_H_left, pad_H_right, pad_W_left, pad_W_right = (
+            padding[0],
+            padding[0],
+            padding[1],
+            padding[1],
+            padding[2],
+            padding[2],
+        )
+
     batch_size, channels, _, _, _ = tensor.shape
 
     # Input shape: (B, C, D, H, W)
     tensor = F.pad(
-        tensor, (padding[2], padding[2], padding[1], padding[1], padding[0], padding[0])
+        tensor,
+        (pad_W_left, pad_W_right, pad_H_left, pad_H_right, pad_D_left, pad_D_right),
     )
-    # Output shape: (B, C, D+2*padding[2], H+2*padding[1], W+2*padding[0])
+    # Output shape: (B, C, D+pad_W_left+pad_W_right, H+pad_H_left+pad_H_right, W+pad_D_left+pad_D_right)
 
     dilated_kernel_size = (
         kernel_size[0] + (kernel_size[0] - 1) * (dilation[0] - 1),
