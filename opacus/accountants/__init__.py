@@ -15,6 +15,7 @@
 from .accountant import IAccountant
 from .gdp import GaussianAccountant
 from .rdp import RDPAccountant
+from .rdp import RDPAccountantAnalyticMoment
 
 
 __all__ = [
@@ -29,5 +30,7 @@ def create_accountant(mechanism: str) -> IAccountant:
         return RDPAccountant()
     elif mechanism == "gdp":
         return GaussianAccountant()
+    elif mechanism == "rdp_analytic":
+        return RDPAccountantAnalyticMoment()
 
     raise ValueError(f"Unexpected accounting mechanism: {mechanism}")

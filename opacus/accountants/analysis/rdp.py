@@ -333,3 +333,111 @@ def get_privacy_spent(
             f"Optimal order is the {extreme} alpha. Please consider expanding the range of alphas to get a tighter privacy bound."
         )
     return eps[idx_opt], orders_vec[idx_opt]
+
+# ==================================
+# Functions for General Composition
+# ==================================
+
+# Functions used for implementation of Wang's Generalized analytic moment bounds for subsampled mechanisms
+# based on theorem 9 of https://arxiv.org/pdf/1808.00087.pdf and implementation  https://github.com/yuxiangw/autodp/blob/master/autodp/rdp_acct.py
+
+def _SGM_compute_rdp_subssample(q: float,sigma: float, alpha: float) -> float:
+    r"""Computes bound of RDP of the Sampled Mechanism at order ``alpha``.
+    Args:
+        q: Subsampling rate of
+        sigma: The standard deviation of the additive Gaussian noise.
+        alpha: The order at which RDP is computed.
+    Returns:
+        RDP at order ``alpha``; can be np.inf.
+    """
+    # SGM rdp calculation:
+    def func(x):
+        return alpha / (2*sigma**2)
+
+    if q == 0:
+        return 0
+
+    if q == 1.0:
+        return func(alpha)
+
+    if np.isinf(alpha):
+        return np.inf
+
+    def cgf(x):
+        return x * func(x+1)
+
+    # since calculations rely on binomial expansion - we do the calculation for integer alpha and then interpolate
+    def subsample_func_int(x):
+        # output the cgf of the subsampled mechanism
+        mm = int(x)
+        eps_inf = func(np.inf)
+        eps_two = func(2.0)
+
+        moments_two = 2 * np.log(prob) + logcomb(mm,2) \
+                        + np.minimum(np.log(4) + eps_two + np.log(1-np.exp(-eps_two)),
+                                    eps_two + np.minimum(np.log(2),
+                                                2 * (eps_inf+np.log(1-np.exp(-eps_inf)))))
+        moment_bound = lambda j: np.minimum(j * (eps_inf + np.log(1-np.exp(-eps_inf))),
+                                            np.log(2)) + cgf(j - 1) \
+                                    + j * np.log(prob) + utils.logcomb(mm, j)
+        moments = [moment_bound(j) for j in range(3, mm + 1, 1)]
+
+        return np.minimum((x-1)*func(x), _log_add([0,moments_two] + moments))
+
+    def subsample_func(x):
+        # This function returns the RDP at alpha = x
+        # RDP with the linear interpolation upper bound of the CGF
+
+        # FROM auto_dp repo :
+
+        # This result applies to both subsampling with replacement and Poisson subsampling.
+        # The result for Poisson subsmapling is due to Theorem 1 of :
+        # Li, Ninghui, Qardaji, Wahbeh, and Su, Dong. On sampling, anonymization, and differential privacy or,
+        # k-anonymization meets differential privacy
+        # The result for Subsampling with replacement is due to:
+        # Jon Ullman's lecture notes: http://www.ccs.neu.edu/home/jullman/PrivacyS17/HW1sol.pdf
+        # See the proof of (b)
+
+        epsinf =  np.log(1+q*(np.exp(func(np.inf))-1)))
+
+        if np.isinf(x):
+            return epsinf
+        if q == 1.0:
+            return func(x)
+
+        if (x >= 1.0) and (x <= 2.0):
+            return np.minimum(epsinf, subsample_func_int(2.0) / (2.0-1))
+        if np.equal(np.mod(x, 1), 0):
+            return np.minimum(epsinf, subsample_func_int(x) / (x-1))
+        xc = math.ceil(x)
+        xf = math.floor(x)
+        return np.min(
+            [epsinf,func(x),
+                ((x-xf)*subsample_func_int(xc) + (1-(x-xf))*subsample_func_int(xf)) / (x-1)]
+        )
+
+    return subsample_func(alpha)
+
+def SGM_compute_general_subsampled_rdp_bound(
+    *, q: float, noise_multiplier: float, steps: int, orders: Union[List[float], float]
+) -> Union[List[float], float]:
+    r"""Computes Renyi Differential Privacy (RDP) analytic moment bound for general subsampled mechanism iterated ``steps`` times.
+    Note that Opacus actually does Poisson subsampling so this bound in not actually valid
+    Args:
+        q: Sampling rate of the mechanism
+        noise_multiplier: The ratio of the standard deviation of the
+            additive Gaussian noise to the L2-sensitivity of the function
+            to which it is added. Note that this is same as the standard
+            deviation of the additive Gaussian noise when the L2-sensitivity
+            of the function is 1.
+        steps: The number of iterations of the mechanism.
+        orders: An array (or a scalar) of RDP orders.
+    Returns:
+        The RDP guarantees at all orders; can be ``np.inf``.
+    """
+    if isinstance(orders, float):
+        rdp = _SGM_compute_rdp_subsample(m,q, orders)
+    else:
+        rdp = np.array([_SGM_compute_rdp_subsample(m,q, order) for order in orders])
+
+    return rdp * steps
