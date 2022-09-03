@@ -308,7 +308,6 @@ for epoch in range(opt.epochs):
         errD = errD_fake + errD_real
         errD.backward()
         optimizerD.step()
-        optimizerD.zero_grad()
 
         D_x = output.mean().item()
         D_G_z1 = output.mean().item()
