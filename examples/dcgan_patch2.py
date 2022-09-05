@@ -301,6 +301,7 @@ for epoch in range(opt.epochs):
         output = netD(fake.detach())
         errD_fake = criterion(output, label_fake)
         errD_fake.backward()
+        torch.nn.utils.clip_grad_norm_(netD.parameters(), opt.max_per_sample_grad_norm)
         optimizerD_fake.step()
 
         # train with real
