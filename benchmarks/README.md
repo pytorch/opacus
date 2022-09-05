@@ -2,7 +2,11 @@
 
 A set of micro-benchmarks that measure elapsed runtime and allocated CUDA memory for both [basic modules](https://github.com/pytorch/opacus/tree/main/opacus/grad_sample) and [more complex layers](https://github.com/pytorch/opacus/tree/main/opacus/layers), as well as their respective [torch.nn](https://pytorch.org/docs/stable/nn.html) counterparts.
 
-Requires PyTorch version >= 1.10.0.
+Requires `torch >= 1.10`
+
+For `--grad_sample_modes functorch` requires `torch==1.12`
+
+For `--grad_sample_modes ew` requires `torch>=1.13`
 
 ## Contents
 
@@ -82,27 +86,37 @@ If saving results, ensure that the `results/raw` (or otherwise specified) root d
 
 ```
 usage: run_benchmarks.py [-h]
-                         [--layers {linear,gsm_linear,conv,gsm_conv,layernorm,gsm_layernorm,instancenorm,gsm_instancenorm,groupnorm,gsm_groupnorm,embedding,gsm_embedding,mha,dpmha,gsm_dpmha,rnn,dprnn,gsm_dprnn,gru,dpgru,gsm_dpgru,lstm,dplstm,gsm_dplstm} [{linear,gsm_linear,conv,gsm_conv,layernorm,gsm_layernorm,instancenorm,gsm_instancenorm,groupnorm,gsm_groupnorm,embedding,gsm_embedding,mha,dpmha,gsm_dpmha,rnn,dprnn,gsm_dprnn,gru,dpgru,gsm_dpgru,lstm,dplstm,gsm_dplstm} ...]]
-                         [--batch_sizes BATCH_SIZES [BATCH_SIZES ...]] [--num_runs NUM_RUNS]
-                         [--num_repeats NUM_REPEATS] [--forward_only] [--random_seed RANDOM_SEED]
-                         [-c CONFIG_FILE] [--cont] [--root ROOT] [--suffix SUFFIX] [--no_save]
-                         [-v]
+                         [--layers {linear,conv,layernorm,instancenorm,groupnorm,embedding,mha,dpmha,rnn,dprnn,gru,dpgru,lstm,dplstm} [{linear,conv,layernorm,instancenorm,groupnorm,embedding,mha,dpmha,rnn,dprnn,gru,dpgru,lstm,dplstm} ...]]
+                         [--batch_sizes BATCH_SIZES [BATCH_SIZES ...]]
+                         [--num_runs NUM_RUNS] [--num_repeats NUM_REPEATS]
+                         [--forward_only] [--random_seed RANDOM_SEED]
+                         [-c CONFIG_FILE] [--cont] [--root ROOT]
+                         [--suffix SUFFIX]
+                         [--grad_sample_modes {baseline,hooks,ew,functorch} [{baseline,hooks,ew,functorch} ...]]
+                         [--no_save] [-v]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --layers {linear,gsm_linear,conv,gsm_conv,layernorm,gsm_layernorm,instancenorm,gsm_instancenorm,groupnorm,gsm_groupnorm,embedding,gsm_embedding,mha,dpmha,gsm_dpmha,rnn,dprnn,gsm_dprnn,gru,dpgru,gsm_dpgru,lstm,dplstm,gsm_dplstm} [{linear,gsm_linear,conv,gsm_conv,layernorm,gsm_layernorm,instancenorm,gsm_instancenorm,groupnorm,gsm_groupnorm,embedding,gsm_embedding,mha,dpmha,gsm_dpmha,rnn,dprnn,gsm_dprnn,gru,dpgru,gsm_dpgru,lstm,dplstm,gsm_dplstm} ...]
+  --layers {linear,conv,layernorm,instancenorm,groupnorm,embedding,mha,dpmha,rnn,dprnn,gru,dpgru,lstm,dplstm} [{linear,conv,layernorm,instancenorm,groupnorm,embedding,mha,dpmha,rnn,dprnn,gru,dpgru,lstm,dplstm} ...]
   --batch_sizes BATCH_SIZES [BATCH_SIZES ...]
-  --num_runs NUM_RUNS   number of benchmarking runs
+  --num_runs NUM_RUNS   number of benchmarking runs for each layer and batch
+                        size
   --num_repeats NUM_REPEATS
-                        how many forward/backward passes per run
+                        number of forward/backward passes per run
   --forward_only        only run forward passes
   --random_seed RANDOM_SEED
-                        random seed for the first run of each layer, subsequent runs increase the
-                        random seed by 1
+                        random seed for the first run for each layer and batch
+                        size, subsequent runs increase the random seed by 1
   -c CONFIG_FILE, --config_file CONFIG_FILE
+                        path to config file with settings for each layer
   --cont                only run missing experiments
-  --root ROOT           path to directory that benchmark results should be saved in
+  --root ROOT           path to directory where benchmark results should be
+                        saved
   --suffix SUFFIX       suffix to append to each result file's name
+  --grad_sample_modes {baseline,hooks,ew,functorch} [{baseline,hooks,ew,functorch} ...]
+                        Mode to compute per sample gradinets: Classic (hooks),
+                        Functorch(functorch), ExpandedWeights(ew), Non-
+                        private(baseline)
   --no_save
   -v, --verbose
 ```
