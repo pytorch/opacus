@@ -162,6 +162,8 @@ commands:
             pip install tensorboard
             python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --batch-size 2000 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device <<parameters.device>>
             python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
+            python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --sample-rate 0.04 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device <<parameters.device>> --grad_sample_mode no_op
+            python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
           when: always
       - store_test_results:
           path: runs/cifar10/test-reports
