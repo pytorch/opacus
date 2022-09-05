@@ -27,7 +27,7 @@ from benchmarks.layers import LayerType
 Memory = namedtuple("Memory", "prev_max_mem, cur_mem")
 
 
-def reset_peak_memory_stats(device: torch.device) -> Memory:
+def reset_peak_memory_stats(device: torch.device) -> Optional[Memory]:
     """Safely resets CUDA peak memory statistics of device if it is
     a CUDA device.
 
@@ -47,7 +47,8 @@ def reset_peak_memory_stats(device: torch.device) -> Memory:
     if prev_max_memory != memory_allocated and prev_max_memory > 0:
         # raises RuntimeError if no previous allocation occurred
         torch.cuda.reset_peak_memory_stats(device)
-        assert torch.cuda.max_memory_allocated(device) == memory_allocated
+        if torch.cuda.max_memory_allocated(device) != memory_allocated:
+            return None
 
     return Memory(prev_max_memory, memory_allocated)
 
@@ -200,7 +201,13 @@ def generate_report(path_to_results: str, save_path: str, format: str) -> None:
     results_dict = []
     for raw in raw_results:
         runtime = np.mean([i["runtime"] for i in raw["results"]])
-        memory = np.mean([i["memory_stats"]["max_memory"] for i in raw["results"]])
+        memory = np.mean(
+            [
+                i["memory_stats"]["max_memory"]
+                for i in raw["results"]
+                if i["memory_stats"] is not None
+            ]
+        )
         result = {
             "layer": raw["layer"],
             "batch_size": raw["batch_size"],

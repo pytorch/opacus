@@ -1,4 +1,0 @@
-,,,,,memory,memory,memory,memory,memory,memory,memory,runtime,runtime,runtime,runtime,runtime,runtime,runtime
-value,,,,,baseline,ew,ew/baseline,functorch,functorch/baseline,hooks,hooks/baseline,baseline,ew,ew/baseline,functorch,functorch/baseline,hooks,hooks/baseline
-batch_size,num_runs,num_repeats,forward_only,layer,,,,,,,,,,,,,,
-64,1,1,False,linear,0.0,0.0,,0.0,,0.0,,0.0018437399999999826,0.042198461000000353,22.88742501654287,0.04137703000000137,22.44190070183527,0.04343755400000049,23.559479102260024

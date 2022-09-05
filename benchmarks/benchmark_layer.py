@@ -43,9 +43,14 @@ def run_layer_benchmark(
     """
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    invalid_mem_flag = False
 
     if torch.cuda.is_available():
-        assert reset_peak_memory_stats(device).cur_mem == 0
+        mem = reset_peak_memory_stats(device)
+        if mem is None:
+            invalid_mem_flag = True
+        else:
+            invalid_mem_flag |= not (mem.cur_mem == 0)
 
     # setup layer
     layer_fun = create_layer(gsm_mode=gsm_mode, **kwargs)
@@ -59,8 +64,8 @@ def run_layer_benchmark(
 
     # move layer to device and get memory statistics
     memory_stats = layer_fun.to(device=device)
-    assert sum(v for _, v in memory_stats.items()) == torch.cuda.memory_allocated(
-        device
+    invalid_mem_flag |= not (
+        sum(v for _, v in memory_stats.items()) == torch.cuda.memory_allocated(device)
     )
 
     # benchmark.Timer performs its own warmups
@@ -72,9 +77,16 @@ def run_layer_benchmark(
     runtime = timer.timeit(num_repeats).mean
 
     # get max memory allocated and reset memory statistics
-    memory_stats["max_memory"] = reset_peak_memory_stats(device).prev_max_mem
+    mem = reset_peak_memory_stats(device)
+    if mem is None:
+        invalid_mem_flag = True
+    else:
+        memory_stats["max_memory"] = mem.prev_max_mem
 
-    return runtime, memory_stats
+    if invalid_mem_flag:
+        return runtime, None
+    else:
+        return runtime, memory_stats
 
 
 def main(args) -> None:
