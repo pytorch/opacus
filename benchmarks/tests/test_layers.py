@@ -13,26 +13,46 @@
 # limitations under the License.
 
 import copy
+import logging
 import random
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple, Type
 
 import pytest
 import torch
 import torch.nn as nn
 from helpers import skipifnocuda
-from layers import LayerFactory
 from opacus.grad_sample import GradSampleModule
+from opacus.grad_sample.gsm_exp_weights import (
+    API_CUTOFF_VERSION,
+    GradSampleModuleExpandedWeights,
+)
 from opacus.layers import DPGRU, DPLSTM, DPRNN, DPMultiheadAttention
-from utils import reset_peak_memory_stats
+
+from benchmarks.layers import LayerFactory
+from benchmarks.utils import reset_peak_memory_stats
+
+
+def _gsm_modes() -> Set[str]:
+    ret = ["baseline", "hooks"]
+    try:
+        import functorch
+
+        ret += ["functorch"]
+    except ImportError:
+        pass
+
+    if torch.__version__ >= API_CUTOFF_VERSION:
+        ret += ["ew"]
+    return set(ret)
 
 
 PARAMETERS = [
     (
-        [("linear", nn.Linear), ("gsm_linear", nn.Linear)],
+        [("linear", nn.Linear, [])],
         {"input_shape": [], "in_features": 512, "out_features": 512},
     ),
     (
-        [("conv", nn.Conv2d), ("gsm_conv", nn.Conv2d)],
+        [("conv", nn.Conv2d, [])],
         {
             "in_channels": 64,
             "input_shape": [50, 100],
@@ -41,29 +61,31 @@ PARAMETERS = [
         },
     ),
     (
-        [("layernorm", nn.LayerNorm), ("gsm_layernorm", nn.LayerNorm)],
+        [("layernorm", nn.LayerNorm, [])],
         {"input_shape": [64], "D": 1},
     ),
     (
-        [
-            ("instancenorm", nn.InstanceNorm1d),
-            ("gsm_instancenorm", nn.InstanceNorm1d),
-        ],
+        [("instancenorm", nn.InstanceNorm1d, [])],
         {"num_features": 256, "input_shape": [64], "affine": True},
     ),
     (
-        [("groupnorm", nn.GroupNorm), ("gsm_groupnorm", nn.GroupNorm)],
+        [("groupnorm", nn.GroupNorm, [])],
         {"input_shape": [], "num_groups": 16, "num_channels": 256},
     ),
     (
-        [("embedding", nn.Embedding), ("gsm_embedding", nn.Embedding)],
-        {"input_shape": [], "num_embeddings": 20000, "embedding_dim": 100},
+        [("embedding", nn.Embedding, [])],
+        {
+            "input_shape": [
+                10,
+            ],
+            "num_embeddings": 20000,
+            "embedding_dim": 100,
+        },
     ),
     (
         [
-            ("mha", nn.MultiheadAttention),
-            ("dpmha", DPMultiheadAttention),
-            ("gsm_dpmha", DPMultiheadAttention),
+            ("mha", nn.MultiheadAttention, ["hooks", "ew"]),
+            ("dpmha", DPMultiheadAttention, ["ew"]),
         ],
         {
             "source_seq_len": 128,
@@ -74,15 +96,12 @@ PARAMETERS = [
     ),
     (
         [
-            ("rnn", nn.RNN),
-            ("dprnn", DPRNN),
-            ("gsm_dprnn", DPRNN),
-            ("gru", nn.GRU),
-            ("dpgru", DPGRU),
-            ("gsm_dpgru", DPGRU),
-            ("lstm", nn.LSTM),
-            ("dplstm", DPLSTM),
-            ("gsm_dplstm", DPLSTM),
+            ("rnn", nn.RNN, ["hooks", "ew"]),
+            ("dprnn", DPRNN, ["hooks"]),
+            ("gru", nn.GRU, ["hooks", "ew"]),
+            ("dpgru", DPGRU, ["hooks"]),
+            ("lstm", nn.LSTM, ["hooks", "ew"]),
+            ("dplstm", DPLSTM, ["hooks"]),
         ],
         {"seq_len": 128, "input_size": 100, "hidden_size": 100},
     ),
@@ -91,7 +110,7 @@ PARAMETERS = [
 
 @pytest.mark.parametrize("layer_list, layer_config", PARAMETERS)
 def test_layer_modules(
-    layer_list: List[Tuple[str, nn.Module]], layer_config: Dict[str, Any]
+    layer_list: List[Tuple[str, Type[nn.Module]]], layer_config: Dict[str, Any]
 ) -> None:
     """For each supported layer, tests that it is instantiated with the correct module
     and DP support.
@@ -100,18 +119,29 @@ def test_layer_modules(
         layer_list: list of tuples of form (layer_name, module)
         layer_config: config for instantiating the layers in layer_list
     """
-    for layer_name, module in layer_list:
-        layer = LayerFactory.create(
-            layer_name=layer_name,
-            batch_size=64,
-            **layer_config,
-        )
 
-        if "gsm" in layer_name:
-            assert isinstance(layer.module, GradSampleModule)
-            assert isinstance(layer.module.to_standard_module(), module)
-        else:
-            assert isinstance(layer.module, module)
+    for layer_name, module, gsm_mode_blocklist in layer_list:
+        for gsm_mode in _gsm_modes() - set(gsm_mode_blocklist):
+            if gsm_mode in gsm_mode_blocklist:
+                continue
+
+            layer = LayerFactory.create(
+                layer_name=layer_name,
+                gsm_mode=gsm_mode,
+                batch_size=64,
+                **layer_config,
+            )
+
+            if gsm_mode == "baseline":
+                assert isinstance(layer.module, module)
+            elif gsm_mode == "hooks":
+                assert isinstance(layer.module, GradSampleModule)
+                assert layer.module.force_functorch == False
+            elif gsm_mode == "functorch":
+                assert isinstance(layer.module, GradSampleModule)
+                assert layer.module.force_functorch == True
+            elif gsm_mode == "ew":
+                assert isinstance(layer.module, GradSampleModuleExpandedWeights)
 
 
 @skipifnocuda
@@ -130,25 +160,29 @@ def test_to_device(
     cpu = torch.device("cpu")
     assert reset_peak_memory_stats(cuda).cur_mem == 0
 
-    for layer_name, module in layer_list:
-        layer = LayerFactory.create(
-            layer_name=layer_name,
-            batch_size=64,
-            **layer_config,
-        )
-        # layer should be initialized on CPU
-        assert torch.cuda.memory_allocated(cuda) == 0
+    for layer_name, module, gsm_mode_blocklist in layer_list:
+        for gsm_mode in _gsm_modes() - set(gsm_mode_blocklist):
+            layer = LayerFactory.create(
+                layer_name=layer_name,
+                batch_size=64,
+                gsm_mode=gsm_mode,
+                **layer_config,
+            )
+            if layer is None:
+                continue
+            # layer should be initialized on CPU
+            assert torch.cuda.memory_allocated(cuda) == 0
 
-        mem_stats = layer.to(cuda)
-        allocated = torch.cuda.memory_allocated(cuda)
-        assert allocated > 0
-        # all allocated memory should be accounted for in the memory statistics
-        assert allocated == sum(v for _, v in mem_stats.items())
+            mem_stats = layer.to(cuda)
+            allocated = torch.cuda.memory_allocated(cuda)
+            assert allocated > 0
+            # all allocated memory should be accounted for in the memory statistics
+            assert allocated == sum(v for _, v in mem_stats.items())
 
-        mem_stats = layer.to(cpu)
-        allocated = torch.cuda.memory_allocated(cuda)
-        assert allocated == 0
-        assert allocated == sum(v for _, v in mem_stats.items())
+            mem_stats = layer.to(cpu)
+            allocated = torch.cuda.memory_allocated(cuda)
+            assert allocated == 0
+            assert allocated == sum(v for _, v in mem_stats.items())
 
     assert reset_peak_memory_stats(cuda).cur_mem == 0
 
@@ -172,25 +206,32 @@ def test_layer_outputs(
         random_seed_b: {},
     }
 
-    for random_seed in (random_seed_a, random_seed_b):
-        for layer_name, module in layer_list:
-            layer = LayerFactory.create(
-                layer_name=layer_name,
-                batch_size=64,
-                random_seed=random_seed,
-                **layer_config,
+    for layer_name, module, gsm_mode_blocklist in layer_list:
+        for gsm_mode in _gsm_modes() - set(gsm_mode_blocklist):
+            for random_seed in (random_seed_a, random_seed_b):
+                logging.error(f"{gsm_mode}, {layer_name}")
+                layer = LayerFactory.create(
+                    layer_name=layer_name,
+                    batch_size=64,
+                    random_seed=random_seed,
+                    gsm_mode=gsm_mode,
+                    **layer_config,
+                )
+                if layer is None:
+                    continue
+                if str(module) not in outputs[random_seed]:
+                    outputs[random_seed][str(module)] = layer.forward_only()
+
+                # same module with same seed should result in same output
+                assert torch.equal(
+                    outputs[random_seed][str(module)], layer.forward_only()
+                )
+
+        # same module with different seed should result in different output
+        for module_name in outputs[random_seed_a]:
+            assert not torch.equal(
+                outputs[random_seed_a][module_name], outputs[random_seed_b][module_name]
             )
-            if str(module) not in outputs[random_seed]:
-                outputs[random_seed][str(module)] = layer.forward_only()
-
-            # same module with same seed should result in same output
-            assert torch.equal(outputs[random_seed][str(module)], layer.forward_only())
-
-    # same module with different seed should result in different output
-    for module_name in outputs[random_seed_a]:
-        assert not torch.equal(
-            outputs[random_seed_a][module_name], outputs[random_seed_b][module_name]
-        )
 
 
 @pytest.mark.parametrize("layer_list, layer_config", PARAMETERS)
@@ -204,13 +245,19 @@ def test_forward_backward(
         layer_list: list of tuples of form (layer_name, module)
         layer_config: config for instantiating the layers in layer_list
     """
-    for layer_name, module in layer_list:
-        layer = LayerFactory.create(
-            layer_name=layer_name,
-            batch_size=64,
-            **layer_config,
-        )
-        layer_copy = copy.deepcopy(layer)
-        layer.forward_backward()
-        for p1, p2 in zip(layer.module.parameters(), layer_copy.module.parameters()):
-            assert torch.equal(p1.data, p2.data)
+    for layer_name, module, gsm_mode_blocklist in layer_list:
+        for gsm_mode in _gsm_modes() - set(gsm_mode_blocklist):
+            layer = LayerFactory.create(
+                layer_name=layer_name,
+                batch_size=64,
+                gsm_mode=gsm_mode,
+                **layer_config,
+            )
+            if layer is None:
+                continue
+            layer_copy = copy.deepcopy(layer)
+            layer.forward_backward()
+            for p1, p2 in zip(
+                layer.module.parameters(), layer_copy.module.parameters()
+            ):
+                assert torch.equal(p1.data, p2.data)

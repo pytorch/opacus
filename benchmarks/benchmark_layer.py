@@ -18,8 +18,9 @@ from typing import Callable, Dict, Tuple
 
 import torch
 import torch.utils.benchmark as benchmark
-from layers import LayerFactory, LayerType
-from utils import get_layer_set, reset_peak_memory_stats
+
+from benchmarks.layers import LayerFactory, LayerType
+from benchmarks.utils import get_layer_set, reset_peak_memory_stats
 
 
 def run_layer_benchmark(
@@ -87,7 +88,7 @@ def main(args) -> None:
         layer_name=args.layer,
         batch_size=args.batch_size,
         random_seed=args.random_seed,
-        gsm_mode = args.gsm_mode,
+        gsm_mode=args.gsm_mode,
         **config[get_layer_set(args.layer)],
     )
     print(f"Runtime (seconds): {runtime}")
@@ -124,7 +125,7 @@ if __name__ == "__main__":
         type=str,
         choices=["baseline", "hooks", "ew", "functorch"],
         default="baseline",
-        help="Mode to compute per sample gradinets: Non-private(baseline), Classic (hooks), Functorch(functorch), ExpandedWeights(ew)"
+        help="Mode to compute per sample gradinets: Non-private(baseline), Classic (hooks), Functorch(functorch), ExpandedWeights(ew)",
     )
     args = parser.parse_args()
     main(args)

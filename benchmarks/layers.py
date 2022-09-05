@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Dict, Optional, Tuple, Union, Type
+from enum import Enum
+from typing import Callable, Dict, Optional, Tuple, Type, Union
 
 import torch
 import torch.nn as nn
@@ -21,7 +22,7 @@ from opacus.grad_sample import GradSampleModule
 from opacus.grad_sample.utils import wrap_model
 from opacus.layers import DPGRU, DPLSTM, DPRNN, DPMultiheadAttention
 from opacus.layers.dp_rnn import DPRNNBase
-from enum import Enum
+
 
 class LayerType:
     LINEAR: str = "linear"
@@ -537,28 +538,44 @@ class LSTMBase(RNNBase):
 
 
 class LayerFactory:
-
     @staticmethod
     # flake8: noqa C901
-    def create(layer_name: str, gsm_mode: str = "baseline", **kwargs) -> Layer:
+    def create(
+        layer_name: str, gsm_mode: str = "baseline", **kwargs
+    ) -> Optional[Layer]:
         if gsm_mode not in ("baseline", "hooks", "ew", "functorch"):
             raise ValueError(f"Unexpected grad_sample_mode={gsm_mode}")
 
-        if layer_name == LayerType.LINEAR: module = LinearBase(**kwargs)
-        elif layer_name == LayerType.CONV: module = ConvBase(**kwargs)
-        elif layer_name == LayerType.LAYERNORM: module = LayerNormBase(**kwargs)
-        elif layer_name == LayerType.INSTANCENORM: module = InstanceNormBase(**kwargs)
-        elif layer_name == LayerType.GROUPNORM: module = GroupNormBase(**kwargs)
-        elif layer_name == LayerType.EMBEDDING: module = EmbeddingBase(**kwargs)
-        elif layer_name == LayerType.RNN: module = RNNBase(layer=nn.RNN, **kwargs)
-        elif layer_name == LayerType.DPRNN:module = RNNBase(layer=DPRNN, **kwargs)
-        elif layer_name == LayerType.GRU: module = RNNBase(layer=nn.GRU, **kwargs)
-        elif layer_name == LayerType.DPGRU: module = RNNBase(layer=DPGRU, **kwargs)
-        elif layer_name == LayerType.LSTM: module = LSTMBase(layer=nn.LSTM, **kwargs)
-        elif layer_name == LayerType.DPLSTM: module = LSTMBase(layer=DPLSTM, **kwargs)
-        elif layer_name == LayerType.MHA: module = MHABase(layer=nn.MultiheadAttention, **kwargs)
-        elif layer_name == LayerType.DPMHA:module = MHABase(layer=DPMultiheadAttention, **kwargs)
-        else: raise Exception(f"Invalid layer type: {layer_name}.")
+        if layer_name == LayerType.LINEAR:
+            module = LinearBase(**kwargs)
+        elif layer_name == LayerType.CONV:
+            module = ConvBase(**kwargs)
+        elif layer_name == LayerType.LAYERNORM:
+            module = LayerNormBase(**kwargs)
+        elif layer_name == LayerType.INSTANCENORM:
+            module = InstanceNormBase(**kwargs)
+        elif layer_name == LayerType.GROUPNORM:
+            module = GroupNormBase(**kwargs)
+        elif layer_name == LayerType.EMBEDDING:
+            module = EmbeddingBase(**kwargs)
+        elif layer_name == LayerType.RNN:
+            module = RNNBase(layer=nn.RNN, **kwargs)
+        elif layer_name == LayerType.DPRNN:
+            module = RNNBase(layer=DPRNN, **kwargs)
+        elif layer_name == LayerType.GRU:
+            module = RNNBase(layer=nn.GRU, **kwargs)
+        elif layer_name == LayerType.DPGRU:
+            module = RNNBase(layer=DPGRU, **kwargs)
+        elif layer_name == LayerType.LSTM:
+            module = LSTMBase(layer=nn.LSTM, **kwargs)
+        elif layer_name == LayerType.DPLSTM:
+            module = LSTMBase(layer=DPLSTM, **kwargs)
+        elif layer_name == LayerType.MHA:
+            module = MHABase(layer=nn.MultiheadAttention, **kwargs)
+        elif layer_name == LayerType.DPMHA:
+            module = MHABase(layer=DPMultiheadAttention, **kwargs)
+        else:
+            raise Exception(f"Invalid layer type: {layer_name}.")
 
         if gsm_mode != "baseline":
             module.make_private(gsm_mode=gsm_mode)

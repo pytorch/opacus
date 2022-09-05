@@ -20,7 +20,8 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 import torch
-from layers import LayerType
+
+from benchmarks.layers import LayerType
 
 
 Memory = namedtuple("Memory", "prev_max_mem, cur_mem")
@@ -209,7 +210,6 @@ def generate_report(path_to_results: str, save_path: str, format: str) -> None:
             "gsm_mode": raw["gsm_mode"],
             "runtime": runtime,
             "memory": memory,
-
         }
         results_dict.append(result)
 

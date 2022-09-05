@@ -13,18 +13,20 @@
 # limitations under the License.
 
 import argparse
+import itertools
 import json
 import logging
 from os.path import exists
 from typing import Any, Dict
-import itertools
 
-from benchmark_layer import run_layer_benchmark
-from layers import LayerType
-from utils import get_layer_set, get_path, save_results
+from benchmarks.benchmark_layer import run_layer_benchmark
+from benchmarks.layers import LayerType
+from benchmarks.utils import get_layer_set, get_path, save_results
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
 
 def run_and_save_benchmark(
     layer: LayerType,
@@ -90,7 +92,9 @@ def main(args) -> None:
     with open(args.config_file) as config_file:
         config = json.load(config_file)
 
-    for layer, batch_size, gsm_mode in itertools.product(args.layers, args.batch_sizes, args.grad_sample_modes):
+    for layer, batch_size, gsm_mode in itertools.product(
+        args.layers, args.batch_sizes, args.grad_sample_modes
+    ):
         # skip benchmark for this layer and batch size if applicable
         if args.cont and exists(
             get_path(
@@ -105,7 +109,9 @@ def main(args) -> None:
                 gsm_mode=gsm_mode,
             )
         ):
-            logger.info(f"Skipping {layer} ({gsm_mode}) at {batch_size} - already exists.")
+            logger.info(
+                f"Skipping {layer} ({gsm_mode}) at {batch_size} - already exists."
+            )
             continue
 
         try:
@@ -120,8 +126,9 @@ def main(args) -> None:
                 gsm_mode=gsm_mode,
             )
         except Exception as e:
-            logger.info(f"Skipping {layer} ({gsm_mode}) at {batch_size} - Failed with {e}")
-
+            logger.info(
+                f"Skipping {layer} ({gsm_mode}) at {batch_size} - Failed with {e}"
+            )
 
 
 if __name__ == "__main__":
@@ -153,7 +160,7 @@ if __name__ == "__main__":
         "--random_seed",
         type=int,
         help="random seed for the first run for each layer and batch size, "
-             "subsequent runs increase the random seed by 1",
+        "subsequent runs increase the random seed by 1",
     )
     parser.add_argument(
         "-c",
@@ -184,8 +191,8 @@ if __name__ == "__main__":
         choices=["baseline", "hooks", "ew", "functorch"],
         default=["baseline", "hooks"],
         help="Mode to compute per sample gradinets: "
-             "Classic (hooks), Functorch(functorch), "
-             "ExpandedWeights(ew), Non-private(baseline)"
+        "Classic (hooks), Functorch(functorch), "
+        "ExpandedWeights(ew), Non-private(baseline)",
     )
     parser.add_argument("--no_save", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
