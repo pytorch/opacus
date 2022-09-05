@@ -35,7 +35,7 @@ from benchmarks.utils import reset_peak_memory_stats
 def _gsm_modes() -> Set[str]:
     ret = ["baseline", "hooks"]
     try:
-        import functorch
+        import functorch # noqa: F401, Checking for import errors
 
         ret += ["functorch"]
     except ImportError:
@@ -136,10 +136,10 @@ def test_layer_modules(
                 assert isinstance(layer.module, module)
             elif gsm_mode == "hooks":
                 assert isinstance(layer.module, GradSampleModule)
-                assert layer.module.force_functorch == False
+                assert not layer.module.force_functorch
             elif gsm_mode == "functorch":
                 assert isinstance(layer.module, GradSampleModule)
-                assert layer.module.force_functorch == True
+                assert layer.module.force_functorch
             elif gsm_mode == "ew":
                 assert isinstance(layer.module, GradSampleModuleExpandedWeights)
 
