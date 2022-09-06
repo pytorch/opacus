@@ -33,7 +33,6 @@ import torchvision.utils as vutils
 from opacus import PrivacyEngine
 from tqdm import tqdm
 
-
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data-root", required=True, help="path to dataset")
 parser.add_argument(
@@ -299,20 +298,19 @@ for epoch in range(opt.epochs):
         label_fake = torch.full((batch_size,), FAKE_LABEL, device=device)
         output = netD(fake.detach())
         errD_fake = criterion(output, label_fake)
-        errD_fake.backward()
-        optimizerD.step()
-        optimizerD.zero_grad()
 
         # train with real
         label_true = torch.full((batch_size,), REAL_LABEL, device=device)
         output = netD(real_data)
         errD_real = criterion(output, label_true)
-        errD_real.backward()
-        optimizerD.step()
-        D_x = output.mean().item()
 
+        # Note that we clip the gradient for not only real but also fake data.
+        errD = errD_fake + errD_real
+        errD.backward()
+        optimizerD.step()
+
+        D_x = output.mean().item()
         D_G_z1 = output.mean().item()
-        errD = errD_real + errD_fake
 
         ############################
         # (2) Update G network: maximize log(D(G(z)))
