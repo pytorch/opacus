@@ -18,13 +18,15 @@ from typing import Callable, Dict, Tuple
 
 import torch
 import torch.utils.benchmark as benchmark
-from layers import LayerFactory, LayerType
-from utils import get_layer_set, reset_peak_memory_stats
+
+from benchmarks.layers import LayerFactory, LayerType
+from benchmarks.utils import get_layer_set, reset_peak_memory_stats
 
 
 def run_layer_benchmark(
     num_repeats: int,
     forward_only: bool = False,
+    gsm_mode: str = "baseline",
     create_layer: Callable = LayerFactory.create,
     **kwargs,
 ) -> Tuple[float, Dict[str, int]]:
@@ -41,12 +43,17 @@ def run_layer_benchmark(
     """
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    invalid_mem_flag = False
 
     if torch.cuda.is_available():
-        assert reset_peak_memory_stats(device).cur_mem == 0
+        mem = reset_peak_memory_stats(device)
+        if mem is None:
+            invalid_mem_flag = True
+        else:
+            invalid_mem_flag |= not (mem.cur_mem == 0)
 
     # setup layer
-    layer_fun = create_layer(**kwargs)
+    layer_fun = create_layer(gsm_mode=gsm_mode, **kwargs)
 
     if forward_only:
         layer_fun.module.eval()
@@ -57,8 +64,8 @@ def run_layer_benchmark(
 
     # move layer to device and get memory statistics
     memory_stats = layer_fun.to(device=device)
-    assert sum(v for _, v in memory_stats.items()) == torch.cuda.memory_allocated(
-        device
+    invalid_mem_flag |= not (
+        sum(v for _, v in memory_stats.items()) == torch.cuda.memory_allocated(device)
     )
 
     # benchmark.Timer performs its own warmups
@@ -70,9 +77,16 @@ def run_layer_benchmark(
     runtime = timer.timeit(num_repeats).mean
 
     # get max memory allocated and reset memory statistics
-    memory_stats["max_memory"] = reset_peak_memory_stats(device).prev_max_mem
+    mem = reset_peak_memory_stats(device)
+    if mem is None:
+        invalid_mem_flag = True
+    else:
+        memory_stats["max_memory"] = mem.prev_max_mem
 
-    return runtime, memory_stats
+    if invalid_mem_flag:
+        return runtime, None
+    else:
+        return runtime, memory_stats
 
 
 def main(args) -> None:
@@ -86,6 +100,7 @@ def main(args) -> None:
         layer_name=args.layer,
         batch_size=args.batch_size,
         random_seed=args.random_seed,
+        gsm_mode=args.gsm_mode,
         **config[get_layer_set(args.layer)],
     )
     print(f"Runtime (seconds): {runtime}")
@@ -116,6 +131,13 @@ if __name__ == "__main__":
         default="config.json",
         type=str,
         help="path to config file with settings for each layer",
+    )
+    parser.add_argument(
+        "gsm_mode",
+        type=str,
+        choices=["baseline", "hooks", "ew", "functorch"],
+        default="baseline",
+        help="Mode to compute per sample gradinets: Non-private(baseline), Classic (hooks), Functorch(functorch), ExpandedWeights(ew)",
     )
     args = parser.parse_args()
     main(args)
