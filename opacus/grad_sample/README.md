@@ -64,32 +64,21 @@ Please note that these are known limitations and we plan to improve Expanded Wei
 
 | xxx                          | Hooks                           | Expanded Weights | Functorch    |
 |:----------------------------:|:-------------------------------:|:----------------:|:------------:| 
-| Required PyTorch version     | 1.8+                            | 1.13+            | 1.12         |
+| Required PyTorch version     | 1.8+                            | 1.13+            | 1.12 (to be updated) |
 | Development status           | Underlying mechanism deprecated | Beta             | Beta         | 
-| Runtime Performance          | 1x                              | ✅ ~30% faster  | 🟨 50%-300% slower |
-| Any DP-allowed† layers       | Not supported                   | Not supported    | ✅ Supported |
+| Runtime Performance†          | baseline                       | ✅ ~25% faster  | 🟨 0-50% slower |
+| Any DP-allowed†† layers       | Not supported                   | Not supported   | ✅ Supported |
 | Most popular nn.* layers     | ✅ Supported                    | ✅ Supported    | ✅ Supported  | 
-| torchscript models           | Not supported                   | ✅ Supported    | ❓            |
+| torchscripted models         | Not supported                   | ✅ Supported    | Not supported |
 | Client-provided grad sampler | ✅ Supported                    | Not supported   | ✅ Not needed |
-| `batch_first=False`          | ✅ Supported                    | Not supported   | ❓            |
-| Recurrent networks           | ✅ Supported                    | Not supported   | ❓            |
+| `batch_first=False`          | ✅ Supported                    | Not supported   | ✅ Supported  |
+| Recurrent networks           | ✅ Supported                    | Not supported   | ✅ Supported  |
 | Padding `same` in Conv       | ✅ Supported                    | Not supported   | ✅ Supported  |
 
-† Layers that produce joint computations on batch samples (e.g. BatchNorm) are not allowed under any approach    
+† Note, that performance differences are unstable and can vary a lot depending on the exact model and batch size. 
+Numbers above are averaged over benchmarks with small models consisting of convolutional and linear layers. 
+Note, that performance differences are only observed on GPU training, CPU performance seem to be almost identical 
+for all approaches.
 
-### Benchmark results
+†† Layers that produce joint computations on batch samples (e.g. BatchNorm) are not allowed under any approach    
 
-Numbers indicated are ratio compared to a non-private baseline. Larger number indicates worse performance 
-(Longer runtime (in seconds) or higher memory footprint)
-
-#### Runtime
-| Layer | batch size | Hooks | ExpandedWeights | Functorch |
-|:-----:|:----------:|:-----:|:---------------:|:---------:|
-| nn.Linear | 16 | 1.91 | 1.53 | 2.80
-| nn.Linear | 32 | 2.15 | 1.50 | 3.07
-| nn.Linear | 64 | 2.88 | 2.15 | 3.44
-| nn.Linear | 128 | 4.51 | 3.11 | 4.41
-| nn.Conv2d | 16 | 1.76 | 4.61 (?) 
-| nn.Conv2d | 32 | 2.21 | 2.01 |
-| nn.Conv2d | 64 | 2.64 | 
-| nn.Conv2d | 128 | 2.89
