@@ -88,6 +88,7 @@ class Conv2d_test(GradSampleHooks_test):
 
         if padding != "same":
             # Test 'convolution as a backward' GSM
+            # 'convolution as a backward' doesn't support padding=same
             conv2d_gsm = GradSampleModule.GRAD_SAMPLERS[nn.Conv2d]
             GradSampleModule.GRAD_SAMPLERS[
                 nn.Conv2d
