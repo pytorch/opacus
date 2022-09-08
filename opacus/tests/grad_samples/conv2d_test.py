@@ -24,7 +24,7 @@ from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.utils.tensor_utils import unfold2d
 from torch.testing import assert_allclose
 
-from .common import expander, GradSampleHooks_test, shrinker
+from .common import GradSampleHooks_test, expander, shrinker
 
 
 class Conv2d_test(GradSampleHooks_test):

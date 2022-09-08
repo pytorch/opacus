@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 from hypothesis import given, settings
 
-from .common import expander, GradSampleHooks_test, shrinker
+from .common import GradSampleHooks_test, expander, shrinker
 
 
 class Conv1d_test(GradSampleHooks_test):
