@@ -101,6 +101,19 @@ def _log_sub(logx: float, logy: float) -> float:
     except OverflowError:
         return logx
 
+def _log_add_list(log_list: list) -> float:
+    r"""Adds a list of numbers in the log space.
+
+    Args:
+        log_list
+    Returns:
+        Sum of numbers in log space. i.e. log(exp(x_1) + exp(x_2) + exp(x_3) + ....)
+    """
+    a = np.max(log_list)
+    # Use exp(a) + exp(b) = (exp(a - b) + 1) * exp(b)
+    return a + np.log(np.sum(np.exp(log_list-a)))
+
+
 
 def _compute_log_a_for_int_alpha(q: float, sigma: float, alpha: int) -> float:
     r"""Computes :math:`log(A_\alpha)` for integer ``alpha``.
@@ -341,14 +354,17 @@ def get_privacy_spent(
 # Functions used for implementation of Wang's Generalized analytic moment bounds for subsampled mechanisms
 # based on theorem 9 of https://arxiv.org/pdf/1808.00087.pdf and implementation  https://github.com/yuxiangw/autodp/blob/master/autodp/rdp_acct.py
 
-def _SGM_compute_rdp_subssample(q: float,sigma: float, alpha: float) -> float:
+def logcomb(n, k):
+    return (special.gammaln(n+1) - special.gammaln(n-k+1) - special.gammaln(k+1))
+
+def _SGM_compute_rdp_subsample(q: float,sigma: float, alpha: float) -> float:
     r"""Computes bound of RDP of the Sampled Mechanism at order ``alpha``.
     Args:
         q: Subsampling rate of
         sigma: The standard deviation of the additive Gaussian noise.
         alpha: The order at which RDP is computed.
     Returns:
-        RDP at order ``alpha``; can be np.inf.
+        RDP at order ``alpha``; can be np.inf.s
     """
     # SGM rdp calculation:
     def func(x):
@@ -373,16 +389,16 @@ def _SGM_compute_rdp_subssample(q: float,sigma: float, alpha: float) -> float:
         eps_inf = func(np.inf)
         eps_two = func(2.0)
 
-        moments_two = 2 * np.log(prob) + logcomb(mm,2) \
+        moments_two = 2 * np.log(q) + logcomb(mm,2) \
                         + np.minimum(np.log(4) + eps_two + np.log(1-np.exp(-eps_two)),
                                     eps_two + np.minimum(np.log(2),
                                                 2 * (eps_inf+np.log(1-np.exp(-eps_inf)))))
         moment_bound = lambda j: np.minimum(j * (eps_inf + np.log(1-np.exp(-eps_inf))),
                                             np.log(2)) + cgf(j - 1) \
-                                    + j * np.log(prob) + utils.logcomb(mm, j)
+                                    + j * np.log(q) + logcomb(mm, j)
         moments = [moment_bound(j) for j in range(3, mm + 1, 1)]
 
-        return np.minimum((x-1)*func(x), _log_add([0,moments_two] + moments))
+        return np.minimum((x-1)*func(x), _log_add_list([0,moments_two] + moments))
 
     def subsample_func(x):
         # This function returns the RDP at alpha = x
@@ -398,7 +414,7 @@ def _SGM_compute_rdp_subssample(q: float,sigma: float, alpha: float) -> float:
         # Jon Ullman's lecture notes: http://www.ccs.neu.edu/home/jullman/PrivacyS17/HW1sol.pdf
         # See the proof of (b)
 
-        epsinf =  np.log(1+q*(np.exp(func(np.inf))-1)))
+        epsinf =  np.log(1+q*(np.exp(func(np.inf))-1))
 
         if np.isinf(x):
             return epsinf
@@ -436,8 +452,8 @@ def SGM_compute_general_subsampled_rdp_bound(
         The RDP guarantees at all orders; can be ``np.inf``.
     """
     if isinstance(orders, float):
-        rdp = _SGM_compute_rdp_subsample(m,q, orders)
+        rdp = _SGM_compute_rdp_subsample(q,noise_multiplier,orders)
     else:
-        rdp = np.array([_SGM_compute_rdp_subsample(m,q, order) for order in orders])
+        rdp = np.array([_SGM_compute_rdp_subsample(q,noise_multiplier, order) for order in orders])
 
     return rdp * steps

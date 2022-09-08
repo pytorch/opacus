@@ -85,4 +85,4 @@ class RDPAccountantAnalyticMoment(IAccountant):
 
     @classmethod
     def mechanism(cls) -> str:
-        return "rdp"
+        return "rdp_analytic"

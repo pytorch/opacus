@@ -15,13 +15,14 @@
 from .accountant import IAccountant
 from .gdp import GaussianAccountant
 from .rdp import RDPAccountant
-from .rdp import RDPAccountantAnalyticMoment
+from .rdp_analytic_moment import RDPAccountantAnalyticMoment
 
 
 __all__ = [
     "IAccountant",
     "GaussianAccountant",
     "RDPAccountant",
+    "RDPAccountantAnalyticMoment"
 ]
 
 
