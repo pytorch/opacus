@@ -24,7 +24,7 @@ from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.utils.tensor_utils import unfold2d
 from torch.testing import assert_allclose
 
-from .common import expander, GradSampleHooks_test, shrinker
+from .common import GradSampleHooks_test, expander, shrinker
 
 
 class Conv2d_test(GradSampleHooks_test):
@@ -85,20 +85,22 @@ class Conv2d_test(GradSampleHooks_test):
             rtol=10e-4,
             ew_compatible=is_ew_compatible,
         )
-        # Test 'convolution as a backward' GSM
-        conv2d_gsm = GradSampleModule.GRAD_SAMPLERS[nn.Conv2d]
-        GradSampleModule.GRAD_SAMPLERS[
-            nn.Conv2d
-        ] = convolution2d_backward_as_a_convolution
-        self.run_test(
-            x,
-            conv,
-            batch_first=True,
-            atol=10e-5,
-            rtol=10e-4,
-            ew_compatible=is_ew_compatible,
-        )
-        GradSampleModule.GRAD_SAMPLERS[nn.Conv2d] = conv2d_gsm
+
+        if padding != "same":
+            # Test 'convolution as a backward' GSM
+            conv2d_gsm = GradSampleModule.GRAD_SAMPLERS[nn.Conv2d]
+            GradSampleModule.GRAD_SAMPLERS[
+                nn.Conv2d
+            ] = convolution2d_backward_as_a_convolution
+            self.run_test(
+                x,
+                conv,
+                batch_first=True,
+                atol=10e-5,
+                rtol=10e-4,
+                ew_compatible=is_ew_compatible,
+            )
+            GradSampleModule.GRAD_SAMPLERS[nn.Conv2d] = conv2d_gsm
 
     @given(
         B=st.integers(1, 4),
