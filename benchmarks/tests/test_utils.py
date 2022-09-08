@@ -20,7 +20,13 @@ from typing import Any, Dict, List, Tuple
 import pytest
 import torch
 from helpers import get_n_byte_tensor, skipifnocuda
-from utils import get_layer_set, get_path, reset_peak_memory_stats, save_results
+
+from benchmarks.utils import (
+    get_layer_set,
+    get_path,
+    reset_peak_memory_stats,
+    save_results,
+)
 
 
 @pytest.mark.parametrize(
@@ -94,8 +100,14 @@ def test_reset_peak_memory_stats(prev_max_memory: int, allocated_memory: int) ->
     "config, path",
     [
         (
-            {"layer": "linear", "batch_size": 64, "num_runs": 10, "num_repeats": 100},
-            "./results/raw/linear_bs_64_runs_10_repeats_100_seed_None.pkl",
+            {
+                "layer": "linear",
+                "batch_size": 64,
+                "num_runs": 10,
+                "num_repeats": 100,
+                "gsm_mode": "none",
+            },
+            "./results/raw/linear_mode_none_bs_64_runs_10_repeats_100_seed_None.pkl",
         ),
         (
             {
@@ -105,8 +117,9 @@ def test_reset_peak_memory_stats(prev_max_memory: int, allocated_memory: int) ->
                 "num_repeats": 20,
                 "random_seed": 13964,
                 "forward_only": True,
+                "gsm_mode": "ew",
             },
-            "./results/raw/gsm_rnn_bs_128_runs_5_repeats_20_seed_13964_forward_only.pkl",
+            "./results/raw/gsm_rnn_mode_ew_bs_128_runs_5_repeats_20_seed_13964_forward_only.pkl",
         ),
         (
             {
@@ -117,8 +130,9 @@ def test_reset_peak_memory_stats(prev_max_memory: int, allocated_memory: int) ->
                 "random_seed": 88362,
                 "root": "./results/tmp/",
                 "suffix": "no_3",
+                "gsm_mode": "hooks",
             },
-            "./results/tmp/dpmha_bs_16_runs_20_repeats_50_seed_88362_no_3.pkl",
+            "./results/tmp/dpmha_mode_hooks_bs_16_runs_20_repeats_50_seed_88362_no_3.pkl",
         ),
     ],
 )
@@ -139,14 +153,15 @@ def pickle_data_and_config(
 
     # setup test directory and save results to pickle file
     os.mkdir(root)
-    save_results(**config, results=[], config={}, root=root, suffix=suffix)
+    try:
+        save_results(**config, results=[], config={}, root=root, suffix=suffix)
 
-    # return pickle data and the config
-    with open(get_path(**config, root=root, suffix=suffix), "rb") as f:
-        yield pickle.load(f), config
-
-    # remove directory
-    shutil.rmtree(root)
+        # return pickle data and the config
+        with open(get_path(**config, root=root, suffix=suffix), "rb") as f:
+            yield pickle.load(f), config
+    finally:
+        # remove directory
+        shutil.rmtree(root)
 
 
 @pytest.mark.parametrize(
@@ -156,6 +171,7 @@ def pickle_data_and_config(
             {
                 "layer": "linear",
                 "batch_size": 64,
+                "gsm_mode": "none",
                 "num_runs": 10,
                 "num_repeats": 100,
                 "random_seed": 13964,
@@ -167,6 +183,7 @@ def pickle_data_and_config(
             {
                 "layer": "dpmha",
                 "batch_size": 16,
+                "gsm_mode": "functorch",
                 "num_runs": 20,
                 "num_repeats": 50,
                 "random_seed": 88362,

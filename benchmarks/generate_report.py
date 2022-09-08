@@ -14,7 +14,7 @@
 
 import argparse
 
-from utils import generate_report
+from benchmarks.utils import generate_report
 
 
 if __name__ == "__main__":

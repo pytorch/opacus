@@ -18,10 +18,11 @@ import time
 import pytest
 import torch
 import torch.nn as nn
-from benchmark_layer import run_layer_benchmark
 from helpers import get_actual_memory_allocated, get_n_byte_tensor, skipifnocuda
-from layers import Layer
-from utils import reset_peak_memory_stats
+
+from benchmarks.benchmark_layer import run_layer_benchmark
+from benchmarks.layers import Layer
+from benchmarks.utils import reset_peak_memory_stats
 
 
 class FakeModule(nn.Module):
