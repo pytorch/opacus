@@ -14,8 +14,11 @@ which one to use.
 improves upon ``GradSampleModule`` on performance and functionality.
 
 **TL;DR:** If you want stable implementation, use ``GradSampleModule`` (`grad_sample_mode="hooks"`).
-If you want to experiment with the new functionality - try ``GradSampleModuleExpandedWeights``(`grad_sample_mode="ew"`)
-and switch back to ``GradSampleModule`` if you encounter strange errors or unexpexted behaviour.
+If you want to experiment with the new functionality, you have two options. Try 
+``GradSampleModuleExpandedWeights``(`grad_sample_mode="ew"`) for better performance and `grad_sample_mode=functorch` 
+if your model is not supported by ``GradSampleModule``. 
+
+Please switch back to ``GradSampleModule``(`grad_sample_mode="hooks"`) if you encounter strange errors or unexpexted behaviour.
 We'd also appreciate it if you report these to us
 
 ## Hooks-based approach
