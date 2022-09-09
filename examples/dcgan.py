@@ -297,20 +297,19 @@ for epoch in range(opt.epochs):
         fake = netG(noise)
         label_fake = torch.full((batch_size,), FAKE_LABEL, device=device)
         output = netD(fake.detach())
+        D_G_z1 = output.mean().item()
         errD_fake = criterion(output, label_fake)
 
         # train with real
         label_true = torch.full((batch_size,), REAL_LABEL, device=device)
         output = netD(real_data)
+        D_x = output.mean().item()
         errD_real = criterion(output, label_true)
 
         # Note that we clip the gradient for not only real but also fake data.
         errD = errD_fake + errD_real
         errD.backward()
         optimizerD.step()
-
-        D_x = output.mean().item()
-        D_G_z1 = output.mean().item()
 
         ############################
         # (2) Update G network: maximize log(D(G(z)))
@@ -322,7 +321,7 @@ for epoch in range(opt.epochs):
         output_g = netD(fake)
         errG = criterion(output_g, label_g)
         errG.backward()
-        D_G_z2 = output.mean().item()
+        D_G_z2 = output_g.mean().item()
         optimizerG.step()
         data_bar.set_description(
             f"epoch: {epoch}, Loss_D: {errD.item()} "
