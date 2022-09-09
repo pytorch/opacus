@@ -423,7 +423,7 @@ def parse_args():
     parser.add_argument(
         "--batch-size",
         default=2000,
-        type=float,
+        type=int,
         metavar="N",
         help="approximate bacth size",
     )

@@ -13,22 +13,25 @@
 # limitations under the License.
 
 import argparse
+import itertools
 import json
 import logging
 from os.path import exists
 from typing import Any, Dict
 
-from benchmark_layer import run_layer_benchmark
-from layers import LayerType
-from utils import get_layer_set, get_path, save_results
+from benchmarks.benchmark_layer import run_layer_benchmark
+from benchmarks.layers import LayerType
+from benchmarks.utils import get_layer_set, get_path, save_results
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def run_and_save_benchmark(
     layer: LayerType,
     batch_size: int,
+    gsm_mode: str,
     args,
     layer_config: Dict[str, Any],
     root: str = "./results/raw/",
@@ -45,7 +48,7 @@ def run_and_save_benchmark(
         suffix: optional string to append to result file name
     """
 
-    logger.info(f"Benchmarking {layer} layer with batch size {batch_size}.")
+    logger.info(f"Benchmarking {layer} {gsm_mode} layer with batch size {batch_size}.")
     results = []
 
     for i in range(args.num_runs):
@@ -55,6 +58,7 @@ def run_and_save_benchmark(
             layer_name=layer,
             batch_size=batch_size,
             random_seed=args.random_seed + i if args.random_seed is not None else None,
+            gsm_mode=gsm_mode,
             **layer_config,
         )
         res = {"runtime": runtime, "memory_stats": memory_stats}
@@ -68,6 +72,7 @@ def run_and_save_benchmark(
             batch_size=batch_size,
             num_runs=args.num_runs,
             num_repeats=args.num_repeats,
+            gsm_mode=gsm_mode,
             results=results,
             config=layer_config,
             random_seed=args.random_seed,
@@ -87,25 +92,29 @@ def main(args) -> None:
     with open(args.config_file) as config_file:
         config = json.load(config_file)
 
-    for layer in args.layers:
-        for batch_size in args.batch_sizes:
+    for layer, batch_size, gsm_mode in itertools.product(
+        args.layers, args.batch_sizes, args.grad_sample_modes
+    ):
+        # skip benchmark for this layer and batch size if applicable
+        if args.cont and exists(
+            get_path(
+                layer=layer,
+                batch_size=batch_size,
+                num_runs=args.num_runs,
+                num_repeats=args.num_repeats,
+                random_seed=args.random_seed,
+                forward_only=args.forward_only,
+                root=args.root,
+                suffix=args.suffix,
+                gsm_mode=gsm_mode,
+            )
+        ):
+            logger.info(
+                f"Skipping {layer} ({gsm_mode}) at {batch_size} - already exists."
+            )
+            continue
 
-            # skip benchmark for this layer and batch size if applicable
-            if args.cont and exists(
-                get_path(
-                    layer=layer,
-                    batch_size=batch_size,
-                    num_runs=args.num_runs,
-                    num_repeats=args.num_repeats,
-                    random_seed=args.random_seed,
-                    forward_only=args.forward_only,
-                    root=args.root,
-                    suffix=args.suffix,
-                )
-            ):
-                logger.info(f"Skipping {layer} at {batch_size} - already exists.")
-                continue
-
+        try:
             # run and save (if applicable) the benchmark for this layer and batch size
             run_and_save_benchmark(
                 layer=layer,
@@ -114,6 +123,11 @@ def main(args) -> None:
                 layer_config=config[get_layer_set(layer)],
                 root=args.root,
                 suffix=args.suffix,
+                gsm_mode=gsm_mode,
+            )
+        except Exception as e:
+            logger.info(
+                f"Skipping {layer} ({gsm_mode}) at {batch_size} - Failed with {e}"
             )
 
 
@@ -145,7 +159,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--random_seed",
         type=int,
-        help="random seed for the first run for each layer and batch size, subsequent runs increase the random seed by 1",
+        help="random seed for the first run for each layer and batch size, "
+        "subsequent runs increase the random seed by 1",
     )
     parser.add_argument(
         "-c",
@@ -168,6 +183,16 @@ if __name__ == "__main__":
         default="",
         type=str,
         help="suffix to append to each result file's name",
+    )
+    parser.add_argument(
+        "--grad_sample_modes",
+        type=str,
+        nargs="+",
+        choices=["baseline", "hooks", "ew", "functorch"],
+        default=["baseline", "hooks"],
+        help="Mode to compute per sample gradinets: "
+        "Classic (hooks), Functorch(functorch), "
+        "ExpandedWeights(ew), Non-private(baseline)",
     )
     parser.add_argument("--no_save", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
