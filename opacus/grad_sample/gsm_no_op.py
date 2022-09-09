@@ -20,9 +20,8 @@ from opacus.grad_sample.gsm_base import AbstractGradSampleModule
 
 class GradSampleModuleNoOp(AbstractGradSampleModule):
     """
-    ExpandedWeights-based implementation of AbstractGradSampleModule
-
-    Computes per-sample gradients using PyTorch built-in mechanism of ExpandedWeights.
+    NoOp GradSampleModule.
+    Only wraps the module. The main goal of this class is to provide the same API for all methods.
     See README.md for more details
     """
 
