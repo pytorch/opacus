@@ -35,7 +35,7 @@ from benchmarks.utils import reset_peak_memory_stats
 def _gsm_modes() -> Set[str]:
     ret = ["baseline", "hooks"]
     try:
-        import functorch # noqa: F401, Checking for import errors
+        import functorch  # noqa: F401, Checking for import errors
 
         ret += ["functorch"]
     except ImportError:
