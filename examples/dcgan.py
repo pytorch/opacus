@@ -30,8 +30,9 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
-from opacus import PrivacyEngine
 from tqdm import tqdm
+
+from opacus import PrivacyEngine
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data-root", required=True, help="path to dataset")
