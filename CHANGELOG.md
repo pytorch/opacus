@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.2
+
+### New ways to compute per sample gradients
+We're glad to present Opacus v1.2, which contains some major updates to per sample gradient computation mechanisms 
+and includes all the good stuff from the recent PyTorch releases.
+* Functorch - per sample gradients for all
+* ExpandedWeights - yet another way to compute per sample gradients
+* See [Release notes](https://github.com/pytorch/opacus/releases/tag/v1.2.0) 
+  and [GradSampleModule README](https://github.com/pytorch/opacus/blob/main/opacus/grad_sample/README.md) 
+  for detailed feature explanation
+  
+### Other improvements
+* Fix `utils.unfold2d` with non-symmetric pad/dilation/kernel_size/stride (#443)
+* Add support for "same" and "valid" padding for hooks-based grad sampler for convolution layers
+* Improve model validation to support frozen layers and catch copied parameters (#489)
+* Remove annoying logging from `set_to_none` (#471)
+* Improved documentation (#480, #478, #482, #485, #486, #487, #488)
+* Imtegration test improvements (#407, #479, #481. #473)
+
+
 ## v1.1.3
 ### Bug fixes
 * Support layers with a mix of frozen and learnable parameters (#437)
