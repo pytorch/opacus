@@ -248,7 +248,9 @@ commands:
         type: string
       layers:
         default: "mha dpmha embedding instancenorm groupnorm layernorm lstm dplstm rnn dprnn linear gru dpgru"
-        grad_sample_modes: "baseline hooks"
+        type: string
+      grad_sample_modes:
+        default: "baseline hooks"
         type: string
       runtime_ratio_threshold:
         default: "7.0"
