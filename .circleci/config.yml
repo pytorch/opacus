@@ -247,7 +247,8 @@ commands:
         default: "cpu"
         type: string
       layers:
-        default: "mha dpmha gsm_dpmha embedding gsm_embedding instancenorm gsm_instancenorm groupnorm gsm_groupnorm layernorm gsm_layernorm lstm dplstm gsm_dplstm rnn dprnn gsm_dprnn linear gsm_linear gru dpgru gsm_dpgru"
+        default: "mha dpmha embedding instancenorm groupnorm layernorm lstm dplstm rnn dprnn linear gru dpgru"
+        grad_sample_modes: "baseline hooks"
         type: string
       runtime_ratio_threshold:
         default: "7.0"
@@ -363,52 +364,62 @@ jobs:
       - run_nvidia_smi
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "groupnorm gsm_groupnorm instancenorm gsm_instancenorm layernorm gsm_layernorm mha dpmha"
+          layers: "groupnorm instancenorm layernorm mha dpmha"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "3.0"
           memory_ratio_threshold: "1.6"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "linear gsm_linear"
+          layers: "linear"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "3.6"
           memory_ratio_threshold: "13.0"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "mha gsm_dpmha"
+          layers: "mha"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "3.5"
           memory_ratio_threshold: "2.0"
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "gru dpgru"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "18.5"
           memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "gru gsm_dpgru"
+          layers: "gru"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "40"
           memory_ratio_threshold: "1.6"
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "lstm dplstm"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "16.5"
           memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "lstm gsm_dplstm"
+          layers: "lstm"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "38.0"
           memory_ratio_threshold: "1.8"
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "rnn dprnn"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "10.0"
           memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "rnn gsm_dprnn"
+          layers: "rnn"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "33.0"
           memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "embedding gsm_embedding"
+          layers: "embedding"
+          grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "8.0"
           memory_ratio_threshold: "15.0"
 
