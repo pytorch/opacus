@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import List
+import warnings
 
 import numpy as np
 
@@ -28,7 +29,41 @@ from .analysis.prv import (
 
 
 class PRVAccountant(IAccountant):
+    r"""
+    Tracks privacy expenditure via numerical composition of Privacy loss Random
+    Variables (PRVs) using the approach suggested by Gopi et al[1]. The implementation
+    here is heavily inspired by the implementation of the authors that accompanied
+    their paper[2].
+
+    By utilising the Fast Fourier transform, this accountant is able to efficiently
+    calculate tight bounds on the privacy expenditure, and has been shown
+    experimentally to obtain tighter bounds than the RDP accountant.
+
+    The idea behind this accountant is approximately as follows:
+
+    A differentially private mechanism can be characterised by a PRV. The composition
+    of multiple differentially privacy mechanisms can be charaterised by the sum of the
+    corresponding PRVs. To get the density of the sum of PRVs, we convolve the
+    individual densities.
+
+    This accountant discretizes the PRVs corresponding to each step of the
+    optimization, and convolves the approximations using the Fast Fourier Transform.
+    The mesh size and bounds for the discretization are chosen automatically to ensure
+    suitable approximation quality.
+
+    The resulting convolved density is used to recover epsilon. For more detail, see
+    the paper[1].
+
+    References:
+        [1] https://arxiv.org/abs/2106.02848
+        [2] https://github.com/microsoft/prv_accountant
+    """
+
     def __init__(self):
+        warnings.warn(
+            "PRVAccountant has not yet been properly checked for correctness. "
+            "Use with caution."
+        )
         super().__init__()
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
@@ -53,16 +88,31 @@ class PRVAccountant(IAccountant):
     def get_epsilon(
         self, delta: float, *, eps_error: float = 0.1, delta_error: float = 1e-6
     ) -> float:
+        """
+        Return privacy budget (epsilon) expended so far.
+
+        Args:
+            delta: target delta
+            eps_error: acceptable level of error in the epsilon estimate
+            delta_error: acceptable level of error in delta
+        """
+        # we construct a discrete PRV from the history
         dprv = self._get_dprv(eps_error=eps_error, delta_error=delta_error)
+        # this discrete PRV can be used to directly estimate and bound epsilon
         _, _, eps_upper = dprv.compute_epsilon(delta, delta_error, eps_error)
+        # return upper bound as we want guarantee, not just estimate
         return eps_upper
 
     def _get_dprv(self, eps_error, delta_error):
-        # convert history to privacy loss random variables (prvs)
+        # convert history to privacy loss random variables (prvs). Opacus currently
+        # operates under the assumption that only a Poisson-subsampled Gaussian
+        # mechanism is ever used during optimisation
         prvs = [
             PoissonSubsampledGaussianPRV(sample_rate, noise_multiplier)
             for noise_multiplier, sample_rate, _ in self.history
         ]
+        # compute a safe domain for discretization per Gopi et al. This determines both
+        # the mesh size and the truncation upper and lower bounds.
         num_self_compositions = [steps for _, _, steps in self.history]
         domain = self._get_domain(
             prvs=prvs,

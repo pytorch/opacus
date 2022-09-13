@@ -13,7 +13,8 @@ SQRT2 = np.sqrt(2)
 
 
 class PoissonSubsampledGaussianPRV:
-    """A Poisson subsampled Gaussian privacy random variable.
+    r"""
+    A Poisson subsampled Gaussian privacy random variable.
 
     For details about the formulas for the pdf and cdf, see propositions B1 and B4 in
     https://www.microsoft.com/en-us/research/publication/numerical-composition-of-differential-privacy/
@@ -60,6 +61,8 @@ class PoissonSubsampledGaussianPRV:
         return _compute_rdp(self.sample_rate, self.noise_multiplier, alpha)
 
 
+# though we have only implemented the PoissonSubsampledGaussianPRV, this truncated prv
+# class is generic, and would work with PRVs corresponding to different mechanisms
 class TruncatedPrivacyRandomVariable:
     def __init__(
         self, prv: PoissonSubsampledGaussianPRV, t_min: float, t_max: float
@@ -88,6 +91,9 @@ class TruncatedPrivacyRandomVariable:
         )
 
     def mean(self) -> float:
+        """
+        Calculate the mean using numerical integration.
+        """
         points = np.concatenate(
             [
                 [self.t_min],

@@ -8,6 +8,10 @@ from ...rdp import RDPAccountant
 
 @dataclass
 class Domain:
+    r"""
+    Stores relevant information about the domain on which PRVs are discretized, and
+    includes a few convenience methods for manipulating it.
+    """
     t_min: float
     t_max: float
     size: int
@@ -87,4 +91,9 @@ def compute_safe_domain_size(
             rdp_accountant.get_epsilon(delta=delta_error / (8 * total_compositions)),
         )
 
+    # FIXME: this implementation is adapted from the code accompanying the paper, but
+    # disagrees subtly with the theory from remark 5.6. It's not immediately clear this
+    # gives the right guarantees in all cases, though it's fine for eps_error < 1 and
+    # hence generic cases.
+    # cf. https://github.com/microsoft/prv_accountant/discussions/34
     return max(L_max, eps_error) + 3

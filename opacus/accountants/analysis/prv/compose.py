@@ -46,6 +46,12 @@ def _compose_convolution_tree(dprvs: List[DiscretePRV]) -> DiscretePRV:
 def compose_heterogeneous(
     dprvs: List[DiscretePRV], num_self_compositions: List[int]
 ) -> DiscretePRV:
+    r"""
+    Compose a heterogenous list of PRVs with multiplicity. We use FFT to compose
+    identical PRVs with themselves first, then pairwise convolve the remaining PRVs.
+
+    This is the approach taken in https://github.com/microsoft/prv_accountant
+    """
     if len(dprvs) != len(num_self_compositions):
         raise ValueError("dprvs and num_self_compositions must have the same length")
 
