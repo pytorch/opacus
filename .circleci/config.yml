@@ -272,8 +272,8 @@ commands:
             python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report-${report_id}.csv --format csv
             python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report-${report_id}.pkl --format pkl
 
-            python benchmarks/check_threshold.py --path-to-report "./benchmarks/results/report-"$report_id".pkl" --metric runtime --threshold <<parameters.runtime_ratio_threshold>>  --column <<parameters.report_column>>
-            python benchmarks/check_threshold.py --path-to-report "./benchmarks/results/report-"$report_id".pkl" --metric memory --threshold <<parameters.memory_ratio_threshold>>  --column <<parameters.report_column>>
+            python benchmarks/check_threshold.py --report-path "./benchmarks/results/report-"$report_id".pkl" --metric runtime --threshold <<parameters.runtime_ratio_threshold>>  --column <<parameters.report_column>>
+            python benchmarks/check_threshold.py --report-path "./benchmarks/results/report-"$report_id".pkl" --metric memory --threshold <<parameters.memory_ratio_threshold>>  --column <<parameters.report_column>>
           when: always
       - store_artifacts:
           path: benchmarks/results/
