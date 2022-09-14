@@ -247,16 +247,16 @@ commands:
         default: "cpu"
         type: string
       layers:
-        default: "mha dpmha embedding instancenorm groupnorm layernorm lstm dplstm rnn dprnn linear gru dpgru"
         type: string
       grad_sample_modes:
         default: "baseline hooks"
         type: string
+      report_column:
+        default: "hooks/baseline"
+        type: string
       runtime_ratio_threshold:
-        default: "7.0"
         type: string
       memory_ratio_threshold:
-        default: "2.0"
         type: string
     steps:
       - run:
@@ -271,8 +271,9 @@ commands:
             report_id=`IFS=$'-'; echo "${layers[*]}"`
             python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report-${report_id}.csv --format csv
             python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report-${report_id}.pkl --format pkl
-            python -c "import pandas as pd; r = pd.read_pickle('./benchmarks/results/report-"$report_id".pkl').fillna(0); th="<<parameters.runtime_ratio_threshold>>"; exit(0) if (r.loc[:, ('runtime', 'hooks/baseline')] < th).all() else exit(1)"
-            python -c "import pandas as pd; r = pd.read_pickle('./benchmarks/results/report-"$report_id".pkl').fillna(0); th="<<parameters.memory_ratio_threshold>>"; exit(0) if (r.loc[:, ('memory', 'hooks/baseline')] < th).all() else exit(1)"
+
+            python benchmarks/check_threshold.py --path-to-report "./benchmarks/results/report-"$report_id".pkl" --metric runtime --threshold <<parameters.runtime_ratio_threshold>>  --column <<parameters.report_column>>
+            python benchmarks/check_threshold.py --path-to-report "./benchmarks/results/report-"$report_id".pkl" --metric memory --threshold <<parameters.memory_ratio_threshold>>  --column <<parameters.report_column>>
           when: always
       - store_artifacts:
           path: benchmarks/results/
@@ -366,7 +367,7 @@ jobs:
       - run_nvidia_smi
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "groupnorm instancenorm layernorm mha dpmha"
+          layers: "groupnorm instancenorm layernorm"
           grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "3.0"
           memory_ratio_threshold: "1.6"
@@ -378,43 +379,57 @@ jobs:
           memory_ratio_threshold: "13.0"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "mha"
+          layers: "mha dpmha"
+          report_column: "dp_baseline/baseline"
+          grad_sample_modes: "baseline hooks"
+          runtime_ratio_threshold: "3.0"
+          memory_ratio_threshold: "1.6"
+      - benchmark_layers_integration_test:
+          device: "cuda"
+          layers: "mha dpmha"
+          report_column: "dp_hooks/baseline"
           grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "3.5"
           memory_ratio_threshold: "2.0"
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "gru dpgru"
+          report_column: "dp_baseline/baseline"
           grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "18.5"
           memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "gru"
+          layers: "gru dpgru"
+          report_column: "dp_hooks/baseline"
           grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "40"
           memory_ratio_threshold: "1.6"
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "lstm dplstm"
+          report_column: "dp_baseline/baseline"
           grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "16.5"
           memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "lstm"
+          layers: "lstm dplstm"
+          report_column: "dp_hooks/baseline"
           grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "38.0"
           memory_ratio_threshold: "1.8"
       - benchmark_layers_integration_test:
           device: "cuda"
           layers: "rnn dprnn"
+          report_column: "dp_baseline/baseline"
           grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "10.0"
           memory_ratio_threshold: "1.2"
       - benchmark_layers_integration_test:
           device: "cuda"
-          layers: "rnn"
+          layers: "rnn dprnn"
+          report_column: "dp_hooks/baseline"
           grad_sample_modes: "baseline hooks"
           runtime_ratio_threshold: "33.0"
           memory_ratio_threshold: "1.2"
@@ -487,6 +502,8 @@ workflows:
       - integrationtest_py37_torch_release_cpu:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
+          filters: *exclude_ghpages
+      - micro_benchmarks_py37_torch_release_cuda:
           filters: *exclude_ghpages
 
   nightly:

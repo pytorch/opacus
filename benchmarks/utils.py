@@ -222,11 +222,16 @@ def generate_report(path_to_results: str, save_path: str, format: str) -> None:
 
     results = pd.DataFrame(results_dict)
 
+    results["gsm_mode"][results["layer"].str.startswith("dp")] = "dp_" + results["gsm_mode"]
+    results["layer"] = results["layer"].str.replace("dp", "")
+
     pivot = results.pivot_table(
         index=["batch_size", "num_runs", "num_repeats", "forward_only", "layer"],
         columns=["gsm_mode"],
         values=["runtime", "memory"],
     )
+
+
 
     def add_ratio(df, metric, variant):
         if variant not in df.columns.get_level_values("gsm_mode"):

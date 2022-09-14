@@ -126,6 +126,8 @@ def main(args) -> None:
                 gsm_mode=gsm_mode,
             )
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             logger.info(
                 f"Skipping {layer} ({gsm_mode}) at {batch_size} - Failed with {e}"
             )
