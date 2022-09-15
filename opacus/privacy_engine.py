@@ -524,7 +524,6 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             noise_generator=noise_generator,
             grad_sample_mode=grad_sample_mode,
-            max_grad_norm=max_grad_norm,
             poisson_sampling=poisson_sampling,
             clipping=clipping,
         )
