@@ -92,13 +92,34 @@ commands:
           no_output_timeout: 1h
           command: |
             mkdir unittest-reports
-            python -m pytest --doctest-modules -p conftest --junitxml=unittest-reports/junit.xml opacus
+            coverage run -m pytest --doctest-modules -p conftest --junitxml=unittest-reports/junit.xml opacus
+            coverage report -i -m
 
       - store_test_results:
           path: unittest-reports
       - store_artifacts:
           path: unittest-reports
 
+  command_unit_tests_multi_gpu:
+    description: "Run multi gpu unit tests"
+    steps:
+      - run:
+          name: "Unit test multi_gpu"
+          no_output_timeout: 1h
+          command: |
+            mkdir unittest-multigpu-reports
+            coverage run -m unittest opacus.tests.multigpu_gradcheck.GradientComputationTest.test_gradient_correct
+            coverage report -i -m
+
+  coveralls_upload_parallel:
+    description: "upload coverage to coveralls"
+    steps:
+      - run:
+          name: "coveralls upload"
+          no_output_timeout: 5m
+          command: |
+            pip install coveralls --user
+            COVERALLS_PARALLEL=true COVERALLS_FLAG_NAME="${CIRCLE_JOB}" coveralls
 
   mnist_integration_test:
     description: "Runs MNIST example end to end"
@@ -300,6 +321,7 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
+      - coveralls_upload_parallel
 
   unittest_py38_torch_release:
     docker:
@@ -308,6 +330,7 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
+      - coveralls_upload_parallel
 
   unittest_py39_torch_release:
     docker:
@@ -316,6 +339,7 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
+      - coveralls_upload_parallel
 
   unittest_py39_torch_nightly:
     docker:
@@ -325,6 +349,7 @@ jobs:
       - pip_dev_install:
           args: "-n"
       - unit_tests
+      - coveralls_upload_parallel
 
   integrationtest_py37_torch_release_cpu:
     docker:
@@ -449,12 +474,8 @@ jobs:
       - py_3_7_setup
       - pip_dev_install
       - run_nvidia_smi
-      - run:
-          name: "Unit test multi_gpu"
-          no_output_timeout: 1h
-          command: |
-            mkdir unittest-multigpu-reports
-            python -m unittest opacus.tests.multigpu_gradcheck.GradientComputationTest.test_gradient_correct
+      - command_unit_tests_multi_gpu
+      - coveralls_upload_parallel
 
 
   auto_deploy_site:
@@ -468,6 +489,17 @@ jobs:
           args: "-n -d"
       - configure_docusaurus_bot
       - deploy_site
+
+  finish_coveralls_parallel:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - run:
+          name: "finish coveralls parallel"
+          no_output_timeout: 5m
+          command: |
+            pip install coveralls --user
+            coveralls --finish
 
 
 aliases:
@@ -503,6 +535,14 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
+      - finish_coveralls_parallel:
+          filters: *exclude_ghpages
+          requires:
+            - unittest_py37_torch_release
+            - unittest_py38_torch_release
+            - unittest_py39_torch_release
+            - unittest_py39_torch_nightly
+            - unittest_multi_gpu
 
   nightly:
     when:
@@ -518,6 +558,10 @@ workflows:
           filters: *exclude_ghpages
       - micro_benchmarks_py37_torch_release_cuda:
           filters: *exclude_ghpages
+      - finish_coveralls_parallel:
+          filters: *exclude_ghpages
+          requires:
+            - unittest_py39_torch_nightly
 
   website_deployment:
     when:
