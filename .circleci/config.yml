@@ -20,6 +20,8 @@ commands:
             echo "In venv: $(pyenv local) - $(python -V), $(pip -V)"
             sudo "$(which python)" -m pip install --upgrade pip
             sudo "$(which python)" -m pip install pytest
+            sudo "$(which python)" -m pip install coverage
+            sudo "$(which python)" -m pip install coveralls
 
   run_nvidia_smi:
     description: "Prints GPU capabilities from nvidia-smi"
