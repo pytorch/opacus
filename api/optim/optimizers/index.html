@@ -28,10 +28,51 @@
 <h1>Optimizers<a class="headerlink" href="#optimizers" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="dp_optimizer.html">DPOptimizer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dp_per_layer_optimizer.html">DPPerLayerOptimizer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dp_ddp_optimizer.html">DistributedDPOptimizer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html">DistributedPerLayerOptimizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dp_optimizer.html">DPOptimizer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer"><code class="docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.accumulated_iterations"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.accumulated_iterations</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.add_noise"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.add_noise()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.attach_step_hook"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.attach_step_hook()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.clip_and_accumulate"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.clip_and_accumulate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.grad_samples"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.grad_samples</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.load_state_dict"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.load_state_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.params"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.params</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.pre_step"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.pre_step()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.scale_grad"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.scale_grad()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.signal_skip_step"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.signal_skip_step()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.state_dict"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.state_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.step"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.step()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.zero_grad"><code class="docutils literal notranslate"><span class="pre">DPOptimizer.zero_grad()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dp_per_layer_optimizer.html">DPPerLayerOptimizer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dp_per_layer_optimizer.html#opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer"><code class="docutils literal notranslate"><span class="pre">DPPerLayerOptimizer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dp_per_layer_optimizer.html#opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer.clip_and_accumulate"><code class="docutils literal notranslate"><span class="pre">DPPerLayerOptimizer.clip_and_accumulate()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dp_ddp_optimizer.html">DistributedDPOptimizer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer"><code class="docutils literal notranslate"><span class="pre">DistributedDPOptimizer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.add_noise"><code class="docutils literal notranslate"><span class="pre">DistributedDPOptimizer.add_noise()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.step"><code class="docutils literal notranslate"><span class="pre">DistributedDPOptimizer.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html">DistributedPerLayerOptimizer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer"><code class="docutils literal notranslate"><span class="pre">DistributedPerLayerOptimizer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.accumulated_iterations"><code class="docutils literal notranslate"><span class="pre">DistributedPerLayerOptimizer.accumulated_iterations</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.add_noise"><code class="docutils literal notranslate"><span class="pre">DistributedPerLayerOptimizer.add_noise()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.clip_and_accumulate"><code class="docutils literal notranslate"><span class="pre">DistributedPerLayerOptimizer.clip_and_accumulate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.pre_step"><code class="docutils literal notranslate"><span class="pre">DistributedPerLayerOptimizer.pre_step()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.SimpleDistributedPerLayerOptimizer"><code class="docutils literal notranslate"><span class="pre">SimpleDistributedPerLayerOptimizer</span></code></a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>
