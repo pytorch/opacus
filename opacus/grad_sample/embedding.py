@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -33,6 +33,7 @@ def compute_embedding_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
+    activations = activations[0]
     ret = {}
     if layer.weight.requires_grad:
         saved = torch.backends.cudnn.deterministic

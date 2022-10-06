@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, Union
+from typing import Dict, Union, List
 
 import torch
 import torch.nn as nn
@@ -36,7 +36,7 @@ def compute_instance_norm_grad_sample(
         nn.InstanceNorm2d,
         nn.InstanceNorm3d,
     ],
-    activations: torch.Tensor,
+    activations: List[torch.Tensor],
     backprops: torch.Tensor,
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
@@ -47,6 +47,7 @@ def compute_instance_norm_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
+    activations = activations[0]
     ret = {}
     if layer.weight.requires_grad:
         gs = F.instance_norm(activations, eps=layer.eps) * backprops

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -24,7 +24,7 @@ from .utils import register_grad_sampler
 
 @register_grad_sampler(nn.Linear)
 def compute_linear_grad_sample(
-    layer: nn.Linear, activations: torch.Tensor, backprops: torch.Tensor
+    layer: nn.Linear, activations: List[torch.Tensor], backprops: torch.Tensor
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
     Computes per sample gradients for ``nn.Linear`` layer
@@ -34,6 +34,7 @@ def compute_linear_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
+    activations = activations[0]
     ret = {}
     if layer.weight.requires_grad:
         gs = contract("n...i,n...j->nij", backprops, activations)

@@ -52,7 +52,7 @@ def ft_compute_per_sample_gradient(layer, activations, backprops):
     if not hasattr(layer, "ft_compute_sample_grad"):
         prepare_layer(layer)
 
-    per_sample_grads = layer.ft_compute_sample_grad(parameters, activations, backprops)
+    per_sample_grads = layer.ft_compute_sample_grad(parameters, activations[0], backprops)
 
     ret = {}
     for i_p, p in enumerate(parameters):

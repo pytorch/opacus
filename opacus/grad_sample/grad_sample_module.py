@@ -282,7 +282,7 @@ class GradSampleModule(AbstractGradSampleModule):
 
         if not hasattr(module, "activations"):
             module.activations = []
-        module.activations.append(forward_input[0].detach())  # pyre-ignore
+        module.activations.append([t.detach() for t in forward_input])  # pyre-ignore
 
         for _, p in trainable_parameters(module):
             p._forward_counter += 1
@@ -385,7 +385,7 @@ class GradSampleModule(AbstractGradSampleModule):
             # Otherwise we infer it here
             module.max_batch_len = _get_batch_size(
                 module=module,
-                grad_sample=activations,
+                grad_sample=activations[0],
                 batch_dim=batch_dim,
             )
 
@@ -401,9 +401,9 @@ class GradSampleModule(AbstractGradSampleModule):
 
         # No matter where the batch dimension was, .grad_samples will *always* put it in the first dim
         if batch_dim != 0:
-            activations = activations.permute(
-                [batch_dim] + [x for x in range(activations.dim()) if x != batch_dim]
-            )
+            activations = [t.permute(
+                [batch_dim] + [x for x in range(t.dim()) if x != batch_dim]
+            ) for t in activations]
             backprops = backprops.permute(
                 [batch_dim] + [x for x in range(backprops.dim()) if x != batch_dim]
             )
@@ -497,8 +497,8 @@ def _get_batch_size(
 
     max_batch_len = 0
     for out in module.activations:
-        if out.shape[batch_dim] > max_batch_len:
-            max_batch_len = out.shape[batch_dim]
+        if out[0].shape[batch_dim] > max_batch_len:
+            max_batch_len = out[0].shape[batch_dim]
 
     max_batch_len = max(max_batch_len, grad_sample.shape[batch_dim])
     return max_batch_len
