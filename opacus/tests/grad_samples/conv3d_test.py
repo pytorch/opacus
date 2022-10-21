@@ -18,13 +18,12 @@ from typing import Tuple, Union
 import hypothesis.strategies as st
 import torch
 import torch.nn as nn
-from hypothesis import given, settings, reproduce_failure
+from hypothesis import given, settings
 
 from .common import GradSampleHooks_test, expander, shrinker
 
 
 class Conv3d_test(GradSampleHooks_test):
-
     @given(
         N=st.integers(1, 4),
         C=st.sampled_from([1, 3, 32]),
