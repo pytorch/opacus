@@ -20,6 +20,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
+from collections import OrderedDict
+
 
 class SequenceBias(nn.Module):
     r"""
@@ -88,11 +90,14 @@ class DPMultiheadAttention(nn.Module):
         add_zero_attn=False,
         kdim=None,
         vdim=None,
+        device=None,
+        dtype=None
     ):
         super(DPMultiheadAttention, self).__init__()
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
+        self._qkv_same_embed_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
         self.dropout = dropout
@@ -107,7 +112,7 @@ class DPMultiheadAttention(nn.Module):
 
         # torch.nn.MultiHeadAttention out_proj is _LinearWithBias
         # explicilty setting bias=True for consistent mimicry
-        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=True)
+        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
 
         self.add_bias_kv = add_bias_kv
         if self.add_bias_kv:
@@ -329,3 +334,75 @@ class DPMultiheadAttention(nn.Module):
             return attn_output, attn_output_weights.sum(dim=1) / self.num_heads
         else:
             return attn_output, None
+
+    def unsqueeze_0_2(self, t):
+        return torch.unsqueeze(torch.unsqueeze(t, 0), 0)
+
+    def state_dict(self, *args, destination=None, prefix='', keep_vars=False):
+        if len(args) > 0:
+            if destination is None:
+                destination = args[0]
+            if len(args) > 1 and prefix == '':
+                prefix = args[1]
+            if len(args) > 2 and keep_vars is False:
+                keep_vars = args[2]
+            # DeprecationWarning is ignored by default
+            warnings.warn(
+                "Positional args are being deprecated, use kwargs instead. Refer to "
+                "https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module.state_dict"
+                " for details.")
+
+        if destination is None:
+            destination = OrderedDict()
+            destination._metadata = OrderedDict()
+
+        destination_alter = OrderedDict()
+        local_metadata = dict(version=self._version)
+        if hasattr(destination, "_metadata"):
+            destination._metadata[prefix[:-1]] = local_metadata
+            if len(prefix.split(".")) > 2:
+                alter_key = ".".join(prefix.split(".")[:-2]) + ".emb.weight"
+            else:
+                alter_key = "emb.weight"
+            if alter_key in destination:
+                destination_alter[alter_key] = destination[alter_key]
+
+        self._save_to_state_dict(destination, prefix, keep_vars)
+        for name, module in self._modules.items():
+            if module is not None:
+                module.state_dict(destination=destination, prefix=prefix + name + '.', keep_vars=keep_vars)
+        for hook in self._state_dict_hooks.values():
+            hook_result = hook(self, destination, prefix, local_metadata)
+            if hook_result is not None:
+                destination = hook_result
+
+        if self._qkv_same_embed_dim:
+            destination_alter[prefix + 'in_proj_weight'] = torch.cat((
+                destination[prefix + 'qlinear.weight'],
+                destination[prefix + 'klinear.weight'],
+                destination[prefix + 'vlinear.weight'],
+            ), 0)
+        else:
+            destination_alter[prefix + 'q_proj_weight'] = destination[prefix + 'qlinear.weight']
+            destination_alter[prefix + 'k_proj_weight'] = destination[prefix + 'klinear.weight']
+            destination_alter[prefix + 'v_proj_weight'] = destination[prefix + 'vlinear.weight']
+
+        if (prefix + 'qlinear.bias') in destination and (prefix + 'klinear.bias') in destination and (prefix + 'vlinear.bias') in destination:
+            destination_alter[prefix + 'in_proj_bias'] = torch.cat((
+                destination[prefix + 'qlinear.bias'],
+                destination[prefix + 'klinear.bias'],
+                destination[prefix + 'vlinear.bias'],
+            ), 0)
+
+        if self.add_bias_kv:
+            destination_alter[prefix + 'bias_k'] = self.unsqueeze_0_2(destination[prefix + 'seq_bias_k.bias'])
+            destination_alter[prefix + 'bias_v'] = self.unsqueeze_0_2(destination[prefix + 'seq_bias_v.bias'])
+
+        destination_alter[prefix + 'out_proj.weight'] = destination[prefix + 'out_proj.weight']
+        if (prefix + 'out_proj.bias') in destination:
+            destination_alter[prefix + 'out_proj.bias'] = destination[prefix + 'out_proj.bias']
+
+        return destination_alter
+
+    def named_parameters(self, prefix: str = '', recurse: bool = True):
+        return self.state_dict(prefix = prefix).items()

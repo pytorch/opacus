@@ -244,7 +244,7 @@ class DPModules_test(unittest.TestCase):
                 f"{i}. {s}" for i, s in enumerate(nn_only_grads, 1)
             )
             raise AssertionError(
-                f"A total of {len(nn_only_grads)} gradients are in dp_module "
+                f"A total of {len(dp_only_grads)} gradients are in dp_module "
                 f"but not in nn_module: \n\t{failed_str}"
             )
 
