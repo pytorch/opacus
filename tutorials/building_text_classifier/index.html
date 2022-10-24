@@ -771,15 +771,68 @@ Trainable parameters count: 7680771
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>| Model | Noise multiplier | Batch size | Accuracy | Epsilon |
-| --- | --- | --- | --- | --- |
-| no DP, train full model | N/A | 32 | 90.1% | N/A |
-| no DP, train upper layers only | N/A | 32 | 85.4% | N/A |
-| DP-SGD | 1.0 | 32 | 70.5% | 0.7 |
-| <strong>DP-SGD (this tutorial)</strong> | <strong>0.4</strong> | <strong>32</strong> | <strong>74.3%</strong> | <strong>7.5</strong> |
-| DP-SGD | 0.3 | 32 | 75.8% | 20.7 |
-| DP-SGD | 0.1 | 32 | 78.3% | 2865 |
-| DP-SGD | 0.4 | 8 | 67.3% | 5.9 |</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Noise multiplier</th>
+<th>Batch size</th>
+<th>Accuracy</th>
+<th>Epsilon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>no DP, train full model</td>
+<td>N/A</td>
+<td>32</td>
+<td>90.1%</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>no DP, train upper layers only</td>
+<td>N/A</td>
+<td>32</td>
+<td>85.4%</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>DP-SGD</td>
+<td>1.0</td>
+<td>32</td>
+<td>70.5%</td>
+<td>0.7</td>
+</tr>
+<tr>
+<td><strong>DP-SGD (this tutorial)</strong></td>
+<td><strong>0.4</strong></td>
+<td><strong>32</strong></td>
+<td><strong>74.3%</strong></td>
+<td><strong>7.5</strong></td>
+</tr>
+<tr>
+<td>DP-SGD</td>
+<td>0.3</td>
+<td>32</td>
+<td>75.8%</td>
+<td>20.7</td>
+</tr>
+<tr>
+<td>DP-SGD</td>
+<td>0.1</td>
+<td>32</td>
+<td>78.3%</td>
+<td>2865</td>
+</tr>
+<tr>
+<td>DP-SGD</td>
+<td>0.4</td>
+<td>8</td>
+<td>67.3%</td>
+<td>5.9</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
