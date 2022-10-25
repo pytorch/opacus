@@ -237,5 +237,8 @@ class BatchMemoryManagerTestWithExpandedWeights(BatchMemoryManagerTest):
         pass
 
 
+@unittest.skipIf(
+    torch.__version__ >= API_CUTOFF_VERSION, "not supported in this torch version"
+)
 class BatchMemoryManagerTestWithFunctorch(BatchMemoryManagerTest):
     GSM_MODE = "functorch"
