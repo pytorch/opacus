@@ -394,13 +394,17 @@ class DPOptimizer(Optimizer):
         Stores clipped and aggregated gradients into `p.summed_grad```
         """
 
-        per_param_norms = [
-            g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
-        ]
-        per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
-        per_sample_clip_factor = (self.max_grad_norm / (per_sample_norms + 1e-6)).clamp(
-            max=1.0
-        )
+        if len(self.grad_samples[0]) == 0:
+            # Empty batch
+            per_sample_clip_factor = torch.zeros((0,))
+        else:
+            per_param_norms = [
+                g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
+            ]
+            per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
+            per_sample_clip_factor = (
+                self.max_grad_norm / (per_sample_norms + 1e-6)
+            ).clamp(max=1.0)
 
         for p in self.params:
             _check_processed_flag(p.grad_sample)

@@ -138,11 +138,12 @@ class PrivacyEngine:
 
             self.secure_rng = csprng.create_random_device_generator("/dev/urandom")
         else:
-            warnings.warn(
-                "Secure RNG turned off. This is perfectly fine for experimentation as it allows "
-                "for much faster training performance, but remember to turn it on and retrain "
-                "one last time before production with ``secure_mode`` turned on."
-            )
+            # warnings.warn(
+            #     "Secure RNG turned off. This is perfectly fine for experimentation as it allows "
+            #     "for much faster training performance, but remember to turn it on and retrain "
+            #     "one last time before production with ``secure_mode`` turned on."
+            # )
+            pass
 
     def _prepare_optimizer(
         self,

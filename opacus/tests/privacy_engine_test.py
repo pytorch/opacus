@@ -805,6 +805,20 @@ class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
         return SampleConvNet()
 
 
+class PrivacyEngineConvNetEmptyBatchTest(PrivacyEngineConvNetTest):
+    def setUp(self):
+        super().setUp()
+
+        # This will trigger multiple empty batches with poisson sampling enabled
+        self.BATCH_SIZE = 1
+
+    def test_checkpoints(self):
+        pass
+
+    def test_noise_level(self):
+        pass
+
+
 class PrivacyEngineConvNetFrozenTest(BasePrivacyEngineTest, unittest.TestCase):
     def _init_data(self):
         ds = FakeData(
