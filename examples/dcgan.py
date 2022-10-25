@@ -282,6 +282,7 @@ if not opt.disable_dp:
 
 optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
+
 for epoch in range(opt.epochs):
     data_bar = tqdm(dataloader)
     for i, data in enumerate(data_bar, 0):
@@ -289,55 +290,63 @@ for epoch in range(opt.epochs):
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
         ###########################
 
-        optimizerD.zero_grad()
+        optimizerD.zero_grad(set_to_none=True)
 
         real_data = data[0].to(device)
         batch_size = real_data.size(0)
+
+        # train with real
+        label_true = torch.full((batch_size,), REAL_LABEL, device=device)
+        output = netD(real_data)
+        errD_real = criterion(output, label_true)
+        D_x = output.mean().item()
+
         # train with fake
         noise = torch.randn(batch_size, nz, 1, 1, device=device)
         fake = netG(noise)
         label_fake = torch.full((batch_size,), FAKE_LABEL, device=device)
         output = netD(fake.detach())
         errD_fake = criterion(output, label_fake)
-        errD_fake.backward()
-        optimizerD.step()
-        optimizerD.zero_grad()
 
-        # train with real
-        label_true = torch.full((batch_size,), REAL_LABEL, device=device)
-        output = netD(real_data)
-        errD_real = criterion(output, label_true)
-        errD_real.backward()
+        # below, you actually have two backward passes happening under the hood
+        # which opacus happens to treat as a recursive network
+        # and therefore doesn't add extra noise for the fake samples
+        # noise for fake samples would be unnecesary to preserve privacy
+
+        errD = errD_real + errD_fake
+        errD.backward()
         optimizerD.step()
-        D_x = output.mean().item()
+        optimizerD.zero_grad(set_to_none=True)
 
         D_G_z1 = output.mean().item()
-        errD = errD_real + errD_fake
 
         ############################
         # (2) Update G network: maximize log(D(G(z)))
         ###########################
         optimizerG.zero_grad()
-        optimizerD.zero_grad()
 
         label_g = torch.full((batch_size,), REAL_LABEL, device=device)
         output_g = netD(fake)
         errG = criterion(output_g, label_g)
         errG.backward()
-        D_G_z2 = output.mean().item()
+        D_G_z2 = output_g.mean().item()
         optimizerG.step()
-        data_bar.set_description(
-            f"epoch: {epoch}, Loss_D: {errD.item()} "
-            f"Loss_G: {errG.item()} D(x): {D_x} "
-            f"D(G(z)): {D_G_z1}/{D_G_z2}"
-        )
 
         if not opt.disable_dp:
             epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
                 delta=opt.delta
             )
-            print(
+            data_bar.set_description(
+                f"epoch: {epoch}, Loss_D: {errD.item()} "
+                f"Loss_G: {errG.item()} D(x): {D_x} "
+                f"D(G(z)): {D_G_z1}/{D_G_z2}"
                 "(ε = %.2f, δ = %.2f) for α = %.2f" % (epsilon, opt.delta, best_alpha)
+            )
+        else:
+            data_bar.set_description(
+                f"epoch: {epoch}, Loss_D: {errD.item()} "
+                f"Loss_G: {errG.item()} D(x): {D_x} "
+                f"D(G(z)): {D_G_z1}/{D_G_z2}"
             )
 
         if i % 100 == 0:
