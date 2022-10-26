@@ -49,6 +49,7 @@ def ft_compute_per_sample_gradient(layer, activations, backprops):
         backprops: the  gradient of the loss w.r.t. outputs of the layer
     """
     parameters = list(layer.parameters())
+    non_recursive_params = set(layer.parameters(recurse=False))
     if not hasattr(layer, "ft_compute_sample_grad"):
         prepare_layer(layer)
 
@@ -56,6 +57,7 @@ def ft_compute_per_sample_gradient(layer, activations, backprops):
 
     ret = {}
     for i_p, p in enumerate(parameters):
-        ret[p] = per_sample_grads[i_p]
+        if p in non_recursive_params:
+            ret[p] = per_sample_grads[i_p]
 
     return ret
