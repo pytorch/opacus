@@ -160,7 +160,7 @@ class GradSampleModule(AbstractGradSampleModule):
             return
 
         for m in module.children():
-            yield from self.walk_with_functorch(m)
+            yield from self.iterate_submodules(m)
 
     def add_hooks(
         self,
