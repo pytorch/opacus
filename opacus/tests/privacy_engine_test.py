@@ -1007,6 +1007,7 @@ class ModelWithCustomLinear(nn.Module):
         return x
 
 
+@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
 class PrivacyEngineCustomLayerTest(BasePrivacyEngineTest, unittest.TestCase):
     def _init_data(self):
         ds = TensorDataset(
