@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 import warnings
 from functools import partial
-from typing import List, Tuple
+from typing import Iterable, List, Tuple
 
 import torch
 import torch.nn as nn
@@ -26,6 +26,7 @@ from opacus.grad_sample.functorch import ft_compute_per_sample_gradient, prepare
 from opacus.grad_sample.gsm_base import AbstractGradSampleModule
 from opacus.layers.dp_rnn import DPGRU, DPLSTM, DPRNN, RNNLinear
 from opacus.utils.module_utils import (
+    has_trainable_params,
     requires_grad,
     trainable_modules,
     trainable_parameters,
@@ -146,6 +147,21 @@ class GradSampleModule(AbstractGradSampleModule):
     def forward(self, *args, **kwargs):
         return self._module(*args, **kwargs)
 
+    def iterate_submodules(self, module: nn.Module) -> Iterable[nn.Module]:
+        if has_trainable_params(module):
+            yield module
+
+        # we'll apply functorch for the entire substree
+        if (
+            has_trainable_params(module)
+            and type(module) not in self.GRAD_SAMPLERS
+            and type(module) not in [DPRNN, DPLSTM, DPGRU]
+        ):
+            return
+
+        for m in module.children():
+            yield from self.walk_with_functorch(m)
+
     def add_hooks(
         self,
         *,
@@ -177,7 +193,7 @@ class GradSampleModule(AbstractGradSampleModule):
             self._module.autograd_grad_sample_hooks = []
             self.autograd_grad_sample_hooks = self._module.autograd_grad_sample_hooks
 
-        for _module_name, module in trainable_modules(self._module):
+        for module in self.iterate_submodules(self._module):
             # Do not add hooks to DPRNN, DPLSTM or DPGRU as the hooks are handled by the `RNNLinear`
             if type(module) in [DPRNN, DPLSTM, DPGRU]:
                 continue

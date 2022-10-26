@@ -1,12 +1,15 @@
 import unittest
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from opacus import PrivacyEngine
 from opacus.grad_sample.gsm_exp_weights import API_CUTOFF_VERSION
+from opacus.tests.utils import (
+    BasicSupportedModule,
+    CustomLinearModule,
+    LinearWithExtraParam,
+    MatmulModule,
+)
 from torch.utils.data import DataLoader
-from opacus.tests.utils import BasicSupportedModule, CustomLinearModule, LinearWithExtraParam, MatmulModule
 
 
 class PrivacyEngineValidationTest(unittest.TestCase):
