@@ -35,8 +35,8 @@ When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>optimizer</strong> (<a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>) – Wrapped optimizer</p></li>
-<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Multiplicative factor of learning rate decay.</p></li>
-<li><p><strong>last_epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The index of last epoch</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Multiplicative factor of learning rate decay.</p></li>
+<li><p><strong>last_epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The index of last epoch</p></li>
 </ul>
 </dd>
 </dl>
@@ -50,9 +50,9 @@ When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>optimizer</strong> (<a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>) – Wrapped optimizer.</p></li>
-<li><p><strong>noise_lambda</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – A function which computes a multiplicative factor given
+<li><p><strong>noise_lambda</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – A function which computes a multiplicative factor given
 an integer epoch</p></li>
-<li><p><strong>last_epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The index of last epoch. Default: -1.</p></li>
+<li><p><strong>last_epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The index of last epoch. Default: -1.</p></li>
 </ul>
 </dd>
 </dl>
@@ -66,9 +66,9 @@ When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>optimizer</strong> (<a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>) – Wrapped optimizer.</p></li>
-<li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Period of learning rate decay.</p></li>
-<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Multiplicative factor of learning rate decay.</p></li>
-<li><p><strong>last_epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The index of last epoch</p></li>
+<li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Period of learning rate decay.</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Multiplicative factor of learning rate decay.</p></li>
+<li><p><strong>last_epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The index of last epoch</p></li>
 </ul>
 </dd>
 </dl>
