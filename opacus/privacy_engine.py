@@ -143,7 +143,6 @@ class PrivacyEngine:
                 "for much faster training performance, but remember to turn it on and retrain "
                 "one last time before production with ``secure_mode`` turned on."
             )
-            pass
 
     def _prepare_optimizer(
         self,
