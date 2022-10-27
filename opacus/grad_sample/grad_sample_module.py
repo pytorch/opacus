@@ -151,7 +151,7 @@ class GradSampleModule(AbstractGradSampleModule):
         if has_trainable_params(module):
             yield module
 
-        # we'll apply functorch for the entire substree
+        # Don't recurse if module is handled by functorch
         if (
             has_trainable_params(module)
             and type(module) not in self.GRAD_SAMPLERS
