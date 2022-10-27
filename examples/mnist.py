@@ -224,7 +224,7 @@ def main():
             ),
         ),
         batch_size=args.batch_size,
-        num_workers=1,
+        num_workers=0,
         pin_memory=True,
     )
     test_loader = torch.utils.data.DataLoader(
@@ -240,7 +240,7 @@ def main():
         ),
         batch_size=args.test_batch_size,
         shuffle=True,
-        num_workers=1,
+        num_workers=0,
         pin_memory=True,
     )
     run_results = []
