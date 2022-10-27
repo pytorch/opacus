@@ -80,7 +80,7 @@ def dtype_safe(x: Any):
         x: any object
 
     Returns:
-        ``x.shape`` if attribute exists, empty tuple otherwise
+        ``x.dtype`` if attribute exists, type of x otherwise
     """
     return x.dtype if hasattr(x, "dtype") else type(x)
 
