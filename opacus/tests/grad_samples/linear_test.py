@@ -57,4 +57,4 @@ class Linear_test(GradSampleHooks_test):
         x = torch.randn(x_shape)
         if not batch_first:
             x = x.transpose(0, 1)
-        self.run_test(x, linear, batch_first=batch_first)
+        self.run_test(x, linear, batch_first=batch_first, ew_compatible=N > 0)

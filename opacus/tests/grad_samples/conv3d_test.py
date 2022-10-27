@@ -71,7 +71,7 @@ class Conv3d_test(GradSampleHooks_test):
             groups=groups,
         )
         is_ew_compatible = (
-            dilation == 1 and padding != "same"
+            dilation == 1 and padding != "same" and N > 0
         )  # TODO add support for padding = 'same' with EW
         self.run_test(
             x,
