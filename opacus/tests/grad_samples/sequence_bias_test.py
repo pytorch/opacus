@@ -19,6 +19,7 @@ from hypothesis import given, settings
 from opacus.layers import SequenceBias
 
 from .common import GradSampleHooks_test
+from ...utils.per_sample_gradients_utils import check_per_sample_gradients_are_correct, get_grad_sample_modes
 
 
 class SequenceBias_test(GradSampleHooks_test):
@@ -27,14 +28,16 @@ class SequenceBias_test(GradSampleHooks_test):
         T=st.integers(10, 20),
         D=st.integers(4, 8),
         batch_first=st.booleans(),
+        test_or_check=st.integers(1, 2)
     )
     @settings(deadline=10000)
     def test_batch_second(
-        self,
-        N: int,
-        T: int,
-        D: int,
-        batch_first: bool,
+            self,
+            N: int,
+            T: int,
+            D: int,
+            batch_first: bool,
+            test_or_check: int
     ):
 
         seqbias = SequenceBias(D, batch_first)
@@ -42,4 +45,9 @@ class SequenceBias_test(GradSampleHooks_test):
             x = torch.randn([N, T, D])
         else:
             x = torch.randn([T, N, D])
-        self.run_test(x, seqbias, batch_first, ew_compatible=False)
+        if test_or_check == 1:
+            self.run_test(x, seqbias, batch_first, ew_compatible=False)
+        if test_or_check == 2:
+            for grad_sample_mode in get_grad_sample_modes(use_ew=False):
+                assert check_per_sample_gradients_are_correct(x, seqbias, batch_first=batch_first,
+                                                              grad_sample_mode=grad_sample_mode)

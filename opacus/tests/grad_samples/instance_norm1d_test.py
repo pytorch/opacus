@@ -19,6 +19,7 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test
+from ...utils.per_sample_gradients_utils import check_per_sample_gradients_are_correct, get_grad_sample_modes
 
 
 class InstanceNorm1d_test(GradSampleHooks_test):
@@ -26,15 +27,23 @@ class InstanceNorm1d_test(GradSampleHooks_test):
         N=st.integers(1, 4),
         C=st.integers(1, 3),
         W=st.integers(5, 10),
+        test_or_check=st.integers(1, 2)
     )
     @settings(deadline=10000)
     def test_3d_input(
-        self,
-        N: int,
-        C: int,
-        W: int,
+            self,
+            N: int,
+            C: int,
+            W: int,
+            test_or_check: int
     ):
 
         x = torch.randn([N, C, W])
         norm = nn.InstanceNorm1d(num_features=C, affine=True, track_running_stats=False)
-        self.run_test(x, norm, batch_first=True)
+
+        if test_or_check == 1:
+            self.run_test(x, norm, batch_first=True)
+        if test_or_check == 2:
+            for grad_sample_mode in get_grad_sample_modes(use_ew=True):
+                assert check_per_sample_gradients_are_correct(x, norm, batch_first=True,
+                                                              grad_sample_mode=grad_sample_mode)

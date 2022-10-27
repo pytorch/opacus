@@ -25,6 +25,7 @@ from opacus.utils.tensor_utils import unfold2d
 from torch.testing import assert_allclose
 
 from .common import GradSampleHooks_test, expander, shrinker
+from ...utils.per_sample_gradients_utils import get_grad_sample_modes, check_per_sample_gradients_are_correct
 
 
 class Conv2d_test(GradSampleHooks_test):
@@ -39,26 +40,28 @@ class Conv2d_test(GradSampleHooks_test):
         padding=st.sampled_from([0, 2, "same", "valid"]),
         dilation=st.integers(1, 3),
         groups=st.integers(1, 16),
+        test_or_check=st.integers(1, 2)
     )
     @settings(deadline=30000)
     def test_conv2d(
-        self,
-        N: int,
-        C: int,
-        H: int,
-        W: int,
-        out_channels_mapper: Callable[[int], int],
-        kernel_size: int,
-        stride: int,
-        padding: int,
-        dilation: int,
-        groups: int,
+            self,
+            N: int,
+            C: int,
+            H: int,
+            W: int,
+            out_channels_mapper: Callable[[int], int],
+            kernel_size: int,
+            stride: int,
+            padding: int,
+            dilation: int,
+            groups: int,
+            test_or_check: int
     ):
         if padding == "same" and stride != 1:
             return
         out_channels = out_channels_mapper(C)
         if (
-            C % groups != 0 or out_channels % groups != 0
+                C % groups != 0 or out_channels % groups != 0
         ):  # since in_channels and out_channels must be divisible by groups
             return
 
@@ -77,22 +80,7 @@ class Conv2d_test(GradSampleHooks_test):
         )  # TODO add support for padding = 'same' with EW
 
         # Test regular GSM
-        self.run_test(
-            x,
-            conv,
-            batch_first=True,
-            atol=10e-5,
-            rtol=10e-4,
-            ew_compatible=is_ew_compatible,
-        )
-
-        if padding != "same" and N > 0:
-            # Test 'convolution as a backward' GSM
-            # 'convolution as a backward' doesn't support padding=same
-            conv2d_gsm = GradSampleModule.GRAD_SAMPLERS[nn.Conv2d]
-            GradSampleModule.GRAD_SAMPLERS[
-                nn.Conv2d
-            ] = convolution2d_backward_as_a_convolution
+        if test_or_check == 1:
             self.run_test(
                 x,
                 conv,
@@ -101,6 +89,43 @@ class Conv2d_test(GradSampleHooks_test):
                 rtol=10e-4,
                 ew_compatible=is_ew_compatible,
             )
+        if test_or_check == 2:
+            for grad_sample_mode in get_grad_sample_modes(use_ew=is_ew_compatible):
+                assert check_per_sample_gradients_are_correct(
+                    x,
+                    conv,
+                    batch_first=True,
+                    atol=10e-5,
+                    rtol=10e-4,
+                    grad_sample_mode=grad_sample_mode
+                )
+
+        if padding != "same" and N > 0:
+            # Test 'convolution as a backward' GSM
+            # 'convolution as a backward' doesn't support padding=same
+            conv2d_gsm = GradSampleModule.GRAD_SAMPLERS[nn.Conv2d]
+            GradSampleModule.GRAD_SAMPLERS[
+                nn.Conv2d
+            ] = convolution2d_backward_as_a_convolution
+            if test_or_check == 1:
+                self.run_test(
+                    x,
+                    conv,
+                    batch_first=True,
+                    atol=10e-5,
+                    rtol=10e-4,
+                    ew_compatible=is_ew_compatible,
+                )
+            if test_or_check == 2:
+                for grad_sample_mode in get_grad_sample_modes(use_ew=is_ew_compatible):
+                    assert check_per_sample_gradients_are_correct(
+                        x,
+                        conv,
+                        batch_first=True,
+                        atol=10e-5,
+                        rtol=10e-4,
+                        grad_sample_mode=grad_sample_mode,
+                    )
             GradSampleModule.GRAD_SAMPLERS[nn.Conv2d] = conv2d_gsm
 
     @given(
@@ -119,19 +144,19 @@ class Conv2d_test(GradSampleHooks_test):
     )
     @settings(deadline=30000)
     def test_unfold2d(
-        self,
-        B: int,
-        C: int,
-        H: int,
-        W: int,
-        k_h: int,
-        k_w: int,
-        pad_h: int,
-        pad_w: int,
-        stride_h: int,
-        stride_w: int,
-        dilation_h: int,
-        dilation_w: int,
+            self,
+            B: int,
+            C: int,
+            H: int,
+            W: int,
+            k_h: int,
+            k_w: int,
+            pad_h: int,
+            pad_w: int,
+            stride_h: int,
+            stride_w: int,
+            dilation_h: int,
+            dilation_w: int,
     ):
         X = torch.randn(B, C, H, W)
         X_unfold_torch = torch.nn.functional.unfold(
