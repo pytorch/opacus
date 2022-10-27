@@ -21,6 +21,7 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test
+from ...utils.per_sample_gradients_utils import check_per_sample_gradients_are_correct, get_grad_sample_modes
 
 
 class GroupNorm_test(GradSampleHooks_test):
@@ -35,15 +36,17 @@ class GroupNorm_test(GradSampleHooks_test):
         H=st.integers(5, 10),
         W=st.integers(4, 8),
         num_groups=st.sampled_from([1, 4, "C"]),
+        test_or_check=st.integers(1, 2)
     )
     @settings(deadline=10000)
     def test_3d_input_groups(
-        self,
-        N: int,
-        C: int,
-        H: int,
-        W: int,
-        num_groups: Union[int, str],
+            self,
+            N: int,
+            C: int,
+            H: int,
+            W: int,
+            num_groups: Union[int, str],
+            test_or_check: int
     ):
 
         if num_groups == "C":
@@ -55,3 +58,9 @@ class GroupNorm_test(GradSampleHooks_test):
         x = torch.randn([N, C, H, W])
         norm = nn.GroupNorm(num_groups=num_groups, num_channels=C, affine=True)
         self.run_test(x, norm, batch_first=True)
+        if test_or_check == 1:
+            self.run_test(x, norm, batch_first=True)
+        if test_or_check == 2:
+            for grad_sample_mode in get_grad_sample_modes(use_ew=True):
+                assert check_per_sample_gradients_are_correct(x, norm, batch_first=True,
+                                                              grad_sample_mode=grad_sample_mode)

@@ -21,7 +21,7 @@ from opacus.layers import DPGRU, DPLSTM, DPRNN
 from opacus.utils.packed_sequences import _gen_packed_data
 
 from .common import GradSampleHooks_test
-
+from ...utils.per_sample_gradients_utils import check_per_sample_gradients_are_correct, get_grad_sample_modes
 
 MODELS = [
     DPRNN,
@@ -59,21 +59,23 @@ class RNN_test(GradSampleHooks_test):
         bidirectional=st.booleans(),
         using_packed_sequences=st.booleans(),
         packed_sequences_sorted=st.booleans(),
+        test_or_check=st.integers(1, 2)
     )
     @settings(deadline=30000)
     def test_rnn(
-        self,
-        model,
-        N: int,
-        T: int,
-        D: int,
-        H: int,
-        num_layers: int,
-        bias: bool,
-        batch_first: bool,
-        bidirectional: bool,
-        using_packed_sequences: bool,
-        packed_sequences_sorted: bool,
+            self,
+            model,
+            N: int,
+            T: int,
+            D: int,
+            H: int,
+            num_layers: int,
+            bias: bool,
+            batch_first: bool,
+            bidirectional: bool,
+            using_packed_sequences: bool,
+            packed_sequences_sorted: bool,
+            test_or_check: int
     ):
         rnn = model(
             D,
@@ -92,4 +94,10 @@ class RNN_test(GradSampleHooks_test):
                 x = torch.randn([N, T, D])
             else:
                 x = torch.randn([T, N, D])
-        self.run_test(x, rnn, batch_first=batch_first, ew_compatible=False)
+
+        if test_or_check == 1:
+            self.run_test(x, rnn, batch_first=batch_first, ew_compatible=False)
+        if test_or_check == 2:
+            for grad_sample_mode in get_grad_sample_modes(use_ew=True):
+                assert check_per_sample_gradients_are_correct(x, rnn, batch_first=batch_first,
+                                                              grad_sample_mode=grad_sample_mode)
