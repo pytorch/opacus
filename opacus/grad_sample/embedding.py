@@ -39,6 +39,10 @@ def compute_embedding_grad_sample(
         torch.backends.cudnn.deterministic = True
 
         batch_size = activations.shape[0]
+        if batch_size == 0:
+            ret[layer.weight] = torch.zeros_like(layer.weight).unsqueeze(0)
+            return ret
+
         index = (
             activations.unsqueeze(-1)
             .expand(*activations.shape, layer.embedding_dim)

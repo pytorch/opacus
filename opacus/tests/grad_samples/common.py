@@ -226,6 +226,9 @@ class GradSampleHooks_test(unittest.TestCase):
         except ImportError:
             grad_sample_modes = ["hooks"]
 
+        if type(x) is not PackedSequence and x.numel() == 0:
+            grad_sample_modes = ["hooks"]
+
         for grad_sample_mode in grad_sample_modes:
             for loss_reduction in ["sum", "mean"]:
 
@@ -262,6 +265,14 @@ class GradSampleHooks_test(unittest.TestCase):
         rtol=10e-5,
         grad_sample_mode="hooks",
     ):
+        opacus_grad_samples = self.compute_opacus_grad_sample(
+            x,
+            module,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+            grad_sample_mode=grad_sample_mode,
+        )
+
         if type(x) is PackedSequence:
             x_unpacked = _unpack_packedsequences(x)
             microbatch_grad_samples = self.compute_microbatch_grad_sample(
@@ -270,18 +281,13 @@ class GradSampleHooks_test(unittest.TestCase):
                 batch_first=batch_first,
                 loss_reduction=loss_reduction,
             )
-        else:
+        elif x.numel() > 0:
             microbatch_grad_samples = self.compute_microbatch_grad_sample(
                 x, module, batch_first=batch_first, loss_reduction=loss_reduction
             )
-
-        opacus_grad_samples = self.compute_opacus_grad_sample(
-            x,
-            module,
-            batch_first=batch_first,
-            loss_reduction=loss_reduction,
-            grad_sample_mode=grad_sample_mode,
-        )
+        else:
+            # We've checked opacus can handle 0-sized batch. Microbatch doesn't make sense
+            return
 
         if microbatch_grad_samples.keys() != opacus_grad_samples.keys():
             raise ValueError(

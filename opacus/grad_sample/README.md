@@ -74,7 +74,7 @@ Please note that these are known limitations and we plan to improve Expanded Wei
 | `batch_first=False`          | ✅ Supported                    | Not supported   | ✅ Supported  |
 | Recurrent networks           | ✅ Supported                    | Not supported   | ✅ Supported  |
 | Padding `same` in Conv       | ✅ Supported                    | Not supported   | ✅ Supported  |
-| Empty poisson batches        | ✅ Supported                    | Not supported   | ✅ Supported  |
+| Empty poisson batches        | ✅ Supported                    | Not supported   | Not supported  |
 
 † Note, that performance differences are unstable and can vary a lot depending on the exact model and batch size. 
 Numbers above are averaged over benchmarks with small models consisting of convolutional and linear layers. 

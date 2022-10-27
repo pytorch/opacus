@@ -25,7 +25,7 @@ from .common import GradSampleHooks_test, expander, shrinker
 
 class Conv1d_test(GradSampleHooks_test):
     @given(
-        N=st.integers(1, 4),
+        N=st.integers(0, 4),
         C=st.sampled_from([1, 3, 32]),
         W=st.integers(6, 10),
         out_channels_mapper=st.sampled_from([expander, shrinker]),

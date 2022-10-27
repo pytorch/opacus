@@ -23,7 +23,7 @@ from .common import GradSampleHooks_test
 
 class Embedding_test(GradSampleHooks_test):
     @given(
-        N=st.integers(1, 4),
+        N=st.integers(0, 4),
         T=st.integers(1, 5),
         Q=st.integers(1, 4),
         R=st.integers(1, 2),

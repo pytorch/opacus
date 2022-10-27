@@ -30,7 +30,7 @@ class GroupNorm_test(GradSampleHooks_test):
     """
 
     @given(
-        N=st.integers(1, 4),
+        N=st.integers(0, 4),
         C=st.integers(1, 8),
         H=st.integers(5, 10),
         W=st.integers(4, 8),

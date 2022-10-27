@@ -29,7 +29,7 @@ from .common import GradSampleHooks_test, expander, shrinker
 
 class Conv2d_test(GradSampleHooks_test):
     @given(
-        N=st.integers(1, 4),
+        N=st.integers(0, 4),
         C=st.sampled_from([1, 3, 32]),
         H=st.integers(11, 17),
         W=st.integers(11, 17),
@@ -73,7 +73,7 @@ class Conv2d_test(GradSampleHooks_test):
             groups=groups,
         )
         is_ew_compatible = (
-            padding != "same"
+            padding != "same" and N > 0
         )  # TODO add support for padding = 'same' with EW
 
         # Test regular GSM
@@ -86,7 +86,7 @@ class Conv2d_test(GradSampleHooks_test):
             ew_compatible=is_ew_compatible,
         )
 
-        if padding != "same":
+        if padding != "same" and N > 0:
             # Test 'convolution as a backward' GSM
             # 'convolution as a backward' doesn't support padding=same
             conv2d_gsm = GradSampleModule.GRAD_SAMPLERS[nn.Conv2d]
