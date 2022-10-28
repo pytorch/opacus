@@ -21,7 +21,10 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test, expander, shrinker
-from ...utils.per_sample_gradients_utils import check_per_sample_gradients_are_correct, get_grad_sample_modes
+from ...utils.per_sample_gradients_utils import (
+    check_per_sample_gradients_are_correct,
+    get_grad_sample_modes,
+)
 
 
 class Conv1d_test(GradSampleHooks_test):
@@ -35,28 +38,28 @@ class Conv1d_test(GradSampleHooks_test):
         padding=st.sampled_from([0, 1, 2, "same", "valid"]),
         dilation=st.integers(1, 2),
         groups=st.integers(1, 12),
-        test_or_check=st.integers(1, 2)
+        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=10000)
     def test_conv1d(
-            self,
-            N: int,
-            C: int,
-            W: int,
-            out_channels_mapper: Callable[[int], int],
-            kernel_size: int,
-            stride: int,
-            padding: int,
-            dilation: int,
-            groups: int,
-            test_or_check: int
+        self,
+        N: int,
+        C: int,
+        W: int,
+        out_channels_mapper: Callable[[int], int],
+        kernel_size: int,
+        stride: int,
+        padding: int,
+        dilation: int,
+        groups: int,
+        test_or_check: int,
     ):
 
         if padding == "same" and stride != 1:
             return
         out_channels = out_channels_mapper(C)
         if (
-                C % groups != 0 or out_channels % groups != 0
+            C % groups != 0 or out_channels % groups != 0
         ):  # since in_channels and out_channels must be divisible by groups
             return
 
@@ -74,5 +77,11 @@ class Conv1d_test(GradSampleHooks_test):
             self.run_test(x, conv, batch_first=True, atol=10e-5, rtol=10e-4)
         if test_or_check == 2:
             for grad_sample_mode in get_grad_sample_modes(use_ew=True):
-                assert check_per_sample_gradients_are_correct(x, conv, batch_first=True, atol=10e-5, rtol=10e-4,
-                                                              grad_sample_mode=grad_sample_mode)
+                assert check_per_sample_gradients_are_correct(
+                    x,
+                    conv,
+                    batch_first=True,
+                    atol=10e-5,
+                    rtol=10e-4,
+                    grad_sample_mode=grad_sample_mode,
+                )

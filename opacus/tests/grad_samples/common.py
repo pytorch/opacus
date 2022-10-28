@@ -22,7 +22,9 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import PackedSequence
 from torch.testing import assert_allclose
 
-from opacus.utils.per_sample_gradients_utils import compute_grad_samples_microbatch_and_opacus
+from opacus.utils.per_sample_gradients_utils import (
+    compute_grad_samples_microbatch_and_opacus,
+)
 
 
 def expander(x, factor: int = 2):
@@ -40,13 +42,13 @@ class GradSampleHooks_test(unittest.TestCase):
     """
 
     def run_test(
-            self,
-            x: Union[torch.Tensor, PackedSequence],
-            module: nn.Module,
-            batch_first=True,
-            atol=10e-6,
-            rtol=10e-5,
-            ew_compatible=True,
+        self,
+        x: Union[torch.Tensor, PackedSequence],
+        module: nn.Module,
+        batch_first=True,
+        atol=10e-6,
+        rtol=10e-5,
+        ew_compatible=True,
     ):
         grad_sample_modes = ["hooks", "functorch"]
         try:
@@ -57,7 +59,7 @@ class GradSampleHooks_test(unittest.TestCase):
         for grad_sample_mode in grad_sample_modes:
             for loss_reduction in ["sum", "mean"]:
                 with self.subTest(
-                        grad_sample_mode=grad_sample_mode, loss_reduction=loss_reduction
+                    grad_sample_mode=grad_sample_mode, loss_reduction=loss_reduction
                 ):
                     self.run_test_with_reduction(
                         x,
@@ -80,21 +82,25 @@ class GradSampleHooks_test(unittest.TestCase):
             )
 
     def run_test_with_reduction(
-            self,
-            x: Union[torch.Tensor, PackedSequence],
-            module: nn.Module,
-            batch_first=True,
-            loss_reduction="mean",
-            atol=10e-6,
-            rtol=10e-5,
-            grad_sample_mode="hooks",
+        self,
+        x: Union[torch.Tensor, PackedSequence],
+        module: nn.Module,
+        batch_first=True,
+        loss_reduction="mean",
+        atol=10e-6,
+        rtol=10e-5,
+        grad_sample_mode="hooks",
     ):
-        microbatch_grad_samples, opacus_grad_samples = \
-            compute_grad_samples_microbatch_and_opacus(x,
-                                                       module,
-                                                       batch_first=batch_first,
-                                                       loss_reduction=loss_reduction,
-                                                       grad_sample_mode=grad_sample_mode)
+        (
+            microbatch_grad_samples,
+            opacus_grad_samples,
+        ) = compute_grad_samples_microbatch_and_opacus(
+            x,
+            module,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+            grad_sample_mode=grad_sample_mode,
+        )
 
         self.check_shapes(microbatch_grad_samples, opacus_grad_samples, loss_reduction)
         self.check_values(
@@ -102,10 +108,10 @@ class GradSampleHooks_test(unittest.TestCase):
         )
 
     def check_shapes(
-            self,
-            microbatch_grad_samples,
-            opacus_grad_samples,
-            loss_reduction,
+        self,
+        microbatch_grad_samples,
+        opacus_grad_samples,
+        loss_reduction,
     ) -> None:
         failed = []
         for name, opacus_grad_sample in opacus_grad_samples.items():
@@ -133,12 +139,12 @@ class GradSampleHooks_test(unittest.TestCase):
             )
 
     def check_values(
-            self,
-            microbatch_grad_samples,
-            opacus_grad_samples,
-            loss_reduction,
-            atol,
-            rtol,
+        self,
+        microbatch_grad_samples,
+        opacus_grad_samples,
+        loss_reduction,
+        atol,
+        rtol,
     ) -> None:
         failed = []
         for name, opacus_grad_sample in opacus_grad_samples.items():

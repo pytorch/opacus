@@ -19,7 +19,10 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test
-from ...utils.per_sample_gradients_utils import get_grad_sample_modes, check_per_sample_gradients_are_correct
+from ...utils.per_sample_gradients_utils import (
+    get_grad_sample_modes,
+    check_per_sample_gradients_are_correct,
+)
 
 
 class InstanceNorm2d_test(GradSampleHooks_test):
@@ -28,17 +31,10 @@ class InstanceNorm2d_test(GradSampleHooks_test):
         C=st.integers(1, 3),
         W=st.integers(5, 10),
         H=st.integers(4, 8),
-        test_or_check=st.integers(1, 2)
+        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=10000)
-    def test_4d_input(
-            self,
-            N: int,
-            C: int,
-            W: int,
-            H: int,
-            test_or_check: int
-    ):
+    def test_4d_input(self, N: int, C: int, W: int, H: int, test_or_check: int):
 
         x = torch.randn([N, C, H, W])
         norm = nn.InstanceNorm2d(num_features=C, affine=True, track_running_stats=False)
@@ -46,5 +42,6 @@ class InstanceNorm2d_test(GradSampleHooks_test):
             self.run_test(x, norm, batch_first=True)
         if test_or_check == 2:
             for grad_sample_mode in get_grad_sample_modes(use_ew=True):
-                assert check_per_sample_gradients_are_correct(x, norm, batch_first=True,
-                                                              grad_sample_mode=grad_sample_mode)
+                assert check_per_sample_gradients_are_correct(
+                    x, norm, batch_first=True, grad_sample_mode=grad_sample_mode
+                )

@@ -19,7 +19,10 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test
-from ...utils.per_sample_gradients_utils import check_per_sample_gradients_are_correct, get_grad_sample_modes
+from ...utils.per_sample_gradients_utils import (
+    check_per_sample_gradients_are_correct,
+    get_grad_sample_modes,
+)
 
 
 class Embedding_test(GradSampleHooks_test):
@@ -32,20 +35,20 @@ class Embedding_test(GradSampleHooks_test):
         D=st.integers(10, 17),
         dim=st.integers(2, 4),
         batch_first=st.booleans(),
-        test_or_check=st.integers(1, 2)
+        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=10000)
     def test_input_across_dims(
-            self,
-            N: int,
-            T: int,
-            Q: int,
-            R: int,
-            V: int,
-            D: int,
-            dim: int,
-            batch_first: bool,
-            test_or_check: int
+        self,
+        N: int,
+        T: int,
+        Q: int,
+        R: int,
+        V: int,
+        D: int,
+        dim: int,
+        batch_first: bool,
+        test_or_check: int,
     ):
 
         if dim == 1:  # TODO: fix when dim is 1
@@ -64,5 +67,6 @@ class Embedding_test(GradSampleHooks_test):
             self.run_test(x, emb, batch_first=batch_first)
         if test_or_check == 2:
             for grad_sample_mode in get_grad_sample_modes(use_ew=True):
-                assert check_per_sample_gradients_are_correct(x, emb, batch_first=batch_first,
-                                                              grad_sample_mode=grad_sample_mode)
+                assert check_per_sample_gradients_are_correct(
+                    x, emb, batch_first=batch_first, grad_sample_mode=grad_sample_mode
+                )

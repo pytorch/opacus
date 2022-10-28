@@ -21,7 +21,10 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test, expander, shrinker
-from ...utils.per_sample_gradients_utils import get_grad_sample_modes, check_per_sample_gradients_are_correct
+from ...utils.per_sample_gradients_utils import (
+    get_grad_sample_modes,
+    check_per_sample_gradients_are_correct,
+)
 
 
 class Conv3d_test(GradSampleHooks_test):
@@ -37,30 +40,30 @@ class Conv3d_test(GradSampleHooks_test):
         padding=st.sampled_from([0, 2, (1, 2, 3), "same", "valid"]),
         dilation=st.sampled_from([1, (1, 2, 2)]),
         groups=st.integers(1, 16),
-        test_or_check=st.integers(1, 2)
+        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=30000)
     def test_conv3d(
-            self,
-            N: int,
-            C: int,
-            D: int,
-            H: int,
-            W: int,
-            out_channels_mapper: int,
-            kernel_size: Union[int, Tuple[int]],
-            stride: Union[int, Tuple[int]],
-            padding: Union[int, Tuple[int]],
-            dilation: int,
-            groups: int,
-            test_or_check: int
+        self,
+        N: int,
+        C: int,
+        D: int,
+        H: int,
+        W: int,
+        out_channels_mapper: int,
+        kernel_size: Union[int, Tuple[int]],
+        stride: Union[int, Tuple[int]],
+        padding: Union[int, Tuple[int]],
+        dilation: int,
+        groups: int,
+        test_or_check: int,
     ):
 
         if padding == "same" and stride != 1:
             return
         out_channels = out_channels_mapper(C)
         if (
-                C % groups != 0 or out_channels % groups != 0
+            C % groups != 0 or out_channels % groups != 0
         ):  # since in_channels and out_channels must be divisible by groups
             return
         x = torch.randn([N, C, D, H, W])
@@ -74,7 +77,7 @@ class Conv3d_test(GradSampleHooks_test):
             groups=groups,
         )
         is_ew_compatible = (
-                dilation == 1 and padding != "same"
+            dilation == 1 and padding != "same"
         )  # TODO add support for padding = 'same' with EW
         if test_or_check == 1:
             self.run_test(
@@ -93,5 +96,5 @@ class Conv3d_test(GradSampleHooks_test):
                     batch_first=True,
                     atol=10e-5,
                     rtol=10e-3,
-                    grad_sample_mode=grad_sample_mode
+                    grad_sample_mode=grad_sample_mode,
                 )
