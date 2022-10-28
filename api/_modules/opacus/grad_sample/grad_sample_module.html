@@ -45,7 +45,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
@@ -53,6 +53,7 @@
 <span class="kn">from</span> <span class="nn">opacus.grad_sample.gsm_base</span> <span class="kn">import</span> <span class="n">AbstractGradSampleModule</span>
 <span class="kn">from</span> <span class="nn">opacus.layers.dp_rnn</span> <span class="kn">import</span> <span class="n">DPGRU</span><span class="p">,</span> <span class="n">DPLSTM</span><span class="p">,</span> <span class="n">DPRNN</span><span class="p">,</span> <span class="n">RNNLinear</span>
 <span class="kn">from</span> <span class="nn">opacus.utils.module_utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">has_trainable_params</span><span class="p">,</span>
     <span class="n">requires_grad</span><span class="p">,</span>
     <span class="n">trainable_modules</span><span class="p">,</span>
     <span class="n">trainable_parameters</span><span class="p">,</span>
@@ -173,6 +174,21 @@
 <div class="viewcode-block" id="GradSampleModule.forward"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+    <span class="k">def</span> <span class="nf">iterate_submodules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">has_trainable_params</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">module</span>
+
+        <span class="c1"># Don't recurse if module is handled by functorch</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">has_trainable_params</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span>
+            <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">DPRNN</span><span class="p">,</span> <span class="n">DPLSTM</span><span class="p">,</span> <span class="n">DPGRU</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">children</span><span class="p">():</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterate_submodules</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
 <div class="viewcode-block" id="GradSampleModule.add_hooks"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.add_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">add_hooks</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -204,7 +220,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span>
 
-        <span class="k">for</span> <span class="n">_module_name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">trainable_modules</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterate_submodules</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">):</span>
             <span class="c1"># Do not add hooks to DPRNN, DPLSTM or DPGRU as the hooks are handled by the `RNNLinear`</span>
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="n">DPRNN</span><span class="p">,</span> <span class="n">DPLSTM</span><span class="p">,</span> <span class="n">DPGRU</span><span class="p">]:</span>
                 <span class="k">continue</span>
