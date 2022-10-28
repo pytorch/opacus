@@ -25,7 +25,10 @@ from opacus.utils.tensor_utils import unfold2d
 from torch.testing import assert_allclose
 
 from .common import GradSampleHooks_test, expander, shrinker
-from ...utils.per_sample_gradients_utils import get_grad_sample_modes, check_per_sample_gradients_are_correct
+from ...utils.per_sample_gradients_utils import (
+    get_grad_sample_modes,
+    check_per_sample_gradients_are_correct,
+)
 
 
 class Conv2d_test(GradSampleHooks_test):
@@ -61,7 +64,7 @@ class Conv2d_test(GradSampleHooks_test):
             return
         out_channels = out_channels_mapper(C)
         if (
-                C % groups != 0 or out_channels % groups != 0
+            C % groups != 0 or out_channels % groups != 0
         ):  # since in_channels and out_channels must be divisible by groups
             return
 
@@ -144,19 +147,19 @@ class Conv2d_test(GradSampleHooks_test):
     )
     @settings(deadline=30000)
     def test_unfold2d(
-            self,
-            B: int,
-            C: int,
-            H: int,
-            W: int,
-            k_h: int,
-            k_w: int,
-            pad_h: int,
-            pad_w: int,
-            stride_h: int,
-            stride_w: int,
-            dilation_h: int,
-            dilation_w: int,
+        self,
+        B: int,
+        C: int,
+        H: int,
+        W: int,
+        k_h: int,
+        k_w: int,
+        pad_h: int,
+        pad_w: int,
+        stride_h: int,
+        stride_w: int,
+        dilation_h: int,
+        dilation_w: int,
     ):
         X = torch.randn(B, C, H, W)
         X_unfold_torch = torch.nn.functional.unfold(

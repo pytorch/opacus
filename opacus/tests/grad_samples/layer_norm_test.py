@@ -19,7 +19,10 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test
-from ...utils.per_sample_gradients_utils import check_per_sample_gradients_are_correct, get_grad_sample_modes
+from ...utils.per_sample_gradients_utils import (
+    check_per_sample_gradients_are_correct,
+    get_grad_sample_modes,
+)
 
 
 class LayerNorm_test(GradSampleHooks_test):
@@ -30,18 +33,18 @@ class LayerNorm_test(GradSampleHooks_test):
         W=st.integers(5, 10),
         input_dim=st.integers(2, 4),
         norm_dim=st.integers(1, 3),
-        test_or_check=st.integers(1, 2)
+        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=10000)
     def test_input_norm(
-            self,
-            N: int,
-            Z: int,
-            W: int,
-            H: int,
-            input_dim: int,
-            norm_dim: int,
-            test_or_check: int
+        self,
+        N: int,
+        Z: int,
+        W: int,
+        H: int,
+        input_dim: int,
+        norm_dim: int,
+        test_or_check: int,
     ):
 
         if norm_dim >= input_dim:
@@ -71,5 +74,6 @@ class LayerNorm_test(GradSampleHooks_test):
             self.run_test(x, norm, batch_first=True)
         if test_or_check == 2:
             for grad_sample_mode in get_grad_sample_modes(use_ew=True):
-                assert check_per_sample_gradients_are_correct(x, norm, batch_first=True,
-                                                              grad_sample_mode=grad_sample_mode)
+                assert check_per_sample_gradients_are_correct(
+                    x, norm, batch_first=True, grad_sample_mode=grad_sample_mode
+                )

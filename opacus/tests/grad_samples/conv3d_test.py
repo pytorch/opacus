@@ -21,7 +21,10 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test, expander, shrinker
-from ...utils.per_sample_gradients_utils import get_grad_sample_modes, check_per_sample_gradients_are_correct
+from ...utils.per_sample_gradients_utils import (
+    get_grad_sample_modes,
+    check_per_sample_gradients_are_correct,
+)
 
 
 class Conv3d_test(GradSampleHooks_test):
