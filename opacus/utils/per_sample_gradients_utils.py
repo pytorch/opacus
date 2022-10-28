@@ -235,7 +235,7 @@ def check_per_sample_gradients_are_correct(
     reductions = ["sum", "mean"]
     if grad_sample_mode == "ew":
         if not batch_first:
-            raise RuntimeError(f"Batch should be first dimension.")
+            raise RuntimeError("Batch should be first dimension.")
         if not check_torch_version_for_ew_sample():
             raise RuntimeError(f"Unsupported torch version: {torch.__version__}.")
         reductions = ["sum"]

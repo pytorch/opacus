@@ -49,6 +49,22 @@ class LayerNorm_test(GradSampleHooks_test):
 
         if norm_dim >= input_dim:
             return
+        normalized_shape, x_shape = self.get_x_shape_and_norm_shape(
+            H, N, W, Z, input_dim, norm_dim
+        )
+
+        norm = nn.LayerNorm(normalized_shape, elementwise_affine=True)
+        x = torch.randn(x_shape)
+        if test_or_check == 1:
+            self.run_test(x, norm, batch_first=True)
+        if test_or_check == 2:
+            for grad_sample_mode in get_grad_sample_modes(use_ew=True):
+                assert check_per_sample_gradients_are_correct(
+                    x, norm, batch_first=True, grad_sample_mode=grad_sample_mode
+                )
+
+    @staticmethod
+    def get_x_shape_and_norm_shape(H, N, W, Z, input_dim, norm_dim):
         if norm_dim == 1:
             normalized_shape = W
             if input_dim == 2:
@@ -67,13 +83,4 @@ class LayerNorm_test(GradSampleHooks_test):
         elif norm_dim == 3:
             normalized_shape = [Z, H, W]
             x_shape = [N, Z, H, W]
-
-        norm = nn.LayerNorm(normalized_shape, elementwise_affine=True)
-        x = torch.randn(x_shape)
-        if test_or_check == 1:
-            self.run_test(x, norm, batch_first=True)
-        if test_or_check == 2:
-            for grad_sample_mode in get_grad_sample_modes(use_ew=True):
-                assert check_per_sample_gradients_are_correct(
-                    x, norm, batch_first=True, grad_sample_mode=grad_sample_mode
-                )
+        return normalized_shape, x_shape
