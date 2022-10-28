@@ -40,6 +40,18 @@ from torch.utils.data import DataLoader, Dataset, TensorDataset
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
+from .utils import CustomLinearModule, LinearWithExtraParam
+
+
+def _is_functorch_available():
+    try:
+        # flake8: noqa F401
+        import functorch
+
+        return True
+    except ImportError:
+        return False
+
 
 def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
     if tensor.grad_sample is None:
@@ -246,7 +258,7 @@ class BasePrivacyEngineTest(ABC):
                 # vanilla gradient is nearly zero: will match even with clipping
                 continue
 
-            atol = 1e-7 if max_steps == 1 else 1e-5
+            atol = 1e-7 if max_steps == 1 else 1e-4
             self.assertEqual(
                 torch.allclose(vp, pp, atol=atol, rtol=1e-3),
                 expected_match,
@@ -265,10 +277,6 @@ class BasePrivacyEngineTest(ABC):
         do_noise=st.booleans(),
         use_closure=st.booleans(),
         max_steps=st.sampled_from([1, 4]),
-        # do_clip=st.just(False),
-        # do_noise=st.just(False),
-        # use_closure=st.just(False),
-        # max_steps=st.sampled_from([4]),
     )
     @settings(deadline=None)
     def test_compare_to_vanilla(
@@ -799,9 +807,7 @@ class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
         )
         return DataLoader(ds, batch_size=self.BATCH_SIZE, drop_last=False)
 
-    def _init_model(
-        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
-    ):
+    def _init_model(self):
         return SampleConvNet()
 
 
@@ -831,14 +837,19 @@ class PrivacyEngineConvNetFrozenTest(BasePrivacyEngineTest, unittest.TestCase):
         )
         return DataLoader(ds, batch_size=self.BATCH_SIZE, drop_last=False)
 
-    def _init_model(
-        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
-    ):
+    def _init_model(self):
         m = SampleConvNet()
         for p in itertools.chain(m.conv1.parameters(), m.gnorm1.parameters()):
             p.requires_grad = False
 
         return m
+
+
+@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
+class PrivacyEngineConvNetFrozenTestFunctorch(PrivacyEngineConvNetFrozenTest):
+    def setUp(self):
+        super().setUp()
+        self.GRAD_SAMPLE_MODE = "functorch"
 
 
 @unittest.skipIf(
@@ -852,6 +863,13 @@ class PrivacyEngineConvNetTestExpandedWeights(PrivacyEngineConvNetTest):
     @unittest.skip("Original p.grad is not available in ExpandedWeights")
     def test_sample_grad_aggregation(self):
         pass
+
+
+@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
+class PrivacyEngineConvNetTestFunctorch(PrivacyEngineConvNetTest):
+    def setUp(self):
+        super().setUp()
+        self.GRAD_SAMPLE_MODE = "functorch"
 
 
 class SampleAttnNet(nn.Module):
@@ -933,6 +951,13 @@ class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
         return SampleAttnNet()
 
 
+@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
+class PrivacyEngineTextTestFunctorch(PrivacyEngineTextTest):
+    def setUp(self):
+        super().setUp()
+        self.GRAD_SAMPLE_MODE = "functorch"
+
+
 class SampleTiedWeights(nn.Module):
     def __init__(self, tie=True):
         super().__init__()
@@ -972,7 +997,39 @@ class PrivacyEngineTiedWeightsTest(BasePrivacyEngineTest, unittest.TestCase):
         )
         return DataLoader(ds, batch_size=self.BATCH_SIZE, drop_last=False)
 
-    def _init_model(
-        self, private=False, state_dict=None, model=None, **privacy_engine_kwargs
-    ):
+    def _init_model(self):
         return SampleTiedWeights(tie=True)
+
+
+@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
+class PrivacyEngineTiedWeightsTestFunctorch(PrivacyEngineTiedWeightsTest):
+    def setUp(self):
+        super().setUp()
+        self.GRAD_SAMPLE_MODE = "functorch"
+
+
+class ModelWithCustomLinear(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = CustomLinearModule(4, 8)
+        self.fc2 = LinearWithExtraParam(8, 4)
+        self.extra_param = nn.Parameter(torch.randn(4, 4))
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.fc2(x)
+        x = x.matmul(self.extra_param)
+        return x
+
+
+@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
+class PrivacyEngineCustomLayerTest(BasePrivacyEngineTest, unittest.TestCase):
+    def _init_data(self):
+        ds = TensorDataset(
+            torch.randn(self.DATA_SIZE, 4),
+            torch.randint(low=0, high=3, size=(self.DATA_SIZE,)),
+        )
+        return DataLoader(ds, batch_size=self.BATCH_SIZE, drop_last=False)
+
+    def _init_model(self):
+        return ModelWithCustomLinear()
