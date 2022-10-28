@@ -31,7 +31,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 
 
-def parametrized_modules(module: nn.Module) -> Iterable[nn.Module]:
+def has_trainable_params(module: nn.Module) -> bool:
+    return any(p.requires_grad for p in module.parameters(recurse=False))
+
+
+def parametrized_modules(module: nn.Module) -> Iterable[Tuple[str, nn.Module]]:
     """
     Recursively iterates over all submodules, returning those that
     have parameters (as opposed to "wrapper modules" that just organize modules).
