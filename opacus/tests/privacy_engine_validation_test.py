@@ -3,13 +3,14 @@ import unittest
 import torch
 from opacus import PrivacyEngine
 from opacus.grad_sample.gsm_exp_weights import API_CUTOFF_VERSION
-from opacus.tests.utils import (
+from torch.utils.data import DataLoader
+
+from .utils import (
     BasicSupportedModule,
     CustomLinearModule,
     LinearWithExtraParam,
     MatmulModule,
 )
-from torch.utils.data import DataLoader
 
 
 class PrivacyEngineValidationTest(unittest.TestCase):

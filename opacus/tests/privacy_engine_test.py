@@ -32,7 +32,6 @@ from opacus.grad_sample.gsm_exp_weights import API_CUTOFF_VERSION
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
 from opacus.scheduler import StepNoise
-from opacus.tests.utils import CustomLinearModule, LinearWithExtraParam
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from opacus.validators.module_validator import ModuleValidator
@@ -40,6 +39,8 @@ from opt_einsum import contract
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
+
+from .utils import CustomLinearModule, LinearWithExtraParam
 
 
 def _is_functorch_available():
