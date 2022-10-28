@@ -100,6 +100,8 @@ def compute_microbatch_grad_sample(
         module: The ``ModelWithLoss`` that wraps the nn.Module you want to test.
         batch_first: Whether batch size is the first dimension (as opposed to the second).
             Defaults to True.
+        loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
+                is a sum or a mean operation. Can take values "sum" or "mean".
 
     Returns:
         Dictionary mapping parameter_name -> per-sample-gradient for that parameter
@@ -165,6 +167,7 @@ def compute_opacus_grad_sample(
         batch_first: Whether batch size is the first dimension (as opposed to the second).
             Defaults to True.
         loss_reduction: What reduction to apply to the loss. Defaults to "mean".
+        grad_sample_mode: What sampling method to use to get gradients.
 
     Returns:
         Dictionary mapping parameter_name -> per-sample-gradient for that parameter
@@ -213,6 +216,19 @@ def check_per_sample_gradients_are_correct(x: Union[torch.Tensor, PackedSequence
                                            atol=10e-6,
                                            rtol=10e-5,
                                            grad_sample_mode="hooks") -> bool:
+    """
+    A utility to check whether per sample gradients are computed correctly with a particular model.
+    Args:
+        x: The tensor in input to the ``module``
+        module: The ``ModelWithLoss`` that wraps the nn.Module you want to check.
+        batch_first: Whether batch size is the first dimension (as opposed to the second).
+            Defaults to True.
+        atol: The relative tolerance parameter (numpy).
+        rtol: The absolute tolerance parameter (numpy).
+        grad_sample_mode: What sampling method to use to get gradients.
+
+    Returns: True if per sample gradients were computed correctly. False otherwise.
+    """
     if grad_sample_mode == "functorch":
         import functorch  # noqa
 
@@ -226,7 +242,7 @@ def check_per_sample_gradients_are_correct(x: Union[torch.Tensor, PackedSequence
 
     correct = True
     for loss_reduction in reductions:
-        correct = correct and check_per_sample_gradients_are_correct_with_reduction(
+        correct = correct and _check_per_sample_gradients_are_correct_with_reduction(
             x,
             module,
             batch_first=batch_first,
@@ -286,7 +302,7 @@ def compute_grad_samples_microbatch_and_opacus(x: Union[torch.Tensor, PackedSequ
     return microbatch_grad_samples, opacus_grad_samples
 
 
-def check_per_sample_gradients_are_correct_with_reduction(
+def _check_per_sample_gradients_are_correct_with_reduction(
         x: Union[torch.Tensor, PackedSequence],
         module: nn.Module,
         batch_first=True,
