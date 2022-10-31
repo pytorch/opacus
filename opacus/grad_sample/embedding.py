@@ -67,10 +67,12 @@ def compute_embeddingbag_gradsampler(layer, inputs, backprops):
         if i < batch_size - 1:
             end = offset[i + 1]
         else:
-            end = index.shape[0] - 1
+            end = index.shape[0]
 
         if layer.mode == "sum":
-            gsm[i][index[begin:end]] = backprops[i]
+            gsm[i][index[begin:end]] += backprops[i]
+        elif layer.mode == "mean":
+            gsm[i][index[begin:end]] += backprops[i] / (end - begin)
 
     ret = {}
     ret[layer.weight] = gsm

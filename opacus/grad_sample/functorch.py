@@ -1,5 +1,5 @@
 from opacus.layers.dp_rnn import RNNLinear
-
+import torch.nn as nn
 
 def prepare_layer(layer, batch_first=True):
     """
@@ -16,6 +16,10 @@ def prepare_layer(layer, batch_first=True):
     if len(list(layer.buffers())) > 0:
         raise NotImplementedError(
             "This layer has buffers and is not supported by Opacus"
+        )
+    if type(layer) is nn.EmbeddingBag:
+        raise NotImplementedError(
+            "Functorch does not support EmbeddingBag yet"
         )
     flayer, _ = make_functional(layer)
 
