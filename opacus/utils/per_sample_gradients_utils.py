@@ -87,8 +87,8 @@ class ModelWithLoss(nn.Module):
 def compute_microbatch_grad_sample(
     x: Union[torch.Tensor, List[torch.Tensor]],
     module: nn.Module,
-    batch_first=True,
-    loss_reduction="mean",
+    batch_first: bool = True,
+    loss_reduction: str = "mean",
 ) -> Dict[str, torch.tensor]:
     """
     Computes per-sample gradients with the microbatch method, i.e. by computing normal gradients
@@ -154,9 +154,9 @@ def compute_microbatch_grad_sample(
 def compute_opacus_grad_sample(
     x: Union[torch.Tensor, PackedSequence],
     module: nn.Module,
-    batch_first=True,
-    loss_reduction="mean",
-    grad_sample_mode="hooks",
+    batch_first: bool = True,
+    loss_reduction: str = "mean",
+    grad_sample_mode: str = "hooks",
 ) -> Dict[str, torch.tensor]:
     """
     Runs Opacus to compute per-sample gradients and return them for testing purposes.
@@ -211,10 +211,10 @@ def check_per_sample_gradients_are_correct(
     x: Union[torch.Tensor, PackedSequence],
     module: nn.Module,
     *,
-    batch_first=True,
-    atol=10e-6,
-    rtol=10e-5,
-    grad_sample_mode="hooks",
+    batch_first: bool = True,
+    atol: float = 10e-6,
+    rtol: float = 10e-5,
+    grad_sample_mode: str = "hooks",
 ) -> bool:
     """
     A utility to check whether per sample gradients are computed correctly with a particular model.
@@ -258,8 +258,8 @@ def check_per_sample_gradients_are_correct(
 def compute_microbatch_grad_sample_tensor_or_seq(
     x: Union[torch.Tensor, PackedSequence],
     module: nn.Module,
-    batch_first=True,
-    loss_reduction="mean",
+    batch_first: bool = True,
+    loss_reduction: str = "mean",
 ):
     if type(x) is PackedSequence:
         x_unpacked = unpack_packedsequences(x)
@@ -280,9 +280,9 @@ def compute_microbatch_grad_sample_tensor_or_seq(
 def compute_grad_samples_microbatch_and_opacus(
     x: Union[torch.Tensor, PackedSequence],
     module: nn.Module,
-    batch_first=True,
-    loss_reduction="mean",
-    grad_sample_mode="hooks",
+    batch_first: bool = True,
+    loss_reduction: str = "mean",
+    grad_sample_mode: str = "hooks",
 ):
     microbatch_grad_samples = compute_microbatch_grad_sample_tensor_or_seq(
         x, module, batch_first=batch_first, loss_reduction=loss_reduction
@@ -308,11 +308,11 @@ def compute_grad_samples_microbatch_and_opacus(
 def _check_per_sample_gradients_are_correct_with_reduction(
     x: Union[torch.Tensor, PackedSequence],
     module: nn.Module,
-    batch_first=True,
-    loss_reduction="mean",
-    atol=10e-6,
-    rtol=10e-5,
-    grad_sample_mode="hooks",
+    batch_first: bool = True,
+    loss_reduction: str = "mean",
+    atol: float = 10e-6,
+    rtol: float = 10e-5,
+    grad_sample_mode: str = "hooks",
 ) -> bool:
     (
         microbatch_grad_samples,
