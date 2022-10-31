@@ -96,8 +96,8 @@ def compute_microbatch_grad_sample(
     as this method is obviously correct, but slow.
 
     Args:
-        x: The tensor in input to the ``module``
-        module: The ``ModelWithLoss`` that wraps the nn.Module you want to test.
+        x: Sample input batch
+         module: The nn.Module you want to test.
         batch_first: Whether batch size is the first dimension (as opposed to the second).
             Defaults to True.
         loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
@@ -162,8 +162,8 @@ def compute_opacus_grad_sample(
     Runs Opacus to compute per-sample gradients and return them for testing purposes.
 
     Args:
-        x: The tensor in input to the ``module``
-        module: The ``ModelWithLoss`` that wraps the nn.Module you want to test.
+        x: Sample input batch
+        module: The nn.Module you want to test.
         batch_first: Whether batch size is the first dimension (as opposed to the second).
             Defaults to True.
         loss_reduction: What reduction to apply to the loss. Defaults to "mean".
@@ -218,16 +218,28 @@ def check_per_sample_gradients_are_correct(
 ) -> bool:
     """
     A utility to check whether per sample gradients are computed correctly with a particular model.
+    The check is performed by comparing the result of the slow but reliable micro-batch method `compute_microbatch_grad_sample`
+    with the result of optimized opacus method.
+
     Args:
-        x: The tensor in input to the ``module``
+        x: Sample input batch
         module: The ``ModelWithLoss`` that wraps the nn.Module you want to check.
         batch_first: Whether batch size is the first dimension (as opposed to the second).
             Defaults to True.
-        atol: The relative tolerance parameter (numpy).
-        rtol: The absolute tolerance parameter (numpy).
+        atol: The relative tolerance parameter (torch.allclose).
+        rtol: The absolute tolerance parameter (torch.allclose).
         grad_sample_mode: What sampling method to use to get gradients.
 
     Returns: True if per sample gradients were computed correctly. False otherwise.
+
+    Example:
+        >>> x_shape = [N, Z, W]
+        >>> x = torch.randn(x_shape)
+        >>> model = nn.Linear(W, W + 2)
+        >>> assert check_per_sample_gradients_are_correct(
+        ...            x,
+        ...            model
+        ...        ) # This will fail only if the opacus per sample gradients do not match the micro-batch gradients.
     """
     if grad_sample_mode == "functorch":
         import functorch  # noqa
