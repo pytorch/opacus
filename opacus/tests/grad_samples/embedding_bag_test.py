@@ -17,8 +17,6 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-import torch.nn.functional as F
-from opacus.grad_sample import wrap_model
 
 from .common import GradSampleHooks_test
 
