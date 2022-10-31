@@ -241,16 +241,12 @@ def check_per_sample_gradients_are_correct(
         ...            model
         ...        ) # This will fail only if the opacus per sample gradients do not match the micro-batch gradients.
     """
-    if grad_sample_mode == "functorch":
-        import functorch  # noqa
-
     reductions = ["sum", "mean"]
     if grad_sample_mode == "ew":
         if not batch_first:
             raise RuntimeError("Batch should be first dimension.")
         if not check_torch_version_for_ew_sample():
             raise RuntimeError(f"Unsupported torch version: {torch.__version__}.")
-        reductions = ["sum"]
 
     for loss_reduction in reductions:
         if not _check_per_sample_gradients_are_correct_with_reduction(

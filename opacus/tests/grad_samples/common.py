@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import unittest
 from typing import Union
 
@@ -60,8 +59,11 @@ class GradSampleHooks_test(unittest.TestCase):
         if type(x) is not PackedSequence and x.numel() == 0:
             grad_sample_modes = ["hooks"]
 
-        for grad_sample_mode in grad_sample_modes:
-            for loss_reduction in ["sum", "mean"]:
+        if ew_compatible and batch_first and torch.__version__ >= (1, 13):
+            grad_sample_modes += ["ew"]
+
+        for loss_reduction in ["sum", "mean"]:
+            for grad_sample_mode in grad_sample_modes:
                 with self.subTest(
                     grad_sample_mode=grad_sample_mode, loss_reduction=loss_reduction
                 ):
@@ -74,16 +76,6 @@ class GradSampleHooks_test(unittest.TestCase):
                         rtol=rtol,
                         grad_sample_mode=grad_sample_mode,
                     )
-        if ew_compatible and batch_first and torch.__version__ >= (1, 13):
-            self.run_test_with_reduction(
-                x,
-                module,
-                batch_first=batch_first,
-                loss_reduction="sum",
-                atol=atol,
-                rtol=rtol,
-                grad_sample_mode="ew",
-            )
 
     def run_test_with_reduction(
         self,
