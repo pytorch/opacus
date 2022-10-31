@@ -240,9 +240,8 @@ def check_per_sample_gradients_are_correct(
             raise RuntimeError(f"Unsupported torch version: {torch.__version__}.")
         reductions = ["sum"]
 
-    correct = True
     for loss_reduction in reductions:
-        correct = correct and _check_per_sample_gradients_are_correct_with_reduction(
+        if not _check_per_sample_gradients_are_correct_with_reduction(
             x,
             module,
             batch_first=batch_first,
@@ -250,9 +249,10 @@ def check_per_sample_gradients_are_correct(
             atol=atol,
             rtol=rtol,
             grad_sample_mode=grad_sample_mode,
-        )
+        ):
+            return False
 
-    return correct
+    return True
 
 
 def compute_microbatch_grad_sample_tensor_or_seq(
@@ -325,16 +325,13 @@ def _check_per_sample_gradients_are_correct_with_reduction(
         grad_sample_mode=grad_sample_mode,
     )
 
-    correct = True
     for name, opacus_grad_sample in opacus_grad_samples.items():
         microbatch_grad_sample = microbatch_grad_samples[name]
-        correct = (
-            correct
-            and np.allclose(microbatch_grad_sample, opacus_grad_sample, atol, rtol)
-            and opacus_grad_sample.shape == microbatch_grad_sample.shape
-        )
-
-    return correct
+        if not opacus_grad_sample.shape == microbatch_grad_sample.shape:
+            return False
+        if not torch.allclose(microbatch_grad_sample, opacus_grad_sample, atol, rtol):
+            return False
+    return True
 
 
 def unpack_packedsequences(X: PackedSequence) -> List[torch.Tensor]:
