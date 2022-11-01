@@ -21,10 +21,6 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test
-from ...utils.per_sample_gradients_utils import (
-    check_per_sample_gradients_are_correct,
-    get_grad_sample_modes,
-)
 
 
 class GroupNorm_test(GradSampleHooks_test):

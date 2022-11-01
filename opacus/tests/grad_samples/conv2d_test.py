@@ -19,16 +19,12 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
+from torch.testing import assert_allclose
+
 from opacus.grad_sample.conv import convolution2d_backward_as_a_convolution
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.utils.tensor_utils import unfold2d
-from torch.testing import assert_allclose
-
 from .common import GradSampleHooks_test, expander, shrinker
-from ...utils.per_sample_gradients_utils import (
-    get_grad_sample_modes,
-    check_per_sample_gradients_are_correct,
-)
 
 
 class Conv2d_test(GradSampleHooks_test):
@@ -104,15 +100,6 @@ class Conv2d_test(GradSampleHooks_test):
                 rtol=10e-4,
                 ew_compatible=is_ew_compatible,
             )
-            for grad_sample_mode in get_grad_sample_modes(use_ew=is_ew_compatible):
-                assert check_per_sample_gradients_are_correct(
-                    x,
-                    conv,
-                    batch_first=True,
-                    atol=10e-5,
-                    rtol=10e-4,
-                    grad_sample_mode=grad_sample_mode,
-                )
             GradSampleModule.GRAD_SAMPLERS[nn.Conv2d] = conv2d_gsm
 
     @given(

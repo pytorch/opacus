@@ -17,13 +17,9 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-from opacus.layers import DPMultiheadAttention
 
+from opacus.layers import DPMultiheadAttention
 from .common import GradSampleHooks_test
-from ...utils.per_sample_gradients_utils import (
-    check_per_sample_gradients_are_correct,
-    get_grad_sample_modes,
-)
 
 
 class DPMultiheadAttentionAdapter(nn.Module):
