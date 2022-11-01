@@ -87,6 +87,10 @@ class GradSampleHooks_test(unittest.TestCase):
         rtol=10e-5,
         grad_sample_mode="hooks",
     ):
+        if (
+            not type(x) is PackedSequence and x.numel() <= 0
+        ):  # We've checked opacus can handle 0-sized batch. Microbatch doesn't make sense
+            return
         (
             microbatch_grad_samples,
             opacus_grad_samples,

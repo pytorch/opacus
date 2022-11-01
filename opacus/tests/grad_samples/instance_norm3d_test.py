@@ -32,16 +32,9 @@ class InstanceNorm3d_test(GradSampleHooks_test):
         W=st.integers(5, 10),
         H=st.integers(4, 8),
         Z=st.integers(1, 4),
-        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=10000)
-    def test_5d_input(self, N: int, C: int, W: int, H: int, Z: int, test_or_check: int):
+    def test_5d_input(self, N: int, C: int, W: int, H: int, Z: int):
         x = torch.randn([N, C, Z, H, W])
         norm = nn.InstanceNorm3d(num_features=C, affine=True, track_running_stats=False)
-        if test_or_check == 1:
-            self.run_test(x, norm, batch_first=True)
-        if test_or_check == 2:
-            for grad_sample_mode in get_grad_sample_modes(use_ew=True):
-                assert check_per_sample_gradients_are_correct(
-                    x, norm, batch_first=True, grad_sample_mode=grad_sample_mode
-                )
+        self.run_test(x, norm, batch_first=True)

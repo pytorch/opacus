@@ -57,7 +57,6 @@ class MultiHeadAttention_test(GradSampleHooks_test):
         add_bias_kv=st.booleans(),
         add_zero_attn=st.booleans(),
         kv_dim=st.booleans(),
-        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=10000)
     def test_multihead_attention(
@@ -70,7 +69,6 @@ class MultiHeadAttention_test(GradSampleHooks_test):
         add_bias_kv: bool,
         add_zero_attn: bool,
         kv_dim: bool,
-        test_or_check: int,
     ):
 
         if kv_dim:
@@ -92,10 +90,4 @@ class MultiHeadAttention_test(GradSampleHooks_test):
         v = torch.randn([T, N, D])
         x = torch.stack((q, k, v), dim=-1)
 
-        if test_or_check == 1:
-            self.run_test(x, attn, batch_first=False)
-        if test_or_check == 2:
-            for grad_sample_mode in get_grad_sample_modes(use_ew=True):
-                assert check_per_sample_gradients_are_correct(
-                    x, attn, batch_first=False, grad_sample_mode=grad_sample_mode
-                )
+        self.run_test(x, attn, batch_first=False)

@@ -292,9 +292,21 @@ def compute_grad_samples_microbatch_and_opacus(
     loss_reduction: str = "mean",
     grad_sample_mode: str = "hooks",
 ):
-    microbatch_grad_samples = compute_microbatch_grad_sample_tensor_or_seq(
-        x, module, batch_first=batch_first, loss_reduction=loss_reduction
-    )
+    if type(x) is PackedSequence:
+        x_unpacked = unpack_packedsequences(x)
+        microbatch_grad_samples = compute_microbatch_grad_sample(
+            x_unpacked,
+            module,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+        )
+    elif x.numel() > 0:
+        microbatch_grad_samples = compute_microbatch_grad_sample(
+            x, module, batch_first=batch_first, loss_reduction=loss_reduction
+        )
+    else:
+        raise RuntimeError("x is expected to be non-empty.")
+
     opacus_grad_samples = compute_opacus_grad_sample(
         x,
         module,

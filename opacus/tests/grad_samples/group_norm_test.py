@@ -39,17 +39,10 @@ class GroupNorm_test(GradSampleHooks_test):
         H=st.integers(5, 10),
         W=st.integers(4, 8),
         num_groups=st.sampled_from([1, 4, "C"]),
-        test_or_check=st.integers(1, 2)
     )
     @settings(deadline=10000)
     def test_3d_input_groups(
-            self,
-            N: int,
-            C: int,
-            H: int,
-            W: int,
-            num_groups: Union[int, str],
-            test_or_check: int
+        self, N: int, C: int, H: int, W: int, num_groups: Union[int, str]
     ):
 
         if num_groups == "C":
@@ -59,12 +52,6 @@ class GroupNorm_test(GradSampleHooks_test):
             return
 
         x = torch.randn([N, C, H, W])
-        ew_compatible=N > 0
+        ew_compatible = N > 0
         norm = nn.GroupNorm(num_groups=num_groups, num_channels=C, affine=True)
-        self.run_test(x, norm, batch_first=True)
-        if test_or_check == 1:
-            self.run_test(x, norm, batch_first=True, ew_compatible=ew_compatible)
-        if test_or_check == 2:
-            for grad_sample_mode in get_grad_sample_modes(use_ew=ew_compatible):
-                assert check_per_sample_gradients_are_correct(x, norm, batch_first=True,
-                                                              grad_sample_mode=grad_sample_mode)
+        self.run_test(x, norm, batch_first=True, ew_compatible=ew_compatible)

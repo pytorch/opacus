@@ -35,20 +35,18 @@ class Embedding_test(GradSampleHooks_test):
         D=st.integers(10, 17),
         dim=st.integers(2, 4),
         batch_first=st.booleans(),
-        test_or_check=st.integers(1, 2)
     )
     @settings(deadline=10000)
     def test_input_across_dims(
-            self,
-            N: int,
-            T: int,
-            Q: int,
-            R: int,
-            V: int,
-            D: int,
-            dim: int,
-            batch_first: bool,
-            test_or_check: int
+        self,
+        N: int,
+        T: int,
+        Q: int,
+        R: int,
+        V: int,
+        D: int,
+        dim: int,
+        batch_first: bool,
     ):
 
         if dim == 1:  # TODO: fix when dim is 1
@@ -63,9 +61,4 @@ class Embedding_test(GradSampleHooks_test):
         emb = nn.Embedding(V, D)
         x = torch.randint(low=0, high=V - 1, size=size)
         ew_compatible = N > 0
-        if test_or_check == 1:
-            self.run_test(x, emb, batch_first=batch_first, ew_compatible=ew_compatible)
-        if test_or_check == 2:
-            for grad_sample_mode in get_grad_sample_modes(use_ew=ew_compatible):
-                assert check_per_sample_gradients_are_correct(x, emb, batch_first=batch_first,
-                                                              grad_sample_mode=grad_sample_mode)
+        self.run_test(x, emb, batch_first=batch_first, ew_compatible=ew_compatible)
