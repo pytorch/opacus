@@ -29,9 +29,7 @@ class SequenceBias_test(GradSampleHooks_test):
         batch_first=st.booleans(),
     )
     @settings(deadline=10000)
-    def test_batch_second(
-        self, N: int, T: int, D: int, batch_first: bool
-    ):
+    def test_batch_second(self, N: int, T: int, D: int, batch_first: bool):
 
         seqbias = SequenceBias(D, batch_first)
         if batch_first:

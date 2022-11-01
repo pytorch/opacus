@@ -33,7 +33,7 @@ class Conv1d_test(GradSampleHooks_test):
         stride=st.integers(1, 2),
         padding=st.sampled_from([0, 1, 2, "same", "valid"]),
         dilation=st.integers(1, 2),
-        groups=st.integers(1, 12)
+        groups=st.integers(1, 12),
     )
     @settings(deadline=10000)
     def test_conv1d(
