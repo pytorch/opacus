@@ -21,6 +21,10 @@ import torch.nn as nn
 from hypothesis import given, settings
 
 from .common import GradSampleHooks_test, expander, shrinker
+from ...utils.per_sample_gradients_utils import (
+    get_grad_sample_modes,
+    check_per_sample_gradients_are_correct,
+)
 
 
 class Conv3d_test(GradSampleHooks_test):
@@ -36,6 +40,7 @@ class Conv3d_test(GradSampleHooks_test):
         padding=st.sampled_from([0, 2, (1, 2, 3), "same", "valid"]),
         dilation=st.sampled_from([1, (1, 2, 2)]),
         groups=st.integers(1, 16),
+        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=30000)
     def test_conv3d(
@@ -51,6 +56,7 @@ class Conv3d_test(GradSampleHooks_test):
         padding: Union[int, Tuple[int]],
         dilation: int,
         groups: int,
+        test_or_check: int,
     ):
 
         if padding == "same" and stride != 1:
@@ -73,11 +79,22 @@ class Conv3d_test(GradSampleHooks_test):
         is_ew_compatible = (
             dilation == 1 and padding != "same" and N > 0
         )  # TODO add support for padding = 'same' with EW
-        self.run_test(
-            x,
-            conv,
-            batch_first=True,
-            atol=10e-5,
-            rtol=10e-3,
-            ew_compatible=is_ew_compatible,
-        )
+        if test_or_check == 1:
+            self.run_test(
+                x,
+                conv,
+                batch_first=True,
+                atol=10e-5,
+                rtol=10e-3,
+                ew_compatible=is_ew_compatible,
+            )
+        if test_or_check == 2:
+            for grad_sample_mode in get_grad_sample_modes(use_ew=is_ew_compatible):
+                assert check_per_sample_gradients_are_correct(
+                    x,
+                    conv,
+                    batch_first=True,
+                    atol=10e-5,
+                    rtol=10e-3,
+                    grad_sample_mode=grad_sample_mode,
+                )
