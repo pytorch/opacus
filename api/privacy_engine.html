@@ -72,10 +72,10 @@ When set to <code class="docutils literal notranslate"><span class="pre">True</s
 running registered fixes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – module to be modified</p>
+<dd class="field-odd"><p><strong>module</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>) – module to be modified</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Module with some submodules replaced for their deep copies or
@@ -105,9 +105,9 @@ more details</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – module to be checked</p></li>
-<li><p><strong>optimizer</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>]) – optimizer to be checked</p></li>
-<li><p><strong>data_loader</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]) – data_loader to be checked</p></li>
+<li><p><strong>module</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>) – module to be checked</p></li>
+<li><p><strong>optimizer</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>]) – optimizer to be checked</p></li>
+<li><p><strong>data_loader</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>]) – data_loader to be checked</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -136,9 +136,9 @@ will invalidate stated privacy guarantees.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – PyTorch module to be used for training</p></li>
-<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – Optimizer to be used for training</p></li>
-<li><p><strong>data_loader</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>) – DataLoader to be used for training</p></li>
+<li><p><strong>module</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>) – PyTorch module to be used for training</p></li>
+<li><p><strong>optimizer</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>) – Optimizer to be used for training</p></li>
+<li><p><strong>data_loader</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>) – DataLoader to be used for training</p></li>
 <li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The ratio of the standard deviation of the Gaussian noise to
 the L2-sensitivity of the function to which the noise is added
 (How much noise to add)</p></li>
@@ -170,7 +170,7 @@ details</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>]</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><p>Tuple of (model, optimizer, data_loader).</p>
@@ -197,12 +197,9 @@ that calculates privacy parameters based on a given privacy budget.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – PyTorch module to be used for training</p></li>
-<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – Optimizer to be used for training</p></li>
-<li><p><strong>data_loader</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>) – DataLoader to be used for training</p></li>
-<li><p><strong>noise_multiplier</strong> – The ratio of the standard deviation of the Gaussian noise to
-the L2-sensitivity of the function to which the noise is added
-(How much noise to add)</p></li>
+<li><p><strong>module</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>) – PyTorch module to be used for training</p></li>
+<li><p><strong>optimizer</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>) – Optimizer to be used for training</p></li>
+<li><p><strong>data_loader</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>) – DataLoader to be used for training</p></li>
 <li><p><strong>max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]) – The maximum norm of the per-sample gradients. Any gradient with norm
 higher than this will be clipped to this value.</p></li>
 <li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to indicate if the input tensor to the corresponding module
@@ -211,18 +208,23 @@ input tensor are expected be <code class="docutils literal notranslate"><span cl
 <code class="docutils literal notranslate"><span class="pre">[K,</span> <span class="pre">batch_size,</span> <span class="pre">...]</span></code></p></li>
 <li><p><strong>loss_reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Indicates if the loss reduction (for aggregating the gradients)
 is a sum or a mean operation. Can take values “sum” or “mean”</p></li>
-<li><p><strong>noise_seed</strong> – Seed to be used for random noise generation</p></li>
 <li><p><strong>poisson_sampling</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – <code class="docutils literal notranslate"><span class="pre">True</span></code> if you want to use standard sampling required
 for DP guarantees. Setting <code class="docutils literal notranslate"><span class="pre">False</span></code> will leave provided data_loader
 unchanged. Technically this doesn’t fit the assumptions made by
 privacy accounting mechanism, but it can be a good approximation when
 using Poisson sampling is unfeasible.</p></li>
-<li><p><strong>clipping</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Per sample gradient clipping mechanism (“flat” or “per_layer”).
+<li><p><strong>clipping</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Per sample gradient clipping mechanism (“flat” or “per_layer” or “adaptive”).
 Flat clipping calculates the norm of the entire gradient over
 all parameters, per layer clipping sets individual norms for
 every parameter tensor, and adaptive clipping updates clipping bound per iteration.
 Flat clipping is usually preferred, but using per layer clipping in combination
 with distributed training can provide notable performance gains.</p></li>
+<li><p><strong>noise_generator</strong> – torch.Generator() object used as a source of randomness for
+the noise</p></li>
+<li><p><strong>grad_sample_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – mode for computing per sample gradients. Determines the
+implementation class for the wrapped <code class="docutils literal notranslate"><span class="pre">module</span></code>. See
+<code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractGradSampleModule</span></code> for more
+details</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -230,7 +232,7 @@ with distributed training can provide notable performance gains.</p></li>
 <dl class="simple">
 <dt>Model is a wrapper around the original model that also computes per sample</dt><dd><p>gradients</p>
 </dd>
-<dt>Optimizer is a wrapper around the original optimizer that also does</dt><dd><p>gradient clipping and adding noise to the gradients</p>
+<dt>Optimizer is a wrapper around the original optimizer that also does</dt><dd><p>gradient clipping and noise addition to the gradients</p>
 </dd>
 <dt>DataLoader is a brand new DataLoader object, constructed to behave as</dt><dd><p>equivalent to the original data loader, possibly with updated
 sampling mechanism. Points to the same dataset object.</p>
@@ -263,9 +265,9 @@ Same as <code class="docutils literal notranslate"><span class="pre">is_compatib
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – module to be checked</p></li>
-<li><p><strong>optimizer</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>]) – optimizer to be checked</p></li>
-<li><p><strong>data_loader</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]) – data_loader to be checked</p></li>
+<li><p><strong>module</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>) – module to be checked</p></li>
+<li><p><strong>optimizer</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>]) – optimizer to be checked</p></li>
+<li><p><strong>data_loader</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>]) – data_loader to be checked</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>

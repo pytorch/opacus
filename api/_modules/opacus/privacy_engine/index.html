@@ -490,9 +490,6 @@
 <span class="sd">            module: PyTorch module to be used for training</span>
 <span class="sd">            optimizer: Optimizer to be used for training</span>
 <span class="sd">            data_loader: DataLoader to be used for training</span>
-<span class="sd">            noise_multiplier: The ratio of the standard deviation of the Gaussian noise to</span>
-<span class="sd">                the L2-sensitivity of the function to which the noise is added</span>
-<span class="sd">                (How much noise to add)</span>
 <span class="sd">            max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm</span>
 <span class="sd">                higher than this will be clipped to this value.</span>
 <span class="sd">            batch_first: Flag to indicate if the input tensor to the corresponding module</span>
@@ -501,18 +498,23 @@
 <span class="sd">                ``[K, batch_size, ...]``</span>
 <span class="sd">            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
 <span class="sd">                is a sum or a mean operation. Can take values "sum" or "mean"</span>
-<span class="sd">            noise_seed: Seed to be used for random noise generation</span>
 <span class="sd">            poisson_sampling: ``True`` if you want to use standard sampling required</span>
 <span class="sd">                for DP guarantees. Setting ``False`` will leave provided data_loader</span>
 <span class="sd">                unchanged. Technically this doesn't fit the assumptions made by</span>
 <span class="sd">                privacy accounting mechanism, but it can be a good approximation when</span>
 <span class="sd">                using Poisson sampling is unfeasible.</span>
-<span class="sd">            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer").</span>
+<span class="sd">            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer" or "adaptive").</span>
 <span class="sd">                Flat clipping calculates the norm of the entire gradient over</span>
 <span class="sd">                all parameters, per layer clipping sets individual norms for</span>
 <span class="sd">                every parameter tensor, and adaptive clipping updates clipping bound per iteration.</span>
 <span class="sd">                Flat clipping is usually preferred, but using per layer clipping in combination</span>
 <span class="sd">                with distributed training can provide notable performance gains.</span>
+<span class="sd">            noise_generator: torch.Generator() object used as a source of randomness for</span>
+<span class="sd">                the noise</span>
+<span class="sd">            grad_sample_mode: mode for computing per sample gradients. Determines the</span>
+<span class="sd">                implementation class for the wrapped ``module``. See</span>
+<span class="sd">                :class:`~opacus.grad_sample.gsm_base.AbstractGradSampleModule` for more</span>
+<span class="sd">                details</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple of (model, optimizer, data_loader).</span>
@@ -520,7 +522,7 @@
 <span class="sd">            Model is a wrapper around the original model that also computes per sample</span>
 <span class="sd">                gradients</span>
 <span class="sd">            Optimizer is a wrapper around the original optimizer that also does</span>
-<span class="sd">             gradient clipping and adding noise to the gradients</span>
+<span class="sd">                gradient clipping and noise addition to the gradients</span>
 <span class="sd">            DataLoader is a brand new DataLoader object, constructed to behave as</span>
 <span class="sd">                equivalent to the original data loader, possibly with updated</span>
 <span class="sd">                sampling mechanism. Points to the same dataset object.</span>
