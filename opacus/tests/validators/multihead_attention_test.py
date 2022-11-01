@@ -36,6 +36,6 @@ class MultiheadAttentionValidator_test(unittest.TestCase):
     def test_fix(self):
         fix_mha = self.mf[type(self.mha)](self.mha)
         self.assertTrue(isinstance(fix_mha, DPMultiheadAttention))
-        self.assertFalse(  # state_dicts are not same
+        self.assertTrue(
             are_state_dict_equal(self.mha.state_dict(), fix_mha.state_dict())
         )

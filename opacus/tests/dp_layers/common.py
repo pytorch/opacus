@@ -217,8 +217,8 @@ class DPModules_test(unittest.TestCase):
         train_fn(nn_module, *train_fn_args, **train_fn_kwargs)
         train_fn(dp_module, *train_fn_args, **train_fn_kwargs)
 
-        nn_params = dict(nn_module.named_parameters())
-        dp_params = dict(dp_module.named_parameters())
+        nn_params = nn_module.state_dict()
+        dp_params = dp_module.state_dict()
 
         nn_only_grads = [
             param_name
@@ -244,11 +244,11 @@ class DPModules_test(unittest.TestCase):
                 f"{i}. {s}" for i, s in enumerate(nn_only_grads, 1)
             )
             raise AssertionError(
-                f"A total of {len(nn_only_grads)} gradients are in dp_module "
+                f"A total of {len(dp_only_grads)} gradients are in dp_module "
                 f"but not in nn_module: \n\t{failed_str}"
             )
 
-        for param_name, nn_param in nn_module.named_parameters():
+        for param_name, nn_param in nn_params.items():
             dp_param = dp_params[param_name]
             self._check_shapes((nn_param), (dp_param), (param_name))
             self._check_values((nn_param), (dp_param), atol, rtol, (param_name))
