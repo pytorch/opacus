@@ -399,9 +399,10 @@ class GradSampleModule(AbstractGradSampleModule):
 
         # No matter where the batch dimension was, .grad_samples will *always* put it in the first dim
         if batch_dim != 0:
-            activations = [t.permute(
-                [batch_dim] + [x for x in range(t.dim()) if x != batch_dim]
-            ) for t in activations]
+            activations = [
+                t.permute([batch_dim] + [x for x in range(t.dim()) if x != batch_dim])
+                for t in activations
+            ]
             backprops = backprops.permute(
                 [batch_dim] + [x for x in range(backprops.dim()) if x != batch_dim]
             )
@@ -474,9 +475,7 @@ class GradSampleModule(AbstractGradSampleModule):
             return errors
 
 
-def _get_batch_size(
-    *, module: nn.Module, batch_dim: int
-) -> int:
+def _get_batch_size(*, module: nn.Module, batch_dim: int) -> int:
     """
     Computes and returns the maximum batch size which is the maximum of the dimension values
     along 'batch_dim' axis over module.activations, where module.activations is
@@ -492,8 +491,8 @@ def _get_batch_size(
     max_batch_len = 0
     for out in module.activations:
         # out is typically a tuple of one element (x)
-        # for embedding bag, it is a tuple of two elements (x, offsets) 
-        # where len(offsets) = batch_size 
+        # for embedding bag, it is a tuple of two elements (x, offsets)
+        # where len(offsets) = batch_size
         if out[-1].shape[batch_dim] > max_batch_len:
             max_batch_len = out[-1].shape[batch_dim]
 

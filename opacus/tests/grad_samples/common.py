@@ -287,7 +287,11 @@ class GradSampleHooks_test(unittest.TestCase):
             )
         else:
             microbatch_grad_samples = self.compute_microbatch_grad_sample(
-                x, module, batch_first=batch_first, loss_reduction=loss_reduction, chunk_method=chunk_method
+                x,
+                module,
+                batch_first=batch_first,
+                loss_reduction=loss_reduction,
+                chunk_method=chunk_method,
             )
 
         opacus_grad_samples = self.compute_opacus_grad_sample(

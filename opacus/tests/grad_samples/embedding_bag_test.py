@@ -47,22 +47,6 @@ class Embedding_bag_test(GradSampleHooks_test):
             input += [torch.randperm(V)[:size]]
 
         input = torch.cat(input, dim=0)
-        # target = torch.randn(N, D)
-
-        # output = emb(input, offsets)
-        # loss = F.mse_loss(output, target)
-        # loss.backward()
-
-        # # Compute microbatch
-        # grad_microbatches = []
-        # for i in range(N):
-        #     emb.zero_grad()
-        #     output = emb(input[offsets[i] : offsets[i] + sizes[i]], None)
-        #     loss = F.mse_loss(output, target[i])
-        #     loss.backward()
-        #     grad_microbatches.append()
-
-        # import pdb;pdb.set_trace()
 
         def chunk_method(x):
             input, offsets = x
@@ -72,6 +56,7 @@ class Embedding_bag_test(GradSampleHooks_test):
                 else:
                     next_offset = len(input)
                 yield (input[offset:next_offset], torch.LongTensor([0]))
-        print(N, sz, V, D, mode)
-        print(input, offsets)
-        self.run_test((input, offsets), emb, chunk_method=chunk_method)
+
+        self.run_test(
+            (input, offsets), emb, chunk_method=chunk_method, ew_compatible=False
+        )
