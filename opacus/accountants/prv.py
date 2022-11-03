@@ -60,10 +60,6 @@ class PRVAccountant(IAccountant):
     """
 
     def __init__(self):
-        warnings.warn(
-            "PRVAccountant has not yet been properly checked for correctness. "
-            "Use with caution."
-        )
         super().__init__()
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
