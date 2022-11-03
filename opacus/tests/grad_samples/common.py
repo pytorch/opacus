@@ -67,7 +67,10 @@ class ModelWithLoss(nn.Module):
         self.criterion = nn.L1Loss(reduction=loss_reduction)
 
     def forward(self, x):
-        x = self.wrapped_module(x)
+        if type(x) is tuple:
+            x = self.wrapped_module(*x)
+        else:
+            x = self.wrapped_module(x)
         if type(x) is PackedSequence:
             loss = _compute_loss_packedsequences(self.criterion, x)
         else:
@@ -106,6 +109,7 @@ class GradSampleHooks_test(unittest.TestCase):
         module: nn.Module,
         batch_first=True,
         loss_reduction="mean",
+        chunk_method=iter,
     ) -> Dict[str, torch.tensor]:
         """
         Computes per-sample gradients with the microbatch method, i.e. by computing normal gradients
@@ -117,6 +121,8 @@ class GradSampleHooks_test(unittest.TestCase):
             module: The ``ModelWithLoss`` that wraps the nn.Module you want to test.
             batch_first: Whether batch size is the first dimension (as opposed to the second).
                 Defaults to True.
+            loss_reduction: What reduction to apply to the loss. Defaults to "mean".
+            chunk_method: The method to use to split the batch into microbatches. Defaults to ``iter``.
 
         Returns:
             Dictionary mapping parameter_name -> per-sample-gradient for that parameter
@@ -136,12 +142,14 @@ class GradSampleHooks_test(unittest.TestCase):
 
         # Invariant: x is [B, T, ...]
 
-        for x_i in x:
+        for x_i in chunk_method(x):
             # x_i is [T, ...]
-            x_i = x_i.unsqueeze(
-                0 if batch_first else 1
-            )  # x_i of size [1, T, ...] if batch_first, else [T, 1, ...]
             module.zero_grad()
+            if type(x_i) is not tuple:
+                # EmbeddingBag provides tuples
+                x_i = x_i.unsqueeze(
+                    0 if batch_first else 1
+                )  # x_i of size [1, T, ...] if batch_first, else [T, 1, ...]
             loss_i = module(x_i)
             loss_i.backward()
             for p in module.parameters():
@@ -219,11 +227,15 @@ class GradSampleHooks_test(unittest.TestCase):
         atol=10e-6,
         rtol=10e-5,
         ew_compatible=True,
+        chunk_method=iter,
     ):
         grad_sample_modes = ["hooks", "functorch"]
         try:
             import functorch  # noqa
         except ImportError:
+            grad_sample_modes = ["hooks"]
+
+        if type(module) is nn.EmbeddingBag:
             grad_sample_modes = ["hooks"]
 
         for grad_sample_mode in grad_sample_modes:
@@ -240,6 +252,7 @@ class GradSampleHooks_test(unittest.TestCase):
                         atol=atol,
                         rtol=rtol,
                         grad_sample_mode=grad_sample_mode,
+                        chunk_method=chunk_method,
                     )
         if ew_compatible and batch_first and torch.__version__ >= (1, 13):
             self.run_test_with_reduction(
@@ -250,6 +263,7 @@ class GradSampleHooks_test(unittest.TestCase):
                 atol=atol,
                 rtol=rtol,
                 grad_sample_mode="ew",
+                chunk_method=chunk_method,
             )
 
     def run_test_with_reduction(
@@ -261,6 +275,7 @@ class GradSampleHooks_test(unittest.TestCase):
         atol=10e-6,
         rtol=10e-5,
         grad_sample_mode="hooks",
+        chunk_method=iter,
     ):
         if type(x) is PackedSequence:
             x_unpacked = _unpack_packedsequences(x)
@@ -272,7 +287,11 @@ class GradSampleHooks_test(unittest.TestCase):
             )
         else:
             microbatch_grad_samples = self.compute_microbatch_grad_sample(
-                x, module, batch_first=batch_first, loss_reduction=loss_reduction
+                x,
+                module,
+                batch_first=batch_first,
+                loss_reduction=loss_reduction,
+                chunk_method=chunk_method,
             )
 
         opacus_grad_samples = self.compute_opacus_grad_sample(

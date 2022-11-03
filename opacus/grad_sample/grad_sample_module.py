@@ -282,7 +282,7 @@ class GradSampleModule(AbstractGradSampleModule):
 
         if not hasattr(module, "activations"):
             module.activations = []
-        module.activations.append(forward_input[0].detach())  # pyre-ignore
+        module.activations.append([t.detach() for t in forward_input])  # pyre-ignore
 
         for _, p in trainable_parameters(module):
             p._forward_counter += 1
@@ -378,16 +378,14 @@ class GradSampleModule(AbstractGradSampleModule):
 
         batch_dim = 0 if batch_first or type(module) is RNNLinear else 1
 
-        activations = module.activations.pop()
-
         if not hasattr(module, "max_batch_len"):
             # For packed sequences, max_batch_len is set in the forward of the model (e.g. the LSTM)
             # Otherwise we infer it here
             module.max_batch_len = _get_batch_size(
                 module=module,
-                grad_sample=activations,
                 batch_dim=batch_dim,
             )
+        activations = module.activations.pop()
 
         n = module.max_batch_len
         if loss_reduction == "mean":
@@ -401,9 +399,10 @@ class GradSampleModule(AbstractGradSampleModule):
 
         # No matter where the batch dimension was, .grad_samples will *always* put it in the first dim
         if batch_dim != 0:
-            activations = activations.permute(
-                [batch_dim] + [x for x in range(activations.dim()) if x != batch_dim]
-            )
+            activations = [
+                t.permute([batch_dim] + [x for x in range(t.dim()) if x != batch_dim])
+                for t in activations
+            ]
             backprops = backprops.permute(
                 [batch_dim] + [x for x in range(backprops.dim()) if x != batch_dim]
             )
@@ -476,29 +475,25 @@ class GradSampleModule(AbstractGradSampleModule):
             return errors
 
 
-def _get_batch_size(
-    *, module: nn.Module, grad_sample: torch.Tensor, batch_dim: int
-) -> int:
+def _get_batch_size(*, module: nn.Module, batch_dim: int) -> int:
     """
     Computes and returns the maximum batch size which is the maximum of the dimension values
-    along 'batch_dim' axis over module.activations + [grad_sample], where module.activations is
+    along 'batch_dim' axis over module.activations, where module.activations is
     a list.
-
-    If module.activations is a not a list, then return grad_sample.shape[batch_dim].
 
     Args:
         module: input module
-        grad_sample: per sample gradient tensor
         batch_dim: batch dimension
 
     Returns:
         Maximum sequence length in a batch
     """
-
     max_batch_len = 0
     for out in module.activations:
-        if out.shape[batch_dim] > max_batch_len:
-            max_batch_len = out.shape[batch_dim]
+        # out is typically a tuple of one element (x)
+        # for embedding bag, it is a tuple of two elements (x, offsets)
+        # where len(offsets) = batch_size
+        if out[-1].shape[batch_dim] > max_batch_len:
+            max_batch_len = out[-1].shape[batch_dim]
 
-    max_batch_len = max(max_batch_len, grad_sample.shape[batch_dim])
     return max_batch_len

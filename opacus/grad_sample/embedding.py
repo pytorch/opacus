@@ -33,6 +33,7 @@ def compute_embedding_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
+    activations = activations[0]
     ret = {}
     if layer.weight.requires_grad:
         saved = torch.backends.cudnn.deterministic
@@ -52,4 +53,28 @@ def compute_embedding_grad_sample(
         )
         torch.backends.cudnn.deterministic = saved
         ret[layer.weight] = grad_sample
+    return ret
+
+
+@register_grad_sampler(nn.EmbeddingBag)
+def compute_embeddingbag_gradsampler(layer, inputs, backprops):
+    index, offset = inputs
+    batch_size = offset.shape[0]
+    gsm = torch.zeros(batch_size, layer.num_embeddings, layer.embedding_dim)
+
+    for i in range(batch_size):
+        begin = offset[i]
+        if i < batch_size - 1:
+            end = offset[i + 1]
+        else:
+            end = index.shape[0]
+
+        if layer.mode == "sum":
+            gsm[i][index[begin:end]] += backprops[i]
+        elif layer.mode == "mean":
+            gsm[i][index[begin:end]] += backprops[i] / (end - begin)
+
+    ret = {}
+    ret[layer.weight] = gsm
+
     return ret

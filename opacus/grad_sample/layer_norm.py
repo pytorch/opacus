@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-from typing import Dict
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -27,7 +27,7 @@ from .utils import register_grad_sampler
 @register_grad_sampler(nn.LayerNorm)
 def compute_layer_norm_grad_sample(
     layer: nn.LayerNorm,
-    activations: torch.Tensor,
+    activations: List[torch.Tensor],
     backprops: torch.Tensor,
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
@@ -38,6 +38,7 @@ def compute_layer_norm_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
+    activations = activations[0]
     ret = {}
     if layer.weight.requires_grad:
         ret[layer.weight] = sum_over_all_but_batch_and_last_n(
