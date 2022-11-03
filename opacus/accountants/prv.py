@@ -86,7 +86,7 @@ class PRVAccountant(IAccountant):
             self.history.append((noise_multiplier, sample_rate, 1))
 
     def get_epsilon(
-        self, delta: float, *, eps_error: float = 0.1, delta_error: float = 1e-6
+        self, delta: float, *, eps_error: float = 0.01, delta_error: float = None
     ) -> float:
         """
         Return privacy budget (epsilon) expended so far.
@@ -96,6 +96,8 @@ class PRVAccountant(IAccountant):
             eps_error: acceptable level of error in the epsilon estimate
             delta_error: acceptable level of error in delta
         """
+        if delta_error is None:
+            delta_error = delta / 1000
         # we construct a discrete PRV from the history
         dprv = self._get_dprv(eps_error=eps_error, delta_error=delta_error)
         # this discrete PRV can be used to directly estimate and bound epsilon

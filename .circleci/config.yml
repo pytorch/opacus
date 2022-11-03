@@ -353,6 +353,19 @@ jobs:
       - unit_tests
       - coveralls_upload_parallel
 
+  prv_accountant_values:
+    docker:
+      - image: cimg/python:3.7.5
+    steps:
+      - checkout
+      - py_3_7_setup
+      - pip_dev_install
+      - run:
+          name: "Unit test prv accountant"
+          no_output_timeout: 1h
+          command: |
+            python -m unittest opacus.tests.prv_accountant
+
   integrationtest_py37_torch_release_cpu:
     docker:
       - image: cimg/python:3.7.5
@@ -555,6 +568,8 @@ workflows:
       - integrationtest_py37_torch_release_cpu:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
+          filters: *exclude_ghpages
+      - prv_accountant_values:
           filters: *exclude_ghpages
       - lint_py37_torch_release:
           filters: *exclude_ghpages
