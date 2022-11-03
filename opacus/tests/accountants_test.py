@@ -63,7 +63,7 @@ class AccountingTest(unittest.TestCase):
             accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
 
         epsilon = accountant.get_epsilon(delta=1e-5)
-        self.assertAlmostEqual(epsilon, 6.9040091)
+        self.assertAlmostEqual(epsilon, 6.7773)
 
     def test_get_noise_multiplier_rdp_epochs(self):
         delta = 1e-5
@@ -110,7 +110,7 @@ class AccountingTest(unittest.TestCase):
             accountant="prv",
         )
 
-        self.assertAlmostEqual(noise_multiplier, 1.3617, places=4)
+        self.assertAlmostEqual(noise_multiplier, 1.3476, places=4)
 
     def test_get_noise_multiplier_prv_steps(self):
         delta = 1e-5
@@ -126,7 +126,7 @@ class AccountingTest(unittest.TestCase):
             accountant="prv",
         )
 
-        self.assertAlmostEqual(noise_multiplier, 1.3049, places=4)
+        self.assertAlmostEqual(noise_multiplier, 1.2915, places=4)
 
     @given(
         epsilon=st.floats(1.0, 10.0),
