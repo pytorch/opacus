@@ -125,6 +125,7 @@ class PrivacyEngine:
         self.secure_mode = secure_mode
         self.secure_rng = None
         self.dataset = None  # only used to detect switching to a different dataset
+        self.dummy = None
 
         if self.secure_mode:
             try:
