@@ -55,5 +55,5 @@ class Embedding_test(GradSampleHooks_test):
             size = [N, T, Q, R]
 
         emb = nn.Embedding(V, D)
-        x = torch.randint(low=0, high=V - 1, size=size)
+        x = torch.randint(low=0, high=V, size=size)
         self.run_test(x, emb, batch_first=batch_first, ew_compatible=N > 0)

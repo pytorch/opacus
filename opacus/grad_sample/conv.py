@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import math
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 import numpy as np
 import torch
@@ -29,7 +29,7 @@ from .utils import register_grad_sampler
 @register_grad_sampler([nn.Conv1d, nn.Conv2d, nn.Conv3d])
 def compute_conv_grad_sample(
     layer: Union[nn.Conv1d, nn.Conv2d, nn.Conv3d],
-    activations: torch.Tensor,
+    activations: List[torch.Tensor],
     backprops: torch.Tensor,
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
@@ -40,6 +40,7 @@ def compute_conv_grad_sample(
         activations: Activations
         backprops: Backpropagations
     """
+    activations = activations[0]
     n = activations.shape[0]
     if n == 0:
         # Empty batch
@@ -112,7 +113,7 @@ def compute_conv_grad_sample(
 # @register_grad_sampler([nn.Conv2d])
 def convolution2d_backward_as_a_convolution(
     layer: nn.Conv2d,
-    activations: torch.Tensor,
+    activations: List[torch.Tensor],
     backprops: torch.Tensor,
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
@@ -124,6 +125,7 @@ def convolution2d_backward_as_a_convolution(
         activations: Activations
         backprops: Backpropagations
     """
+    activations = activations[0]
     batch_size = activations.shape[0]
     input_size = activations.shape[1]
     output_size = backprops.shape[1]
