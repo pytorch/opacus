@@ -22,7 +22,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
-from torch.testing import assert_allclose
+from torch.testing import assert_close
 
 
 def clone_module(module: nn.Module) -> nn.Module:
@@ -327,7 +327,7 @@ class DPModules_test(unittest.TestCase):
                 f"L1 Loss = {F.l1_loss(dp_out, nn_out)}",
             )
             try:
-                assert_allclose(
+                assert_close(
                     actual=dp_out,
                     expected=nn_out,
                     atol=atol,
@@ -378,12 +378,10 @@ class DPModules_test(unittest.TestCase):
         )
 
         try:
-            assert_allclose(
+            assert_close(
                 actual=padded_seq_dp, expected=padded_seq_nn, atol=atol, rtol=rtol
             )
-            assert_allclose(
-                actual=seq_lens_dp, expected=seq_lens_nn, atol=atol, rtol=rtol
-            )
+            assert_close(actual=seq_lens_dp, expected=seq_lens_nn, atol=atol, rtol=rtol)
         except AssertionError:
             if failure_msgs is not None:
                 failure_msgs.append(msg)

@@ -15,9 +15,8 @@
 
 import unittest
 
-from opacus.accountants import (
-    PRVAccountant,
-)
+from opacus.accountants import PRVAccountant
+
 
 # Computed from https://github.com/microsoft/prv_accountant
 msr_values = {
