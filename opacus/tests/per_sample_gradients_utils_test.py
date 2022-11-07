@@ -19,13 +19,12 @@ from typing import Callable
 import hypothesis.strategies as st
 import torch
 from hypothesis import given, settings
-from torch import nn
-
 from opacus.tests.grad_samples.common import expander, shrinker
 from opacus.utils.per_sample_gradients_utils import (
-    get_grad_sample_modes,
     check_per_sample_gradients_are_correct,
+    get_grad_sample_modes,
 )
+from torch import nn
 
 
 class PerSampleGradientsUtilsTest(unittest.TestCase):

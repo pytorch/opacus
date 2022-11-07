@@ -14,16 +14,15 @@
 # limitations under the License.
 
 import io
-from typing import Union, Dict, List
+from typing import Dict, List, Union
 
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
-
 from opacus.grad_sample import wrap_model
 from opacus.utils.module_utils import trainable_parameters
 from opacus.utils.packed_sequences import compute_seq_lengths
+from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
 
 
 def clone_module(module: nn.Module) -> nn.Module:

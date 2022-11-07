@@ -19,11 +19,11 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 from hypothesis import given, settings
-from torch.testing import assert_allclose
-
 from opacus.grad_sample.conv import convolution2d_backward_as_a_convolution
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.utils.tensor_utils import unfold2d
+from torch.testing import assert_allclose
+
 from .common import GradSampleHooks_test, expander, shrinker
 
 
