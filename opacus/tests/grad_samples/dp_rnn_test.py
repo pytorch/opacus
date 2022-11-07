@@ -16,7 +16,7 @@
 import hypothesis.strategies as st
 import torch
 import torch.nn as nn
-from hypothesis import given, settings
+from hypothesis import given, settings, reproduce_failure
 from opacus.layers import DPGRU, DPLSTM, DPRNN
 from opacus.utils.packed_sequences import _gen_packed_data
 

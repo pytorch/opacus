@@ -323,7 +323,6 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
-      - coveralls_upload_parallel
 
   unittest_py38_torch_release:
     docker:
@@ -332,7 +331,6 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
-      - coveralls_upload_parallel
 
   unittest_py39_torch_release:
     docker:
@@ -341,7 +339,6 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
-      - coveralls_upload_parallel
 
   unittest_py39_torch_nightly:
     docker:
@@ -351,7 +348,6 @@ jobs:
       - pip_dev_install:
           args: "-n"
       - unit_tests
-      - coveralls_upload_parallel
 
   prv_accountant_values:
     docker:
@@ -490,7 +486,6 @@ jobs:
       - pip_dev_install
       - run_nvidia_smi
       - command_unit_tests_multi_gpu
-      - coveralls_upload_parallel
 
 
   auto_deploy_site:
