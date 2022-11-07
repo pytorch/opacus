@@ -95,6 +95,22 @@ from the original data loader, except for sampling mechanism.</p>
 </dd></dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="opacus.data_loader.dtype_safe">
+<span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">dtype_safe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#dtype_safe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.dtype_safe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception-safe getter for <code class="docutils literal notranslate"><span class="pre">dtype</span></code> attribute</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>) – any object</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Type" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">x.dtype</span></code> if attribute exists, type of x otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="opacus.data_loader.shape_safe">
 <span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">shape_safe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#shape_safe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.shape_safe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception-safe getter for <code class="docutils literal notranslate"><span class="pre">shape</span></code> attribute</p>
@@ -102,8 +118,11 @@ from the original data loader, except for sampling mechanism.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>) – any object</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">x.shape</span></code> if attribute exists, empty tuple otherwise</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">x.shape</span></code> if attribute exists, empty tuple otherwise</p>
 </dd>
 </dl>
 </dd></dl>
@@ -129,13 +148,13 @@ except for the source of randomness.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.data_loader.wrap_collate_with_empty">
-<span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">wrap_collate_with_empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collate_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_empty_shapes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#wrap_collate_with_empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.wrap_collate_with_empty" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">wrap_collate_with_empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collate_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_empty_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtypes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#wrap_collate_with_empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.wrap_collate_with_empty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wraps given collate function to handle empty batches.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>collate_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]) – collate function to wrap</p></li>
-<li><p><strong>sample_empty_shapes</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>) – expected shape for a batch of size 0. Input is a sequence -
+<li><p><strong>sample_empty_shapes</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>]) – expected shape for a batch of size 0. Input is a sequence -
 one for each tensor in the dataset</p></li>
 </ul>
 </dd>
@@ -161,6 +180,7 @@ the input batch is of size 0</p>
 <li class="toctree-l1"><a class="reference internal" href="optim/optimizers.html">Optimizers</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">DP Data Loader</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.DPDataLoader"><code class="docutils literal notranslate"><span class="pre">DPDataLoader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.dtype_safe"><code class="docutils literal notranslate"><span class="pre">dtype_safe()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.shape_safe"><code class="docutils literal notranslate"><span class="pre">shape_safe()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.switch_generator"><code class="docutils literal notranslate"><span class="pre">switch_generator()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.wrap_collate_with_empty"><code class="docutils literal notranslate"><span class="pre">wrap_collate_with_empty()</span></code></a></li>
