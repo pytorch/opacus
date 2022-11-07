@@ -20,10 +20,6 @@ from hypothesis import given, settings
 
 from opacus.layers import DPMultiheadAttention
 from .common import GradSampleHooks_test
-from ...utils.per_sample_gradients_utils import (
-    check_per_sample_gradients_are_correct,
-    get_grad_sample_modes,
-)
 
 
 class DPMultiheadAttentionAdapter(nn.Module):
@@ -92,10 +88,4 @@ class MultiHeadAttention_test(GradSampleHooks_test):
         v = torch.randn([T, N, D])
         x = torch.stack((q, k, v), dim=-1)
 
-        if test_or_check == 1:
-            self.run_test(x, attn, batch_first=False)
-        if test_or_check == 2:
-            for grad_sample_mode in get_grad_sample_modes(use_ew=True):
-                assert check_per_sample_gradients_are_correct(
-                    x, attn, batch_first=False, grad_sample_mode=grad_sample_mode
-                )
+        self.run_test(x, attn, batch_first=False)
