@@ -69,4 +69,4 @@ class PRVAccountantTest(unittest.TestCase):
             accountant = PRVAccountant()
             accountant.history = [(sigma, q, steps)]
             epsilon = accountant.get_epsilon(delta=1e-6)
-            self.assertAlmostEqual(epsilon, expected_epsilon, places=5)
+            self.assertAlmostEqual(epsilon, expected_epsilon, places=4)

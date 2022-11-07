@@ -72,9 +72,7 @@ def train(args, model, device, train_loader, optimizer, privacy_engine, epoch):
         losses.append(loss.item())
 
     if not args.disable_dp:
-        epsilon = privacy_engine.accountant.get_epsilon(
-            delta=args.delta
-        )
+        epsilon = privacy_engine.accountant.get_epsilon(delta=args.delta)
         print(
             f"Train Epoch: {epoch} \t"
             f"Loss: {np.mean(losses):.6f} "
