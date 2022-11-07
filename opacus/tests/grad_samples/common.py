@@ -15,7 +15,7 @@
 
 import io
 import unittest
-from typing import Dict, List, Union
+from typing import Dict, Iterable, List, Tuple, Union
 
 import numpy as np
 import torch
@@ -34,6 +34,13 @@ def expander(x, factor: int = 2):
 
 def shrinker(x, factor: int = 2):
     return max(1, x // factor)  # if avoid returning 0 for x == 1
+
+
+def is_batch_empty(batch: Union[torch.Tensor, Iterable[torch.Tensor]]):
+    if type(batch) is torch.Tensor:
+        return batch.numel() == 0
+    else:
+        return batch[0].numel() == 0
 
 
 class ModelWithLoss(nn.Module):
@@ -221,7 +228,7 @@ class GradSampleHooks_test(unittest.TestCase):
 
     def run_test(
         self,
-        x: Union[torch.Tensor, PackedSequence],
+        x: Union[torch.Tensor, PackedSequence, Tuple],
         module: nn.Module,
         batch_first=True,
         atol=10e-6,
@@ -235,9 +242,9 @@ class GradSampleHooks_test(unittest.TestCase):
         except ImportError:
             grad_sample_modes = ["hooks"]
 
-        if (type(x) is not PackedSequence and x.numel() == 0) or type(
-            module
-        ) is nn.EmbeddingBag:
+        if type(module) is nn.EmbeddingBag or (
+            type(x) is not PackedSequence and is_batch_empty(x)
+        ):
             grad_sample_modes = ["hooks"]
 
         for grad_sample_mode in grad_sample_modes:
@@ -295,7 +302,7 @@ class GradSampleHooks_test(unittest.TestCase):
                 batch_first=batch_first,
                 loss_reduction=loss_reduction,
             )
-        elif x.numel() > 0:
+        elif not is_batch_empty(x):
             microbatch_grad_samples = self.compute_microbatch_grad_sample(
                 x,
                 module,
