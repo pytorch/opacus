@@ -20,6 +20,7 @@ import hypothesis.strategies as st
 import torch
 from hypothesis import given, settings
 from opacus.tests.grad_samples.common import expander, shrinker
+from opacus.tests.privacy_engine_test import _is_functorch_available
 from opacus.utils.per_sample_gradients_utils import (
     check_per_sample_gradients_are_correct,
     get_grad_sample_modes,
@@ -28,29 +29,35 @@ from torch import nn
 
 
 class PerSampleGradientsUtilsTest(unittest.TestCase):
-    def per_sample_grads_utils_test(self, x, model, ew_compatible, is_empty=False):
+    def per_sample_grads_utils_test(
+        self,
+        x,
+        model,
+        grad_sample_mode,
+        is_empty=False,
+        atol=10e-5,
+        rtol=10e-4,
+    ):
         if is_empty:
-            for grad_sample_mode in get_grad_sample_modes(use_ew=ew_compatible):
-                with self.assertRaises(RuntimeError):
-                    check_per_sample_gradients_are_correct(
-                        x,
-                        model,
-                        batch_first=True,
-                        atol=10e-5,
-                        rtol=10e-4,
-                        grad_sample_mode=grad_sample_mode,
-                    )
+            with self.assertRaises(RuntimeError):
+                check_per_sample_gradients_are_correct(
+                    x,
+                    model,
+                    batch_first=True,
+                    atol=atol,
+                    rtol=rtol,
+                    grad_sample_mode=grad_sample_mode,
+                )
             return
 
-        for grad_sample_mode in get_grad_sample_modes(use_ew=ew_compatible):
-            assert check_per_sample_gradients_are_correct(
-                x,
-                model,
-                batch_first=True,
-                atol=10e-5,
-                rtol=10e-4,
-                grad_sample_mode=grad_sample_mode,
-            )
+        assert check_per_sample_gradients_are_correct(
+            x,
+            model,
+            batch_first=True,
+            atol=atol,
+            rtol=rtol,
+            grad_sample_mode=grad_sample_mode,
+        )
 
     @given(
         N=st.integers(0, 4),
@@ -62,6 +69,7 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
         padding=st.sampled_from([0, 1, 2, "same", "valid"]),
         dilation=st.integers(1, 2),
         groups=st.integers(1, 12),
+        grad_sample_mode=st.sampled_from(get_grad_sample_modes(use_ew=True)),
     )
     @settings(deadline=10000)
     def test_conv1d(
@@ -75,6 +83,7 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
         padding: int,
         dilation: int,
         groups: int,
+        grad_sample_mode: str,
     ):
         if padding == "same" and stride != 1:
             return
@@ -96,7 +105,13 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
         )
         ew_compatible = N > 0
 
-        self.per_sample_grads_utils_test(x, conv, ew_compatible, N == 0)
+        if grad_sample_mode == "functorch" and not _is_functorch_available():
+            raise unittest.SkipTest("Functorch is not available for this version.")
+
+        if not ew_compatible and grad_sample_mode == "ew":
+            return
+
+        self.per_sample_grads_utils_test(x, conv, grad_sample_mode, N == 0)
 
     @given(
         N=st.integers(0, 4),
@@ -106,6 +121,7 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
         input_dim=st.integers(2, 4),
         bias=st.booleans(),
         batch_first=st.booleans(),
+        grad_sample_mode=st.sampled_from(get_grad_sample_modes(use_ew=True)),
     )
     @settings(deadline=10000)
     def test_linear(
@@ -117,6 +133,7 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
         input_dim: int,
         bias: bool,
         batch_first: bool,
+        grad_sample_mode: str,
     ):
 
         if input_dim == 2:
@@ -135,4 +152,10 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
             x = x.transpose(0, 1)
         ew_compatible = N > 0
 
-        self.per_sample_grads_utils_test(x, linear, ew_compatible, N == 0)
+        if grad_sample_mode == "functorch" and not _is_functorch_available():
+            raise unittest.SkipTest("Functorch is not available for this version.")
+
+        if not ew_compatible and grad_sample_mode == "ew":
+            return
+
+        self.per_sample_grads_utils_test(x, linear, grad_sample_mode, N == 0)
