@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from opacus.utils.uniform_sampler import (
@@ -29,7 +29,10 @@ logger = logging.getLogger(__name__)
 
 
 def wrap_collate_with_empty(
-    collate_fn: Optional[_collate_fn_t], sample_empty_shapes: Sequence
+    *,
+    collate_fn: Optional[_collate_fn_t],
+    sample_empty_shapes: Sequence[Tuple],
+    dtypes: Sequence[Union[torch.dtype, Type]],
 ):
     """
     Wraps given collate function to handle empty batches.
@@ -49,12 +52,15 @@ def wrap_collate_with_empty(
         if len(batch) > 0:
             return collate_fn(batch)
         else:
-            return [torch.zeros(x) for x in sample_empty_shapes]
+            return [
+                torch.zeros(shape, dtype=dtype)
+                for shape, dtype in zip(sample_empty_shapes, dtypes)
+            ]
 
     return collate
 
 
-def shape_safe(x: Any):
+def shape_safe(x: Any) -> Tuple:
     """
     Exception-safe getter for ``shape`` attribute
 
@@ -65,6 +71,19 @@ def shape_safe(x: Any):
         ``x.shape`` if attribute exists, empty tuple otherwise
     """
     return x.shape if hasattr(x, "shape") else ()
+
+
+def dtype_safe(x: Any) -> Union[torch.dtype, Type]:
+    """
+    Exception-safe getter for ``dtype`` attribute
+
+    Args:
+        x: any object
+
+    Returns:
+        ``x.dtype`` if attribute exists, type of x otherwise
+    """
+    return x.dtype if hasattr(x, "dtype") else type(x)
 
 
 class DPDataLoader(DataLoader):
@@ -143,7 +162,8 @@ class DPDataLoader(DataLoader):
                 sample_rate=sample_rate,
                 generator=generator,
             )
-        sample_empty_shapes = [[0, *shape_safe(x)] for x in dataset[0]]
+        sample_empty_shapes = [(0, *shape_safe(x)) for x in dataset[0]]
+        dtypes = [dtype_safe(x) for x in dataset[0]]
         if collate_fn is None:
             collate_fn = default_collate
 
@@ -156,7 +176,11 @@ class DPDataLoader(DataLoader):
             dataset=dataset,
             batch_sampler=batch_sampler,
             num_workers=num_workers,
-            collate_fn=wrap_collate_with_empty(collate_fn, sample_empty_shapes),
+            collate_fn=wrap_collate_with_empty(
+                collate_fn=collate_fn,
+                sample_empty_shapes=sample_empty_shapes,
+                dtypes=dtypes,
+            ),
             pin_memory=pin_memory,
             timeout=timeout,
             worker_init_fn=worker_init_fn,

@@ -42,6 +42,14 @@ def compute_conv_grad_sample(
     """
     activations = activations[0]
     n = activations.shape[0]
+    if n == 0:
+        # Empty batch
+        ret = {}
+        ret[layer.weight] = torch.zeros_like(layer.weight).unsqueeze(0)
+        if layer.bias is not None and layer.bias.requires_grad:
+            ret[layer.bias] = torch.zeros_like(layer.bias).unsqueeze(0)
+        return ret
+
     # get activations and backprops in shape depending on the Conv layer
     if type(layer) == nn.Conv2d:
         activations = unfold2d(

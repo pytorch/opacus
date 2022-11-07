@@ -25,7 +25,7 @@ from .common import GradSampleHooks_test, expander, shrinker
 
 class Conv3d_test(GradSampleHooks_test):
     @given(
-        N=st.integers(1, 4),
+        N=st.integers(0, 4),
         C=st.sampled_from([1, 3, 32]),
         D=st.integers(3, 6),
         H=st.integers(6, 10),
@@ -71,7 +71,7 @@ class Conv3d_test(GradSampleHooks_test):
             groups=groups,
         )
         is_ew_compatible = (
-            dilation == 1 and padding != "same"
+            dilation == 1 and padding != "same" and N > 0
         )  # TODO add support for padding = 'same' with EW
         self.run_test(
             x,

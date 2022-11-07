@@ -23,7 +23,7 @@ from .common import GradSampleHooks_test
 
 class Linear_test(GradSampleHooks_test):
     @given(
-        N=st.integers(1, 4),
+        N=st.integers(0, 4),
         Z=st.integers(1, 4),
         H=st.integers(1, 3),
         W=st.integers(10, 17),
@@ -57,4 +57,4 @@ class Linear_test(GradSampleHooks_test):
         x = torch.randn(x_shape)
         if not batch_first:
             x = x.transpose(0, 1)
-        self.run_test(x, linear, batch_first=batch_first)
+        self.run_test(x, linear, batch_first=batch_first, ew_compatible=N > 0)
