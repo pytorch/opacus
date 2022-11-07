@@ -21,6 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from opacus.utils.per_sample_gradients_utils import (
     compute_grad_samples_microbatch_and_opacus,
+    compute_opacus_grad_sample,
 )
 from torch.nn.utils.rnn import PackedSequence
 from torch.testing import assert_allclose
@@ -86,9 +87,15 @@ class GradSampleHooks_test(unittest.TestCase):
         rtol=10e-5,
         grad_sample_mode="hooks",
     ):
-        if (
-            not type(x) is PackedSequence and x.numel() <= 0
-        ):  # We've checked opacus can handle 0-sized batch. Microbatch doesn't make sense
+        if not type(x) is PackedSequence and x.numel() <= 0:
+            _ = compute_opacus_grad_sample(
+                x,
+                module,
+                batch_first=batch_first,
+                loss_reduction=loss_reduction,
+                grad_sample_mode=grad_sample_mode,
+            )
+            # We've checked opacus can handle 0-sized batch. Microbatch doesn't make sense
             return
         (
             microbatch_grad_samples,
