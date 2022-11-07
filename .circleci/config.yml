@@ -550,14 +550,8 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
-      - finish_coveralls_parallel:
+      - prv_accountant_values:
           filters: *exclude_ghpages
-          requires:
-            - unittest_py37_torch_release
-            - unittest_py38_torch_release
-            - unittest_py39_torch_release
-            - unittest_py39_torch_nightly
-            - unittest_multi_gpu
 
   nightly:
     when:
@@ -569,16 +563,10 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
-      - prv_accountant_values:
-          filters: *exclude_ghpages
       - lint_py37_torch_release:
           filters: *exclude_ghpages
       - micro_benchmarks_py37_torch_release_cuda:
           filters: *exclude_ghpages
-      - finish_coveralls_parallel:
-          filters: *exclude_ghpages
-          requires:
-            - unittest_py39_torch_nightly
 
   website_deployment:
     when:

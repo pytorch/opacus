@@ -107,13 +107,14 @@ class PrivacyEngine:
         >>> # continue training as normal
     """
 
-    def __init__(self, *, accountant: str = "rdp", secure_mode: bool = False):
+    def __init__(self, *, accountant: str = "prv", secure_mode: bool = False):
         """
 
         Args:
             accountant: Accounting mechanism. Currently supported:
                 - rdp (:class:`~opacus.accountants.RDPAccountant`)
                 - gdp (:class:`~opacus.accountants.GaussianAccountant`)
+                - prv (:class`~opacus.accountants.PRVAccountant`)
             secure_mode: Set to ``True`` if cryptographically strong DP guarantee is
                 required. ``secure_mode=True`` uses secure random number generator for
                 noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and
