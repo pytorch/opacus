@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import io
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Iterable, Callable
 
 import numpy as np
 import torch
@@ -41,6 +41,13 @@ def clone_module(module: nn.Module) -> nn.Module:
         bytesio.seek(0)
         module_copy = torch.load(bytesio)
     return module_copy
+
+
+def is_batch_empty(batch: Union[torch.Tensor, Iterable[torch.Tensor]]):
+    if type(batch) is torch.Tensor:
+        return batch.numel() == 0
+    else:
+        return batch[0].numel() == 0
 
 
 class ModelWithLoss(nn.Module):
@@ -74,7 +81,10 @@ class ModelWithLoss(nn.Module):
         self.criterion = nn.L1Loss(reduction=loss_reduction)
 
     def forward(self, x):
-        x = self.wrapped_module(x)
+        if type(x) is tuple:
+            x = self.wrapped_module(*x)
+        else:
+            x = self.wrapped_module(x)
         if type(x) is PackedSequence:
             loss = _compute_loss_packedsequences(self.criterion, x)
         else:
@@ -88,6 +98,7 @@ def compute_microbatch_grad_sample(
     module: nn.Module,
     batch_first: bool = True,
     loss_reduction: str = "mean",
+    chunk_method: Callable = iter,
 ) -> Dict[str, torch.tensor]:
     """
     Computes per-sample gradients with the microbatch method, i.e. by computing normal gradients
@@ -96,11 +107,11 @@ def compute_microbatch_grad_sample(
 
     Args:
         x: Sample input batch
-         module: The nn.Module you want to test.
+        module: The nn.Module you want to test.
         batch_first: Whether batch size is the first dimension (as opposed to the second).
             Defaults to True.
-        loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
-                is a sum or a mean operation. Can take values "sum" or "mean".
+        loss_reduction: What reduction to apply to the loss. Defaults to "mean".
+        chunk_method: The method to use to split the batch into microbatches. Defaults to ``iter``.
 
     Returns:
         Dictionary mapping parameter_name -> per-sample-gradient for that parameter
@@ -120,12 +131,14 @@ def compute_microbatch_grad_sample(
 
     # Invariant: x is [B, T, ...]
 
-    for x_i in x:
+    for x_i in chunk_method(x):
         # x_i is [T, ...]
-        x_i = x_i.unsqueeze(
-            0 if batch_first else 1
-        )  # x_i of size [1, T, ...] if batch_first, else [T, 1, ...]
         module.zero_grad()
+        if type(x_i) is not tuple:
+            # EmbeddingBag provides tuples
+            x_i = x_i.unsqueeze(
+                0 if batch_first else 1
+            )  # x_i of size [1, T, ...] if batch_first, else [T, 1, ...]
         loss_i = module(x_i)
         loss_i.backward()
         for p in module.parameters():
@@ -290,6 +303,7 @@ def compute_grad_samples_microbatch_and_opacus(
     batch_first: bool = True,
     loss_reduction: str = "mean",
     grad_sample_mode: str = "hooks",
+    chunk_method: Callable = iter,
 ):
     if type(x) is PackedSequence:
         x_unpacked = unpack_packedsequences(x)
@@ -298,10 +312,15 @@ def compute_grad_samples_microbatch_and_opacus(
             module,
             batch_first=batch_first,
             loss_reduction=loss_reduction,
+            chunk_method=chunk_method,
         )
-    elif x.numel() > 0:
+    elif not is_batch_empty(x):
         microbatch_grad_samples = compute_microbatch_grad_sample(
-            x, module, batch_first=batch_first, loss_reduction=loss_reduction
+            x,
+            module,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+            chunk_method=chunk_method,
         )
     else:
         raise RuntimeError("x is expected to be non-empty.")

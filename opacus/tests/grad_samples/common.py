@@ -13,19 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import unittest
-from typing import Dict, Iterable, List, Tuple, Union
+from typing import Tuple, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus.grad_sample import wrap_model
-from opacus.utils.module_utils import trainable_parameters
-from opacus.utils.packed_sequences import compute_seq_lengths
-from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
+from torch.nn.utils.rnn import PackedSequence
 from torch.testing import assert_close
+
+from opacus.utils.per_sample_gradients_utils import (
+    compute_grad_samples_microbatch_and_opacus,
+    compute_opacus_grad_sample,
+    is_batch_empty,
+)
 
 
 def expander(x, factor: int = 2):
@@ -112,6 +113,7 @@ class GradSampleHooks_test(unittest.TestCase):
             batch_first=batch_first,
             loss_reduction=loss_reduction,
             grad_sample_mode=grad_sample_mode,
+            chunk_method=chunk_method,
         )
 
         self.check_shapes(microbatch_grad_samples, opacus_grad_samples, loss_reduction)
