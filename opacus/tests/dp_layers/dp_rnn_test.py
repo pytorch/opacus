@@ -105,6 +105,8 @@ class DPLSTM_test(DPModules_test):
 
         dp_rnn.load_state_dict(rnn.state_dict())
 
+        # Packed sequences not happy with deterministic
+        torch.use_deterministic_algorithms(False)
         if packed_input_flag == 0:
             # no packed sequence input
             x = (
@@ -124,6 +126,7 @@ class DPLSTM_test(DPModules_test):
             )
         else:
             raise ValueError("Invalid packed input flag")
+        torch.use_deterministic_algorithms(True)
 
         if zero_init:
             self.compare_forward_outputs(

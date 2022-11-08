@@ -332,10 +332,8 @@ def train(
         f"\t Epoch {epoch}. Accuracy: {mean(accs):.6f} | Loss: {mean(losses):.6f}"
     )
     try:
-        epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
-            delta=target_delta
-        )
-        printstr += f" | (ε = {epsilon:.2f}, δ = {target_delta}) for α = {best_alpha}"
+        epsilon = privacy_engine.accountant.get_epsilon(delta=target_delta)
+        printstr += f" | (ε = {epsilon:.2f}, δ = {target_delta})"
     except AttributeError:
         pass
     print(printstr)
@@ -359,10 +357,8 @@ def test(model, test_loader, privacy_engine, target_delta, device="cuda:0"):
     mean_acc = mean(accs)
     printstr = "\n----------------------------\n" f"Test Accuracy: {mean_acc:.6f}"
     if privacy_engine:
-        epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
-            delta=target_delta
-        )
-        printstr += f" (ε = {epsilon:.2f}, δ = {target_delta}) for α = {best_alpha}"
+        epsilon = privacy_engine.accountant.get_epsilon(delta=target_delta)
+        printstr += f" (ε = {epsilon:.2f}, δ = {target_delta})"
     print(printstr + "\n----------------------------\n")
     return mean_acc
 

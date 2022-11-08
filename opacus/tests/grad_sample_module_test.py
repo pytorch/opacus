@@ -25,7 +25,7 @@ from opacus.grad_sample.gsm_exp_weights import (
 )
 from opacus.grad_sample.linear import compute_linear_grad_sample
 from opacus.grad_sample.utils import register_grad_sampler
-from torch.testing import assert_allclose
+from torch.testing import assert_close
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import FakeData
@@ -106,7 +106,7 @@ class GradSampleModuleTest(unittest.TestCase):
             f"MSE = {F.mse_loss(gs_out, normal_out)}, ",
             f"L1 Loss = {F.l1_loss(gs_out, normal_out)}",
         )
-        assert_allclose(gs_out, normal_out, atol=1e-7, rtol=1e-5, msg=msg)
+        assert_close(gs_out, normal_out, atol=1e-7, rtol=1e-5, msg=msg)
 
     def test_zero_grad(self):
         x, _ = next(iter(self.dl))
@@ -161,7 +161,7 @@ class GradSampleModuleTest(unittest.TestCase):
                 f"L1 Loss = {F.l1_loss(gs_tensor, original_tensor)}",
             )
 
-            assert_allclose(gs_tensor, original_tensor, atol=1e-6, rtol=1e-4, msg=msg)
+            assert_close(gs_tensor, original_tensor, atol=1e-6, rtol=1e-4, msg=msg)
 
     def test_remove_hooks(self):
         """
@@ -246,7 +246,7 @@ class GradSampleModuleTest(unittest.TestCase):
         # check wrapped module state dict
         for key in og_state_dict.keys():
             self.assertTrue(f"_module.{key}" in gs_state_dict)
-            assert_allclose(og_state_dict[key], gs_state_dict[f"_module.{key}"])
+            assert_close(og_state_dict[key], gs_state_dict[f"_module.{key}"])
 
     def test_load_state_dict(self):
         gs_state_dict = self.grad_sample_module.state_dict()
@@ -257,7 +257,7 @@ class GradSampleModuleTest(unittest.TestCase):
         # wrapped module is the same
         for key in self.original_model.state_dict().keys():
             self.assertTrue(key in new_gs._module.state_dict())
-            assert_allclose(
+            assert_close(
                 self.original_model.state_dict()[key], new_gs._module.state_dict()[key]
             )
 

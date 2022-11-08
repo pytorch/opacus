@@ -25,7 +25,7 @@ from opacus.grad_sample import wrap_model
 from opacus.utils.module_utils import trainable_parameters
 from opacus.utils.packed_sequences import compute_seq_lengths
 from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
-from torch.testing import assert_allclose
+from torch.testing import assert_close
 
 
 def expander(x, factor: int = 2):
@@ -375,7 +375,7 @@ class GradSampleHooks_test(unittest.TestCase):
                 f"L1 Loss = {F.l1_loss(opacus_grad_sample, microbatch_grad_sample)}",
             )
             try:
-                assert_allclose(
+                assert_close(
                     actual=microbatch_grad_sample,
                     expected=opacus_grad_sample,
                     atol=atol,

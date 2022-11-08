@@ -333,14 +333,12 @@ for epoch in range(opt.epochs):
         optimizerG.step()
 
         if not opt.disable_dp:
-            epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
-                delta=opt.delta
-            )
+            epsilon = privacy_engine.accountant.get_epsilon(delta=opt.delta)
             data_bar.set_description(
                 f"epoch: {epoch}, Loss_D: {errD.item()} "
                 f"Loss_G: {errG.item()} D(x): {D_x} "
                 f"D(G(z)): {D_G_z1}/{D_G_z2}"
-                "(ε = %.2f, δ = %.2f) for α = %.2f" % (epsilon, opt.delta, best_alpha)
+                "(ε = %.2f, δ = %.2f)" % (epsilon, opt.delta)
             )
         else:
             data_bar.set_description(

@@ -323,7 +323,6 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
-      - coveralls_upload_parallel
 
   unittest_py38_torch_release:
     docker:
@@ -332,7 +331,6 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
-      - coveralls_upload_parallel
 
   unittest_py39_torch_release:
     docker:
@@ -341,7 +339,6 @@ jobs:
       - checkout
       - pip_dev_install
       - unit_tests
-      - coveralls_upload_parallel
 
   unittest_py39_torch_nightly:
     docker:
@@ -351,7 +348,19 @@ jobs:
       - pip_dev_install:
           args: "-n"
       - unit_tests
-      - coveralls_upload_parallel
+
+  prv_accountant_values:
+    docker:
+      - image: cimg/python:3.7.5
+    steps:
+      - checkout
+      - py_3_7_setup
+      - pip_dev_install
+      - run:
+          name: "Unit test prv accountant"
+          no_output_timeout: 1h
+          command: |
+            python -m unittest opacus.tests.prv_accountant
 
   integrationtest_py37_torch_release_cpu:
     docker:
@@ -477,7 +486,6 @@ jobs:
       - pip_dev_install
       - run_nvidia_smi
       - command_unit_tests_multi_gpu
-      - coveralls_upload_parallel
 
 
   auto_deploy_site:
@@ -537,14 +545,8 @@ workflows:
           filters: *exclude_ghpages
       - integrationtest_py37_torch_release_cuda:
           filters: *exclude_ghpages
-      - finish_coveralls_parallel:
+      - prv_accountant_values:
           filters: *exclude_ghpages
-          requires:
-            - unittest_py37_torch_release
-            - unittest_py38_torch_release
-            - unittest_py39_torch_release
-            - unittest_py39_torch_nightly
-            - unittest_multi_gpu
 
   nightly:
     when:
@@ -560,10 +562,6 @@ workflows:
           filters: *exclude_ghpages
       - micro_benchmarks_py37_torch_release_cuda:
           filters: *exclude_ghpages
-      - finish_coveralls_parallel:
-          filters: *exclude_ghpages
-          requires:
-            - unittest_py39_torch_nightly
 
   website_deployment:
     when:
