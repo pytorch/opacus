@@ -245,6 +245,7 @@ def check_per_sample_gradients_are_correct(
     Returns: True if per sample gradients were computed correctly. False otherwise.
 
     Example:
+        >>> N, Z, W = 100, 10, 10
         >>> x_shape = [N, Z, W]
         >>> x = torch.randn(x_shape)
         >>> model = nn.Linear(W, W + 2)
