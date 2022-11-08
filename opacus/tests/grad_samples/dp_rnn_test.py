@@ -75,6 +75,7 @@ class RNN_test(GradSampleHooks_test):
         using_packed_sequences: bool,
         packed_sequences_sorted: bool,
     ):
+        torch.use_deterministic_algorithms(False)
         rnn = model(
             D,
             H,

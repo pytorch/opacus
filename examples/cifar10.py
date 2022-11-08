@@ -195,15 +195,12 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
 
         if i % args.print_freq == 0:
             if not args.disable_dp:
-                epsilon, best_alpha = privacy_engine.accountant.get_privacy_spent(
-                    delta=args.delta,
-                    alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
-                )
+                epsilon = privacy_engine.accountant.get_epsilon(delta=args.delta)
                 print(
                     f"\tTrain Epoch: {epoch} \t"
                     f"Loss: {np.mean(losses):.6f} "
                     f"Acc@1: {np.mean(top1_acc):.6f} "
-                    f"(ε = {epsilon:.2f}, δ = {args.delta}) for α = {best_alpha}"
+                    f"(ε = {epsilon:.2f}, δ = {args.delta})"
                 )
             else:
                 print(

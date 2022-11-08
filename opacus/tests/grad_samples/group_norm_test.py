@@ -38,7 +38,12 @@ class GroupNorm_test(GradSampleHooks_test):
     )
     @settings(deadline=10000)
     def test_3d_input_groups(
-        self, N: int, C: int, H: int, W: int, num_groups: Union[int, str]
+        self,
+        N: int,
+        C: int,
+        H: int,
+        W: int,
+        num_groups: Union[int, str],
     ):
 
         if num_groups == "C":
@@ -48,6 +53,5 @@ class GroupNorm_test(GradSampleHooks_test):
             return
 
         x = torch.randn([N, C, H, W])
-        ew_compatible = N > 0
         norm = nn.GroupNorm(num_groups=num_groups, num_channels=C, affine=True)
-        self.run_test(x, norm, batch_first=True, ew_compatible=ew_compatible)
+        self.run_test(x, norm, batch_first=True, ew_compatible=N > 0)

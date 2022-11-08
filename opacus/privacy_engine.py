@@ -107,13 +107,14 @@ class PrivacyEngine:
         >>> # continue training as normal
     """
 
-    def __init__(self, *, accountant: str = "rdp", secure_mode: bool = False):
+    def __init__(self, *, accountant: str = "prv", secure_mode: bool = False):
         """
 
         Args:
             accountant: Accounting mechanism. Currently supported:
                 - rdp (:class:`~opacus.accountants.RDPAccountant`)
                 - gdp (:class:`~opacus.accountants.GaussianAccountant`)
+                - prv (:class`~opacus.accountants.PRVAccountant`)
             secure_mode: Set to ``True`` if cryptographically strong DP guarantee is
                 required. ``secure_mode=True`` uses secure random number generator for
                 noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and
@@ -463,9 +464,6 @@ class PrivacyEngine:
             module: PyTorch module to be used for training
             optimizer: Optimizer to be used for training
             data_loader: DataLoader to be used for training
-            noise_multiplier: The ratio of the standard deviation of the Gaussian noise to
-                the L2-sensitivity of the function to which the noise is added
-                (How much noise to add)
             max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm
                 higher than this will be clipped to this value.
             batch_first: Flag to indicate if the input tensor to the corresponding module
@@ -474,18 +472,23 @@ class PrivacyEngine:
                 ``[K, batch_size, ...]``
             loss_reduction: Indicates if the loss reduction (for aggregating the gradients)
                 is a sum or a mean operation. Can take values "sum" or "mean"
-            noise_seed: Seed to be used for random noise generation
             poisson_sampling: ``True`` if you want to use standard sampling required
                 for DP guarantees. Setting ``False`` will leave provided data_loader
                 unchanged. Technically this doesn't fit the assumptions made by
                 privacy accounting mechanism, but it can be a good approximation when
                 using Poisson sampling is unfeasible.
-            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer").
+            clipping: Per sample gradient clipping mechanism ("flat" or "per_layer" or "adaptive").
                 Flat clipping calculates the norm of the entire gradient over
                 all parameters, per layer clipping sets individual norms for
                 every parameter tensor, and adaptive clipping updates clipping bound per iteration.
                 Flat clipping is usually preferred, but using per layer clipping in combination
                 with distributed training can provide notable performance gains.
+            noise_generator: torch.Generator() object used as a source of randomness for
+                the noise
+            grad_sample_mode: mode for computing per sample gradients. Determines the
+                implementation class for the wrapped ``module``. See
+                :class:`~opacus.grad_sample.gsm_base.AbstractGradSampleModule` for more
+                details
 
         Returns:
             Tuple of (model, optimizer, data_loader).
@@ -493,7 +496,7 @@ class PrivacyEngine:
             Model is a wrapper around the original model that also computes per sample
                 gradients
             Optimizer is a wrapper around the original optimizer that also does
-             gradient clipping and adding noise to the gradients
+                gradient clipping and noise addition to the gradients
             DataLoader is a brand new DataLoader object, constructed to behave as
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.

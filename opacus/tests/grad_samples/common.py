@@ -13,18 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 import unittest
-from typing import Union
+from typing import Dict, Iterable, List, Tuple, Union
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus.utils.per_sample_gradients_utils import (
-    compute_grad_samples_microbatch_and_opacus,
-    compute_opacus_grad_sample,
-)
-from torch.nn.utils.rnn import PackedSequence
-from torch.testing import assert_allclose
+from opacus.grad_sample import wrap_model
+from opacus.utils.module_utils import trainable_parameters
+from opacus.utils.packed_sequences import compute_seq_lengths
+from torch.nn.utils.rnn import PackedSequence, pad_packed_sequence
+from torch.testing import assert_close
 
 
 def expander(x, factor: int = 2):
@@ -43,12 +44,13 @@ class GradSampleHooks_test(unittest.TestCase):
 
     def run_test(
         self,
-        x: Union[torch.Tensor, PackedSequence],
+        x: Union[torch.Tensor, PackedSequence, Tuple],
         module: nn.Module,
         batch_first=True,
         atol=10e-6,
         rtol=10e-5,
         ew_compatible=True,
+        chunk_method=iter,
     ):
         grad_sample_modes = ["hooks", "functorch"]
         try:
@@ -56,7 +58,9 @@ class GradSampleHooks_test(unittest.TestCase):
         except ImportError:
             grad_sample_modes = ["hooks"]
 
-        if type(x) is not PackedSequence and x.numel() == 0:
+        if type(module) is nn.EmbeddingBag or (
+            type(x) is not PackedSequence and is_batch_empty(x)
+        ):
             grad_sample_modes = ["hooks"]
 
         if ew_compatible and batch_first and torch.__version__ >= (1, 13):
@@ -75,6 +79,7 @@ class GradSampleHooks_test(unittest.TestCase):
                         atol=atol,
                         rtol=rtol,
                         grad_sample_mode=grad_sample_mode,
+                        chunk_method=chunk_method,
                     )
 
     def run_test_with_reduction(
@@ -86,8 +91,9 @@ class GradSampleHooks_test(unittest.TestCase):
         atol=10e-6,
         rtol=10e-5,
         grad_sample_mode="hooks",
+        chunk_method=iter,
     ):
-        if not type(x) is PackedSequence and x.numel() <= 0:
+        if not type(x) is PackedSequence and is_batch_empty(x):
             _ = compute_opacus_grad_sample(
                 x,
                 module,
@@ -162,7 +168,7 @@ class GradSampleHooks_test(unittest.TestCase):
                 f"L1 Loss = {F.l1_loss(opacus_grad_sample, microbatch_grad_sample)}",
             )
             try:
-                assert_allclose(
+                assert_close(
                     actual=microbatch_grad_sample,
                     expected=opacus_grad_sample,
                     atol=atol,

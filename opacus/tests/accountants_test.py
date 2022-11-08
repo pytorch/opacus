@@ -17,7 +17,12 @@ import unittest
 
 import hypothesis.strategies as st
 from hypothesis import given, settings
-from opacus.accountants import GaussianAccountant, RDPAccountant, create_accountant
+from opacus.accountants import (
+    GaussianAccountant,
+    PRVAccountant,
+    RDPAccountant,
+    create_accountant,
+)
 from opacus.accountants.utils import get_noise_multiplier
 
 
@@ -46,6 +51,19 @@ class AccountingTest(unittest.TestCase):
         epsilon = accountant.get_epsilon(delta=1e-5)
         self.assertLess(6.59, epsilon)
         self.assertLess(epsilon, 6.6)
+
+    def test_prv_accountant(self):
+        noise_multiplier = 1.5
+        sample_rate = 0.04
+        steps = int(90 // 0.04)
+
+        accountant = PRVAccountant()
+
+        for _ in range(steps):
+            accountant.step(noise_multiplier=noise_multiplier, sample_rate=sample_rate)
+
+        epsilon = accountant.get_epsilon(delta=1e-5)
+        self.assertAlmostEqual(epsilon, 6.777395712150674)
 
     def test_get_noise_multiplier_rdp_epochs(self):
         delta = 1e-5
@@ -77,6 +95,38 @@ class AccountingTest(unittest.TestCase):
         )
 
         self.assertAlmostEqual(noise_multiplier, 1.3562, places=4)
+
+    def test_get_noise_multiplier_prv_epochs(self):
+        delta = 1e-5
+        sample_rate = 0.04
+        epsilon = 8
+        epochs = 90
+
+        noise_multiplier = get_noise_multiplier(
+            target_epsilon=epsilon,
+            target_delta=delta,
+            sample_rate=sample_rate,
+            epochs=epochs,
+            accountant="prv",
+        )
+
+        self.assertAlmostEqual(noise_multiplier, 1.34765625, places=4)
+
+    def test_get_noise_multiplier_prv_steps(self):
+        delta = 1e-5
+        sample_rate = 0.04
+        epsilon = 8
+        steps = 2000
+
+        noise_multiplier = get_noise_multiplier(
+            target_epsilon=epsilon,
+            target_delta=delta,
+            sample_rate=sample_rate,
+            steps=steps,
+            accountant="prv",
+        )
+
+        self.assertAlmostEqual(noise_multiplier, 1.2915, places=4)
 
     @given(
         epsilon=st.floats(1.0, 10.0),

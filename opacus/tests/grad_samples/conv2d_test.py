@@ -22,7 +22,7 @@ from hypothesis import given, settings
 from opacus.grad_sample.conv import convolution2d_backward_as_a_convolution
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.utils.tensor_utils import unfold2d
-from torch.testing import assert_allclose
+from torch.testing import assert_close
 
 from .common import GradSampleHooks_test, expander, shrinker
 
@@ -85,6 +85,7 @@ class Conv2d_test(GradSampleHooks_test):
             rtol=10e-4,
             ew_compatible=is_ew_compatible,
         )
+
         if padding != "same" and N > 0:
             # Test 'convolution as a backward' GSM
             # 'convolution as a backward' doesn't support padding=same
@@ -149,7 +150,7 @@ class Conv2d_test(GradSampleHooks_test):
             dilation=(dilation_w, dilation_h),
         )
 
-        assert_allclose(X_unfold_torch, X_unfold_opacus, atol=0, rtol=0)
+        assert_close(X_unfold_torch, X_unfold_opacus, atol=0, rtol=0)
 
     def test_asymetric_dilation_and_kernel_size(self):
         """
