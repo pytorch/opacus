@@ -19,14 +19,13 @@ from typing import Tuple, Union
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils.rnn import PackedSequence
-from torch.testing import assert_close
-
 from opacus.utils.per_sample_gradients_utils import (
     compute_grad_samples_microbatch_and_opacus,
     compute_opacus_grad_sample,
     is_batch_empty,
 )
+from torch.nn.utils.rnn import PackedSequence
+from torch.testing import assert_close
 
 
 def expander(x, factor: int = 2):

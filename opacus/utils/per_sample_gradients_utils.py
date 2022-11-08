@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import io
-from typing import Dict, List, Union, Iterable, Callable
+from typing import Callable, Dict, Iterable, List, Union
 
 import numpy as np
 import torch
