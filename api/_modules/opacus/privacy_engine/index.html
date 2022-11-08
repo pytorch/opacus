@@ -134,13 +134,14 @@
 <span class="sd">        &gt;&gt;&gt; # continue training as normal</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">accountant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"rdp"</span><span class="p">,</span> <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">accountant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"prv"</span><span class="p">,</span> <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">"""</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            accountant: Accounting mechanism. Currently supported:</span>
 <span class="sd">                - rdp (:class:`~opacus.accountants.RDPAccountant`)</span>
 <span class="sd">                - gdp (:class:`~opacus.accountants.GaussianAccountant`)</span>
+<span class="sd">                - prv (:class`~opacus.accountants.PRVAccountant`)</span>
 <span class="sd">            secure_mode: Set to ``True`` if cryptographically strong DP guarantee is</span>
 <span class="sd">                required. ``secure_mode=True`` uses secure random number generator for</span>
 <span class="sd">                noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and</span>
