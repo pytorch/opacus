@@ -65,6 +65,13 @@ class TutorialHome extends React.Component {
                   Efficient Per-Sample Gradient Computation in Opacus
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://bit.ly/per-sample-gradient-computing-opacus-layers"
+                  target="_blank">
+                  Efficient Per-Sample Gradient Computation for More Layers in Opacus
+                </a>
+              </li>
             </ol>
             <h4>Videos*</h4>
             <p>* Note that Opacus API has changed over time and some of the code samples and demos in the videos may not work. The concepts presented in the videos though are concrete and still valid.</p>
