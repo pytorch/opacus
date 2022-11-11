@@ -1,16 +1,31 @@
 # Changelog
 
+## v1.3
+
+### New features
+* Implement the `PRVAccountant` based on the paper [Numerical Composition of Differential Privacy](https://arxiv.org/abs/2106.02848) (#493)
+* Support `nn.EmbeddingBag` (#519)
+
+### Bug fixes
+* Fix benchmarks (#503, #507, #508)
+* Align `make_private_with_epsilon` with `make_private` (#509, #526)
+* Test fixes (#513, #515, #527, #533)
+* Summed discriminator losses to perform one backprop step (#474)
+* Fixed issue with missing argument in MNIST example (#520)
+* Functorch gradients: investigation and fix (#510)
+* Support empty batches (#530)
+
 ## v1.2
 
 ### New ways to compute per sample gradients
-We're glad to present Opacus v1.2, which contains some major updates to per sample gradient computation mechanisms 
+We're glad to present Opacus v1.2, which contains some major updates to per sample gradient computation mechanisms
 and includes all the good stuff from the recent PyTorch releases.
 * Functorch - per sample gradients for all
 * ExpandedWeights - yet another way to compute per sample gradients
-* See [Release notes](https://github.com/pytorch/opacus/releases/tag/v1.2.0) 
-  and [GradSampleModule README](https://github.com/pytorch/opacus/blob/main/opacus/grad_sample/README.md) 
+* See [Release notes](https://github.com/pytorch/opacus/releases/tag/v1.2.0)
+  and [GradSampleModule README](https://github.com/pytorch/opacus/blob/main/opacus/grad_sample/README.md)
   for detailed feature explanation
-  
+
 ### Other improvements
 * Fix `utils.unfold2d` with non-symmetric pad/dilation/kernel_size/stride (#443)
 * Add support for "same" and "valid" padding for hooks-based grad sampler for convolution layers
