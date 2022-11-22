@@ -122,7 +122,7 @@ class DPDataLoader(DataLoader):
         worker_init_fn: Optional[_worker_init_fn_t] = None,
         multiprocessing_context=None,
         generator=None,
-        prefetch_factor: int = 2,
+        prefetch_factor: Optional[int] = None,
         persistent_workers: bool = False,
         distributed: bool = False,
     ):
