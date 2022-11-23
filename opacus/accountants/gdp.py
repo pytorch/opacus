@@ -59,7 +59,7 @@ class GaussianAccountant(IAccountant):
             if poisson
             else privacy_analysis.compute_eps_uniform
         )
-        noise_multiplier, sample_rate, num_steps = self.history.pop()
+        noise_multiplier, sample_rate, num_steps = self.history[-1]
         return compute_eps(
             steps=num_steps,
             noise_multiplier=noise_multiplier,
