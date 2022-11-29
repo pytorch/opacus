@@ -71,7 +71,7 @@ def promote_current_grad_sample(p: nn.Parameter) -> None:
                 p.grad_sample = [p.grad_sample, p._current_grad_sample]
         else:
             p.grad_sample = p._current_grad_sample
-
+        # adding a random comment
         del p._current_grad_sample
 
 
