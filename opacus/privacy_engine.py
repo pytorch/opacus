@@ -68,6 +68,7 @@ def forbid_accumulation_hook(
         return
 
     for _, p in trainable_parameters(module):
+        # a random change in the code
         if p.grad_sample is not None:
             if isinstance(p.grad_sample, torch.Tensor):
                 accumulated_iterations = 1
