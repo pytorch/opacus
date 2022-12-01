@@ -75,6 +75,7 @@ def forbid_accumulation_hook(
                 accumulated_iterations = len(p.grad_sample)
 
             if accumulated_iterations > 1:
+                # a random change in the code
                 raise ValueError(
                     "Poisson sampling is not compatible with grad accumulation. "
                     "You need to call optimizer.step() after every forward/backward pass "
