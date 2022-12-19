@@ -23,14 +23,18 @@ class UniformWithReplacementSampler(Sampler[List[int]]):
     r"""
     This sampler samples elements according to the Sampled Gaussian Mechanism.
     Each sample is selected with a probability equal to ``sample_rate``.
+    The sampler generates ``steps`` number of batches, that defaults to 1/``sample_rate``.
     """
 
-    def __init__(self, *, num_samples: int, sample_rate: float, generator=None):
+    def __init__(
+        self, *, num_samples: int, sample_rate: float, generator=None, steps=None
+    ):
         r"""
         Args:
             num_samples: number of samples to draw.
             sample_rate: probability used in sampling.
             generator: Generator used in sampling.
+            steps: Number of steps (iterations of the Sampler)
         """
         self.num_samples = num_samples
         self.sample_rate = sample_rate
@@ -42,11 +46,16 @@ class UniformWithReplacementSampler(Sampler[List[int]]):
                 "value, but got num_samples={}".format(self.num_samples)
             )
 
+        if steps is not None:
+            self.steps = steps
+        else:
+            self.steps = int(1 / self.sample_rate)
+
     def __len__(self):
-        return int(1 / self.sample_rate)
+        return self.steps
 
     def __iter__(self):
-        num_batches = int(1 / self.sample_rate)
+        num_batches = self.steps
         while num_batches > 0:
             mask = (
                 torch.rand(self.num_samples, generator=self.generator)
@@ -82,6 +91,7 @@ class DistributedUniformWithReplacementSampler(Sampler):
         sample_rate: float,
         shuffle: bool = True,
         shuffle_seed: int = 0,
+        steps: int = None,
         generator=None,
     ):
         """
@@ -117,7 +127,10 @@ class DistributedUniformWithReplacementSampler(Sampler):
             self.num_samples += 1
 
         # Number of batches: same as non-distributed Poisson sampling, but each batch is smaller
-        self.num_batches = int(1 / self.sample_rate)
+        if steps is not None:
+            self.num_batches = steps
+        else:
+            self.num_batches = int(1 / self.sample_rate)
 
     def __iter__(self):
         if self.shuffle:
