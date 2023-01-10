@@ -9,22 +9,18 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: yarn
-
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install sphinx sphinx-autodoc-typehints
+          python -m pip install --upgrade pip
+          python -m pip install sphinx sphinx-autodoc-typehints
           yarn install
       - name: Build website
-        run: |
-          cd website
-          ./scripts/build_website.sh -b
+        run: ./scripts/build_website.sh -b
 
       # Popular action to deploy to GitHub Pages:
       # Docs: https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-docusaurus
