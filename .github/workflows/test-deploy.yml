@@ -19,6 +19,11 @@ jobs:
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install sphinx sphinx-autodoc-typehints
+          yarn install
       - name: Test build website
-        run: yarn build
+        run: |
+          cd website
+          ./scripts/build_website.sh -b

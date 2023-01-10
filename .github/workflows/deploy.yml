@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
 
 jobs:
   deploy:
@@ -19,9 +17,14 @@ jobs:
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install sphinx sphinx-autodoc-typehints
+          yarn install
       - name: Build website
-        run: yarn build
+        run: |
+          cd website
+          ./scripts/build_website.sh -b
 
       # Popular action to deploy to GitHub Pages:
       # Docs: https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-docusaurus
