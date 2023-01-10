@@ -464,19 +464,6 @@ jobs:
       - run_nvidia_smi
       - command_unit_tests_multi_gpu
 
-
-  auto_deploy_site:
-    docker:
-      - image: cimg/python:3.9-node
-    steps:
-      - run: node --version
-      - run: yarn --version
-      - checkout
-      - pip_dev_install:
-          args: "-n -d"
-      - configure_docusaurus_bot
-      - deploy_site
-
   finish_coveralls_parallel:
     docker:
       - image: cimg/python:3.9
