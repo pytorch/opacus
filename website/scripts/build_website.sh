@@ -96,6 +96,12 @@ if [[ $BUILD_STATIC == true ]]; then
   echo "Building static site"
   echo "-----------------------------------"
   yarn build
+  echo "pwd"
+  pwd
+  echo "-----------------------------------"
+  echo "ls"
+  ls
+  echo "-----------------------------------"
 else
   echo "-----------------------------------"
   echo "Starting local server"
