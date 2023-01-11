@@ -97,10 +97,16 @@ if [[ $BUILD_STATIC == true ]]; then
   echo "-----------------------------------"
   yarn build
   echo "pwd"
+  echo "-----------------------------------"
   pwd
   echo "-----------------------------------"
   echo "ls"
+  echo "-----------------------------------"
   ls
+  echo "-----------------------------------"
+  echo "ls /home/runner/work/opacus/opacus/build/"
+  echo "-----------------------------------"
+  ls /home/runner/work/opacus/opacus/build/
   echo "-----------------------------------"
 else
   echo "-----------------------------------"
