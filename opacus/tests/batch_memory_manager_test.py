@@ -19,7 +19,6 @@ import torch.nn as nn
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from opacus import PrivacyEngine
-from opacus.grad_sample.gsm_exp_weights import API_CUTOFF_VERSION
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -227,9 +226,6 @@ class BatchMemoryManagerTest(unittest.TestCase):
         self.assertTrue(torch.allclose(memory_manager_weights, vanilla_weights))
 
 
-@unittest.skipIf(
-    torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
-)
 class BatchMemoryManagerTestWithExpandedWeights(BatchMemoryManagerTest):
     GSM_MODE = "ew"
 
@@ -237,8 +233,5 @@ class BatchMemoryManagerTestWithExpandedWeights(BatchMemoryManagerTest):
         pass
 
 
-@unittest.skipIf(
-    torch.__version__ >= API_CUTOFF_VERSION, "not supported in this torch version"
-)
 class BatchMemoryManagerTestWithFunctorch(BatchMemoryManagerTest):
     GSM_MODE = "functorch"

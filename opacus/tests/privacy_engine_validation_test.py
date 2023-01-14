@@ -2,7 +2,6 @@ import unittest
 
 import torch
 from opacus import PrivacyEngine
-from opacus.grad_sample.gsm_exp_weights import API_CUTOFF_VERSION
 from torch.utils.data import DataLoader
 
 from .utils import (
@@ -47,9 +46,6 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         for x in dl:
             module(x)
 
-    @unittest.skipIf(
-        torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
-    )
     def test_supported_ew(self):
         module, optim, dl = self._init(BasicSupportedModule(), size=(16, 5))
 
@@ -80,9 +76,6 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         except ImportError:
             print("Test not ran because functorch not imported")
 
-    @unittest.skipIf(
-        torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
-    )
     def test_custom_linear_ew(self):
         module, optim, dl = self._init(CustomLinearModule(5, 8), size=(16, 5))
 
@@ -114,9 +107,6 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         except ImportError:
             print("Test not ran because functorch not imported")
 
-    @unittest.skipIf(
-        torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
-    )
     def test_unsupported_ew(self):
         module, optim, dl = self._init(
             MatmulModule(input_features=5, output_features=10),
@@ -168,9 +158,6 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         for x in dl:
             module(x)
 
-    @unittest.skipIf(
-        torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
-    )
     def test_extra_param_ew(self):
         module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         module, optim, dl = self.privacy_engine.make_private(
@@ -185,9 +172,6 @@ class PrivacyEngineValidationTest(unittest.TestCase):
             for x in dl:
                 module(x)
 
-    @unittest.skipIf(
-        torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
-    )
     def test_extra_param_disabled_ew(self):
         module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         module.extra_param.requires_grad = False
