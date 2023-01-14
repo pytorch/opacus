@@ -19,9 +19,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus.grad_sample import GradSampleModule
-from opacus.grad_sample.gsm_exp_weights import (
-    GradSampleModuleExpandedWeights,
-)
+from opacus.grad_sample.gsm_exp_weights import GradSampleModuleExpandedWeights
 from opacus.grad_sample.linear import compute_linear_grad_sample
 from opacus.grad_sample.utils import register_grad_sampler
 from torch.testing import assert_close

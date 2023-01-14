@@ -41,6 +41,7 @@ from torchvision.datasets import FakeData
 
 from .utils import CustomLinearModule, LinearWithExtraParam
 
+
 def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
     if tensor.grad_sample is None:
         raise ValueError(
