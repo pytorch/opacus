@@ -21,6 +21,6 @@ then
     TORCHVISION_VERSION="0.14.1"
 fi
 
-pip install torch=="${TORCH_VERSION}"
-pip install torchvision==${TORCHVISION_VERSION}
+pip install torch=="${TORCH_VERSION}" --extra-index-url https://download.pytorch.org/whl/cpu
+pip install torchvision==${TORCHVISION_VERSION} --extra-index-url https://download.pytorch.org/whl/cpu
 
