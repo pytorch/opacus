@@ -15,8 +15,8 @@ jobs:
       max-parallel: 48
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: [3.7, 3.8, 3.9, 3.10, 3.11]
-        torch-version: [1.13]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        torch-version: ["1.13"]
 
     runs-on: ${{ matrix.os }}
     steps:
