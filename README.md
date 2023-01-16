@@ -2,7 +2,7 @@
 
 <hr/>
 
-[![CircleCI](https://circleci.com/gh/pytorch/opacus.svg?style=svg)](https://circleci.com/gh/pytorch/opacus)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/pytorch/opacus/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/pytorch/opacus/tree/main)
 [![Coverage Status](https://coveralls.io/repos/github/pytorch/opacus/badge.svg?branch=main)](https://coveralls.io/github/pytorch/opacus?branch=main)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![License](https://img.shields.io/badge/license-apache2-green.svg)](LICENSE)

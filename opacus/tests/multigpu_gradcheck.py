@@ -24,7 +24,6 @@ import torch.nn as nn
 import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.grad_sample.gsm_exp_weights import API_CUTOFF_VERSION
 from opacus.optimizers.ddp_perlayeroptimizer import (
     DistributedPerLayerOptimizer,
     SimpleDistributedPerLayerOptimizer,
@@ -148,13 +147,8 @@ class GradientComputationTest(unittest.TestCase):
             n_gpus >= 2, f"Need at least 2 gpus but was provided only {n_gpus}."
         )
 
-        if torch.__version__ < API_CUTOFF_VERSION:
-            grad_sample_modes = ["hooks"]
-        else:
-            grad_sample_modes = ["hooks", "ew"]
-
         for clipping in ["flat", "per_layer"]:
-            for grad_sample_mode in grad_sample_modes:
+            for grad_sample_mode in ["hooks", "ew"]:
                 weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
 
                 run_demo(

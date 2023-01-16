@@ -16,20 +16,11 @@
 set -e
 TORCH_VERSION=$1
 
-if [ "$TORCH_VERSION" = "1.8.0" ]
+if [ "$TORCH_VERSION" = "1.13.1" ]
 then
-    TORCHVISION_VERSION="0.9.0"
-elif [ "$TORCH_VERSION" = "1.8.1" ]
-then
-    TORCHVISION_VERSION="0.9.1"
-elif [ "$TORCH_VERSION" = "1.9.0" ]
-then
-    TORCHVISION_VERSION="0.10.0"
-elif [ "$TORCH_VERSION" = "1.9.1" ]
-then
-    TORCHVISION_VERSION="0.10.1"
+    TORCHVISION_VERSION="0.14.1"
 fi
 
-pip install torch=="${TORCH_VERSION}"
-pip install torchvision==${TORCHVISION_VERSION}
+pip install torch=="${TORCH_VERSION}" --extra-index-url https://download.pytorch.org/whl/cpu
+pip install torchvision==${TORCHVISION_VERSION} --extra-index-url https://download.pytorch.org/whl/cpu
 

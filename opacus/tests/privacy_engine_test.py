@@ -28,7 +28,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus import PrivacyEngine
-from opacus.grad_sample.gsm_exp_weights import API_CUTOFF_VERSION
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
 from opacus.scheduler import StepNoise
@@ -41,16 +40,6 @@ from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
 from .utils import CustomLinearModule, LinearWithExtraParam
-
-
-def _is_functorch_available():
-    try:
-        # flake8: noqa F401
-        import functorch
-
-        return True
-    except ImportError:
-        return False
 
 
 def get_grad_sample_aggregated(tensor: torch.Tensor, loss_type: str = "mean"):
@@ -845,16 +834,12 @@ class PrivacyEngineConvNetFrozenTest(BasePrivacyEngineTest, unittest.TestCase):
         return m
 
 
-@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
 class PrivacyEngineConvNetFrozenTestFunctorch(PrivacyEngineConvNetFrozenTest):
     def setUp(self):
         super().setUp()
         self.GRAD_SAMPLE_MODE = "functorch"
 
 
-@unittest.skipIf(
-    torch.__version__ < API_CUTOFF_VERSION, "not supported in this torch version"
-)
 class PrivacyEngineConvNetTestExpandedWeights(PrivacyEngineConvNetTest):
     def setUp(self):
         super().setUp()
@@ -865,7 +850,6 @@ class PrivacyEngineConvNetTestExpandedWeights(PrivacyEngineConvNetTest):
         pass
 
 
-@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
 class PrivacyEngineConvNetTestFunctorch(PrivacyEngineConvNetTest):
     def setUp(self):
         super().setUp()
@@ -951,7 +935,6 @@ class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
         return SampleAttnNet()
 
 
-@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
 class PrivacyEngineTextTestFunctorch(PrivacyEngineTextTest):
     def setUp(self):
         super().setUp()
@@ -1001,7 +984,6 @@ class PrivacyEngineTiedWeightsTest(BasePrivacyEngineTest, unittest.TestCase):
         return SampleTiedWeights(tie=True)
 
 
-@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
 class PrivacyEngineTiedWeightsTestFunctorch(PrivacyEngineTiedWeightsTest):
     def setUp(self):
         super().setUp()
@@ -1022,7 +1004,6 @@ class ModelWithCustomLinear(nn.Module):
         return x
 
 
-@unittest.skipIf(not _is_functorch_available(), "not supported in this torch version")
 class PrivacyEngineCustomLayerTest(BasePrivacyEngineTest, unittest.TestCase):
     def _init_data(self):
         ds = TensorDataset(
