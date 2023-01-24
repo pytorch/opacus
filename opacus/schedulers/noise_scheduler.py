@@ -14,11 +14,30 @@
 
 from typing import Callable, Dict
 
-from .optimizers import DPOptimizer
+from opacus.optimizers import DPOptimizer
 
 
-class _NoiseScheduler(object):
+class _NoiseScheduler:
+    """Base class for noise multiplier schedulers. We follow the same API
+    as the standard PyTorch LR schedulers, but apply them to Opacus's noise
+    multiplier param instead.
+
+    This means it only works when you pass a opacus.DPOptimizer, since that
+    will have a `noise_multiplier` attribute.
+    """
+
     def __init__(self, optimizer: DPOptimizer, *, last_epoch=-1):
+        """
+        Args:
+            optimizer (DPOptimizer): The DPOptimizer
+            *: Any other positional args (this is an abstract base class)
+            last_epoch(int): The index of last epoch. Default: -1.
+        """
+        if not hasattr(optimizer, "noise_multiplier"):
+            raise ValueError(
+                "NoiseSchedulers require your optimizer to have a .noise_multiplier attr. "
+                "Are you sure you are using a DPOptimizer? Those have it added for you."
+            )
         self.optimizer = optimizer
         self.last_epoch = last_epoch
 
@@ -44,7 +63,7 @@ class _NoiseScheduler(object):
         self.__dict__.update(state_dict)
 
     def get_noise_multiplier(self):
-        # Compute learning rate using chainable form of the scheduler
+        """Implement your scheduling logic here and return the new value for `noise_multiplier`."""
         raise NotImplementedError
 
     def step(self):
@@ -55,7 +74,12 @@ class _NoiseScheduler(object):
 
 class ExponentialNoise(_NoiseScheduler):
     """
-    Decays the noise_multiplier by gamma every epoch.
+    Multiplies the noise_multiplier by gamma every epoch (so the gamma factors accumulate).
+    This means that:
+        - For gamma < 1, noise_multiplier will shrink
+        - For gamma == 1, no effect
+        - For gamma > 1, noise_multiplier will expand
+
     When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
 
     """
@@ -66,7 +90,7 @@ class ExponentialNoise(_NoiseScheduler):
         Args:
             optimizer: Wrapped optimizer
             gamma: Multiplicative factor of learning rate decay.
-            last_epoch: The index of last epoch
+            last_epoch: The index of last epoch. Default: -1.
         """
         self.gamma = gamma
         super().__init__(optimizer, last_epoch=last_epoch)
@@ -80,9 +104,15 @@ class ExponentialNoise(_NoiseScheduler):
 
 class LambdaNoise(_NoiseScheduler):
     """
-    Sets the noise_multiplier to the initial noise_multiplier times a given function.
-    When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
+    Multiplies your *base* `noise_multiplier` by the output of a `scheduler_function` given
+    as input.
+    Note: the base noise_multiplier is recorded as the noise_multiplier your optimizer
+    had set at the very beginning. This means that the factors from the `scheduler_function`
+    will *not* accumulate, unlike in ExponentialGradClip.
+    If you want some exponential-like behavior, accumulation logic will have to be
+    added in your `scheduler_function`.
 
+    When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
     """
 
     def __init__(
@@ -110,9 +140,13 @@ class LambdaNoise(_NoiseScheduler):
 
 class StepNoise(_NoiseScheduler):
     """
-    Decays the noise_multiplier by gamma every step_size epochs.
-    When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
+    Multiplies `noise_multiplier` by `gamma` every `step_size` epochs (so the `gamma` factors accumulate).
+    This means that:
+        - For gamma < 1, noise_multiplier will shrink
+        - For gamma == 1, no effect
+        - For gamma > 1, noise_multiplier will expand
 
+    When last_epoch=-1, sets initial noise_multiplier as noise_multiplier.
     """
 
     def __init__(

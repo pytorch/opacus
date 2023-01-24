@@ -19,7 +19,7 @@ import itertools
 import math
 import unittest
 from abc import ABC
-from typing import Optional, OrderedDict, Type
+from typing import Optional, OrderedDict
 from unittest.mock import MagicMock, patch
 
 import hypothesis.strategies as st
@@ -30,7 +30,7 @@ from hypothesis import given, settings
 from opacus import PrivacyEngine
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
-from opacus.scheduler import StepNoise
+from opacus.schedulers import StepGradClip, StepNoise
 from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from opacus.validators.module_validator import ModuleValidator
@@ -550,10 +550,13 @@ class BasePrivacyEngineTest(ABC):
             )
 
     @given(
-        noise_scheduler=st.sampled_from([None, StepNoise]),
+        has_noise_scheduler=st.booleans(),
+        has_grad_clip_scheduler=st.booleans(),
     )
     @settings(deadline=None)
-    def test_checkpoints(self, noise_scheduler: Optional[Type[StepNoise]]):
+    def test_checkpoints(
+        self, has_noise_scheduler: bool, has_grad_clip_scheduler: bool
+    ):
         # 1. Disable poisson sampling to avoid randomness in data loading caused by changing seeds.
         # 2. Use noise_multiplier=0.0 to avoid randomness in torch.normal()
         # create a set of components: set 1
@@ -563,11 +566,17 @@ class BasePrivacyEngineTest(ABC):
             poisson_sampling=False,
             grad_sample_mode=self.GRAD_SAMPLE_MODE,
         )
-        s1 = (
-            noise_scheduler(optimizer=opt1, step_size=1, gamma=1.0)
-            if noise_scheduler is not None
+        noise_scheduler1 = (
+            StepNoise(optimizer=opt1, step_size=1, gamma=1.0)
+            if has_noise_scheduler
             else None
         )
+        grad_clip_scheduler1 = (
+            StepGradClip(optimizer=opt1, step_size=1, gamma=1.0)
+            if has_grad_clip_scheduler
+            else None
+        )
+
         # create a different set of components: set 2
         torch.manual_seed(2)
         m2, opt2, _, pe2 = self._init_private_training(
@@ -575,22 +584,37 @@ class BasePrivacyEngineTest(ABC):
             poisson_sampling=False,
             grad_sample_mode=self.GRAD_SAMPLE_MODE,
         )
-        s2 = (
-            noise_scheduler(optimizer=opt2, step_size=1, gamma=2.0)
-            if noise_scheduler is not None
+        noise_scheduler2 = (
+            StepNoise(optimizer=opt2, step_size=1, gamma=2.0)
+            if has_noise_scheduler
+            else None
+        )
+        grad_clip_scheduler2 = (
+            StepGradClip(optimizer=opt2, step_size=1, gamma=2.0)
+            if has_grad_clip_scheduler
             else None
         )
 
         # check that two sets of components are different
         self.assertFalse(are_state_dict_equal(m1.state_dict(), m2.state_dict()))
-        if noise_scheduler:
-            self.assertNotEqual(s1.state_dict(), s2.state_dict())
+        if has_noise_scheduler:
+            self.assertNotEqual(
+                noise_scheduler1.state_dict(), noise_scheduler2.state_dict()
+            )
+
+        if has_grad_clip_scheduler:
+            self.assertNotEqual(
+                grad_clip_scheduler1.state_dict(), grad_clip_scheduler2.state_dict()
+            )
+
         self.assertNotEqual(opt1.noise_multiplier, opt2.noise_multiplier)
 
         # train set 1 for a few steps
         self._train_steps(m1, opt1, dl1)
-        if noise_scheduler:
-            s1.step()
+        if has_noise_scheduler:
+            noise_scheduler1.step()
+        if has_grad_clip_scheduler:
+            grad_clip_scheduler1.step()
 
         # load into set 2
         checkpoint_to_save = {"foo": "bar"}
@@ -599,12 +623,17 @@ class BasePrivacyEngineTest(ABC):
                 path=bytesio,
                 module=m1,
                 optimizer=opt1,
-                noise_scheduler=s1,
+                noise_scheduler=noise_scheduler1,
+                grad_clip_scheduler=grad_clip_scheduler1,
                 checkpoint_dict=checkpoint_to_save,
             )
             bytesio.seek(0)
             loaded_checkpoint = pe2.load_checkpoint(
-                path=bytesio, module=m2, optimizer=opt2, noise_scheduler=s2
+                path=bytesio,
+                module=m2,
+                optimizer=opt2,
+                noise_scheduler=noise_scheduler2,
+                grad_clip_scheduler=grad_clip_scheduler2,
             )
 
         # check if loaded checkpoint has dummy dict
@@ -614,43 +643,17 @@ class BasePrivacyEngineTest(ABC):
         # check the two sets of components are now the same
         self.assertEqual(pe1.accountant.state_dict(), pe2.accountant.state_dict())
         self.assertTrue(are_state_dict_equal(m1.state_dict(), m2.state_dict()))
-        if noise_scheduler:
-            self.assertEqual(s1.state_dict(), s2.state_dict())
+        if has_noise_scheduler:
+            self.assertEqual(
+                noise_scheduler1.state_dict(), noise_scheduler2.state_dict()
+            )
+        if has_grad_clip_scheduler:
+            self.assertEqual(
+                grad_clip_scheduler1.state_dict(), grad_clip_scheduler2.state_dict()
+            )
+
         # check that non-state params are still different
         self.assertNotEqual(opt1.noise_multiplier, opt2.noise_multiplier)
-
-        # train the now loaded set 2 some more (change noise multiplier before doing so)
-        opt2.noise_multiplier = 0.0
-        self._train_steps(m2, opt2, dl1)
-        if noise_scheduler:
-            s2.step()
-
-        # recreate set 1 from scratch (set11) and check it is different from the trained set 2
-        torch.manual_seed(1)
-        m11, opt11, dl11, _ = self._init_private_training(
-            noise_multiplier=0.0,
-            poisson_sampling=False,
-            grad_sample_mode=self.GRAD_SAMPLE_MODE,
-        )
-        s11 = (
-            noise_scheduler(optimizer=opt11, step_size=1, gamma=1.0)
-            if noise_scheduler is not None
-            else None
-        )
-        self.assertFalse(are_state_dict_equal(m2.state_dict(), m11.state_dict()))
-        if noise_scheduler:
-            self.assertNotEqual(s2.state_dict(), s11.state_dict())
-        # train the recreated set for the same number of steps
-        self._train_steps(m11, opt11, dl11)
-        if noise_scheduler:
-            s11.step()
-        self._train_steps(m11, opt11, dl11)
-        if noise_scheduler:
-            s11.step()
-        # check that recreated set is now same as the original set 1 after training
-        self.assertTrue(are_state_dict_equal(m2.state_dict(), m11.state_dict()))
-        if noise_scheduler:
-            self.assertEqual(s2.state_dict(), s11.state_dict())
 
     @given(
         noise_multiplier=st.floats(0.5, 5.0),

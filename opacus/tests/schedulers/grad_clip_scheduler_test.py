@@ -17,12 +17,12 @@ import unittest
 
 import torch
 from opacus import PrivacyEngine
-from opacus.scheduler import ExponentialNoise, LambdaNoise, StepNoise
+from opacus.schedulers import ExponentialGradClip, LambdaGradClip, StepGradClip
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
 
 
-class SchedulerTest(unittest.TestCase):
+class GradClipSchedulerTest(unittest.TestCase):
     def setUp(self):
         n_data, dim = 100, 10
         data = torch.randn(n_data, dim)
@@ -41,33 +41,35 @@ class SchedulerTest(unittest.TestCase):
 
     def test_exponential_scheduler(self):
         gamma = 0.99
-        scheduler = ExponentialNoise(self.optimizer, gamma=gamma)
+        scheduler = ExponentialGradClip(self.optimizer, gamma=gamma)
 
-        self.assertEqual(self.optimizer.noise_multiplier, 1.0)
+        self.assertEqual(self.optimizer.max_grad_norm, 1.0)
         scheduler.step()
-        self.assertEqual(self.optimizer.noise_multiplier, gamma)
+        self.assertEqual(self.optimizer.max_grad_norm, gamma)
 
     def test_step_scheduler(self):
         gamma = 0.1
         step_size = 2
-        scheduler = StepNoise(self.optimizer, step_size=step_size, gamma=gamma)
+        scheduler = StepGradClip(self.optimizer, step_size=step_size, gamma=gamma)
 
-        self.assertEqual(self.optimizer.noise_multiplier, 1.0)
+        self.assertEqual(self.optimizer.max_grad_norm, 1.0)
         scheduler.step()
-        self.assertEqual(self.optimizer.noise_multiplier, 1.0)
+        self.assertEqual(self.optimizer.max_grad_norm, 1.0)
         scheduler.step()
-        self.assertEqual(self.optimizer.noise_multiplier, gamma)
+        self.assertEqual(self.optimizer.max_grad_norm, gamma)
         scheduler.step()
-        self.assertEqual(self.optimizer.noise_multiplier, gamma)
+        self.assertEqual(self.optimizer.max_grad_norm, gamma)
         scheduler.step()
-        self.assertEqual(self.optimizer.noise_multiplier, gamma**2)
+        self.assertEqual(self.optimizer.max_grad_norm, gamma**2)
 
     def test_lambda_scheduler(self):
-        def noise_lambda(epoch):
+        def scheduler_function(epoch):
             return 1 - epoch / 10
 
-        scheduler = LambdaNoise(self.optimizer, noise_lambda=noise_lambda)
+        scheduler = LambdaGradClip(
+            self.optimizer, scheduler_function=scheduler_function
+        )
 
-        self.assertEqual(self.optimizer.noise_multiplier, 1.0)
+        self.assertEqual(self.optimizer.max_grad_norm, 1.0)
         scheduler.step()
-        self.assertEqual(self.optimizer.noise_multiplier, noise_lambda(1))
+        self.assertEqual(self.optimizer.max_grad_norm, scheduler_function(1))
