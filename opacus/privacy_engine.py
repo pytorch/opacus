@@ -29,7 +29,7 @@ from opacus.grad_sample import (
     wrap_model,
 )
 from opacus.optimizers import DPOptimizer, get_optimizer_class
-from opacus.scheduler import _NoiseScheduler
+from opacus.schedulers import _GradClipScheduler, _NoiseScheduler
 from opacus.utils.module_utils import trainable_parameters
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
@@ -550,6 +550,7 @@ class PrivacyEngine:
         module: GradSampleModule,
         optimizer: Optional[DPOptimizer] = None,
         noise_scheduler: Optional[_NoiseScheduler] = None,
+        grad_clip_scheduler: Optional[_GradClipScheduler] = None,
         checkpoint_dict: Optional[Dict[str, Any]] = None,
         module_state_dict_kwargs: Optional[Dict[str, Any]] = None,
         torch_save_kwargs: Optional[Dict[str, Any]] = None,
@@ -560,6 +561,9 @@ class PrivacyEngine:
             path: Path to save the state dict objects.
             module: GradSampleModule to save; wrapped module's state_dict is saved.
             optimizer: DPOptimizer to save; wrapped optimizer's state_dict is saved.
+            noise_scheduler: _NoiseScheduler whose state we should save.
+            grad_clip_scheduler: _GradClipScheduler whose state we should save.
+            checkpoint_dict: Dict[str, Any]; an already-filled checkpoint dict.
             module_state_dict_kwargs: dict of kwargs to pass to ``module.state_dict()``
             torch_save_kwargs: dict of kwargs to pass to ``torch.save()``
 
@@ -573,6 +577,10 @@ class PrivacyEngine:
             checkpoint_dict["optimizer_state_dict"] = optimizer.state_dict()
         if noise_scheduler is not None:
             checkpoint_dict["noise_scheduler_state_dict"] = noise_scheduler.state_dict()
+        if grad_clip_scheduler is not None:
+            checkpoint_dict[
+                "grad_clip_scheduler_state_dict"
+            ] = grad_clip_scheduler.state_dict()
 
         torch.save(checkpoint_dict, path, **(torch_save_kwargs or {}))
 
@@ -583,6 +591,7 @@ class PrivacyEngine:
         module: GradSampleModule,
         optimizer: Optional[DPOptimizer] = None,
         noise_scheduler: Optional[_NoiseScheduler] = None,
+        grad_clip_scheduler: Optional[_GradClipScheduler] = None,
         module_load_dict_kwargs: Optional[Dict[str, Any]] = None,
         torch_load_kwargs: Optional[Dict[str, Any]] = None,
     ) -> Dict:
@@ -605,5 +614,11 @@ class PrivacyEngine:
         noise_scheduler_state_dict = checkpoint.pop("noise_scheduler_state_dict", {})
         if noise_scheduler is not None and len(noise_scheduler_state_dict) > 0:
             noise_scheduler.load_state_dict(noise_scheduler_state_dict)
+
+        grad_clip_scheduler_state_dict = checkpoint.pop(
+            "grad_clip_scheduler_state_dict", {}
+        )
+        if grad_clip_scheduler is not None and len(grad_clip_scheduler_state_dict) > 0:
+            grad_clip_scheduler.load_state_dict(grad_clip_scheduler_state_dict)
 
         return checkpoint
