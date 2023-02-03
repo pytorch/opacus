@@ -24,8 +24,147 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="dp-data-loader">
-<h1>DP Data Loader<a class="headerlink" href="#dp-data-loader" title="Permalink to this heading">¶</a></h1>
+<section id="module-opacus.data_loader">
+<span id="dp-data-loader"></span><h1>DP Data Loader<a class="headerlink" href="#module-opacus.data_loader" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.data_loader.DPDataLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">DPDataLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collate_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_last</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distributed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#DPDataLoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.DPDataLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>DataLoader subclass that always does Poisson sampling and supports empty batches
+by default.</p>
+<p>Typically instantiated via <code class="docutils literal notranslate"><span class="pre">DPDataLoader.from_data_loader()</span></code> method based
+on another DataLoader. DPDataLoader would preserve the behaviour of the original
+data loader, except for the two aspects.</p>
+<p>First, it switches <code class="docutils literal notranslate"><span class="pre">batch_sampler</span></code> to <code class="docutils literal notranslate"><span class="pre">UniformWithReplacementSampler</span></code>, thus enabling
+Poisson sampling (i.e. each element in the dataset is selected to be in the
+next batch with a certain probability defined by <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> parameter).
+NB: this typically leads to a batches of variable size.
+NB2: By default, <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> is calculated based on the <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> of the
+original data loader, so that the average batch size stays the same</p>
+<p>Second, it wraps collate function with support for empty batches.
+Most PyTorch modules will happily process tensors of shape <code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">N,</span> <span class="pre">...)</span></code>,
+but many collate functions will fail to produce such a batch. As with the
+Poisson sampling empty batches become a possibility, we need a DataLoader that
+can handle them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></a>) – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>sample_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – probability with which each element of the dataset is included
+in the next batch.</p></li>
+<li><p><strong>num_workers</strong> – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>collate_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]) – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>pin_memory</strong> – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>drop_last</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>timeout</strong> – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>worker_init_fn</strong> – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>multiprocessing_context</strong> – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>generator</strong> – Random number generator used to sample elements</p></li>
+<li><p><strong>prefetch_factor</strong> – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>persistent_workers</strong> – See <a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code></a></p></li>
+<li><p><strong>distributed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – set <code class="docutils literal notranslate"><span class="pre">True</span></code> if you’ll be using DPDataLoader in a DDP environment
+Selects between <code class="docutils literal notranslate"><span class="pre">DistributedUniformWithReplacementSampler</span></code> and
+<code class="docutils literal notranslate"><span class="pre">UniformWithReplacementSampler</span></code> sampler implementations</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.data_loader.DPDataLoader.from_data_loader">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_data_loader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distributed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#DPDataLoader.from_data_loader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.DPDataLoader.from_data_loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates new <code class="docutils literal notranslate"><span class="pre">DPDataLoader</span></code> based on passed <code class="docutils literal notranslate"><span class="pre">data_loader</span></code> argument.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_loader</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>) – Any DataLoader instance. Must not be over an <code class="docutils literal notranslate"><span class="pre">IterableDataset</span></code></p></li>
+<li><p><strong>distributed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – set <code class="docutils literal notranslate"><span class="pre">True</span></code> if you’ll be using DPDataLoader in a DDP environment</p></li>
+<li><p><strong>generator</strong> – Random number generator used to sample elements. Defaults to
+generator from the original data loader.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New DPDataLoader instance, with all attributes and parameters inherited
+from the original data loader, except for sampling mechanism.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mi">64</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">TensorDataset</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dp_data_loader</span> <span class="o">=</span> <span class="n">DPDataLoader</span><span class="o">.</span><span class="n">from_data_loader</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.data_loader.dtype_safe">
+<span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">dtype_safe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#dtype_safe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.dtype_safe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception-safe getter for <code class="docutils literal notranslate"><span class="pre">dtype</span></code> attribute</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>) – any object</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Type" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">x.dtype</span></code> if attribute exists, type of x otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.data_loader.shape_safe">
+<span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">shape_safe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#shape_safe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.shape_safe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception-safe getter for <code class="docutils literal notranslate"><span class="pre">shape</span></code> attribute</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>) – any object</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">x.shape</span></code> if attribute exists, empty tuple otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.data_loader.switch_generator">
+<span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">switch_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#switch_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.switch_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates new instance of a <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code>, with the exact same behaviour of the
+provided data loader, except for the source of randomness.</p>
+<p>Typically used to enhance a user-provided data loader object with cryptographically
+secure random number generator</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_loader</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>) – Any <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> object</p></li>
+<li><p><strong>generator</strong> – Random number generator object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> object with the exact same behaviour as the input data loader,
+except for the source of randomness.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.data_loader.wrap_collate_with_empty">
+<span class="sig-prename descclassname"><span class="pre">opacus.data_loader.</span></span><span class="sig-name descname"><span class="pre">wrap_collate_with_empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collate_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_empty_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtypes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/data_loader.html#wrap_collate_with_empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.data_loader.wrap_collate_with_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps given collate function to handle empty batches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collate_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]) – collate function to wrap</p></li>
+<li><p><strong>sample_empty_shapes</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>]) – expected shape for a batch of size 0. Input is a sequence -
+one for each tensor in the dataset</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New collate function, which is equivalent to input <code class="docutils literal notranslate"><span class="pre">collate_fn</span></code> for non-empty
+batches and outputs empty tensors with shapes from <code class="docutils literal notranslate"><span class="pre">sample_empty_shapes</span></code> if
+the input batch is of size 0</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </div>
 </div>
@@ -39,7 +178,14 @@
 <li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">Privacy Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grad_sample_module.html">GradSampleModule</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optim/optimizers.html">Optimizers</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">DP Data Loader</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">DP Data Loader</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.DPDataLoader"><code class="docutils literal notranslate"><span class="pre">DPDataLoader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.dtype_safe"><code class="docutils literal notranslate"><span class="pre">dtype_safe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.shape_safe"><code class="docutils literal notranslate"><span class="pre">shape_safe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.switch_generator"><code class="docutils literal notranslate"><span class="pre">switch_generator()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#opacus.data_loader.wrap_collate_with_empty"><code class="docutils literal notranslate"><span class="pre">wrap_collate_with_empty()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="accounting/accounting.html">Privacy Accounting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="validator.html">ModuleValidator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="distributed.html">Distributed</a></li>

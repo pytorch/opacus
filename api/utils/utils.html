@@ -28,10 +28,37 @@
 <h1>Utils<a class="headerlink" href="#utils" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="module_utils.html">Module Utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tensor_utils.html">Tensor Utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="packed_sequences.html">Packed Sequences</a></li>
-<li class="toctree-l1"><a class="reference internal" href="uniform_sampler.html">Uniform Sampler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_utils.html">Module Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_utils.html#opacus.utils.module_utils.are_state_dict_equal"><code class="docutils literal notranslate"><span class="pre">are_state_dict_equal()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_utils.html#opacus.utils.module_utils.clone_module"><code class="docutils literal notranslate"><span class="pre">clone_module()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_utils.html#opacus.utils.module_utils.get_submodule"><code class="docutils literal notranslate"><span class="pre">get_submodule()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_utils.html#opacus.utils.module_utils.parametrized_modules"><code class="docutils literal notranslate"><span class="pre">parametrized_modules()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_utils.html#opacus.utils.module_utils.requires_grad"><code class="docutils literal notranslate"><span class="pre">requires_grad()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_utils.html#opacus.utils.module_utils.trainable_modules"><code class="docutils literal notranslate"><span class="pre">trainable_modules()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_utils.html#opacus.utils.module_utils.trainable_parameters"><code class="docutils literal notranslate"><span class="pre">trainable_parameters()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tensor_utils.html">Tensor Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms"><code class="docutils literal notranslate"><span class="pre">calc_sample_norms()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms_one_layer"><code class="docutils literal notranslate"><span class="pre">calc_sample_norms_one_layer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tensor_utils.html#opacus.utils.tensor_utils.filter_dilated_rows"><code class="docutils literal notranslate"><span class="pre">filter_dilated_rows()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tensor_utils.html#opacus.utils.tensor_utils.sum_over_all_but_batch_and_last_n"><code class="docutils literal notranslate"><span class="pre">sum_over_all_but_batch_and_last_n()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tensor_utils.html#opacus.utils.tensor_utils.unfold2d"><code class="docutils literal notranslate"><span class="pre">unfold2d()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tensor_utils.html#opacus.utils.tensor_utils.unfold3d"><code class="docutils literal notranslate"><span class="pre">unfold3d()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="packed_sequences.html">Packed Sequences</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="packed_sequences.html#opacus.utils.packed_sequences.compute_seq_lengths"><code class="docutils literal notranslate"><span class="pre">compute_seq_lengths()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="uniform_sampler.html">Uniform Sampler</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="uniform_sampler.html#opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler"><code class="docutils literal notranslate"><span class="pre">DistributedUniformWithReplacementSampler</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="uniform_sampler.html#opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler.set_epoch"><code class="docutils literal notranslate"><span class="pre">DistributedUniformWithReplacementSampler.set_epoch()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="uniform_sampler.html#opacus.utils.uniform_sampler.UniformWithReplacementSampler"><code class="docutils literal notranslate"><span class="pre">UniformWithReplacementSampler</span></code></a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>

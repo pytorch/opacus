@@ -31,8 +31,15 @@
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">Privacy Engine</a></li>
-<li class="toctree-l1"><a class="reference internal" href="grad_sample_module.html">GradSampleModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="privacy_engine.html">Privacy Engine</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="privacy_engine.html#opacus.privacy_engine.PrivacyEngine"><code class="docutils literal notranslate"><span class="pre">PrivacyEngine</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="grad_sample_module.html">GradSampleModule</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.create_or_accumulate_grad_sample"><code class="docutils literal notranslate"><span class="pre">create_or_accumulate_grad_sample()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="optim/optimizers.html">Optimizers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="optim/dp_optimizer.html">DPOptimizer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="optim/dp_per_layer_optimizer.html">DPPerLayerOptimizer</a></li>
@@ -40,7 +47,14 @@
 <li class="toctree-l2"><a class="reference internal" href="optim/dp_ddp_per_layer_optimizer.html">DistributedPerLayerOptimizer</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="data_loader.html">DP Data Loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_loader.html">DP Data Loader</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data_loader.html#opacus.data_loader.DPDataLoader"><code class="docutils literal notranslate"><span class="pre">DPDataLoader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_loader.html#opacus.data_loader.dtype_safe"><code class="docutils literal notranslate"><span class="pre">dtype_safe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_loader.html#opacus.data_loader.shape_safe"><code class="docutils literal notranslate"><span class="pre">shape_safe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_loader.html#opacus.data_loader.switch_generator"><code class="docutils literal notranslate"><span class="pre">switch_generator()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_loader.html#opacus.data_loader.wrap_collate_with_empty"><code class="docutils literal notranslate"><span class="pre">wrap_collate_with_empty()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="accounting/accounting.html">Privacy Accounting</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="accounting/iaccountant.html">IAccountant</a></li>
 <li class="toctree-l2"><a class="reference internal" href="accounting/rdp.html">RDPAccountant</a></li>
@@ -48,10 +62,24 @@
 <li class="toctree-l2"><a class="reference internal" href="accounting/utils.html">Utils</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="validator.html">ModuleValidator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="distributed.html">Distributed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validator.html">ModuleValidator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="validator.html#opacus.validators.module_validator.ModuleValidator"><code class="docutils literal notranslate"><span class="pre">ModuleValidator</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="validator.html#opacus.validators.utils.register_module_fixer"><code class="docutils literal notranslate"><span class="pre">register_module_fixer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="validator.html#opacus.validators.utils.register_module_validator"><code class="docutils literal notranslate"><span class="pre">register_module_validator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="distributed.html">Distributed</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="distributed.html#opacus.distributed.DifferentiallyPrivateDistributedDataParallel"><code class="docutils literal notranslate"><span class="pre">DifferentiallyPrivateDistributedDataParallel</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributed.html#opacus.distributed.average_gradients"><code class="docutils literal notranslate"><span class="pre">average_gradients()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="noise_scheduler.html">Noise Scheduler</a></li>
-<li class="toctree-l1"><a class="reference internal" href="batch_memory_manager.html">Batch Memory Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch_memory_manager.html">Batch Memory Manager</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="batch_memory_manager.html#opacus.utils.batch_memory_manager.BatchMemoryManager"><code class="docutils literal notranslate"><span class="pre">BatchMemoryManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="batch_memory_manager.html#opacus.utils.batch_memory_manager.BatchSplittingSampler"><code class="docutils literal notranslate"><span class="pre">BatchSplittingSampler</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="batch_memory_manager.html#opacus.utils.batch_memory_manager.wrap_data_loader"><code class="docutils literal notranslate"><span class="pre">wrap_data_loader()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="layers.html">DP Layers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="dp_multihead_attention.html">DPMultiheadAttention</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dp_rnn.html">DPRNN</a></li>

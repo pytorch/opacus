@@ -24,8 +24,109 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="module-utils">
-<h1>Module Utils<a class="headerlink" href="#module-utils" title="Permalink to this heading">¶</a></h1>
+<section id="module-opacus.utils.module_utils">
+<span id="module-utils"></span><h1>Module Utils<a class="headerlink" href="#module-opacus.utils.module_utils" title="Permalink to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.utils.module_utils.are_state_dict_equal">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">are_state_dict_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sd1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#are_state_dict_equal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.are_state_dict_equal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compares two state dicts, while logging discrepancies</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.utils.module_utils.clone_module">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">clone_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#clone_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.clone_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handy utility to clone an nn.Module. PyTorch doesn’t always support copy.deepcopy(), so it is
+just easier to serialize the model to a BytesIO and read it from there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>module</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>) – The module to clone</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The clone of <code class="docutils literal notranslate"><span class="pre">module</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.utils.module_utils.get_submodule">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">get_submodule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#get_submodule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.get_submodule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the submodule given by target if it exists, otherwise throws an error.</p>
+<p>This is copy-pasta of Pytorch 1.9’s <code class="docutils literal notranslate"><span class="pre">get_submodule()</span></code> implementation; and is
+included here to also support Pytorch 1.8. This function can be removed in favour
+of <code class="docutils literal notranslate"><span class="pre">module.get_submodule()</span></code> once Opacus abandons support for torch 1.8.</p>
+<p>See more details at <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html?highlight=get_submodule#torch.nn.Module.get_submodule">https://pytorch.org/docs/stable/generated/torch.nn.Module.html?highlight=get_submodule#torch.nn.Module.get_submodule</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>) – module</p></li>
+<li><p><strong>target</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – submodule string</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The submodule given by target if it exists</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.11)"><strong>AttributeError</strong></a> – If submodule doesn’t exist</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.utils.module_utils.parametrized_modules">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">parametrized_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#parametrized_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.parametrized_modules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively iterates over all submodules, returning those that
+have parameters (as opposed to “wrapper modules” that just organize modules).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.utils.module_utils.requires_grad">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">requires_grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#requires_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.requires_grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if any parameters in a specified module require gradients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>) – PyTorch module whose parameters are to be examined.</p></li>
+<li><p><strong>recurse</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag specifying if the gradient requirement check should
+be applied recursively to submodules of the specified module</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Flag indicate if any parameters require gradients</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.utils.module_utils.trainable_modules">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">trainable_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#trainable_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.trainable_modules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively iterates over all submodules, returning those that
+have parameters and are trainable (ie they want a grad).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="opacus.utils.module_utils.trainable_parameters">
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">trainable_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#trainable_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.trainable_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively iterates over all parameters, returning those that
+are trainable (ie they want a grad).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch v1.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </div>
 </div>

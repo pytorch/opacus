@@ -24,8 +24,72 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="uniform-sampler">
-<h1>Uniform Sampler<a class="headerlink" href="#uniform-sampler" title="Permalink to this heading">¶</a></h1>
+<section id="module-opacus.utils.uniform_sampler">
+<span id="uniform-sampler"></span><h1>Uniform Sampler<a class="headerlink" href="#module-opacus.utils.uniform_sampler" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.utils.uniform_sampler.</span></span><span class="sig-name descname"><span class="pre">DistributedUniformWithReplacementSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/uniform_sampler.html#DistributedUniformWithReplacementSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Distributed batch sampler.</p>
+<dl class="simple">
+<dt>Each batch is sampled as follows:</dt><dd><ol class="arabic simple">
+<li><p>Shuffle the dataset (enabled by default)</p></li>
+<li><p>Split the dataset among the replicas into chunks of equal size
+(plus or minus one sample)</p></li>
+<li><p>Each replica selects each sample of its chunk independently
+with probability <cite>sample_rate</cite></p></li>
+<li><p>Each replica outputs the selected samples, which form a local batch</p></li>
+</ol>
+</dd>
+</dl>
+<p>The sum of the lengths of the local batches follows a Poisson distribution.
+In particular, the expected length of each local batch is:
+<cite>sample_rate * total_size / num_replicas</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>total_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – total number of samples to sample from</p></li>
+<li><p><strong>sample_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – number of samples to draw.</p></li>
+<li><p><strong>shuffle</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag indicating whether apply shuffle when dividing elements
+between workers</p></li>
+<li><p><strong>shuffle_seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Random seed used to shuffle when dividing elements across workers</p></li>
+<li><p><strong>generator</strong> – torch.Generator() object used as a source of randomness
+when selecting items for the next round on a given worker</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler.set_epoch">
+<span class="sig-name descname"><span class="pre">set_epoch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/uniform_sampler.html#DistributedUniformWithReplacementSampler.set_epoch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler.set_epoch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the epoch for this sampler. When <code class="xref py py-attr docutils literal notranslate"><span class="pre">shuffle=True</span></code>, this ensures all replicas
+use a different random ordering for each epoch. Otherwise, the next iteration of this
+sampler will yield the same ordering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Epoch number.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="opacus.utils.uniform_sampler.UniformWithReplacementSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.utils.uniform_sampler.</span></span><span class="sig-name descname"><span class="pre">UniformWithReplacementSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/uniform_sampler.html#UniformWithReplacementSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.uniform_sampler.UniformWithReplacementSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>This sampler samples elements according to the Sampled Gaussian Mechanism.
+Each sample is selected with a probability equal to <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>.
+The sampler generates <code class="docutils literal notranslate"><span class="pre">steps</span></code> number of batches, that defaults to 1/<code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – number of samples to draw.</p></li>
+<li><p><strong>sample_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – probability used in sampling.</p></li>
+<li><p><strong>generator</strong> – Generator used in sampling.</p></li>
+<li><p><strong>steps</strong> – Number of steps (iterations of the Sampler)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </div>
 </div>
