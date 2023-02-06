@@ -55,7 +55,7 @@ class DPPerLayerOptimizer(DPOptimizer):
         )
 
     def clip_and_accumulate(self):
-        for (p, max_grad_norm) in zip(self.params, self.max_grad_norms):
+        for p, max_grad_norm in zip(self.params, self.max_grad_norms):
             _check_processed_flag(p.grad_sample)
 
             grad_sample = self._get_flat_grad_sample(p)

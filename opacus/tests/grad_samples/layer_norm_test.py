@@ -40,7 +40,6 @@ class LayerNorm_test(GradSampleHooks_test):
         input_dim: int,
         norm_dim: int,
     ):
-
         if norm_dim >= input_dim:
             return
         if norm_dim == 1:

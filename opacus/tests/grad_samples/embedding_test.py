@@ -44,7 +44,6 @@ class Embedding_test(GradSampleHooks_test):
         dim: int,
         batch_first: bool,
     ):
-
         if dim == 1:  # TODO: fix when dim is 1
             size = [T]
         elif dim == 2:

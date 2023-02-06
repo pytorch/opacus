@@ -298,7 +298,6 @@ class GradientComputationTest(unittest.TestCase):
         )
 
     def test_add_remove_ddp_hooks(self):
-
         remaining_hooks = {
             "attached": None,
             "detached": None,

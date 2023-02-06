@@ -138,7 +138,6 @@ class AccountingTest(unittest.TestCase):
     )
     @settings(deadline=10000)
     def test_get_noise_multiplier_overshoot(self, epsilon, epochs, sample_rate, delta):
-
         noise_multiplier = get_noise_multiplier(
             target_epsilon=epsilon,
             target_delta=delta,

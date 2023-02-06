@@ -36,7 +36,6 @@ class SequenceBias_test(GradSampleHooks_test):
         D: int,
         batch_first: bool,
     ):
-
         seqbias = SequenceBias(D, batch_first)
         if batch_first:
             x = torch.randn([N, T, D])

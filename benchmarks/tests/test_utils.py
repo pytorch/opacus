@@ -150,7 +150,6 @@ def test_get_path(config: Dict[str, Any], path: str) -> None:
 def pickle_data_and_config(
     config: Dict[str, Any], root: str, suffix: str
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-
     # setup test directory and save results to pickle file
     os.mkdir(root)
     try:

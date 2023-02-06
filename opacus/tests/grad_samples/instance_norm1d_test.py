@@ -34,7 +34,6 @@ class InstanceNorm1d_test(GradSampleHooks_test):
         C: int,
         W: int,
     ):
-
         x = torch.randn([N, C, W])
         norm = nn.InstanceNorm1d(num_features=C, affine=True, track_running_stats=False)
         self.run_test(x, norm, batch_first=True)

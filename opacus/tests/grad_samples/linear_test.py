@@ -42,7 +42,6 @@ class Linear_test(GradSampleHooks_test):
         bias: bool,
         batch_first: bool,
     ):
-
         if input_dim == 2:
             if not batch_first:
                 return  # see https://github.com/pytorch/opacus/pull/265
