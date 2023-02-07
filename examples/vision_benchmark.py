@@ -134,7 +134,7 @@ def main():  # noqa: C901
         start = time.time()
         data_time = 0
         data_end = time.time()
-        for (images, target) in tqdm(train_loader):
+        for images, target in tqdm(train_loader):
             data_time += time.time() - data_end
             images = images.cuda(non_blocking=True)
 

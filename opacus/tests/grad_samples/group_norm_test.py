@@ -45,7 +45,6 @@ class GroupNorm_test(GradSampleHooks_test):
         W: int,
         num_groups: Union[int, str],
     ):
-
         if num_groups == "C":
             num_groups = C
 

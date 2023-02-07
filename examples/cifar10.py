@@ -159,7 +159,6 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
         params = list(model.parameters())
 
     for i, (images, target) in enumerate(tqdm(train_loader)):
-
         images = images.to(device)
         target = target.to(device)
 
@@ -172,7 +171,7 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
             )
             per_sample_grads = [g.detach() for g in per_sample_grads]
             loss = torch.mean(per_sample_losses)
-            for (p, g) in zip(params, per_sample_grads):
+            for p, g in zip(params, per_sample_grads):
                 p.grad_sample = g
         else:
             loss = criterion(output, target)

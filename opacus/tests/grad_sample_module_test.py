@@ -53,7 +53,6 @@ class SampleConvNet(nn.Module):
 
 
 class GradSampleModuleTest(unittest.TestCase):
-
     CLS = GradSampleModule
 
     def setUp(self):

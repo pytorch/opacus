@@ -249,7 +249,6 @@ class GradSampleHooks_test(unittest.TestCase):
 
         for grad_sample_mode in grad_sample_modes:
             for loss_reduction in ["sum", "mean"]:
-
                 with self.subTest(
                     grad_sample_mode=grad_sample_mode, loss_reduction=loss_reduction
                 ):

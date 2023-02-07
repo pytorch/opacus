@@ -83,7 +83,6 @@ def run_and_save_benchmark(
 
 
 def main(args) -> None:
-
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 

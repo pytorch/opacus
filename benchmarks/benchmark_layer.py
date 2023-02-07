@@ -90,7 +90,6 @@ def run_layer_benchmark(
 
 
 def main(args) -> None:
-
     with open(args.config_file) as config_file:
         config = json.load(config_file)
 

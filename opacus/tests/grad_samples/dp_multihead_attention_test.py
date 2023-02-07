@@ -66,7 +66,6 @@ class MultiHeadAttention_test(GradSampleHooks_test):
         add_zero_attn: bool,
         kv_dim: bool,
     ):
-
         if kv_dim:
             kdim, vdim = D, D
         else:

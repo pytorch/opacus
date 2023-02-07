@@ -52,7 +52,6 @@ class Conv3d_test(GradSampleHooks_test):
         dilation: int,
         groups: int,
     ):
-
         if padding == "same" and stride != 1:
             return
         out_channels = out_channels_mapper(C)

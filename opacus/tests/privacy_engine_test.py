@@ -150,7 +150,6 @@ class BasePrivacyEngineTest(ABC):
         dl: DataLoader,
         max_steps: Optional[int] = None,
     ):
-
         steps = 0
         epochs = 1 if max_steps is None else math.ceil(max_steps / len(dl))
 

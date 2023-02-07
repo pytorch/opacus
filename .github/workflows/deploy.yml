@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install sphinx sphinx-autodoc-typehints nbsphinx bs4
+          python -m pip install opacus sphinx sphinx-autodoc-typehints nbsphinx bs4
           yarn install
       - name: Build website
         run: ./scripts/build_website.sh -b
