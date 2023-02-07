@@ -82,7 +82,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="DPPerLayerOptimizer.clip_and_accumulate"><a class="viewcode-back" href="../../../optim/dp_per_layer_optimizer.html#opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer.clip_and_accumulate">[docs]</a>    <span class="k">def</span> <span class="nf">clip_and_accumulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norms</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">max_grad_norm</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norms</span><span class="p">):</span>
             <span class="n">_check_processed_flag</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>
 
             <span class="n">grad_sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flat_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
