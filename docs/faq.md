@@ -98,7 +98,7 @@ Assuming that batches are randomly selected, an increase in the batch size incre
 
 ## My model throws IncompatibleModuleException. What is going wrong?
 
-Your model most likely contains modules that are not compatible with Opacus. The most prominent example of these modules is batch-norm types. Luckily there is a good substitute for a `BatchNorm` layer, and it is called `GroupNorm`. You can convert all your batch norm submodules using this utility function: `opacus.utils.module_modification.convert_batchnorm_modules.`
+Your model most likely contains modules that are not compatible with Opacus. The most prominent example of these modules is batch-norm types. Before validating you model try to fix incompatible modules using `ModuleValidator.fix(model)` as described [here](https://opacus.ai/tutorials/guide_to_module_validator#Registering-fixer).
 
 ## What is virtual batch size?
 
