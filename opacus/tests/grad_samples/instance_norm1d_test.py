@@ -22,18 +22,11 @@ from .common import GradSampleHooks_test
 
 
 class InstanceNorm1d_test(GradSampleHooks_test):
-    @given(
-        N=st.integers(1, 4),
-        C=st.integers(1, 3),
-        W=st.integers(5, 10),
-    )
+    @given(N=st.integers(1, 4), C=st.integers(1, 3), W=st.integers(5, 10))
     @settings(deadline=10000)
-    def test_3d_input(
-        self,
-        N: int,
-        C: int,
-        W: int,
-    ):
+    def test_3d_input(self, N: int, C: int, W: int):
+
         x = torch.randn([N, C, W])
         norm = nn.InstanceNorm1d(num_features=C, affine=True, track_running_stats=False)
+
         self.run_test(x, norm, batch_first=True)

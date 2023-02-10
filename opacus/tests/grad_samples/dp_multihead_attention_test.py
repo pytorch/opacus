@@ -53,6 +53,7 @@ class MultiHeadAttention_test(GradSampleHooks_test):
         add_bias_kv=st.booleans(),
         add_zero_attn=st.booleans(),
         kv_dim=st.booleans(),
+        test_or_check=st.integers(1, 2),
     )
     @settings(deadline=10000)
     def test_multihead_attention(
@@ -65,6 +66,7 @@ class MultiHeadAttention_test(GradSampleHooks_test):
         add_bias_kv: bool,
         add_zero_attn: bool,
         kv_dim: bool,
+        test_or_check: int,
     ):
         if kv_dim:
             kdim, vdim = D, D

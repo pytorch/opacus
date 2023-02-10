@@ -29,13 +29,8 @@ class InstanceNorm2d_test(GradSampleHooks_test):
         H=st.integers(4, 8),
     )
     @settings(deadline=10000)
-    def test_4d_input(
-        self,
-        N: int,
-        C: int,
-        W: int,
-        H: int,
-    ):
+    def test_4d_input(self, N: int, C: int, W: int, H: int):
+
         x = torch.randn([N, C, H, W])
         norm = nn.InstanceNorm2d(num_features=C, affine=True, track_running_stats=False)
         self.run_test(x, norm, batch_first=True)
