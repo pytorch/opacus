@@ -132,7 +132,6 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
         batch_first: bool,
         grad_sample_mode: str,
     ):
-
         if input_dim == 2:
             if not batch_first:
                 return  # see https://github.com/pytorch/opacus/pull/265
