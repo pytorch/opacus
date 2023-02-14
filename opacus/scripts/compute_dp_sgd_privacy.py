@@ -71,7 +71,7 @@ def _apply_dp_sgd_analysis(
     Returns:
         Pair of privacy loss epsilon and optimal order alpha
     """
-    rdp = compute_rdp(sample_rate, noise_multiplier, steps, alphas)
+    rdp = compute_rdp(q=sample_rate, noise_multiplier=noise_multiplier, steps=steps, orders=alphas)
     eps, opt_alpha = get_privacy_spent(alphas, rdp, delta=delta)
 
     if verbose:
