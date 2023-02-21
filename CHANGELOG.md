@@ -12,6 +12,7 @@ Highlight: Upgraded to PyTorch 1.13+ as required dependency
 * Align DataLoader interface with vanilla PyTorch (#543)
 * Fix GDP accountant epsilon retrieval changing internal state (#541)
 * Add option to specify number of steps in UniformSampler (#550)
+* Fix privacy computation script (#565)
 
 
 ## v1.3
