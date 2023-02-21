@@ -6,7 +6,7 @@ Highlight: Upgraded to PyTorch 1.13+ as required dependency
 
 ### New features
 * Added clipping schedulers (#556)
-* Util to check per sample gradinets (#532)
+* Util to check per sample gradients (#532)
 
 ### Bug fixes
 * Align DataLoader interface with vanilla PyTorch (#543)
