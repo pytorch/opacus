@@ -98,8 +98,10 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        Pair of privacy loss epsilon and optimal order alpha</span>
 <span class="sd">    """</span>
-    <span class="n">rdp</span> <span class="o">=</span> <span class="n">compute_rdp</span><span class="p">(</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">alphas</span><span class="p">)</span>
-    <span class="n">eps</span><span class="p">,</span> <span class="n">opt_alpha</span> <span class="o">=</span> <span class="n">get_privacy_spent</span><span class="p">(</span><span class="n">alphas</span><span class="p">,</span> <span class="n">rdp</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">)</span>
+    <span class="n">rdp</span> <span class="o">=</span> <span class="n">compute_rdp</span><span class="p">(</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span> <span class="n">orders</span><span class="o">=</span><span class="n">alphas</span>
+    <span class="p">)</span>
+    <span class="n">eps</span><span class="p">,</span> <span class="n">opt_alpha</span> <span class="o">=</span> <span class="n">get_privacy_spent</span><span class="p">(</span><span class="n">orders</span><span class="o">=</span><span class="n">alphas</span><span class="p">,</span> <span class="n">rdp</span><span class="o">=</span><span class="n">rdp</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span>
