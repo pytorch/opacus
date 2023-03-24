@@ -76,14 +76,14 @@
   src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js">
 </script>
 <div class="notebook">
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=089e364e"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Training-with-Opacus-on-multiple-GPUs-with-Distributed-Data-Parallel">Training with Opacus on multiple GPUs with Distributed Data Parallel<a class="anchor-link" href="#Training-with-Opacus-on-multiple-GPUs-with-Distributed-Data-Parallel">¶</a></h1>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=afda23db"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>In this tutorial we'll go over the basics you need to know to start using Opacus in your distributed model training pipeline. As the state-of-the-art models and datasets get bigger, multi-GPU training became the norm and Opacus comes with seamless, out-of-the-box support for Distributed Data Parallel (DDP).</p>
@@ -93,14 +93,14 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=e04831f6"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Chapter-0:-Preparations">Chapter 0: Preparations<a class="anchor-link" href="#Chapter-0:-Preparations">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=1089c8c1"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Before we begin, there are a few things we need to mention.</p>
@@ -109,21 +109,21 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=a702f3d6"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Chapter-1:-Getting-Started">Chapter 1: Getting Started<a class="anchor-link" href="#Chapter-1:-Getting-Started">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=3a9a2af5"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>First, let's initialise the distributed environment</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=7189b698">
 <div class="input">
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
@@ -161,14 +161,14 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=36d6ebef"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We'll be using MNIST for a toy example, so let's also initialize simple convolutional network and download the dataset</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=336d6560">
 <div class="input">
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
@@ -212,7 +212,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=254db444">
 <div class="input">
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
@@ -266,7 +266,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=3b754537"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Coming next is the key bit - and the only one that's different from non-private DDP.</p>
@@ -281,7 +281,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=4af4f1d0">
 <div class="input">
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
@@ -359,14 +359,14 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=baae0bb5"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Now we just need to define the training loop and launch it.</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=26c24fc7">
 <div class="input">
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
@@ -453,7 +453,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=03256ef1">
 <div class="input">
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
@@ -488,7 +488,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=e8703467"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>And, finally, running the script. Notice, that we've initialized our <code>DataLoader</code> with <code>batch_size=200</code>, which is equivalent to 300 batches on the full dataset (60000 images).</p>
@@ -496,7 +496,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=48c97af5">
 <div class="input">
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
@@ -531,14 +531,14 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=a2844d05"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Chapter-2:-Data-and-distributed-sampler">Chapter 2: Data and distributed sampler<a class="anchor-link" href="#Chapter-2:-Data-and-distributed-sampler">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=c86099a0"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><strong>Note</strong>: The following two chapters discuss the advanced usage of Opacus and its implementation details. We strongly recommend to read the tutorial on <a href="https://opacus.ai/tutorials/intro_to_advanced_features">Advanced Features of Opacus</a> before proceeding.</p>
@@ -547,7 +547,7 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=5ef85e84"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Let's now initialize the regular data loader and then transform it to the <code>DPDataLoader</code>. This is exactly how we do it in the <code>make_private()</code> method.</p>
@@ -561,7 +561,7 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=ea3bc937">
 <div class="input">
 <div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
@@ -632,7 +632,7 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=3dba7efa">
 <div class="input">
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
@@ -667,7 +667,7 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=98adeb98"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Let's see what happens when we run it - and what exactly does <code>from_data_loader</code> factory did.</p>
@@ -675,7 +675,7 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=99ef680c">
 <div class="input">
 <div class="prompt input_prompt">In [10]:</div>
 <div class="inner_cell">
@@ -699,14 +699,14 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=d938f572"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Chapter-3:-Synchronisation">Chapter 3: Synchronisation<a class="anchor-link" href="#Chapter-3:-Synchronisation">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=491a3ed8"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>One significant difference between <code>DDP</code> and <code>DPDDP</code> is how it approaches synchronisation.</p>
@@ -716,7 +716,7 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=9821ce76">
 <div class="input">
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
@@ -782,7 +782,7 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=a1e810cc"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Now we've initialized <code>DifferentiallyPrivateDistributedDataParallel</code> model and <code>DistributedDPOptimizer</code> let's see how they work together.</p>
@@ -796,7 +796,7 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=fa600d2f">
 <div class="input">
 <div class="prompt input_prompt">In [12]:</div>
 <div class="inner_cell">
@@ -862,7 +862,7 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=d249d0d5">
 <div class="input">
 <div class="prompt input_prompt">In [13]:</div>
 <div class="inner_cell">
@@ -897,14 +897,14 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=a9c95972"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>When we run the code, notice that the gradients are not synchronised after <code>loss.backward()</code>, but only after <code>optimizer.step()</code>. For this example, we've set privacy parameters to effectively disable noise and clipping, so the synchronised gradient is indeed the average between individual worker's gradients.</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=c4a8967c">
 <div class="input">
 <div class="prompt input_prompt">In [14]:</div>
 <div class="inner_cell">
@@ -933,14 +933,14 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=78da9b43-d92a-436f-b000-4b633e85479a"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Cleanup">Cleanup<a class="anchor-link" href="#Cleanup">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=1cf71582-6808-4fb8-b7b0-9afb462b75b8">
 <div class="input">
 <div class="prompt input_prompt">In [15]:</div>
 <div class="inner_cell">

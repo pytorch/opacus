@@ -76,14 +76,14 @@
   src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js">
 </script>
 <div class="notebook">
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=b720e477"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Introduction-to-advanced-features-of-Opacus">Introduction to advanced features of Opacus<a class="anchor-link" href="#Introduction-to-advanced-features-of-Opacus">¶</a></h1>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=e35423c6"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>In this tutorial, we'll dive deeper into Opacus architecture, explore what's happening under the hood of <code>PrivacyEngine</code>, and see how you can adapt if the basic API provided by the <code>PrivacyEngine</code> doesn't satisfy your need.</p>
@@ -92,21 +92,21 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=9faddaca"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Part-0:-Preparations">Part 0: Preparations<a class="anchor-link" href="#Part-0:-Preparations">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=0678c59b"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>First, we'll need to prepare a toy model and a dataset to work with. We'll keep it simple and just throw a bunch of random numbers into some linear layers</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=148a66e5">
 <div class="input">
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
@@ -136,14 +136,14 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=ba140c2a"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Part-1:-The-three-pillars">Part 1: The three pillars<a class="anchor-link" href="#Part-1:-The-three-pillars">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=fc51626e"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Let's recall the basics of DP-SGD (see <a href="https://medium.com/pytorch/differential-privacy-series-part-1-dp-sgd-algorithm-explained-12512c3959a3">this post</a> for a more extensive reminder).</p>
@@ -165,7 +165,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=bea44b4a">
 <div class="input">
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
@@ -188,7 +188,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=a69fbf2f"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Here's how Opacus approaches this task.</p>
@@ -196,7 +196,7 @@
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=9c3a3c39">
 <div class="input">
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
@@ -246,7 +246,7 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=81060faa"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>In short, each of these Opacus classes wraps the underlying object and assigns additional responsibilities:</p>
@@ -258,14 +258,14 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=2f7b44a3"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Part-2:-Inside-make_private()">Part 2: Inside <code>make_private()</code><a class="anchor-link" href="#Part-2:-Inside-make_private()">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=c6a8caed"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We'll talk more about each of the returned objects later. Now let's focus on what happens inside <code>make_private</code> (and what you need to do if you want to wrap the training objects yourself).</p>
@@ -273,7 +273,7 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=93178274">
 <div class="input">
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
@@ -286,7 +286,7 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=32a97246"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We now will reconstruct the actions made by <code>make_private()</code>, but without calling <code>make_private()</code>.</p>
@@ -294,21 +294,21 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=1236e596"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="2a---GradSampleModule">2a - GradSampleModule<a class="anchor-link" href="#2a---GradSampleModule">¶</a></h3>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=4b59525e"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We start by wrapping the model with <code>GradSampleModule</code> - very straightforward.</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=8b39f278">
 <div class="input">
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
@@ -335,14 +335,14 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=a548f91d"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Let's take a look at the gradients. Note the shapes of per sample gradients - it's always the same as the original gradient with an additional dimension representing the batch</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=a0bd78d3">
 <div class="input">
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
@@ -380,7 +380,7 @@ Average grad_sample over 1st dimension. Equal to original:  True
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=31b63901"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We now continue with re-implementing <code>make_private()</code></p>
@@ -389,7 +389,7 @@ Average grad_sample over 1st dimension. Equal to original:  True
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=c9aa9bc5">
 <div class="input">
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
@@ -452,21 +452,21 @@ Average grad_sample over 1st dimension. Equal to original:  True
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=fe68df69"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="2b---DPDataLoader">2b - DPDataLoader<a class="anchor-link" href="#2b---DPDataLoader">¶</a></h3>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=c0e08935"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>We now got to the data loader. Note, that DPDataLoader returns a brand new DataLoader, which is backed by the same dataset.</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=c70f717d">
 <div class="input">
 <div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
@@ -498,14 +498,14 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=26522f38"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Note, that one interesting property of Poisson sampling, which we need to take into account, is that batch sizes are not constant. Yes, on average it'll be the same as the batch size of the original data loader, but it'll vary on every iteration:</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=ed38f726">
 <div class="input">
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
@@ -531,14 +531,14 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=eb273628"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="2c---DPOptimizer">2c - DPOptimizer<a class="anchor-link" href="#2c---DPOptimizer">¶</a></h3>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=86559ea0"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Because of this variability, we can't infer the batch size from the input shape. And we need to know the batch size if we're averaging the gradients (with added noise) - under the DP assumptions sampling outcome (i.e. real batch size) does not affect the amount of noise added.</p>
@@ -547,7 +547,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=8e4ed747">
 <div class="input">
 <div class="prompt input_prompt">In [10]:</div>
 <div class="inner_cell">
@@ -568,14 +568,14 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=69d84c78"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="3d---RDPAccountant">3d - RDPAccountant<a class="anchor-link" href="#3d---RDPAccountant">¶</a></h3>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=50503302"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>And now the final piece of the puzzle - privacy accounting.</p>
@@ -584,7 +584,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=4d0d1b2e">
 <div class="input">
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
@@ -598,7 +598,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=67c7ba30"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Let's unpack what's happened here.</p>
@@ -613,21 +613,21 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=d92eb5e2"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>That concludes it! Now we have fully initialized <code>model</code>, <code>optimizer</code> and <code>data_loader</code> and they're ready to be used for training</p>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=ebee5eaf"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Part-3:-DPOptimizer-customizations">Part 3: DPOptimizer customizations<a class="anchor-link" href="#Part-3:-DPOptimizer-customizations">¶</a></h2>
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=36665c77"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Many non-standard use cases will involve customizing the behaviour of <code>DPOptimizer</code>. In fact, we do this already with per layer clipping (<code>DPPerLayerOptimizer</code>) and (<code>DistributedDPOptimizer</code>). If you're interested in building custom DPOptmizer yourself, definitely do study these implementations.</p>
@@ -635,7 +635,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=02cead99">
 <div class="input">
 <div class="prompt input_prompt">In [12]:</div>
 <div class="inner_cell">
@@ -658,7 +658,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=a7e54d53"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Above is the simplified diagram of DPOptimizer's flow. The main thing to learn from it is how DPOptimizer uses different attributes in <code>nn.Parameter</code> to store gradients at different stages of processing.</p>
@@ -672,7 +672,7 @@ For example, <code>DPPerLayerOptimizer</code> overrides <code>clip_and_accumulat
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=367d8dd7"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>To take a concrete example, let's implement DPOptimizer that adds Laplace noise instead of Gaussian.</p>
@@ -680,7 +680,7 @@ For example, <code>DPPerLayerOptimizer</code> overrides <code>clip_and_accumulat
 </div>
 </div>
 </div>
-<div class="cell border-box-sizing code_cell rendered">
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=bff09997">
 <div class="input">
 <div class="prompt input_prompt">In [13]:</div>
 <div class="inner_cell">
