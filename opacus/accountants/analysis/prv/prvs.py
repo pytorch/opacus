@@ -47,7 +47,9 @@ class PoissonSubsampledGaussianPRV:
         q = self.sample_rate
         sigma = self.noise_multiplier
 
-        z = np.log((np.exp(t) + q - 1) / q)
+        # z doesn't matter if t <= log(1-q)
+        # this is to avoid userwarning if argument to log is <0
+        z = np.log(np.where(t > np.log(1 - q), (np.exp(t) + q - 1) / q, 1))
 
         return np.where(
             t > np.log(1 - q),
