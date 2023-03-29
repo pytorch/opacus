@@ -491,6 +491,11 @@
 <span class="sd">            module: PyTorch module to be used for training</span>
 <span class="sd">            optimizer: Optimizer to be used for training</span>
 <span class="sd">            data_loader: DataLoader to be used for training</span>
+<span class="sd">            target_epsilon: Target epsilon to be achieved, a metric of privacy loss at differential changes in data.</span>
+<span class="sd">            target_delta: Target delta to be achieved. Probability of information being leaked.</span>
+<span class="sd">            epochs: Number of training epochs you intend to perform; noise_multiplier relies on this to calculate</span>
+<span class="sd">                an appropriate sigma to ensure privacy budget of (target_epsilon, target_delta) at the end</span>
+<span class="sd">                of epochs.</span>
 <span class="sd">            max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm</span>
 <span class="sd">                higher than this will be clipped to this value.</span>
 <span class="sd">            batch_first: Flag to indicate if the input tensor to the corresponding module</span>
