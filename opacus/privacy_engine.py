@@ -464,6 +464,11 @@ class PrivacyEngine:
             module: PyTorch module to be used for training
             optimizer: Optimizer to be used for training
             data_loader: DataLoader to be used for training
+            target_epsilon: Target epsilon to be achieved, a metric of privacy loss at differential changes in data.
+            target_delta: Target delta to be achieved. Probability of information being leaked.
+            epochs: Number of training epochs you intend to perform; noise_multiplier relies on this to calculate
+                an appropriate sigma to ensure privacy budget of (target_epsilon, target_delta) at the end
+                of epochs.
             max_grad_norm: The maximum norm of the per-sample gradients. Any gradient with norm
                 higher than this will be clipped to this value.
             batch_first: Flag to indicate if the input tensor to the corresponding module
