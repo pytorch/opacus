@@ -15,7 +15,7 @@
 
 import logging
 import math
-from typing import List, Union
+from typing import List, Optional, Union
 
 import torch.nn as nn
 
@@ -62,16 +62,23 @@ def fix(module: BATCHNORM, **kwargs) -> Union[nn.GroupNorm, INSTANCENORM]:
         "The default batch_norm fixer replaces BatchNorm with GroupNorm."
         "To overwrite the default to InstanceNorm, call fix() with replace_bn_with_in=True."
     )
+
     is_replace_bn_with_in = kwargs.get("replace_bn_with_in", False)
+    num_groups = kwargs.get("num_groups", None)
+
+    if is_replace_bn_with_in and num_groups is not None:
+        raise ValueError("is_replace_bn_with_in and num_groups are mutually exclusive")
 
     return (
         _batchnorm_to_instancenorm(module)
         if is_replace_bn_with_in
-        else _batchnorm_to_groupnorm(module)
+        else _batchnorm_to_groupnorm(module, num_groups)
     )
 
 
-def _batchnorm_to_groupnorm(module: BATCHNORM) -> nn.GroupNorm:
+def _batchnorm_to_groupnorm(
+    module: BATCHNORM, num_groups: Optional[int] = None
+) -> nn.GroupNorm:
     """
     Converts a BatchNorm ``module`` to GroupNorm module.
     This is a helper function.
@@ -86,9 +93,10 @@ def _batchnorm_to_groupnorm(module: BATCHNORM) -> nn.GroupNorm:
         A default value of 32 is chosen for the number of groups based on the
         paper *Group Normalization* https://arxiv.org/abs/1803.08494
     """
-    return nn.GroupNorm(
-        math.gcd(32, module.num_features), module.num_features, affine=module.affine
-    )
+    if num_groups is None:
+        num_groups = math.gcd(32, module.num_features)
+
+    return nn.GroupNorm(num_groups, module.num_features, affine=module.affine)
 
 
 def _batchnorm_to_instancenorm(module: BATCHNORM) -> INSTANCENORM:

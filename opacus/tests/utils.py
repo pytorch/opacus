@@ -19,6 +19,18 @@ class BasicSupportedModule(nn.Module):
         return x
 
 
+class BasicBatchNormModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(4, 8)
+        self.bn = nn.BatchNorm2d(16)
+
+    def forward(self, x):
+        x = self.fc(x)
+        x = self.bn(x)
+        return x
+
+
 class CustomLinearModule(nn.Module):
     def __init__(self, in_features: int, out_features: int):
         super().__init__()
