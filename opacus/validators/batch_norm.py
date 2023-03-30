@@ -77,7 +77,7 @@ def fix(module: BATCHNORM, **kwargs) -> Union[nn.GroupNorm, INSTANCENORM]:
 
 
 def _batchnorm_to_groupnorm(
-    module: BATCHNORM, num_groups: Optional[int] = None
+    module: BATCHNORM, *, num_groups: Optional[int] = None
 ) -> nn.GroupNorm:
     """
     Converts a BatchNorm ``module`` to GroupNorm module.
