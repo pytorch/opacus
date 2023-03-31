@@ -72,7 +72,7 @@ def fix(module: BATCHNORM, **kwargs) -> Union[nn.GroupNorm, INSTANCENORM]:
     return (
         _batchnorm_to_instancenorm(module)
         if is_replace_bn_with_in
-        else _batchnorm_to_groupnorm(module, num_groups)
+        else _batchnorm_to_groupnorm(module, num_groups=num_groups)
     )
 
 
