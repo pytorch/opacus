@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import unittest
+from collections import OrderedDict
 
 import torch
 import torch.nn as nn
@@ -134,3 +135,27 @@ class ModuleValidator_test(unittest.TestCase):
         model.b1.weight.requires_grad = False
         model.b1.bias.requires_grad = False
         self.assertTrue(ModuleValidator.is_valid(model))
+
+    def test_fix_bn_with_args(self):
+        m = nn.Sequential(
+            OrderedDict(
+                [
+                    ("fc", nn.Linear(4, 8)),
+                    ("bn", nn.BatchNorm2d(16)),
+                ]
+            )
+        )
+
+        m1 = ModuleValidator.fix(m)
+        self.assertTrue(isinstance(m1.bn, nn.GroupNorm))
+        self.assertEqual(m1.bn.num_groups, 16)
+
+        m2 = ModuleValidator.fix(m, num_groups=4)
+        self.assertTrue(isinstance(m2.bn, nn.GroupNorm))
+        self.assertEqual(m2.bn.num_groups, 4)
+
+        m3 = ModuleValidator.fix(m, replace_bn_with_in=True)
+        self.assertTrue(isinstance(m3.bn, nn.InstanceNorm2d))
+
+        with self.assertRaises(ValueError):
+            ModuleValidator.fix(m, replace_bn_with_in=True, num_groups=4)
