@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import unittest
+from collections import OrderedDict
 
 import torch
 import torch.nn as nn
-from opacus.tests.utils import BasicBatchNormModel
 from opacus.validators.errors import UnsupportedModuleError
 from opacus.validators.module_validator import ModuleValidator
 from torchvision.models import mobilenet_v3_small
@@ -137,7 +137,15 @@ class ModuleValidator_test(unittest.TestCase):
         self.assertTrue(ModuleValidator.is_valid(model))
 
     def test_fix_bn_with_args(self):
-        m = BasicBatchNormModel()
+        m = nn.Sequential(
+            OrderedDict(
+                [
+                    ("fc", nn.Linear(4, 8)),
+                    ("bn", nn.BatchNorm2d(16)),
+                ]
+            )
+        )
+
         m1 = ModuleValidator.fix(m)
         self.assertTrue(isinstance(m1.bn, nn.GroupNorm))
         self.assertEqual(m1.bn.num_groups, 16)
