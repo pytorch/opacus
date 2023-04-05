@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-from typing import Any, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Optional, Sequence, Tuple, Type, Union, List
 
 import torch
 from opacus.utils.uniform_sampler import (
@@ -23,10 +23,24 @@ from opacus.utils.uniform_sampler import (
 from torch.utils.data import BatchSampler, DataLoader, Dataset, IterableDataset, Sampler
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t
-
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
+#
+# def collate(
+#     batch: List[torch.Tensor],
+#     collate_fn: Optional[_collate_fn_t],
+#     sample_empty_shapes: Sequence[Tuple],
+#     dtypes: Sequence[Union[torch.dtype, Type]],
+# ):
+#     if len(batch) > 0:
+#         return collate_fn(batch)
+#     else:
+#         return [
+#             torch.zeros(shape, dtype=dtype)
+#             for shape, dtype in zip(sample_empty_shapes, dtypes)
+#         ]
 
 def wrap_collate_with_empty(
     *,
@@ -48,7 +62,9 @@ def wrap_collate_with_empty(
         the input batch is of size 0
     """
 
-    def collate(batch):
+    def collate(
+        batch: List[torch.Tensor],
+    ):
         if len(batch) > 0:
             return collate_fn(batch)
         else:
@@ -57,7 +73,12 @@ def wrap_collate_with_empty(
                 for shape, dtype in zip(sample_empty_shapes, dtypes)
             ]
 
-    return collate
+    return partial(
+        collate,
+        collate_fn=collate_fn,
+        sample_empty_shapes=sample_empty_shapes,
+        dtypes=dtypes,
+    )
 
 
 def shape_safe(x: Any) -> Tuple:

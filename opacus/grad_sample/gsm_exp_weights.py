@@ -44,7 +44,6 @@ class GradSampleModuleExpandedWeights(AbstractGradSampleModule):
 
     def forward(self, x: torch.Tensor, *args, **kwargs):
         from torch.nn.utils._per_sample_grad import call_for_per_sample_grads
-
         return call_for_per_sample_grads(
             module=self._module,
             batch_size=x.shape[0],

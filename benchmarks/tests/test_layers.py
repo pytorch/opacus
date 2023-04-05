@@ -23,7 +23,6 @@ import torch.nn as nn
 from helpers import skipifnocuda
 from opacus.grad_sample import GradSampleModule
 from opacus.grad_sample.gsm_exp_weights import (
-    API_CUTOFF_VERSION,
     GradSampleModuleExpandedWeights,
 )
 from opacus.layers import DPGRU, DPLSTM, DPRNN, DPMultiheadAttention
@@ -31,20 +30,7 @@ from opacus.layers import DPGRU, DPLSTM, DPRNN, DPMultiheadAttention
 from benchmarks.layers import LayerFactory
 from benchmarks.utils import reset_peak_memory_stats
 
-
-def _gsm_modes() -> Set[str]:
-    ret = ["baseline", "hooks"]
-    try:
-        import functorch  # noqa: F401, Checking for import errors
-
-        ret += ["functorch"]
-    except ImportError:
-        pass
-
-    if torch.__version__ >= API_CUTOFF_VERSION:
-        ret += ["ew"]
-    return set(ret)
-
+GSM_MODES = {"baseline", "hooks", "ew", "functorch"}
 
 PARAMETERS = [
     (
@@ -121,7 +107,7 @@ def test_layer_modules(
     """
 
     for layer_name, module, gsm_mode_blocklist in layer_list:
-        for gsm_mode in _gsm_modes() - set(gsm_mode_blocklist):
+        for gsm_mode in GSM_MODES - set(gsm_mode_blocklist):
             if gsm_mode in gsm_mode_blocklist:
                 continue
 
@@ -161,7 +147,7 @@ def test_to_device(
     assert reset_peak_memory_stats(cuda).cur_mem == 0
 
     for layer_name, module, gsm_mode_blocklist in layer_list:
-        for gsm_mode in _gsm_modes() - set(gsm_mode_blocklist):
+        for gsm_mode in GSM_MODES - set(gsm_mode_blocklist):
             layer = LayerFactory.create(
                 layer_name=layer_name,
                 batch_size=64,
@@ -207,7 +193,7 @@ def test_layer_outputs(
     }
 
     for layer_name, module, gsm_mode_blocklist in layer_list:
-        for gsm_mode in _gsm_modes() - set(gsm_mode_blocklist):
+        for gsm_mode in GSM_MODES - set(gsm_mode_blocklist):
             for random_seed in (random_seed_a, random_seed_b):
                 logging.error(f"{gsm_mode}, {layer_name}")
                 layer = LayerFactory.create(
@@ -246,7 +232,7 @@ def test_forward_backward(
         layer_config: config for instantiating the layers in layer_list
     """
     for layer_name, module, gsm_mode_blocklist in layer_list:
-        for gsm_mode in _gsm_modes() - set(gsm_mode_blocklist):
+        for gsm_mode in GSM_MODES - set(gsm_mode_blocklist):
             layer = LayerFactory.create(
                 layer_name=layer_name,
                 batch_size=64,

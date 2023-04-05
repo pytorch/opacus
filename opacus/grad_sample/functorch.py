@@ -1,6 +1,28 @@
 import torch.nn as nn
 from opacus.layers.dp_rnn import RNNLinear
+# from torch.func import vmap, grad, functional_call
+import copy
+import torch
+from functorch import make_functional, vmap, grad
 
+
+# https://gist.github.com/zou3519/7769506acc899d83ef1464e28f22e6cf
+# def make_functional(mod, disable_autograd_tracking=False):
+#     params_dict = dict(mod.named_parameters())
+#     params_names = params_dict.keys()
+#     params_values = tuple(params_dict.values())
+#
+#     stateless_mod = copy.deepcopy(mod)
+#     stateless_mod.to('meta')
+#
+#     def fmodel(new_params_values, *args, **kwargs):
+#         new_params_dict = {name: value for name, value in
+#                            zip(params_names, new_params_values)}
+#         return torch.func.functional_call(stateless_mod, new_params_dict, args, kwargs)
+#
+#     if disable_autograd_tracking:
+#         params_values = torch.utils._pytree.tree_map(torch.Tensor.detach, params_values)
+#     return fmodel, params_values
 
 def prepare_layer(layer, batch_first=True):
     """
@@ -12,14 +34,13 @@ def prepare_layer(layer, batch_first=True):
         layer: the layer to prepare
         batch_first: whether the input is batch_first or not
     """
-    from functorch import grad, make_functional, vmap
-
     if len(list(layer.buffers())) > 0:
         raise NotImplementedError(
             "This layer has buffers and is not supported by Opacus"
         )
     if type(layer) is nn.EmbeddingBag:
         raise NotImplementedError("Functorch does not support EmbeddingBag yet")
+
     flayer, _ = make_functional(layer)
 
     def compute_loss_stateless_model(params, activations, backprops):

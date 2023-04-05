@@ -126,7 +126,6 @@ class PrivacyEngine:
         self.secure_mode = secure_mode
         self.secure_rng = None
         self.dataset = None  # only used to detect switching to a different dataset
-
         if self.secure_mode:
             try:
                 import torchcsprng as csprng
@@ -403,7 +402,7 @@ class PrivacyEngine:
             grad_sample_mode=grad_sample_mode,
         )
         if poisson_sampling:
-            module.register_backward_hook(forbid_accumulation_hook)
+            module.register_full_backward_hook(forbid_accumulation_hook)
 
         data_loader = self._prepare_data_loader(
             data_loader, distributed=distributed, poisson_sampling=poisson_sampling
