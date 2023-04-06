@@ -2,10 +2,8 @@ import copy
 
 import torch
 import torch.nn as nn
-
-# from functorch import grad, make_functional, vmap
 from opacus.layers.dp_rnn import RNNLinear
-from torch.func import functional_call, grad, vmap
+from torch.func import grad, vmap
 
 
 # https://gist.github.com/zou3519/7769506acc899d83ef1464e28f22e6cf
