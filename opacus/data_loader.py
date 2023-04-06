@@ -13,7 +13,8 @@
 # limitations under the License.
 
 import logging
-from typing import Any, Optional, Sequence, Tuple, Type, Union, List
+from functools import partial
+from typing import Any, List, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from opacus.utils.uniform_sampler import (
@@ -23,7 +24,7 @@ from opacus.utils.uniform_sampler import (
 from torch.utils.data import BatchSampler, DataLoader, Dataset, IterableDataset, Sampler
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataloader import _collate_fn_t
-from functools import partial
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ logger = logging.getLogger(__name__)
 #             torch.zeros(shape, dtype=dtype)
 #             for shape, dtype in zip(sample_empty_shapes, dtypes)
 #         ]
+
 
 def collate(
     batch: List[torch.Tensor],

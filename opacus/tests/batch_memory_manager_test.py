@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import unittest
 
 import torch
@@ -21,7 +22,7 @@ from hypothesis import strategies as st
 from opacus import PrivacyEngine
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader, TensorDataset
-import sys
+
 
 class Model(nn.Module):
     def __init__(self):

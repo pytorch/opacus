@@ -68,18 +68,12 @@ def forbid_accumulation_hook(
         return
 
     for _, p in trainable_parameters(module):
-        if p.grad_sample is not None:
-            if isinstance(p.grad_sample, torch.Tensor):
-                accumulated_iterations = 1
-            elif isinstance(p.grad_sample, list):
-                accumulated_iterations = len(p.grad_sample)
-
-            if accumulated_iterations > 1:
-                raise ValueError(
-                    "Poisson sampling is not compatible with grad accumulation. "
-                    "You need to call optimizer.step() after every forward/backward pass "
-                    "or consider using BatchMemoryManager"
-                )
+        if p.grad_sample is not None and len(p.grad_sample) > 0:
+            raise ValueError(
+                "Poisson sampling is not compatible with grad accumulation. "
+                "You need to call optimizer.step() after every forward/backward pass "
+                "or consider using BatchMemoryManager"
+            )
 
 
 class PrivacyEngine:
@@ -403,6 +397,7 @@ class PrivacyEngine:
         )
         if poisson_sampling:
             module.register_full_backward_hook(forbid_accumulation_hook)
+            # module.register_backward_hook(forbid_accumulation_hook)
 
         data_loader = self._prepare_data_loader(
             data_loader, distributed=distributed, poisson_sampling=poisson_sampling

@@ -1,9 +1,10 @@
-import torch.nn as nn
-from opacus.layers.dp_rnn import RNNLinear
 # from torch.func import vmap, grad, functional_call
 import copy
+
 import torch
-from functorch import make_functional, vmap, grad
+import torch.nn as nn
+from functorch import grad, make_functional, vmap
+from opacus.layers.dp_rnn import RNNLinear
 
 
 # https://gist.github.com/zou3519/7769506acc899d83ef1464e28f22e6cf
@@ -23,6 +24,7 @@ from functorch import make_functional, vmap, grad
 #     if disable_autograd_tracking:
 #         params_values = torch.utils._pytree.tree_map(torch.Tensor.detach, params_values)
 #     return fmodel, params_values
+
 
 def prepare_layer(layer, batch_first=True):
     """
