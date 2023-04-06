@@ -13,9 +13,9 @@ commands:
           name: "Setup Python v3.9 environment"
           command: |
             cd /opt/circleci/.pyenv && git pull && cd -
-            pyenv install -s 3.9
-            pyenv global 3.9
-            pyenv local 3.9
+            pyenv install -s 3.9.4
+            pyenv global 3.9.4
+            pyenv local 3.9.4
             pyenv versions
             echo "In venv: $(pyenv local) - $(python -V), $(pip -V)"
             sudo "$(which python)" -m pip install --upgrade pip
