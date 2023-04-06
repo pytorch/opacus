@@ -65,26 +65,21 @@ def train(args, model, device, train_loader, optimizer, privacy_engine, epoch):
     for _batch_idx, (data, target) in enumerate(tqdm(train_loader)):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-        print(model)
         output = model(data)
-        break
-
         loss = criterion(output, target)
         loss.backward()
-
         optimizer.step()
         losses.append(loss.item())
 
-
-    # if not args.disable_dp:
-    #     epsilon = privacy_engine.accountant.get_epsilon(delta=args.delta)
-    #     print(
-    #         f"Train Epoch: {epoch} \t"
-    #         f"Loss: {np.mean(losses):.6f} "
-    #         f"(ε = {epsilon:.2f}, δ = {args.delta})"
-    #     )
-    # else:
-    #     print(f"Train Epoch: {epoch} \t Loss: {np.mean(losses):.6f}")
+    if not args.disable_dp:
+        epsilon = privacy_engine.accountant.get_epsilon(delta=args.delta)
+        print(
+            f"Train Epoch: {epoch} \t"
+            f"Loss: {np.mean(losses):.6f} "
+            f"(ε = {epsilon:.2f}, δ = {args.delta})"
+        )
+    else:
+        print(f"Train Epoch: {epoch} \t Loss: {np.mean(losses):.6f}")
 
 
 def test(model, device, test_loader):
@@ -261,12 +256,11 @@ def main():
                 data_loader=train_loader,
                 noise_multiplier=args.sigma,
                 max_grad_norm=args.max_per_sample_grad_norm,
-                grad_sample_mode="ew",
             )
 
         for epoch in range(1, args.epochs + 1):
             train(args, model, device, train_loader, optimizer, privacy_engine, epoch)
-        # run_results.append(test(model, device, test_loader))
+        run_results.append(test(model, device, test_loader))
 
     if len(run_results) > 1:
         print(
@@ -275,14 +269,14 @@ def main():
             )
         )
 
-    # repro_str = (
-    #     f"mnist_{args.lr}_{args.sigma}_"
-    #     f"{args.max_per_sample_grad_norm}_{args.batch_size}_{args.epochs}"
-    # )
-    # torch.save(run_results, f"run_results_{repro_str}.pt")
+    repro_str = (
+        f"mnist_{args.lr}_{args.sigma}_"
+        f"{args.max_per_sample_grad_norm}_{args.batch_size}_{args.epochs}"
+    )
+    torch.save(run_results, f"run_results_{repro_str}.pt")
 
-    # if args.save_model:
-    #     torch.save(model.state_dict(), f"mnist_cnn_{repro_str}.pt")
+    if args.save_model:
+        torch.save(model.state_dict(), f"mnist_cnn_{repro_str}.pt")
 
 
 if __name__ == "__main__":

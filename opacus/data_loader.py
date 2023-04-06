@@ -28,21 +28,6 @@ from torch.utils.data.dataloader import _collate_fn_t
 
 logger = logging.getLogger(__name__)
 
-#
-# def collate(
-#     batch: List[torch.Tensor],
-#     collate_fn: Optional[_collate_fn_t],
-#     sample_empty_shapes: Sequence[Tuple],
-#     dtypes: Sequence[Union[torch.dtype, Type]],
-# ):
-#     if len(batch) > 0:
-#         return collate_fn(batch)
-#     else:
-#         return [
-#             torch.zeros(shape, dtype=dtype)
-#             for shape, dtype in zip(sample_empty_shapes, dtypes)
-#         ]
-
 
 def collate(
     batch: List[torch.Tensor],

@@ -22,32 +22,25 @@ from .common import GradSampleHooks_test
 
 
 class Linear_test(GradSampleHooks_test):
-    # @given(
-    #     # N=st.integers(0, 4),
-    #     N=st.just(2),
-    #     # Z=st.integers(1, 4),
-    #     Z=st.just(4),
-    #     # H=st.integers(1, 3),
-    #     H=st.just(1),
-    #     # W=st.integers(10, 17),
-    #     W=st.just(10),
-    #     # input_dim=st.integers(2, 4),
-    #     input_dim=st.just(2),
-    #     # bias=st.booleans(),
-    #     bias=st.just(False),
-    #     # batch_first=st.booleans(),
-    #     batch_first=st.just(True),
-    # )
-    # @settings(deadline=10000)
+    @given(
+        N=st.integers(0, 4),
+        Z=st.integers(1, 4),
+        H=st.integers(1, 3),
+        W=st.integers(10, 17),
+        input_dim=st.integers(2, 4),
+        bias=st.booleans(),
+        batch_first=st.booleans(),
+    )
+    @settings(deadline=10000)
     def test_input_bias(
         self,
-        N: int = 2,
-        Z: int = 4,
-        W: int = 10,
-        H: int = 1,
-        input_dim: int = 2,
-        bias: bool = False,
-        batch_first: bool = True,
+        N: int,
+        Z: int,
+        W: int,
+        H: int,
+        input_dim: int,
+        bias: bool,
+        batch_first: bool,
     ):
         if input_dim == 2:
             if not batch_first:

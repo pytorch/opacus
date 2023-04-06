@@ -1,29 +1,31 @@
-# from torch.func import vmap, grad, functional_call
 import copy
 
 import torch
 import torch.nn as nn
-from functorch import grad, make_functional, vmap
+
+# from functorch import grad, make_functional, vmap
 from opacus.layers.dp_rnn import RNNLinear
+from torch.func import functional_call, grad, vmap
 
 
 # https://gist.github.com/zou3519/7769506acc899d83ef1464e28f22e6cf
-# def make_functional(mod, disable_autograd_tracking=False):
-#     params_dict = dict(mod.named_parameters())
-#     params_names = params_dict.keys()
-#     params_values = tuple(params_dict.values())
-#
-#     stateless_mod = copy.deepcopy(mod)
-#     stateless_mod.to('meta')
-#
-#     def fmodel(new_params_values, *args, **kwargs):
-#         new_params_dict = {name: value for name, value in
-#                            zip(params_names, new_params_values)}
-#         return torch.func.functional_call(stateless_mod, new_params_dict, args, kwargs)
-#
-#     if disable_autograd_tracking:
-#         params_values = torch.utils._pytree.tree_map(torch.Tensor.detach, params_values)
-#     return fmodel, params_values
+def make_functional(mod, disable_autograd_tracking=False):
+    params_dict = dict(mod.named_parameters())
+    params_names = params_dict.keys()
+    params_values = tuple(params_dict.values())
+
+    stateless_mod = copy.deepcopy(mod)
+    stateless_mod.to("meta")
+
+    def fmodel(new_params_values, *args, **kwargs):
+        new_params_dict = {
+            name: value for name, value in zip(params_names, new_params_values)
+        }
+        return torch.func.functional_call(stateless_mod, new_params_dict, args, kwargs)
+
+    if disable_autograd_tracking:
+        params_values = torch.utils._pytree.tree_map(torch.Tensor.detach, params_values)
+    return fmodel, params_values
 
 
 def prepare_layer(layer, batch_first=True):

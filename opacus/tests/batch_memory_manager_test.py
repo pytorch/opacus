@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import unittest
 
 import torch
@@ -68,7 +67,6 @@ class BatchMemoryManagerTest(unittest.TestCase):
         batch_size: int,
         max_physical_batch_size: int,
     ):
-        print(batch_size, file=sys.stderr)
         batches_per_step = max(1, batch_size // max_physical_batch_size)
         model, optimizer, data_loader = self._init_training(
             num_workers=num_workers,
@@ -118,7 +116,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
                     weights_before = torch.clone(model._module.fc.weight)
 
     @given(
-        num_workers=st.integers(0, 2),
+        num_workers=st.integers(0, 4),
         pin_memory=st.booleans(),
     )
     @settings(deadline=10000)
