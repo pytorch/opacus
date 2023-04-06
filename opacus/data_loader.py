@@ -42,6 +42,21 @@ logger = logging.getLogger(__name__)
 #             for shape, dtype in zip(sample_empty_shapes, dtypes)
 #         ]
 
+def collate(
+    batch: List[torch.Tensor],
+    collate_fn: Optional[_collate_fn_t],
+    sample_empty_shapes: Sequence[Tuple],
+    dtypes: Sequence[Union[torch.dtype, Type]],
+):
+    if len(batch) > 0:
+        return collate_fn(batch)
+    else:
+        return [
+            torch.zeros(shape, dtype=dtype)
+            for shape, dtype in zip(sample_empty_shapes, dtypes)
+        ]
+
+
 def wrap_collate_with_empty(
     *,
     collate_fn: Optional[_collate_fn_t],
@@ -61,17 +76,6 @@ def wrap_collate_with_empty(
         batches and outputs empty tensors with shapes from ``sample_empty_shapes`` if
         the input batch is of size 0
     """
-
-    def collate(
-        batch: List[torch.Tensor],
-    ):
-        if len(batch) > 0:
-            return collate_fn(batch)
-        else:
-            return [
-                torch.zeros(shape, dtype=dtype)
-                for shape, dtype in zip(sample_empty_shapes, dtypes)
-            ]
 
     return partial(
         collate,
