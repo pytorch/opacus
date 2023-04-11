@@ -21,6 +21,7 @@ from .grad_sample_module import GradSampleModule, create_or_accumulate_grad_samp
 from .group_norm import compute_group_norm_grad_sample  # noqa
 from .gsm_base import AbstractGradSampleModule
 from .gsm_exp_weights import GradSampleModuleExpandedWeights
+from .gsm_no_op import GradSampleModuleNoOp
 from .instance_norm import compute_instance_norm_grad_sample  # noqa
 from .layer_norm import compute_layer_norm_grad_sample  # noqa
 from .linear import compute_linear_grad_sample  # noqa
@@ -30,6 +31,7 @@ from .utils import get_gsm_class, register_grad_sampler, wrap_model
 __all__ = [
     "GradSampleModule",
     "GradSampleModuleExpandedWeights",
+    "GradSampleModuleNoOp",
     "AbstractGradSampleModule",
     "register_grad_sampler",
     "create_or_accumulate_grad_sample",

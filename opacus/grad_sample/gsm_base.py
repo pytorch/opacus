@@ -15,9 +15,12 @@
 
 import logging
 from abc import ABC, abstractmethod
+from typing import Optional
 
+import torch
 import torch.nn as nn
 from opacus.utils.module_utils import trainable_parameters
+from torch.utils.hooks import RemovableHandle
 
 
 logger = logging.getLogger(__name__)
@@ -58,6 +61,7 @@ class AbstractGradSampleModule(nn.Module, ABC):
         self._module = m
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
+        self.grad_accumulation_hook: Optional[RemovableHandle] = None
 
         for _, p in trainable_parameters(self):
             p.grad_sample = None
@@ -139,3 +143,50 @@ class AbstractGradSampleModule(nn.Module, ABC):
             for p in self.parameters():
                 if hasattr(p, attr):
                     delattr(p, attr)
+
+    def forbid_grad_accumulation(self):
+        """
+        This method attaches a hook that detects repetitive forward/backward
+        passes between optimizer steps.
+
+        Ther hook that will be wrapped around the whole model using
+        `register_full_backward_hook`. We wish to detect a case where:
+            -  `optimizer.zero_grad()` is not called before the backward pass; and
+            -  `p.grad_sample` was updated in a *previous* iteration.
+
+        To do so, we attach a backward hook to the model that runs *before* the computation
+        of `grad_sample` for the current step.
+
+        ValueError will be thrown during the backward pass if repetitive gradient
+        accumulation is detected
+        """
+
+        def forbid_grad_accumulation_hook(
+            module: AbstractGradSampleModule,
+            _grad_input: torch.Tensor,
+            _grad_output: torch.Tensor,
+        ):
+            if not module.training:
+                return
+
+            for _, p in trainable_parameters(module):
+                if p.grad_sample is not None and len(p.grad_sample) > 0:
+                    raise ValueError(
+                        "Poisson sampling is not compatible with grad accumulation. "
+                        "You need to call optimizer.step() after every forward/backward pass "
+                        "or consider using BatchMemoryManager"
+                    )
+
+        if self.grad_accumulation_hook is None:
+            self.grad_accumulation_hook = self.register_full_backward_hook(
+                forbid_grad_accumulation_hook
+            )
+
+    def allow_grad_accumulation(self):
+        """
+        This method removes the hook, attached by `forbid_grad_accumulation`.
+        Has no effect if `forbid_grad_accumulation` hasn't been called
+        """
+        if self.grad_accumulation_hook:
+            self.grad_accumulation_hook.remove()
+            self.grad_accumulation_hook = None

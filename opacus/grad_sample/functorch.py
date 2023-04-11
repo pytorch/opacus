@@ -15,6 +15,9 @@ def make_functional(mod, disable_autograd_tracking=False):
     stateless_mod = copy.deepcopy(mod)
     stateless_mod.to("meta")
 
+    if hasattr(stateless_mod, "allow_grad_accumulation"):
+        stateless_mod.allow_grad_accumulation()
+
     def fmodel(new_params_values, *args, **kwargs):
         new_params_dict = {
             name: value for name, value in zip(params_names, new_params_values)
@@ -56,7 +59,6 @@ def prepare_layer(layer, batch_first=True):
 
         output = flayer(params, batched_activations)
         loss = (output * batched_backprops).sum()
-
         return loss
 
     ft_compute_grad = grad(compute_loss_stateless_model)
