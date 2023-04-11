@@ -31,10 +31,26 @@ logger = logging.getLogger(__name__)
 
 def collate(
     batch: List[torch.Tensor],
+    *,
     collate_fn: Optional[_collate_fn_t],
     sample_empty_shapes: Sequence[Tuple],
     dtypes: Sequence[Union[torch.dtype, Type]],
 ):
+    """
+    Wraps `collate_fn` to handle empty batches.
+
+    Default `collate_fn` implementations typically can't handle batches of length zero.
+    Since this is a possible case for poisson sampling, we need to wrap the collate
+    method, producing tensors with the correct shape and size (albeit the batch
+    dimension being zero-size)
+
+
+    :param batch: List of tensort to be passed to collate_fn implementation
+    :param collate_fn: Collame method to be wrapped
+    :param sample_empty_shapes: Sample tensors with the expected shape
+    :param dtypes: Expected dtypes
+    :return: Batch tensor(s)
+    """
     if len(batch) > 0:
         return collate_fn(batch)
     else:

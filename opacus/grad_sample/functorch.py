@@ -7,7 +7,15 @@ from torch.func import grad, vmap
 
 
 # https://gist.github.com/zou3519/7769506acc899d83ef1464e28f22e6cf
-def make_functional(mod, disable_autograd_tracking=False):
+def make_functional(mod: nn.Module, disable_autograd_tracking: bool = False):
+    """
+    Helper method to mimic deprecated `functorch.make_functional()` behaviour. See
+    https://pytorch.org/docs/master/func.migrating.html
+
+    :param mod:
+    :param disable_autograd_tracking:
+    :return:
+    """
     params_dict = dict(mod.named_parameters())
     params_names = params_dict.keys()
     params_values = tuple(params_dict.values())

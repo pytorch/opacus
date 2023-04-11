@@ -52,14 +52,14 @@ class GradSampleHooks_test(unittest.TestCase):
         ew_compatible=True,
         chunk_method=iter,
     ):
-        grad_sample_modes = ["hooks", "functorch"]
+        grad_sample_modes = ["hooks", "functorch", "ew"]
 
         if type(module) is nn.EmbeddingBag or (
             type(x) is not PackedSequence and is_batch_empty(x)
         ):
-            grad_sample_modes = ["hooks"]
+            grad_sample_modes = ["hooks", "ew"]
 
-        for loss_reduction in ["mean"]:
+        for loss_reduction in ["sum", "mean"]:
             for grad_sample_mode in grad_sample_modes:
                 with self.subTest(
                     grad_sample_mode=grad_sample_mode, loss_reduction=loss_reduction
