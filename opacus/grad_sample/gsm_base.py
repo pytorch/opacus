@@ -17,7 +17,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
-import torch
 import torch.nn as nn
 from opacus.utils.module_utils import trainable_parameters
 from torch.utils.hooks import RemovableHandle

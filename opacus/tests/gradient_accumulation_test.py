@@ -20,7 +20,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus import PrivacyEngine
-from opacus.grad_sample import GradSampleModule
 from opacus.grad_sample.utils import get_gsm_class
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader
