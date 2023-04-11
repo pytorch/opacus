@@ -21,6 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from opacus import PrivacyEngine
 from opacus.grad_sample import GradSampleModule
+from opacus.grad_sample.utils import get_gsm_class
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -68,6 +69,7 @@ class GradientAccumulationTest(unittest.TestCase):
         self.LR = 0  # we want to call optimizer.step() without modifying the model
         self.ALPHAS = [1 + x / 10.0 for x in range(1, 100, 10)]
         self.criterion = nn.CrossEntropyLoss()
+        self.GRAD_SAMPLE_MODE = "hooks"
 
         self.setUp_data()
         self.setUp_model_and_optimizer()
@@ -130,7 +132,8 @@ class GradientAccumulationTest(unittest.TestCase):
         Calling loss.backward() multiple times should sum up the gradients in .grad
         and accumulate all the individual gradients in .grad-sample
         """
-        grad_sample_module = GradSampleModule(self.model)
+        gsm_class = get_gsm_class(self.GRAD_SAMPLE_MODE)
+        grad_sample_module = gsm_class(self.model)
         data_iter = iter(self.dl)  # 4 batches of size 4 each
         self.model_forward_backward(grad_sample_module, data_iter, num_steps=8)
         # should accumulate grads in .grad and .grad_sample
@@ -181,6 +184,7 @@ class GradientAccumulationTest(unittest.TestCase):
             data_loader=self.dl,
             noise_multiplier=0.0,
             max_grad_norm=999,
+            grad_sample_mode=self.GRAD_SAMPLE_MODE,
         )
 
         self.model_forward_backward(model, dl, num_steps=1)
@@ -197,6 +201,7 @@ class GradientAccumulationTest(unittest.TestCase):
             noise_multiplier=0.0,
             max_grad_norm=999,
             poisson_sampling=False,
+            grad_sample_mode=self.GRAD_SAMPLE_MODE,
         )
 
         self.model_forward_backward(model, dl, num_steps=8)
@@ -230,6 +235,7 @@ class GradientAccumulationTest(unittest.TestCase):
             noise_multiplier=1.0,
             max_grad_norm=1.0,
             poisson_sampling=False,
+            grad_sample_mode=self.GRAD_SAMPLE_MODE,
         )
 
         # should work fine with zero_grad
@@ -252,6 +258,7 @@ class GradientAccumulationTest(unittest.TestCase):
             noise_multiplier=1.0,
             max_grad_norm=1.0,
             poisson_sampling=False,
+            grad_sample_mode=self.GRAD_SAMPLE_MODE,
         )
 
         with BatchMemoryManager(
@@ -265,3 +272,9 @@ class GradientAccumulationTest(unittest.TestCase):
                 self.model_forward_backward(
                     model, new_data_loader, optimizer, num_steps=3, do_zero_grad=False
                 )
+
+
+class GradientAccumulationTestFunctorch(GradientAccumulationTest):
+    def setUp(self):
+        super().setUp()
+        self.GRAD_SAMPLE_MODE = "functorch"

@@ -135,6 +135,7 @@ class GradSampleModule(AbstractGradSampleModule):
             )
 
         self.hooks_enabled = False
+        self.grad_accumulation_allowed = True
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
         self.force_functorch = force_functorch
@@ -348,6 +349,14 @@ class GradSampleModule(AbstractGradSampleModule):
             if p._forward_counter == 0:
                 promote_current_grad_sample(p)
 
+            if not self.grad_accumulation_allowed:
+                if isinstance(p.grad_sample, list) and len(p.grad_sample) > 1:
+                    raise ValueError(
+                        "Poisson sampling is not compatible with grad accumulation. "
+                        "You need to call optimizer.step() after every forward/backward pass "
+                        "or consider using BatchMemoryManager"
+                    )
+
         if len(module.activations) == 0:
             if hasattr(module, "max_batch_len"):
                 del module.max_batch_len
@@ -473,6 +482,12 @@ class GradSampleModule(AbstractGradSampleModule):
             raise NotImplementedError(errors)
         else:
             return errors
+
+    def forbid_grad_accumulation(self):
+        self.grad_accumulation_allowed = False
+
+    def allow_grad_accumulation(self):
+        self.grad_accumulation_allowed = True
 
 
 def _get_batch_size(*, module: nn.Module, batch_dim: int) -> int:
