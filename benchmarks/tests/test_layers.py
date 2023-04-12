@@ -22,13 +22,12 @@ import torch
 import torch.nn as nn
 from helpers import skipifnocuda
 from opacus.grad_sample import GradSampleModule
-from opacus.grad_sample.gsm_exp_weights import (
-    GradSampleModuleExpandedWeights,
-)
+from opacus.grad_sample.gsm_exp_weights import GradSampleModuleExpandedWeights
 from opacus.layers import DPGRU, DPLSTM, DPRNN, DPMultiheadAttention
 
 from benchmarks.layers import LayerFactory
 from benchmarks.utils import reset_peak_memory_stats
+
 
 GSM_MODES = {"baseline", "hooks", "ew", "functorch"}
 

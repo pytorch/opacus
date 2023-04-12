@@ -33,11 +33,11 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
+from opacus.grad_sample.functorch import make_functional
+from torch.func import grad, grad_and_value, vmap
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
-from torch.func import grad_and_value, vmap, grad
-from opacus.grad_sample.functorch import make_functional
 
 
 logging.basicConfig(
@@ -143,7 +143,6 @@ def train(args, model, train_loader, optimizer, privacy_engine, epoch, device):
     if args.grad_sample_mode == "no_op":
         # Functorch prepare
         fmodel, _fparams = make_functional(model)
-        # params = dict(model.named_parameters())
 
         def compute_loss_stateless_model(params, sample, target):
             batch = sample.unsqueeze(0)
