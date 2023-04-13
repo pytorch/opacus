@@ -44,13 +44,16 @@ def collate(
     method, producing tensors with the correct shape and size (albeit the batch
     dimension being zero-size)
 
+    Args:
+        batch: List of tensort to be passed to collate_fn implementation
+        collate_fn: Collame method to be wrapped
+        sample_empty_shapes: Sample tensors with the expected shape
+        dtypes: Expected dtypes
 
-    :param batch: List of tensort to be passed to collate_fn implementation
-    :param collate_fn: Collame method to be wrapped
-    :param sample_empty_shapes: Sample tensors with the expected shape
-    :param dtypes: Expected dtypes
-    :return: Batch tensor(s)
+    Returns:
+        Batch tensor(s)
     """
+
     if len(batch) > 0:
         return collate_fn(batch)
     else:

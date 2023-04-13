@@ -12,9 +12,12 @@ def make_functional(mod: nn.Module, disable_autograd_tracking: bool = False):
     Helper method to mimic deprecated `functorch.make_functional()` behaviour. See
     https://pytorch.org/docs/master/func.migrating.html
 
-    :param mod:
-    :param disable_autograd_tracking:
-    :return:
+    Args:
+        mod: module to be converted to functional
+        disable_autograd_tracking:
+
+    Returns:
+        Tuple with cloned model and new params
     """
     params_dict = dict(mod.named_parameters())
     params_names = params_dict.keys()
