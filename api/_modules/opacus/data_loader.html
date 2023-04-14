@@ -97,7 +97,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        ``x.shape`` if attribute exists, empty tuple otherwise</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"shape"</span><span class="p">)</span> <span class="k">else</span> <span class="p">()</span></div>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"shape"</span><span class="p">,</span> <span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="dtype_safe"><a class="viewcode-back" href="../../data_loader.html#opacus.data_loader.dtype_safe">[docs]</a><span class="k">def</span> <span class="nf">dtype_safe</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">Type</span><span class="p">]:</span>
@@ -110,7 +110,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        ``x.dtype`` if attribute exists, type of x otherwise</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="DPDataLoader"><a class="viewcode-back" href="../../data_loader.html#opacus.data_loader.DPDataLoader">[docs]</a><span class="k">class</span> <span class="nc">DPDataLoader</span><span class="p">(</span><span class="n">DataLoader</span><span class="p">):</span>
