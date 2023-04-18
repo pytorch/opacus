@@ -13,7 +13,8 @@
 # limitations under the License.
 
 import logging
-from typing import Any, Optional, Sequence, Tuple, Type, Union
+from functools import partial
+from typing import Any, List, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from opacus.utils.uniform_sampler import (
@@ -26,6 +27,40 @@ from torch.utils.data.dataloader import _collate_fn_t
 
 
 logger = logging.getLogger(__name__)
+
+
+def collate(
+    batch: List[torch.Tensor],
+    *,
+    collate_fn: Optional[_collate_fn_t],
+    sample_empty_shapes: Sequence[Tuple],
+    dtypes: Sequence[Union[torch.dtype, Type]],
+):
+    """
+    Wraps `collate_fn` to handle empty batches.
+
+    Default `collate_fn` implementations typically can't handle batches of length zero.
+    Since this is a possible case for poisson sampling, we need to wrap the collate
+    method, producing tensors with the correct shape and size (albeit the batch
+    dimension being zero-size)
+
+    Args:
+        batch: List of tensort to be passed to collate_fn implementation
+        collate_fn: Collame method to be wrapped
+        sample_empty_shapes: Sample tensors with the expected shape
+        dtypes: Expected dtypes
+
+    Returns:
+        Batch tensor(s)
+    """
+
+    if len(batch) > 0:
+        return collate_fn(batch)
+    else:
+        return [
+            torch.zeros(shape, dtype=dtype)
+            for shape, dtype in zip(sample_empty_shapes, dtypes)
+        ]
 
 
 def wrap_collate_with_empty(
@@ -48,16 +83,12 @@ def wrap_collate_with_empty(
         the input batch is of size 0
     """
 
-    def collate(batch):
-        if len(batch) > 0:
-            return collate_fn(batch)
-        else:
-            return [
-                torch.zeros(shape, dtype=dtype)
-                for shape, dtype in zip(sample_empty_shapes, dtypes)
-            ]
-
-    return collate
+    return partial(
+        collate,
+        collate_fn=collate_fn,
+        sample_empty_shapes=sample_empty_shapes,
+        dtypes=dtypes,
+    )
 
 
 def shape_safe(x: Any) -> Tuple:

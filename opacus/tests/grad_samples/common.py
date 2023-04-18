@@ -59,7 +59,7 @@ class GradSampleHooks_test(unittest.TestCase):
         ):
             grad_sample_modes = ["hooks"]
 
-        if ew_compatible and batch_first and torch.__version__ >= (1, 13):
+        if ew_compatible and batch_first:
             grad_sample_modes += ["ew"]
 
         for loss_reduction in ["sum", "mean"]:

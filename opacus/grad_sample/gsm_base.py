@@ -15,9 +15,11 @@
 
 import logging
 from abc import ABC, abstractmethod
+from typing import Optional
 
 import torch.nn as nn
 from opacus.utils.module_utils import trainable_parameters
+from torch.utils.hooks import RemovableHandle
 
 
 logger = logging.getLogger(__name__)
@@ -58,6 +60,7 @@ class AbstractGradSampleModule(nn.Module, ABC):
         self._module = m
         self.batch_first = batch_first
         self.loss_reduction = loss_reduction
+        self.grad_accumulation_hook: Optional[RemovableHandle] = None
 
         for _, p in trainable_parameters(self):
             p.grad_sample = None
@@ -139,3 +142,23 @@ class AbstractGradSampleModule(nn.Module, ABC):
             for p in self.parameters():
                 if hasattr(p, attr):
                     delattr(p, attr)
+
+    def forbid_grad_accumulation(self):
+        """
+        Sets a flag to detect gradient accumulation (multiple forward/backward passes
+        without an optimizer step or clearing out gradients).
+
+        When set, GradSampleModule will throw a ValueError on the second backward pass.
+        :return:
+        """
+        pass
+
+    def allow_grad_accumulation(self):
+        """
+        Unsets a flag to detect gradient accumulation (multiple forward/backward passes
+        without an optimizer step or clearing out gradients).
+
+        When set, GradSampleModule will throw a ValueError on the second backward pass.
+        :return:
+        """
+        pass

@@ -6,16 +6,16 @@ version: 2.1
 
 commands:
 
-  py_3_7_setup:
-    description: "Install and switch to Python 3.7.5; also install pip and pytest."
+  py_3_9_setup:
+    description: "Install and switch to Python 3.9; also install pip and pytest."
     steps:
       - run:
-          name: "Setup Python v3.7.5 environment"
+          name: "Setup Python v3.9 environment"
           command: |
             cd /opt/circleci/.pyenv && git pull && cd -
-            pyenv install -s 3.7.5
-            pyenv global 3.7.5
-            pyenv local 3.7.5
+            pyenv install -s 3.9.4
+            pyenv global 3.9.4
+            pyenv local 3.9.4
             pyenv versions
             echo "In venv: $(pyenv local) - $(python -V), $(pip -V)"
             sudo "$(which python)" -m pip install --upgrade pip
@@ -283,23 +283,15 @@ commands:
 
 jobs:
 
-  lint_py37_torch_release:
+  lint_py39_torch_release:
     docker:
-      - image: cimg/python:3.7.5
+      - image: cimg/python:3.9
     steps:
       - checkout
       - pip_dev_install
       - lint_flake8
       - lint_black
       - isort
-
-  unittest_py37_torch_release:
-    docker:
-      - image: cimg/python:3.7.5
-    steps:
-      - checkout
-      - pip_dev_install
-      - unit_tests
 
   unittest_py38_torch_release:
     docker:
@@ -328,10 +320,10 @@ jobs:
 
   prv_accountant_values:
     docker:
-      - image: cimg/python:3.7.5
+      - image: cimg/python:3.9
     steps:
       - checkout
-      - py_3_7_setup
+      - py_3_9_setup
       - pip_dev_install
       - run:
           name: "Unit test prv accountant"
@@ -339,23 +331,23 @@ jobs:
           command: |
             python -m unittest opacus.tests.prv_accountant
 
-  integrationtest_py37_torch_release_cpu:
+  integrationtest_py39_torch_release_cpu:
     docker:
-      - image: cimg/python:3.7.5
+      - image: cimg/python:3.9
     steps:
       - checkout
-      - py_3_7_setup
+      - py_3_9_setup
       - pip_dev_install
       - mnist_integration_test:
           device: "cpu"
 
-  integrationtest_py37_torch_release_cuda:
+  integrationtest_py39_torch_release_cuda:
     machine:
       resource_class: gpu.nvidia.small.multi
       image: ubuntu-2004-cuda-11.4:202110-01
     steps:
       - checkout
-      - py_3_7_setup
+      - py_3_9_setup
       - pip_dev_install
       - run_nvidia_smi
       - mnist_integration_test:
@@ -369,13 +361,13 @@ jobs:
       - dcgan_integration_test:
           device: "cuda"
 
-  micro_benchmarks_py37_torch_release_cuda:
+  micro_benchmarks_py39_torch_release_cuda:
     machine:
       resource_class: gpu.nvidia.small.multi
       image: ubuntu-2004-cuda-11.4:202110-01
     steps:
       - checkout
-      - py_3_7_setup
+      - py_3_9_setup
       - pip_dev_install
       - run_nvidia_smi
       - benchmark_layers_integration_test:
@@ -459,7 +451,7 @@ jobs:
       image: ubuntu-2004-cuda-11.4:202110-01
     steps:
       - checkout
-      - py_3_7_setup
+      - py_3_9_setup
       - pip_dev_install
       - run_nvidia_smi
       - command_unit_tests_multi_gpu
@@ -493,9 +485,7 @@ workflows:
       not:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
-      - lint_py37_torch_release:
-          filters: *exclude_ghpages
-      - unittest_py37_torch_release:
+      - lint_py39_torch_release:
           filters: *exclude_ghpages
       - unittest_py38_torch_release:
           filters: *exclude_ghpages
@@ -505,9 +495,9 @@ workflows:
           filters: *exclude_ghpages
       - unittest_multi_gpu:
           filters: *exclude_ghpages
-      - integrationtest_py37_torch_release_cpu:
+      - integrationtest_py39_torch_release_cpu:
           filters: *exclude_ghpages
-      - integrationtest_py37_torch_release_cuda:
+      - integrationtest_py39_torch_release_cuda:
           filters: *exclude_ghpages
       - prv_accountant_values:
           filters: *exclude_ghpages
@@ -518,12 +508,12 @@ workflows:
     jobs:
       - unittest_py39_torch_nightly:
           filters: *exclude_ghpages
-      - integrationtest_py37_torch_release_cpu:
+      - integrationtest_py39_torch_release_cpu:
           filters: *exclude_ghpages
-      - integrationtest_py37_torch_release_cuda:
+      - integrationtest_py39_torch_release_cuda:
           filters: *exclude_ghpages
-      - lint_py37_torch_release:
+      - lint_py39_torch_release:
           filters: *exclude_ghpages
-      - micro_benchmarks_py37_torch_release_cuda:
+      - micro_benchmarks_py39_torch_release_cuda:
           filters: *exclude_ghpages
 

@@ -30,56 +30,10 @@ from opacus.grad_sample import (
 )
 from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.schedulers import _GradClipScheduler, _NoiseScheduler
-from opacus.utils.module_utils import trainable_parameters
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
-
-
-def forbid_accumulation_hook(
-    module: AbstractGradSampleModule,
-    _grad_input: torch.Tensor,
-    _grad_output: torch.Tensor,
-):
-    """
-    Model hook that detects repetitive forward/backward passes between optimizer steps.
-
-    This is a backward hook that will be wrapped around the whole model using
-    `register_backward_hook`. We wish to detect a case where:
-        -  `optimizer.zero_grad()` is not called before the backward pass; and
-        -  `p.grad_sample` was updated in a *previous* iteration.
-
-    To do so, we attach a backward hook to the model that runs *after* the computation
-    of `grad_sample` for the current step. We compute the number of accumulated iterations
-    like on `optimizers/optimizer.py` and check whether it's strictly larger than one.
-
-    Args:
-        module: input module
-        _grad_input: module input gradient (not used here)
-        _grad_output: module output gradient (not used here)
-
-    Raises:
-        ValueError
-            If the hook detected multiple forward/backward passes between optimizer steps
-
-    """
-    if not module.training:
-        return
-
-    for _, p in trainable_parameters(module):
-        if p.grad_sample is not None:
-            if isinstance(p.grad_sample, torch.Tensor):
-                accumulated_iterations = 1
-            elif isinstance(p.grad_sample, list):
-                accumulated_iterations = len(p.grad_sample)
-
-            if accumulated_iterations > 1:
-                raise ValueError(
-                    "Poisson sampling is not compatible with grad accumulation. "
-                    "You need to call optimizer.step() after every forward/backward pass "
-                    "or consider using BatchMemoryManager"
-                )
 
 
 class PrivacyEngine:
@@ -126,7 +80,6 @@ class PrivacyEngine:
         self.secure_mode = secure_mode
         self.secure_rng = None
         self.dataset = None  # only used to detect switching to a different dataset
-
         if self.secure_mode:
             try:
                 import torchcsprng as csprng
@@ -403,7 +356,7 @@ class PrivacyEngine:
             grad_sample_mode=grad_sample_mode,
         )
         if poisson_sampling:
-            module.register_backward_hook(forbid_accumulation_hook)
+            module.forbid_grad_accumulation()
 
         data_loader = self._prepare_data_loader(
             data_loader, distributed=distributed, poisson_sampling=poisson_sampling
