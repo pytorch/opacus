@@ -88,6 +88,14 @@ Otherwise, functorch will be used only for layers without registered grad sample
 </dl>
 </dd></dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.allow_grad_accumulation">
+<span class="sig-name descname"><span class="pre">allow_grad_accumulation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.allow_grad_accumulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.allow_grad_accumulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unsets a flag to detect gradient accumulation (multiple forward/backward passes
+without an optimizer step or clearing out gradients).</p>
+<p>When set, GradSampleModule will throw a ValueError on the second backward pass.
+:return:</p>
+</dd></dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.capture_backprops_hook">
 <span class="sig-name descname"><span class="pre">capture_backprops_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_forward_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forward_output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_reduction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.capture_backprops_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.capture_backprops_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes per sample gradients given the current backprops and activations
@@ -137,6 +145,14 @@ disable them so you don’t need to call this unless you want to re-enable them.
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
 </dd>
 </dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.forbid_grad_accumulation">
+<span class="sig-name descname"><span class="pre">forbid_grad_accumulation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/grad_sample/grad_sample_module.html#GradSampleModule.forbid_grad_accumulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.grad_sample.grad_sample_module.GradSampleModule.forbid_grad_accumulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a flag to detect gradient accumulation (multiple forward/backward passes
+without an optimizer step or clearing out gradients).</p>
+<p>When set, GradSampleModule will throw a ValueError on the second backward pass.
+:return:</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.grad_sample.grad_sample_module.GradSampleModule.forward">

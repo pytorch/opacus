@@ -40,7 +40,8 @@
 <span class="c1"># limitations under the License.</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">opacus.utils.uniform_sampler</span> <span class="kn">import</span> <span class="p">(</span>
@@ -53,6 +54,40 @@
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="collate"><a class="viewcode-back" href="../../data_loader.html#opacus.data_loader.collate">[docs]</a><span class="k">def</span> <span class="nf">collate</span><span class="p">(</span>
+    <span class="n">batch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">collate_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_collate_fn_t</span><span class="p">],</span>
+    <span class="n">sample_empty_shapes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">],</span>
+    <span class="n">dtypes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">Type</span><span class="p">]],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Wraps `collate_fn` to handle empty batches.</span>
+
+<span class="sd">    Default `collate_fn` implementations typically can't handle batches of length zero.</span>
+<span class="sd">    Since this is a possible case for poisson sampling, we need to wrap the collate</span>
+<span class="sd">    method, producing tensors with the correct shape and size (albeit the batch</span>
+<span class="sd">    dimension being zero-size)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        batch: List of tensort to be passed to collate_fn implementation</span>
+<span class="sd">        collate_fn: Collame method to be wrapped</span>
+<span class="sd">        sample_empty_shapes: Sample tensors with the expected shape</span>
+<span class="sd">        dtypes: Expected dtypes</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Batch tensor(s)</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">collate_fn</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sample_empty_shapes</span><span class="p">,</span> <span class="n">dtypes</span><span class="p">)</span>
+        <span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="wrap_collate_with_empty"><a class="viewcode-back" href="../../data_loader.html#opacus.data_loader.wrap_collate_with_empty">[docs]</a><span class="k">def</span> <span class="nf">wrap_collate_with_empty</span><span class="p">(</span>
@@ -75,16 +110,12 @@
 <span class="sd">        the input batch is of size 0</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">collate</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">collate_fn</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sample_empty_shapes</span><span class="p">,</span> <span class="n">dtypes</span><span class="p">)</span>
-            <span class="p">]</span>
-
-    <span class="k">return</span> <span class="n">collate</span></div>
+    <span class="k">return</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">collate</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="o">=</span><span class="n">collate_fn</span><span class="p">,</span>
+        <span class="n">sample_empty_shapes</span><span class="o">=</span><span class="n">sample_empty_shapes</span><span class="p">,</span>
+        <span class="n">dtypes</span><span class="o">=</span><span class="n">dtypes</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="shape_safe"><a class="viewcode-back" href="../../data_loader.html#opacus.data_loader.shape_safe">[docs]</a><span class="k">def</span> <span class="nf">shape_safe</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">:</span>

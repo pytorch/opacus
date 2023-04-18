@@ -162,6 +162,7 @@
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">hooks_enabled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_accumulation_allowed</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">=</span> <span class="n">loss_reduction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">force_functorch</span> <span class="o">=</span> <span class="n">force_functorch</span>
@@ -375,6 +376,14 @@
             <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">_forward_counter</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">promote_current_grad_sample</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad_accumulation_allowed</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"Poisson sampling is not compatible with grad accumulation. "</span>
+                        <span class="s2">"You need to call optimizer.step() after every forward/backward pass "</span>
+                        <span class="s2">"or consider using BatchMemoryManager"</span>
+                    <span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">activations</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"max_batch_len"</span><span class="p">):</span>
                 <span class="k">del</span> <span class="n">module</span><span class="o">.</span><span class="n">max_batch_len</span></div>
@@ -499,7 +508,13 @@
         <span class="k">if</span> <span class="n">strict</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">errors</span></div></div>
+            <span class="k">return</span> <span class="n">errors</span></div>
+
+<div class="viewcode-block" id="GradSampleModule.forbid_grad_accumulation"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.forbid_grad_accumulation">[docs]</a>    <span class="k">def</span> <span class="nf">forbid_grad_accumulation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_accumulation_allowed</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="GradSampleModule.allow_grad_accumulation"><a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.allow_grad_accumulation">[docs]</a>    <span class="k">def</span> <span class="nf">allow_grad_accumulation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_accumulation_allowed</span> <span class="o">=</span> <span class="kc">True</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">_get_batch_size</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">batch_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
