@@ -500,6 +500,8 @@ workflows:
           filters: *exclude_ghpages
       - prv_accountant_values:
           filters: *exclude_ghpages
+      - micro_benchmarks_py39_torch_release_cuda:
+          filters: *exclude_ghpages
 
   nightly:
     when:
