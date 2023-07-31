@@ -181,7 +181,7 @@ class PrivacyEngine:
             if (
                 module.batch_first != batch_first
                 or module.loss_reduction != loss_reduction
-                or type(module) != get_gsm_class(grad_sample_mode)
+                or type(module) is not get_gsm_class(grad_sample_mode)
             ):
                 raise ValueError(
                     f"Pre-existing GradSampleModule doesn't match new arguments."

@@ -51,7 +51,7 @@ def compute_conv_grad_sample(
         return ret
 
     # get activations and backprops in shape depending on the Conv layer
-    if type(layer) == nn.Conv2d:
+    if type(layer) is nn.Conv2d:
         activations = unfold2d(
             activations,
             kernel_size=layer.kernel_size,
@@ -59,7 +59,7 @@ def compute_conv_grad_sample(
             stride=layer.stride,
             dilation=layer.dilation,
         )
-    elif type(layer) == nn.Conv1d:
+    elif type(layer) is nn.Conv1d:
         activations = activations.unsqueeze(-2)  # add the H dimension
         # set arguments to tuples with appropriate second element
         if layer.padding == "same":
@@ -77,7 +77,7 @@ def compute_conv_grad_sample(
             stride=(1, layer.stride[0]),
             dilation=(1, layer.dilation[0]),
         )
-    elif type(layer) == nn.Conv3d:
+    elif type(layer) is nn.Conv3d:
         activations = unfold3d(
             activations,
             kernel_size=layer.kernel_size,
