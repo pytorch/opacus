@@ -230,7 +230,7 @@ def generate_report(path_to_results: str, save_path: str, format: str) -> None:
     pivot = results.pivot_table(
         index=["batch_size", "num_runs", "num_repeats", "forward_only", "layer"],
         columns=["gsm_mode"],
-        values=["runtime", "memory"],
+        values=["runtime"],
     )
 
     def add_ratio(df, metric, variant):
@@ -245,7 +245,6 @@ def generate_report(path_to_results: str, save_path: str, format: str) -> None:
     if "baseline" in results["gsm_mode"].tolist():
         for m in set(results["gsm_mode"].tolist()) - {"baseline"}:
             add_ratio(pivot, "runtime", m)
-            add_ratio(pivot, "memory", m)
         pivot.columns = pivot.columns.set_names("value", level=1)
 
     output = pivot.sort_index(axis=1).sort_values(
