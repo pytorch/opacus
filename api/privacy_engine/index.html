@@ -39,7 +39,7 @@ PyTorch training objects with their private counterparts.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">MyCustomModel</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">()</span>
-<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">dataloader</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">make_private</span><span class="p">(</span>
 <span class="gp">... </span>   <span class="n">module</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
 <span class="gp">... </span>   <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
