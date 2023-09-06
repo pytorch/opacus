@@ -116,7 +116,7 @@ def wrap_data_loader(
     )
 
 
-class BatchMemoryManager(object):
+class BatchMemoryManager:
     """
     Context manager to manage memory consumption during training.
 
