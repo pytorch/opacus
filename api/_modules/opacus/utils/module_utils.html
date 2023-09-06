@@ -62,7 +62,9 @@
     <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="n">recurse</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="parametrized_modules"><a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.parametrized_modules">[docs]</a><span class="k">def</span> <span class="nf">parametrized_modules</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]]:</span>
+<div class="viewcode-block" id="parametrized_modules">
+<a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.parametrized_modules">[docs]</a>
+<span class="k">def</span> <span class="nf">parametrized_modules</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Recursively iterates over all submodules, returning those that</span>
 <span class="sd">    have parameters (as opposed to "wrapper modules" that just organize modules).</span>
@@ -74,7 +76,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="trainable_modules"><a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.trainable_modules">[docs]</a><span class="k">def</span> <span class="nf">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]]:</span>
+
+<div class="viewcode-block" id="trainable_modules">
+<a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.trainable_modules">[docs]</a>
+<span class="k">def</span> <span class="nf">trainable_modules</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Recursively iterates over all submodules, returning those that</span>
 <span class="sd">    have parameters and are trainable (ie they want a grad).</span>
@@ -86,7 +91,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="trainable_parameters"><a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.trainable_parameters">[docs]</a><span class="k">def</span> <span class="nf">trainable_parameters</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]]:</span>
+
+<div class="viewcode-block" id="trainable_parameters">
+<a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.trainable_parameters">[docs]</a>
+<span class="k">def</span> <span class="nf">trainable_parameters</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Recursively iterates over all parameters, returning those that</span>
 <span class="sd">    are trainable (ie they want a grad).</span>
@@ -96,7 +104,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="requires_grad"><a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.requires_grad">[docs]</a><span class="k">def</span> <span class="nf">requires_grad</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">recurse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+
+<div class="viewcode-block" id="requires_grad">
+<a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.requires_grad">[docs]</a>
+<span class="k">def</span> <span class="nf">requires_grad</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">recurse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Checks if any parameters in a specified module require gradients.</span>
 
@@ -112,7 +123,10 @@
     <span class="k">return</span> <span class="n">requires_grad</span></div>
 
 
-<div class="viewcode-block" id="clone_module"><a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.clone_module">[docs]</a><span class="k">def</span> <span class="nf">clone_module</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+
+<div class="viewcode-block" id="clone_module">
+<a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.clone_module">[docs]</a>
+<span class="k">def</span> <span class="nf">clone_module</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Handy utility to clone an nn.Module. PyTorch doesn't always support copy.deepcopy(), so it is</span>
 <span class="sd">    just easier to serialize the model to a BytesIO and read it from there.</span>
@@ -133,7 +147,10 @@
     <span class="k">return</span> <span class="n">module_copy</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">next_param</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="k">if</span> <span class="n">next_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">module_copy</span></div>
 
 
-<div class="viewcode-block" id="get_submodule"><a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.get_submodule">[docs]</a><span class="k">def</span> <span class="nf">get_submodule</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+
+<div class="viewcode-block" id="get_submodule">
+<a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.get_submodule">[docs]</a>
+<span class="k">def</span> <span class="nf">get_submodule</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Returns the submodule given by target if it exists, otherwise throws an error.</span>
 
@@ -172,7 +189,10 @@
     <span class="k">return</span> <span class="n">mod</span></div>
 
 
-<div class="viewcode-block" id="are_state_dict_equal"><a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.are_state_dict_equal">[docs]</a><span class="k">def</span> <span class="nf">are_state_dict_equal</span><span class="p">(</span><span class="n">sd1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">sd2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+
+<div class="viewcode-block" id="are_state_dict_equal">
+<a class="viewcode-back" href="../../../utils/module_utils.html#opacus.utils.module_utils.are_state_dict_equal">[docs]</a>
+<span class="k">def</span> <span class="nf">are_state_dict_equal</span><span class="p">(</span><span class="n">sd1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">sd2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Compares two state dicts, while logging discrepancies</span>
 <span class="sd">    """</span>
@@ -188,6 +208,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="kc">True</span></div>
+
 </pre></div>
 </div>
 </div>

@@ -45,13 +45,17 @@
 <span class="kn">from</span> <span class="nn">.analysis</span> <span class="kn">import</span> <span class="n">rdp</span> <span class="k">as</span> <span class="n">privacy_analysis</span>
 
 
-<div class="viewcode-block" id="RDPAccountant"><a class="viewcode-back" href="../../../accounting/rdp.html#opacus.accountants.rdp.RDPAccountant">[docs]</a><span class="k">class</span> <span class="nc">RDPAccountant</span><span class="p">(</span><span class="n">IAccountant</span><span class="p">):</span>
+<div class="viewcode-block" id="RDPAccountant">
+<a class="viewcode-back" href="../../../accounting/rdp.html#opacus.accountants.rdp.RDPAccountant">[docs]</a>
+<span class="k">class</span> <span class="nc">RDPAccountant</span><span class="p">(</span><span class="n">IAccountant</span><span class="p">):</span>
     <span class="n">DEFAULT_ALPHAS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
-<div class="viewcode-block" id="RDPAccountant.step"><a class="viewcode-back" href="../../../accounting/rdp.html#opacus.accountants.rdp.RDPAccountant.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="RDPAccountant.step">
+<a class="viewcode-back" href="../../../accounting/rdp.html#opacus.accountants.rdp.RDPAccountant.step">[docs]</a>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">last_noise_multiplier</span><span class="p">,</span> <span class="n">last_sample_rate</span><span class="p">,</span> <span class="n">num_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
             <span class="k">if</span> <span class="p">(</span>
@@ -69,6 +73,7 @@
 
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
 
     <span class="k">def</span> <span class="nf">get_privacy_spent</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">alphas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -94,7 +99,9 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">best_alpha</span><span class="p">)</span>
 
-<div class="viewcode-block" id="RDPAccountant.get_epsilon"><a class="viewcode-back" href="../../../accounting/rdp.html#opacus.accountants.rdp.RDPAccountant.get_epsilon">[docs]</a>    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span>
+<div class="viewcode-block" id="RDPAccountant.get_epsilon">
+<a class="viewcode-back" href="../../../accounting/rdp.html#opacus.accountants.rdp.RDPAccountant.get_epsilon">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">alphas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -108,12 +115,17 @@
         <span class="n">eps</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_privacy_spent</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span> <span class="n">alphas</span><span class="o">=</span><span class="n">alphas</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">eps</span></div>
 
+
     <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
 
-<div class="viewcode-block" id="RDPAccountant.mechanism"><a class="viewcode-back" href="../../../accounting/rdp.html#opacus.accountants.rdp.RDPAccountant.mechanism">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="RDPAccountant.mechanism">
+<a class="viewcode-back" href="../../../accounting/rdp.html#opacus.accountants.rdp.RDPAccountant.mechanism">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">mechanism</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">"rdp"</span></div></div>
+        <span class="k">return</span> <span class="s2">"rdp"</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

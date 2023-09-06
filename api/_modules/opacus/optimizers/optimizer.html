@@ -193,7 +193,9 @@
         <span class="p">)</span>
 
 
-<div class="viewcode-block" id="DPOptimizer"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer">[docs]</a><span class="k">class</span> <span class="nc">DPOptimizer</span><span class="p">(</span><span class="n">Optimizer</span><span class="p">):</span>
+<div class="viewcode-block" id="DPOptimizer">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer">[docs]</a>
+<span class="k">class</span> <span class="nc">DPOptimizer</span><span class="p">(</span><span class="n">Optimizer</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    ``torch.optim.Optimizer`` wrapper that adds additional functionality to clip per</span>
 <span class="sd">    sample gradients and add Gaussian noise.</span>
@@ -318,7 +320,9 @@
 
         <span class="k">return</span> <span class="n">ret</span>
 
-<div class="viewcode-block" id="DPOptimizer.signal_skip_step"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.signal_skip_step">[docs]</a>    <span class="k">def</span> <span class="nf">signal_skip_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_skip</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="DPOptimizer.signal_skip_step">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.signal_skip_step">[docs]</a>
+    <span class="k">def</span> <span class="nf">signal_skip_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_skip</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Signals the optimizer to skip an optimization step and only perform clipping and</span>
 <span class="sd">        per sample gradient accumulation.</span>
@@ -339,6 +343,7 @@
 <span class="sd">            do_skip: flag if next step should be skipped</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_step_skip_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">do_skip</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">_check_skip_next_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pop_next</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -402,7 +407,9 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">vals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-<div class="viewcode-block" id="DPOptimizer.attach_step_hook"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.attach_step_hook">[docs]</a>    <span class="k">def</span> <span class="nf">attach_step_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">DPOptimizer</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
+<div class="viewcode-block" id="DPOptimizer.attach_step_hook">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.attach_step_hook">[docs]</a>
+    <span class="k">def</span> <span class="nf">attach_step_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">DPOptimizer</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Attaches a hook to be executed after gradient clipping/noising, but before the</span>
 <span class="sd">        actual optimization step.</span>
@@ -415,7 +422,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">step_hook</span> <span class="o">=</span> <span class="n">fn</span></div>
 
-<div class="viewcode-block" id="DPOptimizer.clip_and_accumulate"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.clip_and_accumulate">[docs]</a>    <span class="k">def</span> <span class="nf">clip_and_accumulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DPOptimizer.clip_and_accumulate">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.clip_and_accumulate">[docs]</a>
+    <span class="k">def</span> <span class="nf">clip_and_accumulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Performs gradient clipping.</span>
 <span class="sd">        Stores clipped and aggregated gradients into `p.summed_grad```</span>
@@ -445,7 +455,10 @@
 
             <span class="n">_mark_as_processed</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DPOptimizer.add_noise"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.add_noise">[docs]</a>    <span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DPOptimizer.add_noise">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.add_noise">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``</span>
 <span class="sd">        """</span>
@@ -463,7 +476,10 @@
 
             <span class="n">_mark_as_processed</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DPOptimizer.scale_grad"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.scale_grad">[docs]</a>    <span class="k">def</span> <span class="nf">scale_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DPOptimizer.scale_grad">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.scale_grad">[docs]</a>
+    <span class="k">def</span> <span class="nf">scale_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Applies given ``loss_reduction`` to ``p.grad``.</span>
 
@@ -474,7 +490,10 @@
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">/=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_batch_size</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">accumulated_iterations</span></div>
 
-<div class="viewcode-block" id="DPOptimizer.zero_grad"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.zero_grad">[docs]</a>    <span class="k">def</span> <span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_to_none</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DPOptimizer.zero_grad">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.zero_grad">[docs]</a>
+    <span class="k">def</span> <span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_to_none</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Clear gradients.</span>
 
@@ -507,7 +526,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">(</span><span class="n">set_to_none</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DPOptimizer.pre_step"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.pre_step">[docs]</a>    <span class="k">def</span> <span class="nf">pre_step</span><span class="p">(</span>
+
+<div class="viewcode-block" id="DPOptimizer.pre_step">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.pre_step">[docs]</a>
+    <span class="k">def</span> <span class="nf">pre_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -532,7 +554,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_last_step_skipped</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
-<div class="viewcode-block" id="DPOptimizer.step"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="DPOptimizer.step">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.step">[docs]</a>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">closure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">enable_grad</span><span class="p">():</span>
                 <span class="n">closure</span><span class="p">()</span>
@@ -542,14 +567,22 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span></div>
 
+
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span>
 
-<div class="viewcode-block" id="DPOptimizer.state_dict"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="DPOptimizer.state_dict">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.state_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="DPOptimizer.load_state_dict"><a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="DPOptimizer.load_state_dict">
+<a class="viewcode-back" href="../../../optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer.load_state_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

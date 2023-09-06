@@ -25,16 +25,16 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="module-opacus.distributed">
-<span id="distributed"></span><h1>Distributed<a class="headerlink" href="#module-opacus.distributed" title="Permalink to this heading">¶</a></h1>
+<span id="distributed"></span><h1>Distributed<a class="headerlink" href="#module-opacus.distributed" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="opacus.distributed.DifferentiallyPrivateDistributedDataParallel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.distributed.</span></span><span class="sig-name descname"><span class="pre">DifferentiallyPrivateDistributedDataParallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/distributed.html#DifferentiallyPrivateDistributedDataParallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.distributed.DifferentiallyPrivateDistributedDataParallel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.distributed.</span></span><span class="sig-name descname"><span class="pre">DifferentiallyPrivateDistributedDataParallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/distributed.html#DifferentiallyPrivateDistributedDataParallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.distributed.DifferentiallyPrivateDistributedDataParallel" title="Link to this definition">¶</a></dt>
 <dd><p>Implements distributed data parallelism that is based on
 <code class="docutils literal notranslate"><span class="pre">torch.distributed</span></code> package at the module level.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.distributed.DifferentiallyPrivateDistributedDataParallel.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/distributed.html#DifferentiallyPrivateDistributedDataParallel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.distributed.DifferentiallyPrivateDistributedDataParallel.forward" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/distributed.html#DifferentiallyPrivateDistributedDataParallel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.distributed.DifferentiallyPrivateDistributedDataParallel.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Defines the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
@@ -48,7 +48,7 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.distributed.average_gradients">
-<span class="sig-prename descclassname"><span class="pre">opacus.distributed.</span></span><span class="sig-name descname"><span class="pre">average_gradients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/distributed.html#average_gradients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.distributed.average_gradients" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.distributed.</span></span><span class="sig-name descname"><span class="pre">average_gradients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/distributed.html#average_gradients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.distributed.average_gradients" title="Link to this definition">¶</a></dt>
 <dd><p>For all parameters of a given <code class="docutils literal notranslate"><span class="pre">model</span></code> averages gradients over all workers</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

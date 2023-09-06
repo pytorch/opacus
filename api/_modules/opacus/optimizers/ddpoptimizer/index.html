@@ -49,7 +49,9 @@
 <span class="kn">from</span> <span class="nn">.optimizer</span> <span class="kn">import</span> <span class="n">DPOptimizer</span>
 
 
-<div class="viewcode-block" id="DistributedDPOptimizer"><a class="viewcode-back" href="../../../optim/dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer">[docs]</a><span class="k">class</span> <span class="nc">DistributedDPOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
+<div class="viewcode-block" id="DistributedDPOptimizer">
+<a class="viewcode-back" href="../../../optim/dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer">[docs]</a>
+<span class="k">class</span> <span class="nc">DistributedDPOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    :class:`~opacus.optimizers.optimizer.DPOptimizer` compatible with</span>
 <span class="sd">    distributed data processing</span>
@@ -78,13 +80,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_rank</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">world_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
 
-<div class="viewcode-block" id="DistributedDPOptimizer.add_noise"><a class="viewcode-back" href="../../../optim/dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.add_noise">[docs]</a>    <span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="DistributedDPOptimizer.add_noise">
+<a class="viewcode-back" href="../../../optim/dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.add_noise">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Noise only gets added to the first worker</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_noise</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">reduce_gradients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
@@ -94,14 +99,18 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="o">/=</span> <span class="bp">self</span><span class="o">.</span><span class="n">world_size</span>
 
-<div class="viewcode-block" id="DistributedDPOptimizer.step"><a class="viewcode-back" href="../../../optim/dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span>
+<div class="viewcode-block" id="DistributedDPOptimizer.step">
+<a class="viewcode-back" href="../../../optim/dp_ddp_optimizer.html#opacus.optimizers.ddpoptimizer.DistributedDPOptimizer.step">[docs]</a>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_step</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reduce_gradients</span><span class="p">()</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span></div></div>
+            <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

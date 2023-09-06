@@ -51,7 +51,9 @@
 <span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
 
 
-<div class="viewcode-block" id="calc_sample_norms"><a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms">[docs]</a><span class="k">def</span> <span class="nf">calc_sample_norms</span><span class="p">(</span>
+<div class="viewcode-block" id="calc_sample_norms">
+<a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_sample_norms</span><span class="p">(</span>
     <span class="n">named_params</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span> <span class="o">*</span><span class="p">,</span> <span class="n">flat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
@@ -84,7 +86,10 @@
     <span class="k">return</span> <span class="n">norms</span></div>
 
 
-<div class="viewcode-block" id="calc_sample_norms_one_layer"><a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms_one_layer">[docs]</a><span class="k">def</span> <span class="nf">calc_sample_norms_one_layer</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="calc_sample_norms_one_layer">
+<a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.calc_sample_norms_one_layer">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_sample_norms_one_layer</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Calculates the norm of the given tensor (a single parameter) for each sample.</span>
 
@@ -111,7 +116,10 @@
     <span class="k">return</span> <span class="n">norms</span></div>
 
 
-<div class="viewcode-block" id="sum_over_all_but_batch_and_last_n"><a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.sum_over_all_but_batch_and_last_n">[docs]</a><span class="k">def</span> <span class="nf">sum_over_all_but_batch_and_last_n</span><span class="p">(</span>
+
+<div class="viewcode-block" id="sum_over_all_but_batch_and_last_n">
+<a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.sum_over_all_but_batch_and_last_n">[docs]</a>
+<span class="k">def</span> <span class="nf">sum_over_all_but_batch_and_last_n</span><span class="p">(</span>
     <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
@@ -140,7 +148,10 @@
         <span class="k">return</span> <span class="n">tensor</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dims</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="unfold2d"><a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.unfold2d">[docs]</a><span class="k">def</span> <span class="nf">unfold2d</span><span class="p">(</span>
+
+<div class="viewcode-block" id="unfold2d">
+<a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.unfold2d">[docs]</a>
+<span class="k">def</span> <span class="nf">unfold2d</span><span class="p">(</span>
     <span class="nb">input</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">kernel_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
@@ -199,7 +210,10 @@
     <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">H_effective</span> <span class="o">*</span> <span class="n">W_effective</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="unfold3d"><a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.unfold3d">[docs]</a><span class="k">def</span> <span class="nf">unfold3d</span><span class="p">(</span>
+
+<div class="viewcode-block" id="unfold3d">
+<a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.unfold3d">[docs]</a>
+<span class="k">def</span> <span class="nf">unfold3d</span><span class="p">(</span>
     <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">kernel_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
@@ -314,7 +328,10 @@
     <span class="k">return</span> <span class="n">tensor</span></div>
 
 
-<div class="viewcode-block" id="filter_dilated_rows"><a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.filter_dilated_rows">[docs]</a><span class="k">def</span> <span class="nf">filter_dilated_rows</span><span class="p">(</span>
+
+<div class="viewcode-block" id="filter_dilated_rows">
+<a class="viewcode-back" href="../../../utils/tensor_utils.html#opacus.utils.tensor_utils.filter_dilated_rows">[docs]</a>
+<span class="k">def</span> <span class="nf">filter_dilated_rows</span><span class="p">(</span>
     <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">dilation</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
     <span class="n">dilated_kernel_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
@@ -360,6 +377,7 @@
         <span class="n">tensor_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">tensor_np</span><span class="p">,</span> <span class="n">indices_to_keep</span><span class="p">[</span><span class="n">dim</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis_offset</span> <span class="o">+</span> <span class="n">dim</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">tensor_np</span><span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

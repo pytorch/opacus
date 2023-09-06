@@ -49,7 +49,9 @@
 <span class="kn">from</span> <span class="nn">torch.nn.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span>
 
 
-<div class="viewcode-block" id="SequenceBias"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias">[docs]</a><span class="k">class</span> <span class="nc">SequenceBias</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="SequenceBias">
+<a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias">[docs]</a>
+<span class="k">class</span> <span class="nc">SequenceBias</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Adds one bias element to the end of the sequence.</span>
 <span class="sd">    so if the input has a shape ``(L, N, E)``, (``batch_first = False``),</span>
@@ -86,16 +88,22 @@
 <span class="sd">        """</span>
         <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SequenceBias.forward"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<div class="viewcode-block" id="SequenceBias.forward">
+<a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.SequenceBias.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>
             <span class="n">bsz</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span></div></div>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DPMultiheadAttention"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention">[docs]</a><span class="k">class</span> <span class="nc">DPMultiheadAttention</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DPMultiheadAttention">
+<a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention">[docs]</a>
+<span class="k">class</span> <span class="nc">DPMultiheadAttention</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    This is DP-friendly implementation of nn.MultiheadAttention.</span>
 <span class="sd">    For full reference see original module refer to</span>
@@ -147,7 +155,9 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DPMultiheadAttention.load_state_dict"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">):</span>
+<div class="viewcode-block" id="DPMultiheadAttention.load_state_dict">
+<a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention.load_state_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Loads module from previously saved state.</span>
 
@@ -196,8 +206,11 @@
 
         <span class="nb">super</span><span class="p">(</span><span class="n">DPMultiheadAttention</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span></div>
 
+
     <span class="c1"># flake8: noqa C901</span>
-<div class="viewcode-block" id="DPMultiheadAttention.forward"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+<div class="viewcode-block" id="DPMultiheadAttention.forward">
+<a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">,</span>
         <span class="n">key</span><span class="p">,</span>
@@ -359,10 +372,13 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">attn_output</span><span class="p">,</span> <span class="kc">None</span></div>
 
+
     <span class="k">def</span> <span class="nf">unsqueeze_0_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DPMultiheadAttention.state_dict"><a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention.state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">keep_vars</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="DPMultiheadAttention.state_dict">
+<a class="viewcode-back" href="../../../dp_multihead_attention.html#opacus.layers.dp_multihead_attention.DPMultiheadAttention.state_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">keep_vars</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">destination</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">destination</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
             <span class="n">destination</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
@@ -443,7 +459,9 @@
             <span class="k">if</span> <span class="n">hook_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">destination_alter</span> <span class="o">=</span> <span class="n">hook_result</span>
 
-        <span class="k">return</span> <span class="n">destination_alter</span></div></div>
+        <span class="k">return</span> <span class="n">destination_alter</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

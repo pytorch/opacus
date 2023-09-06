@@ -44,7 +44,9 @@
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
 
 
-<div class="viewcode-block" id="average_gradients"><a class="viewcode-back" href="../../distributed.html#opacus.distributed.average_gradients">[docs]</a><span class="k">def</span> <span class="nf">average_gradients</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="average_gradients">
+<a class="viewcode-back" href="../../distributed.html#opacus.distributed.average_gradients">[docs]</a>
+<span class="k">def</span> <span class="nf">average_gradients</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    For all parameters of a given ``model`` averages gradients over all workers</span>
 
@@ -62,7 +64,10 @@
         <span class="n">param</span><span class="o">.</span><span class="n">grad</span> <span class="o">/=</span> <span class="n">world_size</span></div>
 
 
-<div class="viewcode-block" id="DifferentiallyPrivateDistributedDataParallel"><a class="viewcode-back" href="../../distributed.html#opacus.distributed.DifferentiallyPrivateDistributedDataParallel">[docs]</a><span class="k">class</span> <span class="nc">DifferentiallyPrivateDistributedDataParallel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DifferentiallyPrivateDistributedDataParallel">
+<a class="viewcode-back" href="../../distributed.html#opacus.distributed.DifferentiallyPrivateDistributedDataParallel">[docs]</a>
+<span class="k">class</span> <span class="nc">DifferentiallyPrivateDistributedDataParallel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Implements distributed data parallelism that is based on</span>
 <span class="sd">    ``torch.distributed`` package at the module level.</span>
@@ -80,8 +85,12 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">model</span>
 
-<div class="viewcode-block" id="DifferentiallyPrivateDistributedDataParallel.forward"><a class="viewcode-back" href="../../distributed.html#opacus.distributed.DifferentiallyPrivateDistributedDataParallel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+<div class="viewcode-block" id="DifferentiallyPrivateDistributedDataParallel.forward">
+<a class="viewcode-back" href="../../distributed.html#opacus.distributed.DifferentiallyPrivateDistributedDataParallel.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

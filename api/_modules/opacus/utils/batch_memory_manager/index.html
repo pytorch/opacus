@@ -51,7 +51,9 @@
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">BatchSampler</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">Sampler</span>
 
 
-<div class="viewcode-block" id="BatchSplittingSampler"><a class="viewcode-back" href="../../../batch_memory_manager.html#opacus.utils.batch_memory_manager.BatchSplittingSampler">[docs]</a><span class="k">class</span> <span class="nc">BatchSplittingSampler</span><span class="p">(</span><span class="n">Sampler</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
+<div class="viewcode-block" id="BatchSplittingSampler">
+<a class="viewcode-back" href="../../../batch_memory_manager.html#opacus.utils.batch_memory_manager.BatchSplittingSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">BatchSplittingSampler</span><span class="p">(</span><span class="n">Sampler</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Samples according to the underlying instance of ``Sampler``, but splits</span>
 <span class="sd">    the index sequences into smaller chunks.</span>
@@ -109,7 +111,10 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="wrap_data_loader"><a class="viewcode-back" href="../../../batch_memory_manager.html#opacus.utils.batch_memory_manager.wrap_data_loader">[docs]</a><span class="k">def</span> <span class="nf">wrap_data_loader</span><span class="p">(</span>
+
+<div class="viewcode-block" id="wrap_data_loader">
+<a class="viewcode-back" href="../../../batch_memory_manager.html#opacus.utils.batch_memory_manager.wrap_data_loader">[docs]</a>
+<span class="k">def</span> <span class="nf">wrap_data_loader</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">max_batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">DPOptimizer</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
@@ -143,7 +148,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="BatchMemoryManager"><a class="viewcode-back" href="../../../batch_memory_manager.html#opacus.utils.batch_memory_manager.BatchMemoryManager">[docs]</a><span class="k">class</span> <span class="nc">BatchMemoryManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BatchMemoryManager">
+<a class="viewcode-back" href="../../../batch_memory_manager.html#opacus.utils.batch_memory_manager.BatchMemoryManager">[docs]</a>
+<span class="k">class</span> <span class="nc">BatchMemoryManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Context manager to manage memory consumption during training.</span>
 
@@ -206,6 +214,7 @@
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
         <span class="k">pass</span></div>
+
 </pre></div>
 </div>
 </div>

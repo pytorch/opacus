@@ -46,7 +46,9 @@
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Sampler</span>
 
 
-<div class="viewcode-block" id="UniformWithReplacementSampler"><a class="viewcode-back" href="../../../utils/uniform_sampler.html#opacus.utils.uniform_sampler.UniformWithReplacementSampler">[docs]</a><span class="k">class</span> <span class="nc">UniformWithReplacementSampler</span><span class="p">(</span><span class="n">Sampler</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
+<div class="viewcode-block" id="UniformWithReplacementSampler">
+<a class="viewcode-back" href="../../../utils/uniform_sampler.html#opacus.utils.uniform_sampler.UniformWithReplacementSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">UniformWithReplacementSampler</span><span class="p">(</span><span class="n">Sampler</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    This sampler samples elements according to the Sampled Gaussian Mechanism.</span>
 <span class="sd">    Each sample is selected with a probability equal to ``sample_rate``.</span>
@@ -94,7 +96,10 @@
             <span class="n">num_batches</span> <span class="o">-=</span> <span class="mi">1</span></div>
 
 
-<div class="viewcode-block" id="DistributedUniformWithReplacementSampler"><a class="viewcode-back" href="../../../utils/uniform_sampler.html#opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler">[docs]</a><span class="k">class</span> <span class="nc">DistributedUniformWithReplacementSampler</span><span class="p">(</span><span class="n">Sampler</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DistributedUniformWithReplacementSampler">
+<a class="viewcode-back" href="../../../utils/uniform_sampler.html#opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">DistributedUniformWithReplacementSampler</span><span class="p">(</span><span class="n">Sampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Distributed batch sampler.</span>
 
@@ -190,7 +195,9 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_batches</span>
 
-<div class="viewcode-block" id="DistributedUniformWithReplacementSampler.set_epoch"><a class="viewcode-back" href="../../../utils/uniform_sampler.html#opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler.set_epoch">[docs]</a>    <span class="k">def</span> <span class="nf">set_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="DistributedUniformWithReplacementSampler.set_epoch">
+<a class="viewcode-back" href="../../../utils/uniform_sampler.html#opacus.utils.uniform_sampler.DistributedUniformWithReplacementSampler.set_epoch">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Sets the epoch for this sampler. When :attr:`shuffle=True`, this ensures all replicas</span>
 <span class="sd">        use a different random ordering for each epoch. Otherwise, the next iteration of this</span>
@@ -199,7 +206,9 @@
 <span class="sd">        Args:</span>
 <span class="sd">            epoch (int): Epoch number.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">=</span> <span class="n">epoch</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">=</span> <span class="n">epoch</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

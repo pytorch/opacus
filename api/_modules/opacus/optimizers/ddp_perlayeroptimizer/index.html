@@ -65,7 +65,9 @@
         <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">=</span> <span class="n">grad</span>
 
 
-<div class="viewcode-block" id="SimpleDistributedPerLayerOptimizer"><a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.SimpleDistributedPerLayerOptimizer">[docs]</a><span class="k">class</span> <span class="nc">SimpleDistributedPerLayerOptimizer</span><span class="p">(</span><span class="n">DPPerLayerOptimizer</span><span class="p">,</span> <span class="n">DistributedDPOptimizer</span><span class="p">):</span>
+<div class="viewcode-block" id="SimpleDistributedPerLayerOptimizer">
+<a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.SimpleDistributedPerLayerOptimizer">[docs]</a>
+<span class="k">class</span> <span class="nc">SimpleDistributedPerLayerOptimizer</span><span class="p">(</span><span class="n">DPPerLayerOptimizer</span><span class="p">,</span> <span class="n">DistributedDPOptimizer</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
@@ -91,7 +93,10 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DistributedPerLayerOptimizer"><a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer">[docs]</a><span class="k">class</span> <span class="nc">DistributedPerLayerOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DistributedPerLayerOptimizer">
+<a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer">[docs]</a>
+<span class="k">class</span> <span class="nc">DistributedPerLayerOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    :class:`~opacus.optimizers.optimizer.DPOptimizer` that implements</span>
 <span class="sd">    per layer clipping strategy and is compatible with distributed data parallel</span>
@@ -148,15 +153,23 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">expected_batch_size</span> <span class="o">*</span> <span class="n">p</span><span class="o">.</span><span class="n">accumulated_iterations</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">world_size</span>
             <span class="p">)</span>
 
-<div class="viewcode-block" id="DistributedPerLayerOptimizer.clip_and_accumulate"><a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.clip_and_accumulate">[docs]</a>    <span class="k">def</span> <span class="nf">clip_and_accumulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="DistributedPerLayerOptimizer.clip_and_accumulate">
+<a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.clip_and_accumulate">[docs]</a>
+    <span class="k">def</span> <span class="nf">clip_and_accumulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Clip and accumulate is added per layer in DPDDP Per Layer."</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="DistributedPerLayerOptimizer.add_noise"><a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.add_noise">[docs]</a>    <span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DistributedPerLayerOptimizer.add_noise">
+<a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.add_noise">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Noise is added per layer in DPDDP Per Layer."</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DistributedPerLayerOptimizer.pre_step"><a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.pre_step">[docs]</a>    <span class="k">def</span> <span class="nf">pre_step</span><span class="p">(</span>
+
+<div class="viewcode-block" id="DistributedPerLayerOptimizer.pre_step">
+<a class="viewcode-back" href="../../../optim/dp_ddp_per_layer_optimizer.html#opacus.optimizers.ddp_perlayeroptimizer.DistributedPerLayerOptimizer.pre_step">[docs]</a>
+    <span class="k">def</span> <span class="nf">pre_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_skip_next_step</span><span class="p">():</span>
@@ -171,6 +184,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_last_step_skipped</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span></div>
+
 
     <span class="k">def</span> <span class="nf">_ddp_per_layer_hook</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
@@ -199,6 +213,7 @@
             <span class="n">p</span><span class="o">.</span><span class="n">ddp_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">register_hook</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ddp_per_layer_hook</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">max_grad_norm</span><span class="p">))</span>
             <span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

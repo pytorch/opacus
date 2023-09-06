@@ -115,7 +115,9 @@
     <span class="k">return</span> <span class="n">packed_data</span>
 
 
-<div class="viewcode-block" id="compute_seq_lengths"><a class="viewcode-back" href="../../../utils/packed_sequences.html#opacus.utils.packed_sequences.compute_seq_lengths">[docs]</a><span class="k">def</span> <span class="nf">compute_seq_lengths</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<div class="viewcode-block" id="compute_seq_lengths">
+<a class="viewcode-back" href="../../../utils/packed_sequences.html#opacus.utils.packed_sequences.compute_seq_lengths">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_seq_lengths</span><span class="p">(</span><span class="n">batch_sizes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Computes the sequence lengths of a PackedSequence represented with batch_sizes.</span>
 
@@ -142,6 +144,7 @@
     <span class="n">running_seq_lengths</span> <span class="o">+=</span> <span class="n">batch_sizes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="p">[</span><span class="n">running_seq</span><span class="p">]</span>
     <span class="n">running_seq_lengths</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">running_seq_lengths</span></div>
+
 </pre></div>
 </div>
 </div>

@@ -45,7 +45,9 @@
 <span class="kn">from</span> <span class="nn">.analysis</span> <span class="kn">import</span> <span class="n">gdp</span> <span class="k">as</span> <span class="n">privacy_analysis</span>
 
 
-<div class="viewcode-block" id="GaussianAccountant"><a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant">[docs]</a><span class="k">class</span> <span class="nc">GaussianAccountant</span><span class="p">(</span><span class="n">IAccountant</span><span class="p">):</span>
+<div class="viewcode-block" id="GaussianAccountant">
+<a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant">[docs]</a>
+<span class="k">class</span> <span class="nc">GaussianAccountant</span><span class="p">(</span><span class="n">IAccountant</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"GDP accounting is experimental and can underestimate privacy expenditure."</span>
@@ -53,7 +55,9 @@
         <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
-<div class="viewcode-block" id="GaussianAccountant.step"><a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="GaussianAccountant.step">
+<a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant.step">[docs]</a>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">last_noise_multiplier</span><span class="p">,</span> <span class="n">last_sample_rate</span><span class="p">,</span> <span class="n">num_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
             <span class="k">if</span> <span class="p">(</span>
@@ -71,7 +75,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[(</span><span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span></div>
 
-<div class="viewcode-block" id="GaussianAccountant.get_epsilon"><a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant.get_epsilon">[docs]</a>    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">poisson</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+
+<div class="viewcode-block" id="GaussianAccountant.get_epsilon">
+<a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant.get_epsilon">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">poisson</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return privacy budget (epsilon) expended so far.</span>
 
@@ -94,12 +101,17 @@
             <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span>
         <span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
 
-<div class="viewcode-block" id="GaussianAccountant.mechanism"><a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant.mechanism">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="GaussianAccountant.mechanism">
+<a class="viewcode-back" href="../../../accounting/gdp.html#opacus.accountants.gdp.GaussianAccountant.mechanism">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">mechanism</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">"gdp"</span></div></div>
+        <span class="k">return</span> <span class="s2">"gdp"</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

@@ -63,7 +63,9 @@
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
 
 
-<div class="viewcode-block" id="PrivacyEngine"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine">[docs]</a><span class="k">class</span> <span class="nc">PrivacyEngine</span><span class="p">:</span>
+<div class="viewcode-block" id="PrivacyEngine">
+<a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine">[docs]</a>
+<span class="k">class</span> <span class="nc">PrivacyEngine</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Main entry point to the Opacus API - use ``PrivacyEngine``  to enable differential</span>
 <span class="sd">    privacy for your model training.</span>
@@ -226,7 +228,9 @@
                 <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="p">)</span>
 
-<div class="viewcode-block" id="PrivacyEngine.is_compatible"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.is_compatible">[docs]</a>    <span class="k">def</span> <span class="nf">is_compatible</span><span class="p">(</span>
+<div class="viewcode-block" id="PrivacyEngine.is_compatible">
+<a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.is_compatible">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_compatible</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -246,7 +250,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">module</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="PrivacyEngine.validate"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
+
+<div class="viewcode-block" id="PrivacyEngine.validate">
+<a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.validate">[docs]</a>
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -268,7 +275,10 @@
 <span class="sd">        """</span>
         <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="PrivacyEngine.get_compatible_module"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_compatible_module">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="PrivacyEngine.get_compatible_module">
+<a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_compatible_module">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_compatible_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return a privacy engine compatible module. Also validates the module after</span>
@@ -287,7 +297,10 @@
         <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">module</span></div>
 
-<div class="viewcode-block" id="PrivacyEngine.make_private"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.make_private">[docs]</a>    <span class="k">def</span> <span class="nf">make_private</span><span class="p">(</span>
+
+<div class="viewcode-block" id="PrivacyEngine.make_private">
+<a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.make_private">[docs]</a>
+    <span class="k">def</span> <span class="nf">make_private</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -415,7 +428,10 @@
 
         <span class="k">return</span> <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span></div>
 
-<div class="viewcode-block" id="PrivacyEngine.make_private_with_epsilon"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.make_private_with_epsilon">[docs]</a>    <span class="k">def</span> <span class="nf">make_private_with_epsilon</span><span class="p">(</span>
+
+<div class="viewcode-block" id="PrivacyEngine.make_private_with_epsilon">
+<a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.make_private_with_epsilon">[docs]</a>
+    <span class="k">def</span> <span class="nf">make_private_with_epsilon</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -516,7 +532,10 @@
             <span class="n">clipping</span><span class="o">=</span><span class="n">clipping</span><span class="p">,</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="PrivacyEngine.get_epsilon"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_epsilon">[docs]</a>    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+
+<div class="viewcode-block" id="PrivacyEngine.get_epsilon">
+<a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_epsilon">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Computes the (epsilon, delta) privacy budget spent so far.</span>
 
@@ -528,7 +547,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="PrivacyEngine.save_checkpoint"><a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.save_checkpoint">[docs]</a>    <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span>
+
+<div class="viewcode-block" id="PrivacyEngine.save_checkpoint">
+<a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.save_checkpoint">[docs]</a>
+    <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">IO</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]],</span>
@@ -569,6 +591,7 @@
 
         <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">checkpoint_dict</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">torch_save_kwargs</span> <span class="ow">or</span> <span class="p">{}))</span></div>
 
+
     <span class="k">def</span> <span class="nf">load_checkpoint</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -607,6 +630,7 @@
             <span class="n">grad_clip_scheduler</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">grad_clip_scheduler_state_dict</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">checkpoint</span></div>
+
 </pre></div>
 </div>
 </div>

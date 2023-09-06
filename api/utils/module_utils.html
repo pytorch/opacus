@@ -25,15 +25,15 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="module-opacus.utils.module_utils">
-<span id="module-utils"></span><h1>Module Utils<a class="headerlink" href="#module-opacus.utils.module_utils" title="Permalink to this heading">¶</a></h1>
+<span id="module-utils"></span><h1>Module Utils<a class="headerlink" href="#module-opacus.utils.module_utils" title="Link to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.module_utils.are_state_dict_equal">
-<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">are_state_dict_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sd1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#are_state_dict_equal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.are_state_dict_equal" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">are_state_dict_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sd1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#are_state_dict_equal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.are_state_dict_equal" title="Link to this definition">¶</a></dt>
 <dd><p>Compares two state dicts, while logging discrepancies</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.module_utils.clone_module">
-<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">clone_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#clone_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.clone_module" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">clone_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#clone_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.clone_module" title="Link to this definition">¶</a></dt>
 <dd><p>Handy utility to clone an nn.Module. PyTorch doesn’t always support copy.deepcopy(), so it is
 just easier to serialize the model to a BytesIO and read it from there.</p>
 <dl class="field-list simple">
@@ -50,7 +50,7 @@ just easier to serialize the model to a BytesIO and read it from there.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.module_utils.get_submodule">
-<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">get_submodule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#get_submodule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.get_submodule" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">get_submodule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#get_submodule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.get_submodule" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the submodule given by target if it exists, otherwise throws an error.</p>
 <p>This is copy-pasta of Pytorch 1.9’s <code class="docutils literal notranslate"><span class="pre">get_submodule()</span></code> implementation; and is
 included here to also support Pytorch 1.8. This function can be removed in favour
@@ -76,7 +76,7 @@ of <code class="docutils literal notranslate"><span class="pre">module.get_submo
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.module_utils.parametrized_modules">
-<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">parametrized_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#parametrized_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.parametrized_modules" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">parametrized_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#parametrized_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.parametrized_modules" title="Link to this definition">¶</a></dt>
 <dd><p>Recursively iterates over all submodules, returning those that
 have parameters (as opposed to “wrapper modules” that just organize modules).</p>
 <dl class="field-list simple">
@@ -87,7 +87,7 @@ have parameters (as opposed to “wrapper modules” that just organize modules)
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.module_utils.requires_grad">
-<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">requires_grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#requires_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.requires_grad" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">requires_grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#requires_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.requires_grad" title="Link to this definition">¶</a></dt>
 <dd><p>Checks if any parameters in a specified module require gradients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -107,7 +107,7 @@ be applied recursively to submodules of the specified module</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.module_utils.trainable_modules">
-<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">trainable_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#trainable_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.trainable_modules" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">trainable_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#trainable_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.trainable_modules" title="Link to this definition">¶</a></dt>
 <dd><p>Recursively iterates over all submodules, returning those that
 have parameters and are trainable (ie they want a grad).</p>
 <dl class="field-list simple">
@@ -118,7 +118,7 @@ have parameters and are trainable (ie they want a grad).</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="opacus.utils.module_utils.trainable_parameters">
-<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">trainable_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#trainable_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.trainable_parameters" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">opacus.utils.module_utils.</span></span><span class="sig-name descname"><span class="pre">trainable_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/utils/module_utils.html#trainable_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.utils.module_utils.trainable_parameters" title="Link to this definition">¶</a></dt>
 <dd><p>Recursively iterates over all parameters, returning those that
 are trainable (ie they want a grad).</p>
 <dl class="field-list simple">

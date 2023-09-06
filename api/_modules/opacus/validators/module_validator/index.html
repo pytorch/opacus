@@ -54,7 +54,9 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="ModuleValidator"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator">[docs]</a><span class="k">class</span> <span class="nc">ModuleValidator</span><span class="p">:</span>
+<div class="viewcode-block" id="ModuleValidator">
+<a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator">[docs]</a>
+<span class="k">class</span> <span class="nc">ModuleValidator</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Encapsulates all the validation logic required by Opacus.</span>
 <span class="sd">    Also works as a namespace to hold registered validators and fixers.</span>
@@ -63,7 +65,9 @@
     <span class="n">VALIDATORS</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">FIXERS</span> <span class="o">=</span> <span class="p">{}</span>
 
-<div class="viewcode-block" id="ModuleValidator.validate"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.validate">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="ModuleValidator.validate">
+<a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.validate">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">UnsupportedModuleError</span><span class="p">]:</span>
@@ -97,7 +101,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">errors</span></div>
 
-<div class="viewcode-block" id="ModuleValidator.is_valid"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.is_valid">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="ModuleValidator.is_valid">
+<a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.is_valid">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Check if module and sub_modules are valid by running registered custom validators.</span>
@@ -110,7 +117,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span></div>
 
-<div class="viewcode-block" id="ModuleValidator.fix"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="ModuleValidator.fix">
+<a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Make the module and sub_modules DP compatible by running registered custom fixers.</span>
@@ -151,6 +161,7 @@
         <span class="c1"># return fixed module</span>
         <span class="k">return</span> <span class="n">module</span></div>
 
+
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_replace_sub_module</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -171,7 +182,9 @@
             <span class="n">sub_module_parent</span><span class="o">.</span><span class="n">_modules</span><span class="p">[</span><span class="n">sub_module_path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_sub_module</span>
         <span class="k">return</span> <span class="n">root</span>
 
-<div class="viewcode-block" id="ModuleValidator.fix_and_validate"><a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix_and_validate">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="ModuleValidator.fix_and_validate">
+<a class="viewcode-back" href="../../../validator.html#opacus.validators.module_validator.ModuleValidator.fix_and_validate">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">fix_and_validate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Fix the module and sub_modules first, and then run validation.</span>
@@ -191,7 +204,9 @@
         <span class="c1"># 2. perform module specific validations.</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">fixed_module</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># return fixed module</span>
-        <span class="k">return</span> <span class="n">fixed_module</span></div></div>
+        <span class="k">return</span> <span class="n">fixed_module</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>
