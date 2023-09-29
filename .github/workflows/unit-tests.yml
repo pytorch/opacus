@@ -1,0 +1,108 @@
+name: Unit-tests with release and nightly versions of PyTorch on Linux CPU and CUDA
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  unit_tests_cpu:
+    strategy:
+      matrix:
+        python_version: ["3.9"]
+        pytorch_version: ["nightly", "release"]
+      fail-fast: false
+    uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+    with:
+      runner: linux.2xlarge
+      repository: pytorch/opacus
+      timeout: 60
+      script: |
+        echo '::group::Create conda env with correct Python version'
+        set -x
+        PYTHON_VERSION="${{ matrix.python_version }}"
+        conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+        conda activate test
+        python --version | grep "${PYTHON_VERSION}"
+        echo '::endgroup::'
+
+        echo '::group::Install dependencies via pip, including extra deps.'
+        if ["${{ matrix.pytorch_version }}" == "nightly"]; then
+          pip_install_arg="-n"
+        else
+          pip_install_arg=""
+        fi
+        apt-get install apt
+        ./scripts/install_via_pip.sh "$pip_install_arg"
+        echo '::endgroup::'
+
+        echo '::group::Run unit tests'
+        mkdir unittest-reports
+        python -m pytest --doctest-modules -p conftest --junitxml=unittest-reports/junit.xml opacus
+        echo '::endgroup::'
+
+  unit_test_multi_gpu:
+    strategy:
+      matrix:
+        python_version: ["3.9"]
+        cuda_arch_version: ["12.0"]
+      fail-fast: false
+    uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+    with:
+      runner: linux.g5.4xlarge.nvidia.gpu
+      gpu-arch-type: cuda
+      gpu-arch-version: ${{ matrix.cuda_arch_version }}
+      repository: pytorch/opacus
+      timeout: 60
+      script: |
+        echo '::group::Create conda env with correct Python version'
+        set -x
+        PYTHON_VERSION="${{ matrix.python_version }}"
+        conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+        conda activate test
+        python --version | grep "${PYTHON_VERSION}"
+        echo '::endgroup::'
+
+        echo '::group::Install dependencies via pip, including extra deps.'
+        apt-get install apt
+        ./scripts/install_via_pip.sh
+        echo '::endgroup::'
+
+        echo '::group::Run nvidia-smi'
+        nvidia-smi
+        echo '::endgroup::'
+
+        echo '::group::Run multi gpu unit tests'
+        mkdir unittest-multigpu-reports
+        python -m unittest opacus.tests.multigpu_gradcheck.GradientComputationTest.test_gradient_correct
+        echo '::endgroup::'
+
+  prv_accountant_values:
+    strategy:
+      matrix:
+        python_version: ["3.9"]
+      fail-fast: false
+    uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+    with:
+      runner: linux.2xlarge
+      repository: pytorch/opacus
+      timeout: 60
+      script: |
+        echo '::group::Create conda env with correct Python version'
+        set -x
+        PYTHON_VERSION="${{ matrix.python_version }}"
+        conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+        conda activate test
+        python --version | grep "${PYTHON_VERSION}"
+        echo '::endgroup::'
+
+        echo '::group::Install dependencies via pip, including extra deps.'
+        apt-get install apt
+        ./scripts/install_via_pip.sh
+        echo '::endgroup::'
+
+        echo '::group::Unit test prv accountant'
+        python -m unittest opacus.tests.prv_accountant
+        echo '::endgroup::'

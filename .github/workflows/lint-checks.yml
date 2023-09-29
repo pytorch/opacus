@@ -1,0 +1,45 @@
+name: Lint checks release version of PyTorch on Linux CPU
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  lint:
+    strategy:
+      matrix:
+        python_version: ["3.9"]
+      fail-fast: false
+    uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+    with:
+      runner: linux.2xlarge
+      repository: pytorch/opacus
+      timeout: 60
+      script: |
+        echo '::group::Create conda env with correct Python version'
+        set -x
+        PYTHON_VERSION="${{ matrix.python_version }}"
+        conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+        conda activate test
+        python --version | grep "${PYTHON_VERSION}"
+        echo '::endgroup::'
+
+        echo '::group::Install dependencies via pip, including extra deps.'
+        apt-get install apt
+        ./scripts/install_via_pip.sh
+        echo '::endgroup::'
+
+        echo '::group::Lint with flake8'
+        flake8 --config ./.github/flake8_config.ini
+        echo '::endgroup::'
+
+        echo '::group::Lint with black'
+        black --check --diff --color .
+        echo '::endgroup::'
+
+        echo '::group::Check import order with isort'
+        isort -v -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
+        echo '::endgroup::'
