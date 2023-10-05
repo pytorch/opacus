@@ -100,7 +100,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
 
         if self.enable_dp:
             self.trainer.fit_loop.setup_data()
-            dataloader = self.trainer.train_dataloader
+            data_loader = self.trainer.train_dataloader
 
             # transform (model, optimizer, dataloader) to DP-versions
             if hasattr(self, "dp"):
