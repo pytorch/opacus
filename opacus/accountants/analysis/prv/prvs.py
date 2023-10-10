@@ -96,11 +96,15 @@ class TruncatedPrivacyRandomVariable:
         """
         Calculate the mean using numerical integration.
         """
+        # determine points based on t_min and t_max
+        lower_exponent = int(np.log10(np.abs(self.t_min)))
+        upper_exponent = int(np.log10(self.t_max))
         points = np.concatenate(
             [
                 [self.t_min],
-                -np.logspace(-5, -1, 5)[::-1],
-                np.logspace(-5, -1, 5),
+                -np.logspace(start=lower_exponent, stop=-5, num=10),
+                [0],
+                np.logspace(start=-5, stop=upper_exponent, num=10),
                 [self.t_max],
             ]
         )
