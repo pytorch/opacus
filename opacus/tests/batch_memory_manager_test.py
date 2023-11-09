@@ -16,7 +16,7 @@ import unittest
 
 import torch
 import torch.nn as nn
-from hypothesis import given, settings
+from hypothesis import given, settings, HealthCheck
 from hypothesis import strategies as st
 from opacus import PrivacyEngine
 from opacus.utils.batch_memory_manager import BatchMemoryManager
@@ -59,7 +59,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
         batch_size=st.sampled_from([8, 16, 64]),
         max_physical_batch_size=st.sampled_from([4, 8]),
     )
-    @settings(deadline=10000)
+    @settings(suppress_health_check=list(HealthCheck), deadline=10000)
     def test_basic(
         self,
         num_workers: int,
@@ -119,7 +119,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
         num_workers=st.integers(0, 4),
         pin_memory=st.booleans(),
     )
-    @settings(deadline=10000)
+    @settings(suppress_health_check=list(HealthCheck), deadline=10000)
     def test_empty_batch(
         self,
         num_workers: int,
