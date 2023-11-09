@@ -16,7 +16,7 @@ import unittest
 
 import torch
 import torch.nn as nn
-from hypothesis import given, settings, HealthCheck
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from opacus import PrivacyEngine
 from opacus.utils.batch_memory_manager import BatchMemoryManager

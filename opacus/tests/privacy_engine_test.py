@@ -26,7 +26,7 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from hypothesis import given, settings, HealthCheck
+from hypothesis import HealthCheck, given, settings
 from opacus import PrivacyEngine
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
