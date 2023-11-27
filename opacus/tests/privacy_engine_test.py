@@ -26,7 +26,7 @@ import hypothesis.strategies as st
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
 from opacus import PrivacyEngine
 from opacus.layers.dp_multihead_attention import DPMultiheadAttention
 from opacus.optimizers.optimizer import _generate_noise
@@ -266,7 +266,7 @@ class BasePrivacyEngineTest(ABC):
         use_closure=st.booleans(),
         max_steps=st.sampled_from([1, 4]),
     )
-    @settings(deadline=None)
+    @settings(suppress_health_check=list(HealthCheck), deadline=None)
     def test_compare_to_vanilla(
         self,
         do_clip: bool,
@@ -552,7 +552,7 @@ class BasePrivacyEngineTest(ABC):
         has_noise_scheduler=st.booleans(),
         has_grad_clip_scheduler=st.booleans(),
     )
-    @settings(deadline=None)
+    @settings(suppress_health_check=list(HealthCheck), deadline=None)
     def test_checkpoints(
         self, has_noise_scheduler: bool, has_grad_clip_scheduler: bool
     ):
@@ -659,7 +659,7 @@ class BasePrivacyEngineTest(ABC):
         max_steps=st.integers(8, 10),
         secure_mode=st.just(False),  # TODO: enable after fixing torchcsprng build
     )
-    @settings(deadline=None)
+    @settings(suppress_health_check=list(HealthCheck), deadline=None)
     def test_noise_level(
         self,
         noise_multiplier: float,

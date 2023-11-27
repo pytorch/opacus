@@ -343,7 +343,7 @@ jobs:
   integrationtest_py39_torch_release_cuda:
     machine:
       resource_class: gpu.nvidia.small.multi
-      image: ubuntu-2004-cuda-11.4:202110-01
+      image: linux-cuda-12:default
     steps:
       - checkout
       - py_3_9_setup
@@ -363,7 +363,7 @@ jobs:
   micro_benchmarks_py39_torch_release_cuda:
     machine:
       resource_class: gpu.nvidia.small.multi
-      image: ubuntu-2004-cuda-11.4:202110-01
+      image: linux-cuda-12:default
     steps:
       - checkout
       - py_3_9_setup
@@ -447,7 +447,7 @@ jobs:
   unittest_multi_gpu:
     machine:
       resource_class: gpu.nvidia.medium.multi
-      image: ubuntu-2004-cuda-11.4:202110-01
+      image: linux-cuda-12:default
     steps:
       - checkout
       - py_3_9_setup
@@ -515,4 +515,3 @@ workflows:
           filters: *exclude_ghpages
       - micro_benchmarks_py39_torch_release_cuda:
           filters: *exclude_ghpages
-
