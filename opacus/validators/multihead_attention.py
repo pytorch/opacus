@@ -45,6 +45,7 @@ def fix(module: nn.MultiheadAttention) -> DPMultiheadAttention:
         add_zero_attn=module.add_zero_attn,
         kdim=module.kdim,
         vdim=module.vdim,
+        batch_first=module.batch_first,
     )
     dp_attn.load_state_dict(module.state_dict())
     return dp_attn

@@ -89,6 +89,7 @@ class DPMultiheadAttention(nn.Module):
         add_zero_attn=False,
         kdim=None,
         vdim=None,
+        batch_first=False,
         device=None,
         dtype=None,
     ):
@@ -96,10 +97,13 @@ class DPMultiheadAttention(nn.Module):
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
-        self._qkv_same_embed_dim = self.kdim == embed_dim and self.vdim == embed_dim
+
+        # when self._qkv_same_embed_dim = True, "in_proj_weight" rather than "q,k,v_weight" and fast path calculation will be used in "nn.transformer", which should be avoided. This is why we force self._qkv_same_embed_dim = False.
+        self._qkv_same_embed_dim = False
 
         self.num_heads = num_heads
         self.dropout = dropout
+        self.batch_first = batch_first
         self.head_dim = embed_dim // num_heads
         assert (
             self.head_dim * num_heads == self.embed_dim
@@ -119,6 +123,10 @@ class DPMultiheadAttention(nn.Module):
         self.add_zero_attn = add_zero_attn
 
         self.dropout = nn.Dropout(dropout)
+
+        # to avoid null pointers in Transformer.forward
+        self.in_proj_weight = None
+        self.in_proj_bias = None
 
     def load_state_dict(self, state_dict):
         r"""
@@ -178,7 +186,33 @@ class DPMultiheadAttention(nn.Module):
         key_padding_mask=None,
         need_weights=True,
         attn_mask=None,
+        is_causal=False,
     ):
+        is_batched = query.dim() == 3
+
+        assert is_batched == True, "The query must have a dimension of 3."
+
+        r"""
+        As per https://github.com/pytorch/opacus/issues/596, we have to include ``is_causal`` as a dummy parameter of the function,
+        since it is used in the ``forward`` function of parent class ``nn.TransformerEncoderLayer``.
+        """
+        assert (
+            is_causal == False
+        ), "We currently do not support causal mask. Will fix it in the future."
+
+        r"""
+        Using the same logic with ``nn.MultiheadAttention`` (https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html).
+        """
+        if self.batch_first:
+            if key is value:
+                if query is key:
+                    query = key = value = query.transpose(1, 0)
+                else:
+                    query, key = [x.transpose(1, 0) for x in (query, key)]
+                    value = key
+            else:
+                query, key, value = [x.transpose(1, 0) for x in (query, key, value)]
+
         tgt_len, bsz, embed_dim = query.size()
         if embed_dim != self.embed_dim:
             raise ValueError(
@@ -323,6 +357,9 @@ class DPMultiheadAttention(nn.Module):
         )
         attn_output = self.out_proj(attn_output)
 
+        if self.batch_first:
+            attn_output = attn_output.transpose(1, 0)
+
         if need_weights:
             # average attention weights over heads
             attn_output_weights = attn_output_weights.view(
@@ -361,7 +398,7 @@ class DPMultiheadAttention(nn.Module):
                     keep_vars=keep_vars,
                 )
 
-        if self._qkv_same_embed_dim:
+        if (self.kdim == self.embed_dim) and (self.vdim == self.embed_dim):
             destination_alter[prefix + "in_proj_weight"] = torch.cat(
                 (
                     destination[prefix + "qlinear.weight"],
