@@ -73,11 +73,11 @@ class BasePrivacyEngineTest(ABC):
         torch.manual_seed(42)
 
     @abc.abstractmethod
-    def _init_data(self):
+    def _init_data(self) -> None:
         pass
 
     @abc.abstractmethod
-    def _init_model(self):
+    def _init_model(self) -> None:
         pass
 
     def _init_vanilla_training(
@@ -193,7 +193,7 @@ class BasePrivacyEngineTest(ABC):
                 if max_steps and steps >= max_steps:
                     break
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         for opt_exclude_frozen in [True, False]:
             with self.subTest(opt_exclude_frozen=opt_exclude_frozen):
                 model, optimizer, dl, _ = self._init_private_training(
@@ -287,7 +287,7 @@ class BasePrivacyEngineTest(ABC):
             max_steps=max_steps,
         )
 
-    def test_flat_clipping(self):
+    def test_flat_clipping(self) -> None:
         self.BATCH_SIZE = 1
         max_grad_norm = 0.5
 
@@ -314,7 +314,7 @@ class BasePrivacyEngineTest(ABC):
         self.assertAlmostEqual(clipped_grads.norm().item(), max_grad_norm, places=3)
         self.assertGreater(non_clipped_grads.norm(), clipped_grads.norm())
 
-    def test_per_layer_clipping(self):
+    def test_per_layer_clipping(self) -> None:
         self.BATCH_SIZE = 1
         max_grad_norm_per_layer = 1.0
 
@@ -344,7 +344,7 @@ class BasePrivacyEngineTest(ABC):
                 min(non_clipped_norm, max_grad_norm_per_layer), clipped_norm, places=3
             )
 
-    def test_sample_grad_aggregation(self):
+    def test_sample_grad_aggregation(self) -> None:
         """
         Check if final gradient is indeed an aggregation over per-sample gradients
         """
@@ -367,7 +367,7 @@ class BasePrivacyEngineTest(ABC):
                 f"Param: {p_name}",
             )
 
-    def test_noise_changes_every_time(self):
+    def test_noise_changes_every_time(self) -> None:
         """
         Test that adding noise results in ever different model params.
         We disable clipping in this test by setting it to a very high threshold.
@@ -387,7 +387,7 @@ class BasePrivacyEngineTest(ABC):
         for p0, p1 in zip(first_run_params, second_run_params):
             self.assertFalse(torch.allclose(p0, p1))
 
-    def test_get_compatible_module_inaction(self):
+    def test_get_compatible_module_inaction(self) -> None:
         needs_no_replacement_module = nn.Linear(1, 2)
         fixed_module = PrivacyEngine.get_compatible_module(needs_no_replacement_module)
         self.assertFalse(fixed_module is needs_no_replacement_module)
@@ -397,7 +397,7 @@ class BasePrivacyEngineTest(ABC):
             )
         )
 
-    def test_model_validator(self):
+    def test_model_validator(self) -> None:
         """
         Test that the privacy engine raises errors
         if there are unsupported modules
@@ -416,7 +416,7 @@ class BasePrivacyEngineTest(ABC):
                 grad_sample_mode=self.GRAD_SAMPLE_MODE,
             )
 
-    def test_model_validator_after_fix(self):
+    def test_model_validator_after_fix(self) -> None:
         """
         Test that the privacy engine fixes unsupported modules
         and succeeds.
@@ -435,7 +435,7 @@ class BasePrivacyEngineTest(ABC):
         )
         self.assertTrue(1, 1)
 
-    def test_make_private_with_epsilon(self):
+    def test_make_private_with_epsilon(self) -> None:
         model, optimizer, dl = self._init_vanilla_training()
         target_eps = 2.0
         target_delta = 1e-5
@@ -458,7 +458,7 @@ class BasePrivacyEngineTest(ABC):
             target_eps, privacy_engine.get_epsilon(target_delta), places=2
         )
 
-    def test_deterministic_run(self):
+    def test_deterministic_run(self) -> None:
         """
         Tests that for 2 different models, secure seed can be fixed
         to produce same (deterministic) runs.
@@ -483,7 +483,7 @@ class BasePrivacyEngineTest(ABC):
                 "Model parameters after deterministic run must match",
             )
 
-    def test_validator_weight_update_check(self):
+    def test_validator_weight_update_check(self) -> None:
         """
         Test that the privacy engine raises error if ModuleValidator.fix(model) is
         called after the optimizer is created
@@ -522,7 +522,7 @@ class BasePrivacyEngineTest(ABC):
             grad_sample_mode=self.GRAD_SAMPLE_MODE,
         )
 
-    def test_parameters_match(self):
+    def test_parameters_match(self) -> None:
         dl = self._init_data()
 
         m1 = self._init_model()
@@ -721,7 +721,7 @@ class BasePrivacyEngineTest(ABC):
 
     @unittest.skip("requires torchcsprng compatible with new pytorch versions")
     @patch("torch.normal", MagicMock(return_value=torch.Tensor([0.6])))
-    def test_generate_noise_in_secure_mode(self):
+    def test_generate_noise_in_secure_mode(self) -> None:
         """
         Tests that the noise is added correctly in secure_mode,
         according to section 5.1 in https://arxiv.org/abs/2107.10138.
@@ -803,16 +803,16 @@ class PrivacyEngineConvNetTest(BasePrivacyEngineTest, unittest.TestCase):
 
 
 class PrivacyEngineConvNetEmptyBatchTest(PrivacyEngineConvNetTest):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         # This will trigger multiple empty batches with poisson sampling enabled
         self.BATCH_SIZE = 1
 
-    def test_checkpoints(self):
+    def test_checkpoints(self) -> None:
         pass
 
-    def test_noise_level(self):
+    def test_noise_level(self) -> None:
         pass
 
 
@@ -837,23 +837,23 @@ class PrivacyEngineConvNetFrozenTest(BasePrivacyEngineTest, unittest.TestCase):
 
 
 class PrivacyEngineConvNetFrozenTestFunctorch(PrivacyEngineConvNetFrozenTest):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.GRAD_SAMPLE_MODE = "functorch"
 
 
 class PrivacyEngineConvNetTestExpandedWeights(PrivacyEngineConvNetTest):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.GRAD_SAMPLE_MODE = "ew"
 
     @unittest.skip("Original p.grad is not available in ExpandedWeights")
-    def test_sample_grad_aggregation(self):
+    def test_sample_grad_aggregation(self) -> None:
         pass
 
 
 class PrivacyEngineConvNetTestFunctorch(PrivacyEngineConvNetTest):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.GRAD_SAMPLE_MODE = "functorch"
 
@@ -938,7 +938,7 @@ class PrivacyEngineTextTest(BasePrivacyEngineTest, unittest.TestCase):
 
 
 class PrivacyEngineTextTestFunctorch(PrivacyEngineTextTest):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.GRAD_SAMPLE_MODE = "functorch"
 
@@ -987,7 +987,7 @@ class PrivacyEngineTiedWeightsTest(BasePrivacyEngineTest, unittest.TestCase):
 
 
 class PrivacyEngineTiedWeightsTestFunctorch(PrivacyEngineTiedWeightsTest):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.GRAD_SAMPLE_MODE = "functorch"
 

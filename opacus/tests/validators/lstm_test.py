@@ -23,17 +23,17 @@ from opacus.validators.module_validator import ModuleValidator
 
 
 class LSTMValidator_test(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.lstm = nn.LSTM(8, 4)
         self.mv = ModuleValidator.VALIDATORS
         self.mf = ModuleValidator.FIXERS
 
-    def test_validate(self):
+    def test_validate(self) -> None:
         val_lstm = self.mv[type(self.lstm)](self.lstm)
         self.assertEqual(len(val_lstm), 1)
         self.assertTrue(isinstance(val_lstm[0], ShouldReplaceModuleError))
 
-    def test_fix(self):
+    def test_fix(self) -> None:
         fix_lstm = self.mf[type(self.lstm)](self.lstm)
         self.assertTrue(isinstance(fix_lstm, DPLSTM))
         self.assertTrue(

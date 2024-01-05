@@ -21,7 +21,7 @@ from opacus.validators.module_validator import ModuleValidator
 
 
 class BatchNormValidator_test(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.bn1 = nn.BatchNorm1d(4)
         self.bn2 = nn.BatchNorm2d(4)
         self.bn3 = nn.BatchNorm3d(4)
@@ -29,7 +29,7 @@ class BatchNormValidator_test(unittest.TestCase):
         self.mv = ModuleValidator.VALIDATORS
         self.mf = ModuleValidator.FIXERS
 
-    def test_validate(self):
+    def test_validate(self) -> None:
         val1 = self.mv[type(self.bn1)](self.bn1)
         val2 = self.mv[type(self.bn2)](self.bn2)
         val3 = self.mv[type(self.bn3)](self.bn3)
@@ -45,7 +45,7 @@ class BatchNormValidator_test(unittest.TestCase):
         self.assertTrue(isinstance(val3[0], ShouldReplaceModuleError))
         self.assertTrue(isinstance(vals[0], ShouldReplaceModuleError))
 
-    def test_fix(self):
+    def test_fix(self) -> None:
         fix1 = self.mf[type(self.bn1)](self.bn1)
         fix2 = self.mf[type(self.bn2)](self.bn2)
         fix3 = self.mf[type(self.bn3)](self.bn3)

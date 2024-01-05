@@ -23,17 +23,17 @@ from opacus.validators.module_validator import ModuleValidator
 
 
 class MultiheadAttentionValidator_test(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mha = nn.MultiheadAttention(8, 4)
         self.mv = ModuleValidator.VALIDATORS
         self.mf = ModuleValidator.FIXERS
 
-    def test_validate(self):
+    def test_validate(self) -> None:
         val_mha = self.mv[type(self.mha)](self.mha)
         self.assertEqual(len(val_mha), 1)
         self.assertTrue(isinstance(val_mha[0], ShouldReplaceModuleError))
 
-    def test_fix(self):
+    def test_fix(self) -> None:
         fix_mha = self.mf[type(self.mha)](self.mha)
         self.assertTrue(isinstance(fix_mha, DPMultiheadAttention))
         self.assertTrue(

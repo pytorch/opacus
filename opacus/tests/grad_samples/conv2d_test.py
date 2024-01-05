@@ -152,7 +152,7 @@ class Conv2d_test(GradSampleHooks_test):
 
         assert_close(X_unfold_torch, X_unfold_opacus, atol=0, rtol=0)
 
-    def test_asymetric_dilation_and_kernel_size(self):
+    def test_asymetric_dilation_and_kernel_size(self) -> None:
         """
         This test is mainly for particular use cases and can be useful for future debugging
         """

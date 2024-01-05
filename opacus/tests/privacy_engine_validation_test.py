@@ -31,7 +31,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
 
         return module, optim, dl
 
-    def test_supported_hooks(self):
+    def test_supported_hooks(self) -> None:
         module, optim, dl = self._init(BasicSupportedModule(), size=(16, 5))
 
         module, optim, dl = self.privacy_engine.make_private(
@@ -46,7 +46,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         for x in dl:
             module(x)
 
-    def test_supported_ew(self):
+    def test_supported_ew(self) -> None:
         module, optim, dl = self._init(BasicSupportedModule(), size=(16, 5))
 
         module, optim, dl = self.privacy_engine.make_private(
@@ -61,7 +61,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         for x in dl:
             module(x)
 
-    def test_custom_linear_hooks(self):
+    def test_custom_linear_hooks(self) -> None:
         module, optim, dl = self._init(CustomLinearModule(5, 8), size=(16, 5))
         try:
             gsm, _, _ = self.privacy_engine.make_private(
@@ -76,7 +76,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         except ImportError:
             print("Test not ran because functorch not imported")
 
-    def test_custom_linear_ew(self):
+    def test_custom_linear_ew(self) -> None:
         module, optim, dl = self._init(CustomLinearModule(5, 8), size=(16, 5))
 
         module, optim, dl = self.privacy_engine.make_private(
@@ -91,7 +91,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         for x in dl:
             module(x)
 
-    def test_unsupported_hooks(self):
+    def test_unsupported_hooks(self) -> None:
         try:
             module, optim, dl = self._init(MatmulModule(5, 8), size=(16, 5))
 
@@ -107,7 +107,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         except ImportError:
             print("Test not ran because functorch not imported")
 
-    def test_unsupported_ew(self):
+    def test_unsupported_ew(self) -> None:
         module, optim, dl = self._init(
             MatmulModule(input_features=5, output_features=10),
             size=(16, 5),
@@ -127,7 +127,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
             for x in dl:
                 module(x)
 
-    def test_extra_param_hooks_requires_grad(self):
+    def test_extra_param_hooks_requires_grad(self) -> None:
         module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         try:
             gsm, _, _ = self.privacy_engine.make_private(
@@ -143,7 +143,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         except ImportError:
             print("Test not ran because functorch not imported")
 
-    def test_extra_param_hooks_no_requires_grad(self):
+    def test_extra_param_hooks_no_requires_grad(self) -> None:
         module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         module.extra_param.requires_grad = False
         module, optim, dl = self.privacy_engine.make_private(
@@ -158,7 +158,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
         for x in dl:
             module(x)
 
-    def test_extra_param_ew(self):
+    def test_extra_param_ew(self) -> None:
         module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         module, optim, dl = self.privacy_engine.make_private(
             module=module,
@@ -172,7 +172,7 @@ class PrivacyEngineValidationTest(unittest.TestCase):
             for x in dl:
                 module(x)
 
-    def test_extra_param_disabled_ew(self):
+    def test_extra_param_disabled_ew(self) -> None:
         module, optim, dl = self._init(LinearWithExtraParam(5, 8), size=(16, 5))
         module.extra_param.requires_grad = False
 

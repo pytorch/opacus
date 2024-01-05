@@ -42,11 +42,11 @@ class PoissonSamplingTest(unittest.TestCase):
 
         self.sampler, self.dataloader = self._init_data(seed=7)
 
-    def test_length(self):
+    def test_length(self) -> None:
         self.assertEqual(len(self.sampler), 10)
         self.assertEqual(len(self.dataloader), 10)
 
-    def test_batch_sizes(self):
+    def test_batch_sizes(self) -> None:
         batch_sizes = []
         for x, _y in self.dataloader:
             batch_sizes.append(x.shape[0])
@@ -54,7 +54,7 @@ class PoissonSamplingTest(unittest.TestCase):
         self.assertGreater(len(set(batch_sizes)), 1)
         self.assertAlmostEqual(np.mean(batch_sizes), self.batch_size, delta=2)
 
-    def test_same_seed(self):
+    def test_same_seed(self) -> None:
         batch_sizes1 = []
         for x, _y in self.dataloader:
             batch_sizes1.append(x.shape[0])
@@ -66,7 +66,7 @@ class PoissonSamplingTest(unittest.TestCase):
 
         self.assertEqual(batch_sizes1, batch_sizes2)
 
-    def test_different_seed(self):
+    def test_different_seed(self) -> None:
         batch_sizes1 = []
         for x, _y in self.dataloader:
             batch_sizes1.append(x.shape[0])

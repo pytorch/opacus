@@ -61,7 +61,7 @@ class SampleConvNet(nn.Module):
 
 
 class GradientAccumulationTest(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.DATA_SIZE = 128
         self.BATCH_SIZE = 16
         self.SAMPLE_RATE = self.BATCH_SIZE / self.DATA_SIZE
@@ -73,7 +73,7 @@ class GradientAccumulationTest(unittest.TestCase):
         self.setUp_data()
         self.setUp_model_and_optimizer()
 
-    def setUp_data(self):
+    def setUp_data(self) -> None:
         self.ds = FakeData(
             size=self.DATA_SIZE,
             image_size=(1, 35, 35),
@@ -84,7 +84,7 @@ class GradientAccumulationTest(unittest.TestCase):
         )
         self.dl = DataLoader(self.ds, batch_size=self.BATCH_SIZE)
 
-    def setUp_model_and_optimizer(self):
+    def setUp_model_and_optimizer(self) -> None:
         self.model = SampleConvNet()
         self.optimizer = torch.optim.SGD(
             self.model.parameters(), lr=self.LR, momentum=0
@@ -126,7 +126,7 @@ class GradientAccumulationTest(unittest.TestCase):
             if num_steps == 0:
                 break
 
-    def test_grad_sample_accumulation(self):
+    def test_grad_sample_accumulation(self) -> None:
         """
         Calling loss.backward() multiple times should sum up the gradients in .grad
         and accumulate all the individual gradients in .grad-sample
@@ -175,7 +175,7 @@ class GradientAccumulationTest(unittest.TestCase):
         )
         self.assertTrue(torch.allclose(grad, orig_grad, atol=10e-5, rtol=10e-3))
 
-    def test_privacy_engine_poisson_accumulation(self):
+    def test_privacy_engine_poisson_accumulation(self) -> None:
         privacy_engine = PrivacyEngine()
         model, optimizer, dl = privacy_engine.make_private(
             module=self.model,
@@ -191,7 +191,7 @@ class GradientAccumulationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.model_forward_backward(model, dl, num_steps=1)
 
-    def test_privacy_engine_no_poisson_accumulation(self):
+    def test_privacy_engine_no_poisson_accumulation(self) -> None:
         privacy_engine = PrivacyEngine()
         model, optimizer, dl = privacy_engine.make_private(
             module=self.model,
@@ -225,7 +225,7 @@ class GradientAccumulationTest(unittest.TestCase):
             f"MAD is {(orig_grad - accumulated_grad).abs().mean()}",
         )
 
-    def test_privacy_engine_zero_grad(self):
+    def test_privacy_engine_zero_grad(self) -> None:
         privacy_engine = PrivacyEngine()
         model, optimizer, dl = privacy_engine.make_private(
             module=self.model,
@@ -248,7 +248,7 @@ class GradientAccumulationTest(unittest.TestCase):
                 model, dl, optimizer, num_steps=2, do_zero_grad=False
             )
 
-    def test_batch_splitter_zero_grad(self):
+    def test_batch_splitter_zero_grad(self) -> None:
         privacy_engine = PrivacyEngine()
         model, optimizer, dl = privacy_engine.make_private(
             module=self.model,
@@ -274,6 +274,6 @@ class GradientAccumulationTest(unittest.TestCase):
 
 
 class GradientAccumulationTestFunctorch(GradientAccumulationTest):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.GRAD_SAMPLE_MODE = "functorch"

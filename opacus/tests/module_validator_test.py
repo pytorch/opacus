@@ -136,7 +136,7 @@ class ModuleValidator_test(unittest.TestCase):
         model.b1.bias.requires_grad = False
         self.assertTrue(ModuleValidator.is_valid(model))
 
-    def test_fix_bn_with_args(self):
+    def test_fix_bn_with_args(self) -> None:
         m = nn.Sequential(
             OrderedDict(
                 [

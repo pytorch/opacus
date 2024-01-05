@@ -64,7 +64,7 @@ msr_values = {
 
 
 class PRVAccountantTest(unittest.TestCase):
-    def test_values(self):
+    def test_values(self) -> None:
         for (sigma, q, steps), expected_epsilon in msr_values.items():
             accountant = PRVAccountant()
             accountant.history = [(sigma, q, steps)]

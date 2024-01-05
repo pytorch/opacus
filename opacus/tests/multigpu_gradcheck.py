@@ -140,7 +140,7 @@ def run_demo(demo_fn, weight, world_size, dp, clipping, grad_sample_mode):
 
 
 class GradientComputationTest(unittest.TestCase):
-    def test_gradient_correct(self):
+    def test_gradient_correct(self) -> None:
         # Tests that gradient is the same with DP or with DDP
         n_gpus = torch.cuda.device_count()
         self.assertTrue(

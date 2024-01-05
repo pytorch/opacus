@@ -21,7 +21,7 @@ from opacus.validators.module_validator import ModuleValidator
 
 
 class InstanceNormValidator_test(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.in1 = nn.InstanceNorm1d(4, affine=True, track_running_stats=True)
         self.in2 = nn.InstanceNorm2d(4, affine=False, track_running_stats=True)
         self.in3 = nn.InstanceNorm3d(4, affine=False, track_running_stats=True)
@@ -30,7 +30,7 @@ class InstanceNormValidator_test(unittest.TestCase):
         self.mv = ModuleValidator.VALIDATORS
         self.mf = ModuleValidator.FIXERS
 
-    def test_validate(self):
+    def test_validate(self) -> None:
         val1 = self.mv[type(self.in1)](self.in1)
         val2 = self.mv[type(self.in2)](self.in2)
         val3 = self.mv[type(self.in3)](self.in3)
@@ -45,7 +45,7 @@ class InstanceNormValidator_test(unittest.TestCase):
         self.assertTrue(isinstance(val2[0], IllegalModuleConfigurationError))
         self.assertTrue(isinstance(val3[0], IllegalModuleConfigurationError))
 
-    def test_fix(self):
+    def test_fix(self) -> None:
         fix1 = self.mf[type(self.in1)](self.in1)
         fix2 = self.mf[type(self.in2)](self.in2)
         fix3 = self.mf[type(self.in3)](self.in3)
