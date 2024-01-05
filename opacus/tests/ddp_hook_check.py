@@ -255,7 +255,7 @@ def run_function(local_function, tensor, dp, noise_multiplier=0, max_grad_norm=1
 
 
 class GradientComputationTest(unittest.TestCase):
-    def test_connection(self):
+    def test_connection(self) -> None:
         tensor = torch.zeros(10, 10)
         world_size = run_function(debug, tensor, dp=True)
 
@@ -263,7 +263,7 @@ class GradientComputationTest(unittest.TestCase):
             world_size >= 2, f"Need at least 2 gpus but was provided only {world_size}."
         )
 
-    def test_gradient_noclip_zeronoise(self):
+    def test_gradient_noclip_zeronoise(self) -> None:
         # Tests that gradient is the same with DP or with DDP
         weight_dp, weight_nodp = torch.zeros(10, 10), torch.zeros(10, 10)
 
@@ -272,7 +272,7 @@ class GradientComputationTest(unittest.TestCase):
 
         self.assertTrue(torch.norm(weight_dp - weight_nodp) < 1e-7)
 
-    def test_ddp_hook(self):
+    def test_ddp_hook(self) -> None:
         # Tests that the DDP hook does the same thing as naive aggregation with per layer clipping
         weight_ddp_naive, weight_ddp_hook = torch.zeros(10, 10), torch.zeros(10, 10)
 
@@ -297,7 +297,7 @@ class GradientComputationTest(unittest.TestCase):
             f"DDP naive: {weight_ddp_naive}\nDDP hook: {weight_ddp_hook}",
         )
 
-    def test_add_remove_ddp_hooks(self):
+    def test_add_remove_ddp_hooks(self) -> None:
         remaining_hooks = {
             "attached": None,
             "detached": None,

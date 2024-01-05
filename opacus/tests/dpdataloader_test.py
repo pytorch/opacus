@@ -20,12 +20,12 @@ from torch.utils.data import DataLoader, TensorDataset
 
 
 class DPDataLoaderTest(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.data_size = 10
         self.dimension = 7
         self.num_classes = 11
 
-    def test_collate_classes(self):
+    def test_collate_classes(self) -> None:
         x = torch.randn(self.data_size, self.dimension)
         y = torch.randint(low=0, high=self.num_classes, size=(self.data_size,))
 
@@ -36,7 +36,7 @@ class DPDataLoaderTest(unittest.TestCase):
         self.assertEqual(x_b.size(0), 0)
         self.assertEqual(y_b.size(0), 0)
 
-    def test_collate_tensor(self):
+    def test_collate_tensor(self) -> None:
         x = torch.randn(self.data_size, self.dimension)
 
         dataset = TensorDataset(x)
@@ -46,7 +46,7 @@ class DPDataLoaderTest(unittest.TestCase):
 
         self.assertEqual(s.size(0), 0)
 
-    def test_drop_last_true(self):
+    def test_drop_last_true(self) -> None:
         x = torch.randn(self.data_size, self.dimension)
 
         dataset = TensorDataset(x)

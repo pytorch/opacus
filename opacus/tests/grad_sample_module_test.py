@@ -225,18 +225,18 @@ class GradSampleModuleTest(unittest.TestCase):
         register_grad_sampler(SimpleLinear)(compute_linear_grad_sample)
         GradSampleModule(SimpleLinear(4, 2))
 
-    def test_custom_module_validation(self):
+    def test_custom_module_validation(self) -> None:
         with self.assertRaises(NotImplementedError):
             GradSampleModule(mobilenet_v3_small())
 
-    def test_submodule_access(self):
+    def test_submodule_access(self) -> None:
         _ = self.grad_sample_module.fc1
         _ = self.grad_sample_module.fc2
 
         with self.assertRaises(AttributeError):
             _ = self.grad_sample_module.fc3
 
-    def test_state_dict(self):
+    def test_state_dict(self) -> None:
         gs_state_dict = self.grad_sample_module.state_dict()
         og_state_dict = self.original_model.state_dict()
         # check wrapped module state dict
@@ -244,7 +244,7 @@ class GradSampleModuleTest(unittest.TestCase):
             self.assertTrue(f"_module.{key}" in gs_state_dict)
             assert_close(og_state_dict[key], gs_state_dict[f"_module.{key}"])
 
-    def test_load_state_dict(self):
+    def test_load_state_dict(self) -> None:
         gs_state_dict = self.grad_sample_module.state_dict()
         new_gs = GradSampleModule(
             SampleConvNet(), batch_first=False, loss_reduction="mean"
@@ -261,11 +261,11 @@ class GradSampleModuleTest(unittest.TestCase):
 class EWGradSampleModuleTest(GradSampleModuleTest):
     CLS = GradSampleModuleExpandedWeights
 
-    def test_remove_hooks(self):
+    def test_remove_hooks(self) -> None:
         pass
 
-    def test_enable_hooks(self):
+    def test_enable_hooks(self) -> None:
         pass
 
-    def test_disable_hooks(self):
+    def test_disable_hooks(self) -> None:
         pass

@@ -27,7 +27,7 @@ from opacus.accountants.utils import get_noise_multiplier
 
 
 class AccountingTest(unittest.TestCase):
-    def test_rdp_accountant(self):
+    def test_rdp_accountant(self) -> None:
         noise_multiplier = 1.5
         sample_rate = 0.04
         steps = int(90 / 0.04)
@@ -39,7 +39,7 @@ class AccountingTest(unittest.TestCase):
         epsilon = accountant.get_epsilon(delta=1e-5)
         self.assertAlmostEqual(epsilon, 7.32911117143)
 
-    def test_gdp_accountant(self):
+    def test_gdp_accountant(self) -> None:
         noise_multiplier = 1.5
         sample_rate = 0.04
         steps = int(90 // 0.04)
@@ -52,7 +52,7 @@ class AccountingTest(unittest.TestCase):
         self.assertLess(6.59, epsilon)
         self.assertLess(epsilon, 6.6)
 
-    def test_prv_accountant(self):
+    def test_prv_accountant(self) -> None:
         noise_multiplier = 1.5
         sample_rate = 0.04
         steps = int(90 // 0.04)
@@ -65,7 +65,7 @@ class AccountingTest(unittest.TestCase):
         epsilon = accountant.get_epsilon(delta=1e-5)
         self.assertAlmostEqual(epsilon, 6.777395712150674)
 
-    def test_get_noise_multiplier_rdp_epochs(self):
+    def test_get_noise_multiplier_rdp_epochs(self) -> None:
         delta = 1e-5
         sample_rate = 0.04
         epsilon = 8
@@ -81,7 +81,7 @@ class AccountingTest(unittest.TestCase):
 
         self.assertAlmostEqual(noise_multiplier, 1.416, places=4)
 
-    def test_get_noise_multiplier_rdp_steps(self):
+    def test_get_noise_multiplier_rdp_steps(self) -> None:
         delta = 1e-5
         sample_rate = 0.04
         epsilon = 8
@@ -96,7 +96,7 @@ class AccountingTest(unittest.TestCase):
 
         self.assertAlmostEqual(noise_multiplier, 1.3562, places=4)
 
-    def test_get_noise_multiplier_prv_epochs(self):
+    def test_get_noise_multiplier_prv_epochs(self) -> None:
         delta = 1e-5
         sample_rate = 0.04
         epsilon = 8
@@ -112,7 +112,7 @@ class AccountingTest(unittest.TestCase):
 
         self.assertAlmostEqual(noise_multiplier, 1.34765625, places=4)
 
-    def test_get_noise_multiplier_prv_steps(self):
+    def test_get_noise_multiplier_prv_steps(self) -> None:
         delta = 1e-5
         sample_rate = 0.04
         epsilon = 8
@@ -153,7 +153,7 @@ class AccountingTest(unittest.TestCase):
         actual_epsilon = accountant.get_epsilon(delta=delta)
         self.assertLess(actual_epsilon, epsilon)
 
-    def test_get_noise_multiplier_gdp(self):
+    def test_get_noise_multiplier_gdp(self) -> None:
         delta = 1e-5
         sample_rate = 0.04
         epsilon = 8
@@ -169,7 +169,7 @@ class AccountingTest(unittest.TestCase):
 
         self.assertAlmostEqual(noise_multiplier, 1.3232421875)
 
-    def test_accountant_state_dict(self):
+    def test_accountant_state_dict(self) -> None:
         noise_multiplier = 1.5
         sample_rate = 0.04
         steps = int(90 / 0.04)
@@ -191,7 +191,7 @@ class AccountingTest(unittest.TestCase):
             accountant.state_dict(dummy_dest)["dummy_k"], dummy_dest["dummy_k"]
         )
 
-    def test_accountant_load_state_dict(self):
+    def test_accountant_load_state_dict(self) -> None:
         noise_multiplier = 1.5
         sample_rate = 0.04
         steps = int(90 / 0.04)

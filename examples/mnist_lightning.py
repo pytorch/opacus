@@ -136,7 +136,7 @@ class LitSampleConvNetClassifier(pl.LightningModule):
         self.log("test_accuracy", self.test_accuracy, on_step=False, on_epoch=True)
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         # Logging privacy spent: (epsilon, delta)
         epsilon = self.privacy_engine.get_epsilon(self.delta)
         self.log("epsilon", epsilon, on_epoch=True, prog_bar=True)

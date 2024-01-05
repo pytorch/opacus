@@ -171,7 +171,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
                     )
                     weights_before = torch.clone(model._module.fc.weight)
 
-    def test_equivalent_to_one_batch(self):
+    def test_equivalent_to_one_batch(self) -> None:
         torch.manual_seed(1337)
         model, optimizer, data_loader = self._init_training()
 
@@ -229,7 +229,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
 class BatchMemoryManagerTestWithExpandedWeights(BatchMemoryManagerTest):
     GSM_MODE = "ew"
 
-    def test_empty_batch(self):
+    def test_empty_batch(self) -> None:
         pass
 
 

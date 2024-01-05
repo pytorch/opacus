@@ -54,13 +54,13 @@ class PoissonSamplingTest(unittest.TestCase):
 
         self.samplers, self.dataloaders = self._init_data(seed=7)
 
-    def test_length(self):
+    def test_length(self) -> None:
         for sampler in self.samplers:
             self.assertEqual(len(sampler), 10)
         for dataloader in self.dataloaders:
             self.assertEqual(len(dataloader), 10)
 
-    def test_batch_sizes(self):
+    def test_batch_sizes(self) -> None:
         for dataloader in self.dataloaders:
             batch_sizes = []
             for x, _y in dataloader:
@@ -71,7 +71,7 @@ class PoissonSamplingTest(unittest.TestCase):
                 np.mean(batch_sizes), self.batch_size // self.world_size, delta=2
             )
 
-    def test_separate_batches(self):
+    def test_separate_batches(self) -> None:
         indices = {
             rank: [i.item() for batch in self.samplers[rank] for i in batch]
             for rank in range(self.world_size)
