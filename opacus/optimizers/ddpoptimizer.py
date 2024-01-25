@@ -70,8 +70,12 @@ class DistributedDPOptimizer(DPOptimizer):
     def step(
         self, closure: Optional[Callable[[], float]] = None
     ) -> Optional[torch.Tensor]:
+        if closure is not None:
+            with torch.enable_grad():
+                closure()
+
         if self.pre_step():
             self.reduce_gradients()
-            return self.original_optimizer.step(closure)
+            return self.original_optimizer.step()
         else:
             return None

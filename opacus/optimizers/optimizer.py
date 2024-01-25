@@ -491,6 +491,11 @@ class DPOptimizer(Optimizer):
             closure: A closure that reevaluates the model and
                 returns the loss. Optional for most optimizers.
         """
+        # The corner case when the optimizer has no trainable parameters.
+        # Essentially the DPOptimizer act as a normal optimizer
+        if self.grad_samples is None or len(self.grad_samples) == 0:
+            return True
+
         self.clip_and_accumulate()
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
