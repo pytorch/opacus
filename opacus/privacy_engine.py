@@ -536,9 +536,9 @@ class PrivacyEngine:
         if noise_scheduler is not None:
             checkpoint_dict["noise_scheduler_state_dict"] = noise_scheduler.state_dict()
         if grad_clip_scheduler is not None:
-            checkpoint_dict[
-                "grad_clip_scheduler_state_dict"
-            ] = grad_clip_scheduler.state_dict()
+            checkpoint_dict["grad_clip_scheduler_state_dict"] = (
+                grad_clip_scheduler.state_dict()
+            )
 
         torch.save(checkpoint_dict, path, **(torch_save_kwargs or {}))
 
