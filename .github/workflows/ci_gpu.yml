@@ -1,0 +1,173 @@
+name: CI_GPU
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+  unittest_multi_gpu:
+    runs-on: linux.4xlarge.nvidia.gpu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          ./scripts/install_via_pip.sh -c
+
+      - name: Run multi-GPU unit tests
+        run: |
+          nvidia-smi
+          nvcc --version
+          python -m unittest opacus.tests.multigpu_gradcheck.GradientComputationTest.test_gradient_correct
+
+
+  integrationtest_py39_torch_release_cuda:
+    runs-on: ubuntu-latest
+    container:
+      # https://hub.docker.com/r/nvidia/cuda
+      image: nvidia/cuda:12.3.1-base-ubuntu22.04
+      options: --gpus all
+    env:
+      TZ: 'UTC'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest coverage coveralls
+          ./scripts/install_via_pip.sh -c
+
+      - name: Install CUDA toolkit and cuDNN
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            cuda-toolkit-11-1 \
+            libcudnn8=8.1.1.33-1+cuda11.1 \
+            libcudnn8-dev=8.1.1.33-1+cuda11.1
+
+      - name: Run MNIST integration test (CUDA)
+        run: |
+          mkdir -p runs/mnist/data
+          mkdir -p runs/mnist/test-reports
+          python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 64 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device cuda
+          python -c "import torch; accuracy = torch.load('run_results_mnist_0.25_0.7_1.5_64_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
+
+      - name: Store MNIST test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: mnist-gpu-reports
+          path: runs/mnist/test-reports
+
+      - name: Run CIFAR10 integration test (CUDA)
+        run: |
+          mkdir -p runs/cifar10/data
+          mkdir -p runs/cifar10/logs
+          mkdir -p runs/cifar10/test-reports
+          pip install tensorboard
+          python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --batch-size 2000 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device cuda
+          python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
+          python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --batch-size 2000 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device cuda --grad_sample_mode no_op
+          python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
+
+      - name: Store CIFAR10 test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: cifar10-gpu-reports
+          path: runs/cifar10/test-reports
+
+      - name: Run IMDb integration test (CUDA)
+        run: |
+          mkdir -p runs/imdb/data
+          mkdir -p runs/imdb/test-reports
+          pip install --user datasets transformers
+          python examples/imdb.py --lr 0.02 --sigma 1.0 -c 1.0 --batch-size 64 --max-sequence-length 256 --epochs 2 --data-root runs/imdb/data --device cuda
+          python -c "import torch; accuracy = torch.load('run_results_imdb_classification.pt'); exit(0) if (accuracy>0.54 and accuracy<0.66) else exit(1)"
+
+      - name: Store IMDb test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: imdb-gpu-reports
+          path: runs/imdb/test-reports
+
+      - name: Run charlstm integration test (CUDA)
+        run: |
+          mkdir -p runs/charlstm/data
+          wget https://download.pytorch.org/tutorial/data.zip -O runs/charlstm/data/data.zip
+          unzip runs/charlstm/data/data.zip -d runs/charlstm/data
+          rm runs/charlstm/data/data.zip
+          mkdir -p runs/charlstm/test-reports
+          pip install scikit-learn
+          python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --batch-size 400 --n-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="runs/charlstm/data/data/names/" --device cuda --test-every 5
+          python -c "import torch; accuracy = torch.load('run_results_chr_lstm_classification.pt'); exit(0) if (accuracy>0.60 and accuracy<0.80) else exit(1)"
+
+      - name: Store test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: charlstm-gpu-reports
+          path: runs/charlstm/test-reports
+
+  micro_benchmarks_py39_torch_release_cuda:
+    runs-on: ubuntu-latest
+    needs: [integrationtest_py39_torch_release_cuda]
+    container:
+      # https://hub.docker.com/r/nvidia/cuda
+      image: nvidia/cuda:12.3.1-base-ubuntu22.04
+      options: --gpus all
+    env:
+      TZ: 'UTC'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest coverage coveralls
+          ./scripts/install_via_pip.sh
+
+      - name: Install CUDA toolkit and cuDNN
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            cuda-toolkit-11-1 \
+            libcudnn8=8.1.1.33-1+cuda11.1 \
+            libcudnn8-dev=8.1.1.33-1+cuda11.1
+
+      - name: Run benchmark integration tests (CUDA)
+        run: |
+          mkdir -p benchmarks/results/raw
+          python benchmarks/run_benchmarks.py --batch_size 16 --layers "groupnorm instancenorm layernorm" --config_file ./benchmarks/config.json --root ./benchmarks/results/raw/ --cont
+          IFS=$' ';layers=("groupnorm" "instancenorm" "layernorm"); rm -rf /tmp/report_layers; mkdir -p /tmp/report_layers; IFS=$'\n'; files=`( echo "${layers[*]}" ) | sed 's/.*/.\/benchmarks\/results\/raw\/&*/'`
+          cp -v ${files[@]} /tmp/report_layers
+          report_id=`IFS=$'-'; echo "${layers[*]}"`
+          python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report-${report_id}.csv --format csv
+          python benchmarks/generate_report.py --path-to-results /tmp/report_layers --save-path benchmarks/results/report-${report_id}.pkl --format pkl
+          python benchmarks/check_threshold.py --report-path "./benchmarks/results/report-"$report_id".pkl" --metric runtime --threshold 3.0 --column "hooks/baseline"
+          python benchmarks/check_threshold.py --report-path "./benchmarks/results/report-"$report_id".pkl" --metric memory --threshold 1.6 --column "hooks/baseline"
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: benchmarks-reports
+          path: benchmarks/results/
