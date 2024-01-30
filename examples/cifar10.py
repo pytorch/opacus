@@ -33,7 +33,6 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.grad_sample.functorch import make_functional
 from torch.func import grad, grad_and_value, vmap
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision.datasets import CIFAR10
