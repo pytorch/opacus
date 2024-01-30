@@ -405,9 +405,12 @@ class DPRNNBase(RenameParamsMixin, nn.Module):
             for direction, (cell, h0, c0) in directions:
                 # apply single direction layer (with dropout)
                 out_layer, h, c = self.forward_layer(
-                    x
-                    if layer == 0
-                    else output,  # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
+                    (
+                        x
+                        if layer == 0
+                        else output
+                        # [T, B, D/H/2H] / tuple T x [B, D/H/2H]
+                    ),
                     h0,  # [B, H]
                     c0,
                     batch_sizes,

@@ -12,6 +12,7 @@ class Domain:
     Stores relevant information about the domain on which PRVs are discretized, and
     includes a few convenience methods for manipulating it.
     """
+
     t_min: float
     t_max: float
     size: int
