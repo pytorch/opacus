@@ -90,9 +90,9 @@ class Conv2d_test(GradSampleHooks_test):
             # Test 'convolution as a backward' GSM
             # 'convolution as a backward' doesn't support padding=same
             conv2d_gsm = GradSampleModule.GRAD_SAMPLERS[nn.Conv2d]
-            GradSampleModule.GRAD_SAMPLERS[
-                nn.Conv2d
-            ] = convolution2d_backward_as_a_convolution
+            GradSampleModule.GRAD_SAMPLERS[nn.Conv2d] = (
+                convolution2d_backward_as_a_convolution
+            )
             self.run_test(
                 x,
                 conv,
