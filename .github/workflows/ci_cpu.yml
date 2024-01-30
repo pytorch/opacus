@@ -1,0 +1,170 @@
+name: CI_CPU
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '4 4 * * *'  # This schedule runs the nightly job every night at 4:04AM
+
+
+jobs:
+  ########### LINT ##############
+  lint_py39_torch_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black isort
+          ./scripts/install_via_pip.sh
+      - name: Lint with flake8
+        run: flake8 --config ./.github/workflows/flake8_config.ini
+      - name: Lint with black
+        run: black --check --diff --color .
+      - name: Check import order with isort
+        run: isort -v -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
+
+  ########### UNIT TESTS ##############
+  unittest_py38_torch_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest coverage coveralls
+          ./scripts/install_via_pip.sh
+      - name: Run unit tests
+        run: |
+          mkdir unittest-py38-release-reports
+          coverage run -m pytest --doctest-modules -p conftest --junitxml=unittest-py38-release-reports/junit.xml opacus
+          coverage report -i -m
+      - name: Store test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: unittest-py38-release-reports
+          path: unittest-py38-release-reports
+
+  unittest_py39_torch_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest coverage coveralls
+          ./scripts/install_via_pip.sh
+      - name: Run unit tests
+        run: |
+          mkdir unittest-py39-release-reports
+          coverage run -m pytest --doctest-modules -p conftest --junitxml=unittest-py39-release-reports/junit.xml opacus
+          coverage report -i -m
+      - name: Store test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: unittest-py39-release-reports
+          path: unittest-py39-release-reports
+
+  prv_accountant_values:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          ./scripts/install_via_pip.sh
+      - name: Run prv accountant unit tests
+        run: |
+          python -m unittest opacus.tests.prv_accountant
+
+  ########### NIGHTLY TEST ##############
+  unittest_py39_torch_nightly:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest coverage coveralls
+          ./scripts/install_via_pip.sh -n
+      - name: Run unit tests
+        run: |
+          mkdir unittest-py39-nightly-reports
+          python -m pytest --doctest-modules -p conftest --junitxml=unittest-py39-nightly-reports/junit.xml opacus
+      - name: Store test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: unittest-py39-nightly-reports
+          path: unittest-py39-nightly-reports
+
+  ########### INTEGRATION TEST ##############
+  integrationtest_py39_torch_release_cpu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest coverage coveralls
+          ./scripts/install_via_pip.sh
+      - name: Run MNIST integration test (CPU)
+        run: |
+          mkdir -p runs/mnist/data
+          mkdir -p runs/mnist/test-reports
+          coverage run examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 64 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device cpu
+          python -c "import torch; accuracy = torch.load('run_results_mnist_0.25_0.7_1.5_64_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
+          coverage report -i -m
+      - name: Store test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: mnist-cpu-reports
+          path: runs/mnist/test-reports
+
+  ######## FINISH COVERALLS ##########
+  finish_coveralls_parallel:
+    needs: [unittest_py38_torch_release, unittest_py39_torch_release, integrationtest_py39_torch_release_cpu]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Finish Coveralls Parallel
+        uses: coverallsapp/github-action@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
