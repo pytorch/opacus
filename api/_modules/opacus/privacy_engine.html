@@ -585,9 +585,9 @@
         <span class="k">if</span> <span class="n">noise_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">checkpoint_dict</span><span class="p">[</span><span class="s2">"noise_scheduler_state_dict"</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_scheduler</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">grad_clip_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">checkpoint_dict</span><span class="p">[</span>
-                <span class="s2">"grad_clip_scheduler_state_dict"</span>
-            <span class="p">]</span> <span class="o">=</span> <span class="n">grad_clip_scheduler</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+            <span class="n">checkpoint_dict</span><span class="p">[</span><span class="s2">"grad_clip_scheduler_state_dict"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">grad_clip_scheduler</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+            <span class="p">)</span>
 
         <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">checkpoint_dict</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">torch_save_kwargs</span> <span class="ow">or</span> <span class="p">{}))</span></div>
 

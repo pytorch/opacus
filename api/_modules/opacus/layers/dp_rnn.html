@@ -463,9 +463,12 @@
             <span class="k">for</span> <span class="n">direction</span><span class="p">,</span> <span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">c0</span><span class="p">)</span> <span class="ow">in</span> <span class="n">directions</span><span class="p">:</span>
                 <span class="c1"># apply single direction layer (with dropout)</span>
                 <span class="n">out_layer</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_layer</span><span class="p">(</span>
-                    <span class="n">x</span>
-                    <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">0</span>
-                    <span class="k">else</span> <span class="n">output</span><span class="p">,</span>  <span class="c1"># [T, B, D/H/2H] / tuple T x [B, D/H/2H]</span>
+                    <span class="p">(</span>
+                        <span class="n">x</span>
+                        <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">0</span>
+                        <span class="k">else</span> <span class="n">output</span>
+                        <span class="c1"># [T, B, D/H/2H] / tuple T x [B, D/H/2H]</span>
+                    <span class="p">),</span>
                     <span class="n">h0</span><span class="p">,</span>  <span class="c1"># [B, H]</span>
                     <span class="n">c0</span><span class="p">,</span>
                     <span class="n">batch_sizes</span><span class="p">,</span>

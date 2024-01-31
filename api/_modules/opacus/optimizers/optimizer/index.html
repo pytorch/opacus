@@ -540,6 +540,11 @@
 <span class="sd">            closure: A closure that reevaluates the model and</span>
 <span class="sd">                returns the loss. Optional for most optimizers.</span>
 <span class="sd">        """</span>
+        <span class="c1"># The corner case when the optimizer has no trainable parameters.</span>
+        <span class="c1"># Essentially the DPOptimizer act as a normal optimizer</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad_samples</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_samples</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">clip_and_accumulate</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_skip_next_step</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_is_last_step_skipped</span> <span class="o">=</span> <span class="kc">True</span>

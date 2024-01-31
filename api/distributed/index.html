@@ -31,11 +31,11 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opacus.distributed.</span></span><span class="sig-name descname"><span class="pre">DifferentiallyPrivateDistributedDataParallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/distributed.html#DifferentiallyPrivateDistributedDataParallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.distributed.DifferentiallyPrivateDistributedDataParallel" title="Link to this definition">¶</a></dt>
 <dd><p>Implements distributed data parallelism that is based on
 <code class="docutils literal notranslate"><span class="pre">torch.distributed</span></code> package at the module level.</p>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.distributed.DifferentiallyPrivateDistributedDataParallel.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opacus/distributed.html#DifferentiallyPrivateDistributedDataParallel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.distributed.DifferentiallyPrivateDistributedDataParallel.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Defines the computation performed at every call.</p>
+<dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -52,7 +52,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd><p>For all parameters of a given <code class="docutils literal notranslate"><span class="pre">model</span></code> averages gradients over all workers</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>model</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></span>) – model</p>
+<dd class="field-odd"><p><strong>model</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></span>) – model</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
