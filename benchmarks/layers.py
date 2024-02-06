@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum
 from typing import Callable, Dict, Optional, Tuple, Type, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from opacus.grad_sample import GradSampleModule
 from opacus.grad_sample.utils import wrap_model
 from opacus.layers import DPGRU, DPLSTM, DPRNN, DPMultiheadAttention
 from opacus.layers.dp_rnn import DPRNNBase
