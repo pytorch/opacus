@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.1
+
+### Bug fixes
+* Fix DP MultiheadAttention (#598)
+* Fix: make prv accountant robust to larger epsilons (#606)
+* Fix the corner case when the optimizer has no trainable parameters (#619)
+
 ## v1.4
 
 Highlight: Upgraded to PyTorch 1.13+ as required dependency
