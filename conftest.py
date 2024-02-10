@@ -60,8 +60,12 @@ def create_namespace(doctest_namespace):
     Initialize namespace for doctest.
     Everything added to `doctest_namespace` will be available in the doctest.
     """
-    from typing import Set, Union  # noqa
+    from typing import Any, Dict, List, Set, Tuple, Union  # noqa
+
+    import numpy as np  # noqa
     import opacus  # noqa
+    import torch  # noqa
+    from torch import nn  # noqa
 
     # Adding all imports in the doctest namespace
     doctest_namespace.update(**locals())
