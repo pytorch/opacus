@@ -8,48 +8,64 @@ on:
     branches:
       - main
 
+jobs:
   unittest_multi_gpu:
-    runs-on: linux.4xlarge.nvidia.gpu
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [linux.4xlarge.nvidia.gpu]
+        python-version: [3.8]
+        cuda-tag: ["cu11"]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Display Python version
+        run: python3 -c "import sys; print(sys.version)"
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           ./scripts/install_via_pip.sh -c
 
       - name: Run multi-GPU unit tests
         run: |
           nvidia-smi
           nvcc --version
-          python -m unittest opacus.tests.multigpu_gradcheck.GradientComputationTest.test_gradient_correct
+          python3 -m unittest opacus.tests.multigpu_gradcheck.GradientComputationTest.test_gradient_correct
 
 
   integrationtest_py39_torch_release_cuda:
-    runs-on: ubuntu-latest
-    container:
-      # https://hub.docker.com/r/nvidia/cuda
-      image: nvidia/cuda:12.3.1-base-ubuntu22.04
-      options: --gpus all
-    env:
-      TZ: 'UTC'
+    # runs-on: linux.4xlarge.nvidia.gpu
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [linux.4xlarge.nvidia.gpu]
+        python-version: [3.8]
+        cuda-tag: ["cu11"]
+    # container:
+    #   # https://hub.docker.com/r/nvidia/cuda
+    #   image: nvidia/cuda:12.3.1-base-ubuntu22.04
+    #   options: --gpus all
+    # env:
+    #   TZ: 'UTC'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
+      # - name: Set up Python
+      #   uses: actions/setup-python@v2
+      #   with:
+      #     python-version: '3.10.13'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python3 -m pip install --upgrade pip
           pip install pytest coverage coveralls
           ./scripts/install_via_pip.sh -c
 

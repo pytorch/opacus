@@ -33,9 +33,10 @@ while getopts 'ncdv:' flag; do
 # NOTE: Only Debian variants are supported, since this script is only
 # used by our tests on CircleCI.
 
-curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt-get update && sudo apt-get install yarn
+# curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+# echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+# sudo apt-get update && sudo apt-get install yarn
+# sudo yum install yarn
 
 # yarn needs terminal info
 export TERM=xterm
