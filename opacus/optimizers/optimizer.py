@@ -396,7 +396,9 @@ class DPOptimizer(Optimizer):
 
         if len(self.grad_samples[0]) == 0:
             # Empty batch
-            per_sample_clip_factor = torch.zeros((0,))
+            per_sample_clip_factor = torch.zeros(
+                (0,), device=self.grad_samples[0].device
+            )
         else:
             per_param_norms = [
                 g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
