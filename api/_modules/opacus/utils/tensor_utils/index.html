@@ -366,17 +366,18 @@
     <span class="n">kernel_rank</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">)</span>
 
     <span class="n">indices_to_keep</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dilated_kernel_size</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dilation</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">kernel_rank</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dilated_kernel_size</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dilation</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">kernel_rank</span><span class="p">)</span>
     <span class="p">]</span>
-
-    <span class="n">tensor_np</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
 
     <span class="n">axis_offset</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">-</span> <span class="n">kernel_rank</span>
 
     <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">kernel_rank</span><span class="p">):</span>
-        <span class="n">tensor_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">tensor_np</span><span class="p">,</span> <span class="n">indices_to_keep</span><span class="p">[</span><span class="n">dim</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis_offset</span> <span class="o">+</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span>
+            <span class="n">tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">axis_offset</span> <span class="o">+</span> <span class="n">dim</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">indices_to_keep</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+        <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">tensor_np</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">tensor</span></div>
 
 </pre></div>
 </div>
