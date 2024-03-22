@@ -23,7 +23,6 @@ from opacus.utils.uniform_sampler import (
 )
 from torch.utils.data import BatchSampler, DataLoader, Sampler
 
-
 class BatchSplittingSampler(Sampler[List[int]]):
     """
     Samples according to the underlying instance of ``Sampler``, but splits
@@ -71,13 +70,17 @@ class BatchSplittingSampler(Sampler[List[int]]):
     def __len__(self):
         if isinstance(self.sampler, BatchSampler):
             return int(
-                len(self.sampler) * (self.sampler.batch_size / self.max_batch_size)
+                np.ceil(
+                    len(self.sampler) * (self.sampler.batch_size / self.max_batch_size)
+                )
             )
         elif isinstance(self.sampler, UniformWithReplacementSampler) or isinstance(
             self.sampler, DistributedUniformWithReplacementSampler
         ):
             expected_batch_size = self.sampler.sample_rate * self.sampler.num_samples
-            return int(len(self.sampler) * (expected_batch_size / self.max_batch_size))
+            return int(
+                np.ceil(len(self.sampler) * (expected_batch_size / self.max_batch_size))
+            )
 
         return len(self.sampler)
 
