@@ -16,14 +16,12 @@ import math
 from typing import List
 
 import numpy as np
-from torch.utils.data import BatchSampler, DataLoader, Sampler
-
 from opacus.optimizers import DPOptimizer
 from opacus.utils.uniform_sampler import (
     DistributedUniformWithReplacementSampler,
     UniformWithReplacementSampler,
 )
-
+yeah they have a citation link down at the bottom. I can ask Thomas if there's a paper he'd like us to cite for that analysis too
 
 class BatchSplittingSampler(Sampler[List[int]]):
     """
