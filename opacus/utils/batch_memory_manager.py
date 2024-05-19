@@ -23,6 +23,7 @@ from opacus.utils.uniform_sampler import (
 )
 from torch.utils.data import BatchSampler, DataLoader, Sampler
 
+
 class BatchSplittingSampler(Sampler[List[int]]):
     """
     Samples according to the underlying instance of ``Sampler``, but splits
