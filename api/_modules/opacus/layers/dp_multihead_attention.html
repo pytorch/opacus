@@ -243,17 +243,12 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Using the same logic with ``nn.MultiheadAttention`` (https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html).</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="n">value</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">query</span> <span class="ow">is</span> <span class="n">key</span><span class="p">:</span>
-                    <span class="n">query</span> <span class="o">=</span> <span class="n">key</span> <span class="o">=</span> <span class="n">value</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">query</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">)]</span>
-                    <span class="n">value</span> <span class="o">=</span> <span class="n">key</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)]</span>
 
-        <span class="n">tgt_len</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="n">embed_dim</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>
+            <span class="n">tgt_len</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="n">embed_dim</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bsz</span><span class="p">,</span> <span class="n">tgt_len</span><span class="p">,</span> <span class="n">embed_dim</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+
         <span class="k">if</span> <span class="n">embed_dim</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_dim</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"query has as size of </span><span class="si">{</span><span class="n">embed_dim</span><span class="si">}</span><span class="s2"> while the embedding"</span>
@@ -273,6 +268,9 @@
         <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vlinear</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
         <span class="n">q</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">scaling</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>
+            <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)]</span>
 
         <span class="k">if</span> <span class="n">attn_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">attn_mask</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
@@ -392,13 +390,14 @@
 
         <span class="n">attn_output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span><span class="n">attn_output_weights</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">list</span><span class="p">(</span><span class="n">attn_output</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="o">==</span> <span class="p">[</span><span class="n">bsz</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="n">tgt_len</span><span class="p">,</span> <span class="n">head_dim</span><span class="p">]</span>
-        <span class="n">attn_output</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">attn_output</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">tgt_len</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">attn_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_proj</span><span class="p">(</span><span class="n">attn_output</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>
-            <span class="n">attn_output</span> <span class="o">=</span> <span class="n">attn_output</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">attn_output</span> <span class="o">=</span> <span class="n">attn_output</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="n">tgt_len</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">attn_output</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">attn_output</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">tgt_len</span><span class="p">,</span> <span class="n">bsz</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">attn_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_proj</span><span class="p">(</span><span class="n">attn_output</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">need_weights</span><span class="p">:</span>
             <span class="c1"># average attention weights over heads</span>
