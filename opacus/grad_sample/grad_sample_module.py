@@ -207,7 +207,7 @@ class GradSampleModule(AbstractGradSampleModule):
             )
 
             self.autograd_grad_sample_hooks.append(
-                module.register_backward_hook(
+                module.register_full_backward_hook(
                     partial(
                         self.capture_backprops_hook,
                         loss_reduction=loss_reduction,
