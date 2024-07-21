@@ -18,7 +18,11 @@ from .ddp_perlayeroptimizer import (
     SimpleDistributedPerLayerOptimizer,
 )
 from .ddpoptimizer import DistributedDPOptimizer
+from .ddpoptimizer_fast_gradient_clipping import (
+    DistributedDPOptimizerFastGradientClipping,
+)
 from .optimizer import DPOptimizer
+from .optimizer_fast_gradient_clipping import DPOptimizerFastGradientClipping
 from .perlayeroptimizer import DPPerLayerOptimizer
 
 
@@ -27,6 +31,8 @@ __all__ = [
     "DistributedPerLayerOptimizer",
     "DistributedDPOptimizer",
     "DPOptimizer",
+    "DPOptimizerFastGradientClipping",
+    "DistributedDPOptimizerFastGradientlipping",
     "DPPerLayerOptimizer",
     "SimpleDistributedPerLayerOptimizer",
 ]
@@ -35,6 +41,10 @@ __all__ = [
 def get_optimizer_class(clipping: str, distributed: bool, grad_sample_mode: str = None):
     if clipping == "flat" and distributed is False:
         return DPOptimizer
+    elif clipping == "ghost" and distributed is False:
+        return DPOptimizerFastGradientClipping
+    elif clipping == "ghost" and distributed is True:
+        return DistributedDPOptimizerFastGradientClipping
     elif clipping == "flat" and distributed is True:
         return DistributedDPOptimizer
     elif clipping == "per_layer" and distributed is False:

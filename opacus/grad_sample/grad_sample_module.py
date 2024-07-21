@@ -34,6 +34,7 @@ from opacus.utils.module_utils import (
 
 
 logger = logging.getLogger(__name__)
+logger.disabled = True
 
 
 def create_or_accumulate_grad_sample(
@@ -465,10 +466,8 @@ class GradSampleModule(AbstractGradSampleModule):
         errors.extend(
             [
                 NotImplementedError(
-                    f"Model contains a trainable layer "
+                    f"Model contains a trainable layer with buffers"
                     f"that Opacus doesn't currently support({m_name}:{m}). "
-                    f"Please implement and register grad sampler for this layer. "
-                    f"(See opacus.grad_sample.utils.register_grad_sampler)"
                 )
                 for m_name, m in trainable_modules(module)
                 # With functorch, all modules are trainable

@@ -25,6 +25,7 @@ from torch.optim import Optimizer
 
 
 logger = logging.getLogger(__name__)
+logger.disabled = True
 
 
 def _mark_as_processed(obj: Union[torch.Tensor, List[torch.Tensor]]):
@@ -497,18 +498,14 @@ class DPOptimizer(Optimizer):
         # Essentially the DPOptimizer act as a normal optimizer
         if self.grad_samples is None or len(self.grad_samples) == 0:
             return True
-
         self.clip_and_accumulate()
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return False
-
         self.add_noise()
         self.scale_grad()
-
         if self.step_hook:
             self.step_hook(self)
-
         self._is_last_step_skipped = False
         return True
 
@@ -516,7 +513,6 @@ class DPOptimizer(Optimizer):
         if closure is not None:
             with torch.enable_grad():
                 closure()
-
         if self.pre_step():
             return self.original_optimizer.step()
         else:
