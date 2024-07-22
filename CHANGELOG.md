@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.5
+
+### New features
+Fast Gradient Clipping and Ghost Clipping (#656)
+
+### Bug fixes
+* Fix gradient shape error for DPMultiheadAttention (issue 650) (#651)
+* Pass kwargs from make_private to _prepare_optimizer (#648)
+* Fix BatchMemoryManager length (#641)
+* Fix GPU-CPU device mismatch error in util filter_dilated_rows (#633)
+* Fix Opacus's runtime error with an empty batch (issue 612) (#631)
+
+
 ## v1.4.1
 
 ### Bug fixes
