@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,9 @@ from typing import Sequence, Type, Union
 import torch.nn as nn
 
 from .grad_sample_module import GradSampleModule
+from .grad_sample_module_fast_gradient_clipping import (
+    GradSampleModuleFastGradientClipping,
+)
 from .gsm_base import AbstractGradSampleModule
 from .gsm_exp_weights import GradSampleModuleExpandedWeights
 from .gsm_no_op import GradSampleModuleNoOp
@@ -46,6 +49,33 @@ def register_grad_sampler(
         )
         for target_class in target_classes:
             GradSampleModule.GRAD_SAMPLERS[target_class] = f
+            GradSampleModuleFastGradientClipping.GRAD_SAMPLERS[target_class] = f
+        return f
+
+    return decorator
+
+
+def register_norm_sampler(
+    target_class_or_classes: Union[Type[nn.Module], Sequence[Type[nn.Module]]]
+):
+    """
+    Registers the decorated function as the ``norm_sampler`` of ``target_class_or_classes``, which is
+    the function that will be invoked every time you want to compute a per-sample gradient norm
+    of ``target_class_or_classes``. The signature of every norm_sampler is always the same:
+
+    >>> @register_norm_sampler(MyCustomModel)
+    ... def compute_grad_norm_sample(module, activations, backprops):
+    ...    pass
+    """
+
+    def decorator(f):
+        target_classes = (
+            target_class_or_classes
+            if isinstance(target_class_or_classes, Sequence)
+            else [target_class_or_classes]
+        )
+        for target_class in target_classes:
+            GradSampleModuleFastGradientClipping.NORM_SAMPLERS[target_class] = f
         return f
 
     return decorator
@@ -70,6 +100,8 @@ def get_gsm_class(grad_sample_mode: str) -> Type[AbstractGradSampleModule]:
         return GradSampleModule
     elif grad_sample_mode == "ew":
         return GradSampleModuleExpandedWeights
+    elif grad_sample_mode == "ghost":
+        return GradSampleModuleFastGradientClipping
     elif grad_sample_mode == "no_op":
         return GradSampleModuleNoOp
     else:
