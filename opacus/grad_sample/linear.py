@@ -18,7 +18,7 @@ from typing import Dict, List
 
 import torch
 import torch.nn as nn
-from opt_einsum import contract
+from opt_einsum.contract import contract
 
 from .utils import register_grad_sampler, register_norm_sampler
 
