@@ -1,0 +1,249 @@
+name: Integration tests with release version of PyTorch on Linux CPU and CUDA
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  integration_test_cpu:
+    strategy:
+      matrix:
+        python_version: ["3.9"]
+      fail-fast: false
+    uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+    with:
+      runner: linux.2xlarge
+      repository: pytorch/opacus
+      timeout: 60
+      script: |
+        echo '::group::Create conda env with correct Python version'
+        set -x
+        PYTHON_VERSION="${{ matrix.python_version }}"
+        conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+        conda activate test
+        python --version | grep "${PYTHON_VERSION}"
+        echo '::endgroup::'
+
+        echo '::group::Install dependencies via pip, including extra deps.'
+        apt-get install apt
+        ./scripts/install_via_pip.sh
+        echo '::endgroup::'
+
+        echo '::group::Runs MNIST example end to end'
+        mkdir -p runs/mnist/data
+        mkdir -p runs/mnist/test-reports
+        echo "Using $(python -V)"
+        echo "Using $(pip -V)"
+        python examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 64 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device <<parameters.device>>
+        python -c "import torch; accuracy = torch.load('run_results_mnist_0.25_0.7_1.5_64_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
+        echo '::endgroup::'
+
+  mnist:
+    strategy:
+      matrix:
+        python_version: ["3.9"]
+        cuda_arch_version: ["11.8"]
+      fail-fast: false
+    uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+    with:
+      runner: linux.g5.4xlarge.nvidia.gpu
+      gpu-arch-type: cuda
+      gpu-arch-version: ${{ matrix.cuda_arch_version }}
+      repository: pytorch/opacus
+      timeout: 60
+      script: |
+        echo '::group::Create conda env with correct Python version'
+        set -x
+        PYTHON_VERSION="${{ matrix.python_version }}"
+        conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+        conda activate test
+        python --version | grep "${PYTHON_VERSION}"
+        echo '::endgroup::'
+
+        echo "::group::Install dependencies via pip, including extra deps."
+        apt-get install apt
+        ./scripts/install_via_pip.sh
+        echo "::endgroup::"
+
+        echo "::group::Run nvidia-smi"
+        nvidia-smi
+        echo "::endgroup::"
+
+        echo "::group::Run mnist example end to end"
+        mkdir -p runs/mnist/data
+        mkdir -p runs/mnist/test-reports
+        echo "Using $(python -V)"
+        echo "Using $(pip -V)"
+        python examples/mnist_lightning.py fit --trainer.accelerator cuda --model.lr 0.25 --model.sigma 0.7 --model.max_per_sample_grad_norm 1.5 --model.sample_rate 0.004 --trainer.max_epochs 1 --data.data_dir runs/mnist/data --data.sample_rate 0.004
+        echo "::endgroup::"
+
+  cifar10:
+    strategy:
+      matrix:
+        python_version: ["3.9"]
+        cuda_arch_version: ["11.8"]
+      fail-fast: false
+    uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+    with:
+      runner: linux.g5.4xlarge.nvidia.gpu
+      gpu-arch-type: cuda
+      gpu-arch-version: ${{ matrix.cuda_arch_version }}
+      repository: pytorch/opacus
+      timeout: 60
+      script: |
+        echo '::group::Create conda env with correct Python version'
+        set -x
+        PYTHON_VERSION="${{ matrix.python_version }}"
+        conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+        conda activate test
+        python --version | grep "${PYTHON_VERSION}"
+        echo '::endgroup::'
+
+        echo "::group::Install dependencies via pip, including extra deps."
+        apt-get install apt
+        ./scripts/install_via_pip.sh
+        echo "::endgroup::"
+
+        echo "::group::Run nvidia-smi"
+        nvidia-smi
+        echo "::endgroup::"
+
+        echo "::group::Run cifar10 example end to end"
+        mkdir -p runs/cifar10/data
+        mkdir -p runs/cifar10/logs
+        mkdir -p runs/cifar10/test-reports
+        echo "Using $(python -V)"
+        echo "Using $(pip -V)"
+        pip install tensorboard
+        python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --batch-size 2000 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device cuda
+        python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
+        python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --batch-size 2000 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device cuda --grad_sample_mode no_op
+        python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
+        echo "::endgroup::"
+
+    imdb:
+      strategy:
+      matrix:
+        python_version: ["3.9"]
+        cuda_arch_version: ["11.8"]
+      fail-fast: false
+      uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+      with:
+        runner: linux.g5.4xlarge.nvidia.gpu
+        gpu-arch-type: cuda
+        gpu-arch-version: ${{ matrix.cuda_arch_version }}
+        repository: pytorch/opacus
+        timeout: 60
+        script: |
+          echo '::group::Create conda env with correct Python version'
+          set -x
+          PYTHON_VERSION="${{ matrix.python_version }}"
+          conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+          conda activate test
+          python --version | grep "${PYTHON_VERSION}"
+          echo '::endgroup::'
+
+          echo "::group::Install dependencies via pip, including extra deps."
+          apt-get install apt
+          ./scripts/install_via_pip.sh
+          echo "::endgroup::"
+
+          echo "::group::Run nvidia-smi"
+          nvidia-smi
+          echo "::endgroup::"
+
+          echo "::group::Run imdb example end to end"
+          mkdir -p runs/imdb/data
+          mkdir -p runs/imdb/test-reports
+          echo "Using $(python -V)"
+          echo "Using $(pip -V)"
+          pip install --user datasets transformers
+          python examples/imdb.py --lr 0.02 --sigma 1.0 -c 1.0 --batch-size 64 --max-sequence-length 256 --epochs 2 --data-root runs/imdb/data --device cuda
+          python -c "import torch; accuracy = torch.load('run_results_imdb_classification.pt'); exit(0) if (accuracy>0.54 and accuracy<0.66) else exit(1)"
+          echo "::endgroup::"
+
+    charlstm:
+      strategy:
+      matrix:
+        python_version: ["3.9"]
+        cuda_arch_version: ["11.8"]
+      fail-fast: false
+      uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+      with:
+        runner: linux.g5.4xlarge.nvidia.gpu
+        gpu-arch-type: cuda
+        gpu-arch-version: ${{ matrix.cuda_arch_version }}
+        repository: pytorch/opacus
+        timeout: 60
+        script: |
+          echo '::group::Create conda env with correct Python version'
+          set -x
+          PYTHON_VERSION="${{ matrix.python_version }}"
+          conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+          conda activate test
+          python --version | grep "${PYTHON_VERSION}"
+          echo '::endgroup::'
+
+          echo "::group::Install dependencies via pip, including extra deps."
+          apt-get install apt
+          ./scripts/install_via_pip.sh
+          echo "::endgroup::"
+
+          echo "::group::Run nvidia-smi"
+          nvidia-smi
+          echo "::endgroup::"
+
+          echo "::group::Run charlstm example end to end"
+          mkdir -p runs/charlstm/data
+          wget https://download.pytorch.org/tutorial/data.zip -O runs/charlstm/data/data.zip
+          unzip runs/charlstm/data/data.zip -d runs/charlstm/data
+          rm runs/charlstm/data/data.zip
+          mkdir -p runs/charlstm/test-reports
+          echo "Using $(python -V)"
+          echo "Using $(pip -V)"
+          pip install scikit-learn
+          python examples/char-lstm-classification.py --epochs=20 --learning-rate=2.0 --hidden-size=128 --delta=8e-5 --batch-size 400 --n-layers=1 --sigma=1.0 --max-per-sample-grad-norm=1.5 --data-root="runs/charlstm/data/data/names/" --device="cuda" --test-every 5
+          python -c "import torch; accuracy = torch.load('run_results_chr_lstm_classification.pt'); exit(0) if (accuracy>0.60 and accuracy<0.80) else exit(1)"
+          echo "::endgroup::"
+
+    dcgan:
+      strategy:
+      matrix:
+        python_version: ["3.9"]
+        cuda_arch_version: ["11.8"]
+      fail-fast: false
+      uses: pytorch/test-infra/.github/workflows/linux_job.yml@main
+      with:
+        runner: linux.g5.4xlarge.nvidia.gpu
+        gpu-arch-type: cuda
+        gpu-arch-version: ${{ matrix.cuda_arch_version }}
+        repository: pytorch/opacus
+        timeout: 60
+        script: |
+          echo '::group::Create conda env with correct Python version'
+          set -x
+          PYTHON_VERSION="${{ matrix.python_version }}"
+          conda create --yes --quiet -n test python="${PYTHON_VERSION}"
+          conda activate test
+          python --version | grep "${PYTHON_VERSION}"
+          echo '::endgroup::'
+
+          echo "::group::Install dependencies via pip, including extra deps."
+          apt-get install apt
+          ./scripts/install_via_pip.sh
+          echo "::endgroup::"
+
+          echo "::group::Run nvidia-smi"
+          nvidia-smi
+          echo "::endgroup::"
+
+          echo "::group::Run dcgan example end to end"
+          mkdir -p runs/dcgan/data
+          mkdir -p runs/dcgan/test-reports
+          echo "Using $(python -V) ($(which python))"
+          echo "Using $(pip -V) ($(which pip))"
+          python examples/dcgan.py --lr 2e-4 --sigma 0.7 -c 1.5 --batch-size 32 --epochs 1 --data-root runs/dcgan/data --device cuda
+          echo "::endgroup::"
