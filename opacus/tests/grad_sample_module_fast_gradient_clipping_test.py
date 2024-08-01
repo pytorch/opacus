@@ -22,6 +22,7 @@ import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus.grad_sample import GradSampleModule, GradSampleModuleFastGradientClipping
 from opacus.optimizers import DPOptimizer, DPOptimizerFastGradientClipping
+from opacus.utils.fast_gradient_clipping_utils import double_backward
 from opacus.utils.per_sample_gradients_utils import clone_module
 from torch.utils.data import DataLoader, Dataset
 
@@ -108,7 +109,7 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
     @settings(deadline=1000000)
     def test_norm_calculation_fast_gradient_clipping(self, size, length, dim):
         """
-        Tests if norm calculation is same between standard (opacus) and fast gradient clipping"
+        Tests if norm calculation is the same between standard (opacus) and fast gradient clipping"
         """
         self.length = length
         self.size = size
@@ -189,7 +190,7 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
     @settings(deadline=1000000)
     def test_gradient_calculation_fast_gradient_clipping(self, size, length, dim):
         """
-        Tests if gradients are same between standard (opacus) and fast gradient clipping"
+        Tests if gradients are the same between standard (opacus) and fast gradient clipping, using double_backward function"
         """
 
         noise_multiplier = 0.0
@@ -237,19 +238,10 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
         ]
         flat_grads_normal = torch.cat([p.flatten() for p in all_grads_normal])
 
-        self.grad_sample_module.enable_hooks()
         output_gc = self.grad_sample_module(input_data)
 
         first_loss_per_sample = self.criterion(output_gc, target_data)
-        first_loss = torch.mean(first_loss_per_sample)
-        first_loss.backward(retain_graph=True)
-
-        optimizer_gc.zero_grad()
-        coeff = self.grad_sample_module.get_coeff()
-        second_loss_per_sample = coeff * first_loss_per_sample
-        second_loss = torch.sum(second_loss_per_sample)
-        self.grad_sample_module.disable_hooks()
-        second_loss.backward()
+        double_backward(self.grad_sample_module, optimizer_gc, first_loss_per_sample)
 
         all_grads_gc = [param.grad for param in self.grad_sample_module.parameters()]
         flat_grads_gc = torch.cat([p.flatten() for p in all_grads_gc])
@@ -261,5 +253,5 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
             ]
         )
         logging.info(f"Diff = {diff}")
-        msg = "FAIL: Gradients from vanilla DP-SGD and from fast gradient clipping are different"
+        msg = "Fail: Gradients from vanilla DP-SGD and from fast gradient clipping are different"
         assert torch.allclose(flat_grads_normal, flat_grads_gc, atol=1e-3), msg
