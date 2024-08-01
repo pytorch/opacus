@@ -24,7 +24,7 @@ from .optimizer_fast_gradient_clipping import DPOptimizerFastGradientClipping
 
 class DistributedDPOptimizerFastGradientClipping(DPOptimizerFastGradientClipping):
     """
-    :class:`~opacus.optimizers.optimizer.DPOptimizer` compatible with
+    :class:`opacus.optimizers.optimizer.DPOptimizer` compatible with
     distributed data processing
     """
 
