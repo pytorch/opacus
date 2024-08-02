@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from . import utils
-from .grad_sample import GradSampleModule
+from .grad_sample import GradSampleModule, GradSampleModuleFastGradientClipping
 from .privacy_engine import PrivacyEngine
 from .version import __version__
 
@@ -22,6 +22,7 @@ from .version import __version__
 __all__ = [
     "PrivacyEngine",
     "GradSampleModule",
+    "GradSampleModuleFastGradientClipping",
     "utils",
     "__version__",
 ]

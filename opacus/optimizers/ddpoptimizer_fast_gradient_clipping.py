@@ -76,6 +76,6 @@ class DistributedDPOptimizerFastGradientClipping(DPOptimizerFastGradientClipping
 
         if self.pre_step():
             self.reduce_gradients()
-            return self.original_optimizer.original_optimizer.step()
+            return self.original_optimizer.step()
         else:
             return None
