@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.5.2
+
+### New features
+* Add a function of "double_backward" simplifying the training loop (#661)
+
+### Bug fixes
+* Fix issue with setting of param_group for the DPOptimizer wrapper (issue 649) (#660)
+* Fix issue of DDP optimizer for FGC. The step function incorrectly called "original_optimizer.original_optimizer" (#662)
+* Replace "opt_einsum.contract" by "torch.einsum"(#663)
+
 ## v1.5.1
 
 ### Bug fixes
