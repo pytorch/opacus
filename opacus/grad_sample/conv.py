@@ -21,7 +21,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opacus.utils.tensor_utils import unfold2d, unfold3d
-from opt_einsum import contract
 
 from .utils import register_grad_sampler
 
@@ -90,7 +89,7 @@ def compute_conv_grad_sample(
     ret = {}
     if layer.weight.requires_grad:
         # n=batch_sz; o=num_out_channels; p=(num_in_channels/groups)*kernel_sz
-        grad_sample = contract("noq,npq->nop", backprops, activations)
+        grad_sample = torch.einsum("noq,npq->nop", backprops, activations)
         # rearrange the above tensor and extract diagonals.
         grad_sample = grad_sample.view(
             n,
@@ -100,7 +99,7 @@ def compute_conv_grad_sample(
             int(layer.in_channels / layer.groups),
             np.prod(layer.kernel_size),
         )
-        grad_sample = contract("ngrg...->ngr...", grad_sample).contiguous()
+        grad_sample = torch.einsum("ngrg...->ngr...", grad_sample).contiguous()
         shape = [n] + list(layer.weight.shape)
         ret[layer.weight] = grad_sample.view(shape)
 

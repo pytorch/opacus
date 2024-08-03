@@ -18,7 +18,6 @@ from functools import partial
 from typing import Callable, List, Optional
 
 import torch
-from opt_einsum import contract
 from torch import nn
 from torch.optim import Optimizer
 
@@ -31,7 +30,7 @@ def _clip_and_accumulate_parameter(p: nn.Parameter, max_grad_norm: float):
     per_sample_norms = p.grad_sample.view(len(p.grad_sample), -1).norm(2, dim=-1)
     per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0)
 
-    grad = contract("i,i...", per_sample_clip_factor, p.grad_sample)
+    grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
     if p.summed_grad is not None:
         p.summed_grad += grad
     else:
