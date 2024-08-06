@@ -274,7 +274,6 @@ class GradSampleModule(AbstractGradSampleModule):
     ):
         if (
             not requires_grad(module)
-            or not module.training
             or not torch.is_grad_enabled()
         ):
             return
