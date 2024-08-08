@@ -171,6 +171,7 @@ class PrivacyEngine:
         module: nn.Module,
         *,
         batch_first: bool = True,
+        max_grad_norm: Union[float, List[float]] = 1.0,
         loss_reduction: str = "mean",
         grad_sample_mode: str = "hooks",
     ) -> AbstractGradSampleModule:
@@ -194,12 +195,21 @@ class PrivacyEngine:
 
             return module
         else:
-            return wrap_model(
-                module,
-                grad_sample_mode=grad_sample_mode,
-                batch_first=batch_first,
-                loss_reduction=loss_reduction,
-            )
+            if grad_sample_mode == "ghost":
+                return wrap_model(
+                    module,
+                    grad_sample_mode=grad_sample_mode,
+                    batch_first=batch_first,
+                    loss_reduction=loss_reduction,
+                    max_grad_norm=max_grad_norm,
+                )
+            else:
+                return wrap_model(
+                    module,
+                    grad_sample_mode=grad_sample_mode,
+                    batch_first=batch_first,
+                    loss_reduction=loss_reduction,
+                )
 
     def is_compatible(
         self,
@@ -355,6 +365,7 @@ class PrivacyEngine:
         module = self._prepare_model(
             module,
             batch_first=batch_first,
+            max_grad_norm=max_grad_norm,
             loss_reduction=loss_reduction,
             grad_sample_mode=grad_sample_mode,
         )
