@@ -1,12 +1,12 @@
 {
   "Using Opacus": [
     {
-      "id": "building_image_classifier",
-      "title": "Building image classifier with Differential Privacy"
+      "id": "building_text_classifier",
+      "title": "Building text classifier with Fast Gradient Clipping DP-SGD"
     },
     {
-      "id": "building_text_classifier",
-      "title": "Building text classifier with Differential Privacy"
+      "id": "building_image_classifier",
+      "title": "Building image classifier with Differential Privacy"
     },
     {
       "id": "building_lstm_name_classifier",
@@ -27,6 +27,6 @@
     {
       "id": "ddp_tutorial",
       "title": "Training on multiple GPUs with DistributedDataParallel"
-    } 
+    }
   ]
 }

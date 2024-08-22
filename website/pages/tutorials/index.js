@@ -72,6 +72,13 @@ class TutorialHome extends React.Component {
                   Efficient Per-Sample Gradient Computation for More Layers in Opacus
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://pytorch.org/blog/clipping-in-opacus/"
+                  target="_blank">
+                  Enabling Fast Gradient Clipping and Ghost Clipping in Opacus
+                </a>
+              </li>
             </ol>
             <h4>Videos*</h4>
             <p>* Note that Opacus API has changed over time and some of the code samples and demos in the videos may not work. The concepts presented in the videos though are concrete and still valid.</p>
