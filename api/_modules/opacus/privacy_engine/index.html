@@ -57,6 +57,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">opacus.optimizers</span> <span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">get_optimizer_class</span>
 <span class="kn">from</span> <span class="nn">opacus.schedulers</span> <span class="kn">import</span> <span class="n">_GradClipScheduler</span><span class="p">,</span> <span class="n">_NoiseScheduler</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.fast_gradient_clipping_utils</span> <span class="kn">import</span> <span class="n">DPLossFastGradientClipping</span>
 <span class="kn">from</span> <span class="nn">opacus.validators.module_validator</span> <span class="kn">import</span> <span class="n">ModuleValidator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
 <span class="kn">from</span> <span class="nn">torch.nn.parallel</span> <span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
@@ -317,6 +318,7 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
         <span class="n">optimizer</span><span class="p">:</span> <span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">criterion</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(),</span>  <span class="c1"># Added deafult for backward compatibility</span>
         <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
         <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">max_grad_norm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
@@ -440,6 +442,11 @@
         <span class="n">optimizer</span><span class="o">.</span><span class="n">attach_step_hook</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_optimizer_hook_fn</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">grad_sample_mode</span> <span class="o">==</span> <span class="s2">"ghost"</span><span class="p">:</span>
+            <span class="n">criterion</span> <span class="o">=</span> <span class="n">DPLossFastGradientClipping</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">loss_reduction</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">data_loader</span>
 
         <span class="k">return</span> <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span></div>
 
@@ -451,6 +458,7 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
         <span class="n">optimizer</span><span class="p">:</span> <span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">criterion</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(),</span>  <span class="c1"># Added deafult for backward compatibility</span>
         <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
         <span class="n">target_epsilon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">target_delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -530,6 +538,7 @@
             <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
             <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
             <span class="n">data_loader</span><span class="o">=</span><span class="n">data_loader</span><span class="p">,</span>
+            <span class="n">criterion</span><span class="o">=</span><span class="n">criterion</span><span class="p">,</span>
             <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">get_noise_multiplier</span><span class="p">(</span>
                 <span class="n">target_epsilon</span><span class="o">=</span><span class="n">target_epsilon</span><span class="p">,</span>
                 <span class="n">target_delta</span><span class="o">=</span><span class="n">target_delta</span><span class="p">,</span>
