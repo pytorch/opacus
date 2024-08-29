@@ -101,7 +101,7 @@ def run_ghost_clipping_test(
         loss_per_sample = loss_fn(outputs, y)
         torch.mean(loss_per_sample).backward(retain_graph=True)
         optimizer.zero_grad()
-        rescaled_loss_per_sample = ddp_model.get_coeff() * loss_per_sample
+        rescaled_loss_per_sample = ddp_model.get_clipping_coef() * loss_per_sample
         rescaled_loss = torch.sum(rescaled_loss_per_sample)
         ddp_model.disable_hooks()
         rescaled_loss.backward()

@@ -47,12 +47,21 @@ def create_norm_sample(
     """
 
     if param.requires_grad:
-        param._norm_sample = torch.zeros(
-            torch.Size([max_batch_len, 1]),
-            device=grad_sample.device,
-            dtype=grad_sample.dtype,
-        )
-        param._norm_sample = grad_sample.reshape(len(grad_sample), -1).norm(2, dim=-1)
+        if (
+            max_batch_len == 0
+        ):  # To handle the case of empty batch that may arise from Poisson sampling
+            param._norm_sample = torch.tensor(
+                [], device=grad_sample.device, dtype=grad_sample.dtype
+            )
+        else:
+            param._norm_sample = torch.zeros(
+                torch.Size([max_batch_len, 1]),
+                device=grad_sample.device,
+                dtype=grad_sample.dtype,
+            )
+            param._norm_sample = grad_sample.reshape(len(grad_sample), -1).norm(
+                2, dim=-1
+            )
 
 
 class GradSampleModuleFastGradientClipping(GradSampleModule):
@@ -110,7 +119,7 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
         self.max_grad_norm = max_grad_norm
         self.use_ghost_clipping = use_ghost_clipping
 
-    def get_coeff(self) -> torch.Tensor:
+    def get_clipping_coef(self) -> torch.Tensor:
         """Get per-example gradient scaling factor for clipping."""
         norm_sample = self.get_norm_sample()
         return (self.max_grad_norm / (norm_sample + 1e-6)).clamp(max=1.0)
@@ -175,6 +184,7 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
             return
 
         backprops = forward_output[0].detach()
+
         activations, backprops = self.rearrange_grad_samples(
             module=module,
             backprops=backprops,
@@ -216,7 +226,6 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
                         max_batch_len=module.max_batch_len,
                     )
                     del p.grad_sample
-
         if len(module.activations) == 0:
             if hasattr(module, "max_batch_len"):
                 del module.max_batch_len

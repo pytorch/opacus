@@ -22,7 +22,7 @@ import torch.nn.functional as F
 from hypothesis import given, settings
 from opacus.grad_sample import GradSampleModule, GradSampleModuleFastGradientClipping
 from opacus.optimizers import DPOptimizer, DPOptimizerFastGradientClipping
-from opacus.utils.fast_gradient_clipping_utils import double_backward
+from opacus.utils.fast_gradient_clipping_utils import DPLossFastGradientClipping
 from opacus.utils.per_sample_gradients_utils import clone_module
 from torch.utils.data import DataLoader, Dataset
 
@@ -146,7 +146,7 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
         (input_data, target_data) = list(self.dl)[0]
         optimizer_normal.zero_grad()
         output_normal = self.model_normal(input_data)
-        loss_normal = torch.mean(self.criterion(output_normal, target_data))
+        loss_normal = torch.mean(self.criterion(output_normal, target_data), dim=0)
         loss_normal.backward()
         all_norms_normal = torch.stack(
             [
@@ -165,7 +165,7 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
         first_loss.backward(retain_graph=True)
 
         optimizer_gc.zero_grad()
-        coeff = self.grad_sample_module.get_coeff()
+        coeff = self.grad_sample_module.get_clipping_coef()
         second_loss_per_sample = coeff * first_loss_per_sample
         second_loss = torch.sum(second_loss_per_sample)
         self.grad_sample_module.disable_hooks()
@@ -190,7 +190,7 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
     @settings(deadline=1000000)
     def test_gradient_calculation_fast_gradient_clipping(self, size, length, dim):
         """
-        Tests if gradients are the same between standard (opacus) and fast gradient clipping, using double_backward function"
+        Tests if gradients are the same between standard (opacus) and fast gradient clipping"
         """
 
         noise_multiplier = 0.0
@@ -200,7 +200,7 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
         self.dim = dim
         self.setUp_data_sequantial(self.size, self.length, self.dim)
         max_grad_norm = 1.0
-        self.criterion = torch.nn.CrossEntropyLoss(reduction="none")
+        self.criterion = torch.nn.CrossEntropyLoss()
 
         sample_module = SampleModule()
         self.model_normal = GradSampleModule(clone_module(sample_module))
@@ -226,10 +226,14 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
             expected_batch_size=batch_size,
         )
 
+        criterion_gc = DPLossFastGradientClipping(
+            self.grad_sample_module, optimizer_gc, self.criterion
+        )
+
         (input_data, target_data) = list(self.dl)[0]
         optimizer_normal.zero_grad()
         output_normal = self.model_normal(input_data)
-        loss_normal = torch.mean(self.criterion(output_normal, target_data))
+        loss_normal = torch.mean(self.criterion(output_normal, target_data), dim=0)
         loss_normal.backward()
         optimizer_normal.step()
 
@@ -240,8 +244,9 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
 
         output_gc = self.grad_sample_module(input_data)
 
-        first_loss_per_sample = self.criterion(output_gc, target_data)
-        double_backward(self.grad_sample_module, optimizer_gc, first_loss_per_sample)
+        loss_gc = criterion_gc(output_gc, target_data)
+        loss_gc.backward()
+        # double_backward(self.grad_sample_module, optimizer_gc, first_loss_per_sample)
 
         all_grads_gc = [param.grad for param in self.grad_sample_module.parameters()]
         flat_grads_gc = torch.cat([p.flatten() for p in all_grads_gc])

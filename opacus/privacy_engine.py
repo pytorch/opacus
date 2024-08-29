@@ -30,6 +30,7 @@ from opacus.grad_sample import (
 )
 from opacus.optimizers import DPOptimizer, get_optimizer_class
 from opacus.schedulers import _GradClipScheduler, _NoiseScheduler
+from opacus.utils.fast_gradient_clipping_utils import DPLossFastGradientClipping
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -277,6 +278,7 @@ class PrivacyEngine:
         *,
         module: nn.Module,
         optimizer: optim.Optimizer,
+        criterion=nn.CrossEntropyLoss(),  # Added deafult for backward compatibility
         data_loader: DataLoader,
         noise_multiplier: float,
         max_grad_norm: Union[float, List[float]],
@@ -400,6 +402,11 @@ class PrivacyEngine:
         optimizer.attach_step_hook(
             self.accountant.get_optimizer_hook_fn(sample_rate=sample_rate)
         )
+        if grad_sample_mode == "ghost":
+            criterion = DPLossFastGradientClipping(
+                module, optimizer, criterion, loss_reduction
+            )
+            return module, optimizer, criterion, data_loader
 
         return module, optimizer, data_loader
 
@@ -408,6 +415,7 @@ class PrivacyEngine:
         *,
         module: nn.Module,
         optimizer: optim.Optimizer,
+        criterion=nn.CrossEntropyLoss(),  # Added deafult for backward compatibility
         data_loader: DataLoader,
         target_epsilon: float,
         target_delta: float,
@@ -487,6 +495,7 @@ class PrivacyEngine:
             module=module,
             optimizer=optimizer,
             data_loader=data_loader,
+            criterion=criterion,
             noise_multiplier=get_noise_multiplier(
                 target_epsilon=target_epsilon,
                 target_delta=target_delta,
