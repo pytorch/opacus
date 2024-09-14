@@ -72,7 +72,7 @@ jobs:
           python -c "import torch; accuracy = torch.load('run_results_mnist_0.25_0.7_1.5_64_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
 
       - name: Store MNIST test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: mnist-gpu-reports
           path: runs/mnist/test-reports
@@ -89,7 +89,7 @@ jobs:
           python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
 
       - name: Store CIFAR10 test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: cifar10-gpu-reports
           path: runs/cifar10/test-reports
@@ -104,7 +104,7 @@ jobs:
       #     python -c "import torch; accuracy = torch.load('run_results_imdb_classification.pt'); exit(0) if (accuracy>0.54 and accuracy<0.66) else exit(1)"
 
       # - name: Store IMDb test results
-      #   uses: actions/upload-artifact@v2
+      #   uses: actions/upload-artifact@v4
       #   with:
       #     name: imdb-gpu-reports
       #     path: runs/imdb/test-reports
@@ -121,7 +121,7 @@ jobs:
       #     python -c "import torch; accuracy = torch.load('run_results_chr_lstm_classification.pt'); exit(0) if (accuracy>0.60 and accuracy<0.80) else exit(1)"
 
       # - name: Store test results
-      #   uses: actions/upload-artifact@v2
+      #   uses: actions/upload-artifact@v4
       #   with:
       #     name: charlstm-gpu-reports
       #     path: runs/charlstm/test-reports
