@@ -55,7 +55,7 @@ jobs:
           coverage run -m pytest --doctest-modules -p conftest --junitxml=unittest-py38-release-reports/junit.xml opacus
           coverage report -i -m
       - name: Store test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: unittest-py38-release-reports
           path: unittest-py38-release-reports
@@ -80,7 +80,7 @@ jobs:
           coverage run -m pytest --doctest-modules -p conftest --junitxml=unittest-py39-release-reports/junit.xml opacus
           coverage report -i -m
       - name: Store test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: unittest-py39-release-reports
           path: unittest-py39-release-reports
@@ -123,7 +123,7 @@ jobs:
           mkdir unittest-py39-nightly-reports
           python -m pytest --doctest-modules -p conftest --junitxml=unittest-py39-nightly-reports/junit.xml opacus
       - name: Store test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: unittest-py39-nightly-reports
           path: unittest-py39-nightly-reports
@@ -151,7 +151,7 @@ jobs:
           python -c "import torch; accuracy = torch.load('run_results_mnist_0.25_0.7_1.5_64_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
           coverage report -i -m
       - name: Store test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: mnist-cpu-reports
           path: runs/mnist/test-reports
