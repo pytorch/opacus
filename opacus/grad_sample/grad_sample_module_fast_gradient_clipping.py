@@ -107,13 +107,15 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
         Raises:
             NotImplementedError
                 If ``strict`` is set to ``True`` and module ``m`` (or any of its
-                submodules) doesn't have a registered grad sampler function.
+                submodules) includes a buffer.
         """
 
         super().__init__(
             m,
             batch_first=batch_first,
             loss_reduction=loss_reduction,
+            strict=strict,
+            force_functorch=force_functorch,
         )
         self.trainable_parameters = [p for _, p in trainable_parameters(self._module)]
         self.max_grad_norm = max_grad_norm
