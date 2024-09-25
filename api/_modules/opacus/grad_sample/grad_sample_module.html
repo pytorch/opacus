@@ -137,10 +137,9 @@
 <span class="sd">                ``[K, batch_size, ...]``</span>
 <span class="sd">            loss_reduction: Indicates if the loss reduction (for aggregating the gradients)</span>
 <span class="sd">                is a sum or a mean operation. Can take values "sum" or "mean"</span>
-<span class="sd">            strict: If set to ``True``, the input module will be validated to check that</span>
-<span class="sd">                ``GradSampleModule`` has grad sampler functions for all submodules of</span>
-<span class="sd">                the input module (i.e. if it knows how to calculate per sample gradients)</span>
-<span class="sd">                for all model parameters. If set to ``False``, per sample gradients will</span>
+<span class="sd">            strict: If set to ``True``, the input module will be validated to make sure that none of its submodules includes buffers,</span>
+<span class="sd">                which is not currently supported by Opacus.</span>
+<span class="sd">                If set to ``False``, per sample gradients will</span>
 <span class="sd">                be computed on "best effort" basis - they will be available where</span>
 <span class="sd">                possible and set to None otherwise. This is not recommended, because</span>
 <span class="sd">                some unsupported modules (e.g. BatchNorm) affect other parameters and</span>
@@ -152,7 +151,7 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError</span>
 <span class="sd">                If ``strict`` is set to ``True`` and module ``m`` (or any of its</span>
-<span class="sd">                submodules) doesn't have a registered grad sampler function.</span>
+<span class="sd">                submodules) includes a buffer.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">m</span><span class="p">,</span>
