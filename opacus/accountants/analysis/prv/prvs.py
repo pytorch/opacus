@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 import numpy as np
+import numpy.typing as npt
 from scipy import integrate
 from scipy.special import erfc
 
@@ -133,7 +134,7 @@ class TruncatedPrivacyRandomVariable:
 
 @dataclass
 class DiscretePRV:
-    pmf: np.ndarray
+    pmf: npt.NDArray
     domain: Domain
 
     def __len__(self) -> int:
