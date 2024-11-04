@@ -72,7 +72,8 @@ class RenameParamsMixin:
         self.parameters() proceeds recursively from the top, going into submodules after processing
         items at the current level, and will not return duplicates.
         """
-        for old_name, param in super().named_parameters():
+
+        for old_name, param in list(super().named_parameters()):
             if old_name in self.old_to_new:
                 new_name = self.old_to_new[old_name]
                 self.register_parameter(new_name, param)
