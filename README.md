@@ -10,6 +10,7 @@
 [Opacus](https://opacus.ai) is a library that enables training PyTorch models with differential privacy.
 It supports training with minimal code changes required on the client, has little impact on training performance, and allows the client to online track the privacy budget expended at any given moment.
 
+
 ## Target audience
 This code release is aimed at two target audiences:
 1. ML practitioners will find this to be a gentle introduction to training a model with differential privacy as it requires minimal code changes.
@@ -99,6 +100,7 @@ If you want to learn more about DP-SGD and related topics, check out our series 
 - [PriCon 2020 Tutorial: Differentially Private Model Training with Opacus](https://www.youtube.com/watch?v=MWPwofiQMdE&list=PLUNOsx6Az_ZGKQd_p4StdZRFQkCBwnaY6&index=52)
 - [Differential Privacy on PyTorch | PyTorch Developer Day 2020](https://www.youtube.com/watch?v=l6fbl2CBnq0)
 - [Opacus v1.0 Highlights | PyTorch Developer Day 2021](https://www.youtube.com/watch?v=U1mszp8lzUI)
+- [Enabling Fast Gradient Clipping and Ghost Clipping in Opacus](https://pytorch.org/blog/clipping-in-opacus/)
 
 
 ## FAQ
