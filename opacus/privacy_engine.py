@@ -289,7 +289,7 @@ class PrivacyEngine:
         noise_generator=None,
         grad_sample_mode: str = "hooks",
         **kwargs,
-    ) -> Tuple[GradSampleModule, DPOptimizer, DataLoader]:
+    ):
         """
         Add privacy-related responsibilities to the main PyTorch training objects:
         model, optimizer, and the data loader.
@@ -339,12 +339,15 @@ class PrivacyEngine:
                 details
 
         Returns:
-            Tuple of (model, optimizer, data_loader).
+            Tuple of (model, optimizer, criterion (if grad_sample_model="ghost"), data_loader).
 
             Model is a wrapper around the original model that also computes per sample
                 gradients
             Optimizer is a wrapper around the original optimizer that also does
              gradient clipping and noise addition to the gradients
+            Criterion is a wrapper around the original criterion that does two
+                backward pass under the hood. Returned if grad_sample_mode is
+                "ghost".
             DataLoader is a brand new DataLoader object, constructed to behave as
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.
@@ -472,17 +475,23 @@ class PrivacyEngine:
                 details
 
         Returns:
-            Tuple of (model, optimizer, data_loader).
+            Tuple of (model, optimizer, criterion (if grad_sample_mode="ghost"), data_loader).
 
             Model is a wrapper around the original model that also computes per sample
                 gradients
             Optimizer is a wrapper around the original optimizer that also does
                 gradient clipping and noise addition to the gradients
+            Criterion is a wrapper around the original criterion that does two
+                backward pass under the hood. Returned if grad_sample_mode is
+                "ghost".
             DataLoader is a brand new DataLoader object, constructed to behave as
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.
         """
         sample_rate = 1 / len(data_loader)
+        epsilon_tolerance = kwargs.get(
+            "epsilon_tolerance", 0.01
+        )  # same default as in get_noise_multiplier
 
         if len(self.accountant) > 0:
             warnings.warn(
@@ -502,6 +511,7 @@ class PrivacyEngine:
                 sample_rate=sample_rate,
                 epochs=epochs,
                 accountant=self.accountant.mechanism(),
+                epsilon_tolerance=epsilon_tolerance,
                 **kwargs,
             ),
             max_grad_norm=max_grad_norm,
