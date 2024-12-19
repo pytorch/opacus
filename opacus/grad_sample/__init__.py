@@ -17,6 +17,7 @@ from .conv import compute_conv_grad_sample  # noqa
 from .dp_multihead_attention import compute_sequence_bias_grad_sample  # noqa
 from .dp_rnn import compute_rnn_linear_grad_sample  # noqa
 from .embedding import compute_embedding_grad_sample  # noqa
+from .embedding_norm_sample import compute_embedding_norm_sample  # noqa
 from .grad_sample_module import GradSampleModule, create_or_accumulate_grad_sample
 from .grad_sample_module_fast_gradient_clipping import (  # noqa
     GradSampleModuleFastGradientClipping,
