@@ -68,7 +68,10 @@ class RDPAccountant(IAccountant):
         return float(eps), float(best_alpha)
 
     def get_epsilon(
-        self, delta: float, alphas: Optional[List[Union[float, int]]] = None
+        self,
+        delta: float,
+        alphas: Optional[List[Union[float, int]]] = None,
+        **kwargs,
     ):
         """
         Return privacy budget (epsilon) expended so far.

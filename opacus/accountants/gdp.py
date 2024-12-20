@@ -44,7 +44,7 @@ class GaussianAccountant(IAccountant):
         else:
             self.history = [(noise_multiplier, sample_rate, 1)]
 
-    def get_epsilon(self, delta: float, poisson: bool = True) -> float:
+    def get_epsilon(self, delta: float, poisson: bool = True, **kwargs) -> float:
         """
         Return privacy budget (epsilon) expended so far.
 
