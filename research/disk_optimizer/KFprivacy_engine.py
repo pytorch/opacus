@@ -4,7 +4,7 @@ from opacus.optimizers import DPOptimizer
 from opacus.privacy_engine import PrivacyEngine
 from torch import optim
 
-from . import KF_DPOptimizer, get_optimizer_class
+from optimizers import KF_DPOptimizer, get_optimizer_class
 
 
 class KF_PrivacyEngine(PrivacyEngine):

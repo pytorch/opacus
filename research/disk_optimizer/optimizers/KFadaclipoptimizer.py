@@ -5,10 +5,11 @@ import math
 from typing import Optional
 
 import torch
-from KFoptimizer import KF_DPOptimizer
 from opacus.optimizers.adaclipoptimizer import AdaClipDPOptimizer
 from torch.optim import Optimizer
 from torch.optim.optimizer import required
+
+from .KFoptimizer import KF_DPOptimizer
 
 
 logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Optional
+from typing import Optional, List
 
 import torch
 from opacus.optimizers.optimizer import DPOptimizer
@@ -51,6 +51,19 @@ class KF_DPOptimizer(DPOptimizer):
         self.kappa = kappa
         self.gamma = gamma
 
+    @DPOptimizer.grad_samples.setter
+    def grad_samples(self, value):
+        """
+        Set the per sample gradient tensors to zero
+        """
+        if value is not None:
+            for (p,v) in zip(self.params, value):
+                p.grad_sample = v
+        else:
+            for p in self.params:
+                if hasattr(p, "grad_sample"):
+                    p.grad_sample = None
+
     def _compute_one_closure(self, closure=required):
         loss = None
         has_kf_d_t = True
@@ -74,7 +87,7 @@ class KF_DPOptimizer(DPOptimizer):
         loss = None
         has_kf_d_t = True
         with torch.enable_grad():
-            closure()
+            loss = closure()
         for p in self.params:
             state = self.state[p]
             if "kf_d_t" not in state:
