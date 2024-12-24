@@ -69,16 +69,27 @@ class KF_AdaClipDPOptimizer(AdaClipDPOptimizer, KF_DPOptimizer):
             loss = self._compute_one_closure(closure)
 
         if self.pre_step():
+            tmp_states = []
+            first_step = False
             for p in self.params:
                 grad = p.grad
                 state = self.state[p]
                 if "kf_d_t" not in state:
+                    state = dict()
+                    first_step = True
                     state["kf_d_t"] = torch.zeros_like(p.data).to(p.data)
                     state["kf_m_t"] = grad.clone().to(p.data)
                 state["kf_m_t"].lerp_(grad, weight=self.kappa)
                 p.grad = state["kf_m_t"].clone().to(p.data)
                 state["kf_d_t"] = -p.data.clone().to(p.data)
+                if first_step:
+                    tmp_states.append(state)
             self.original_optimizer.step()
             for p in self.params:
+                if first_step:
+                    tmp_state = tmp_states.pop(0)
+                    self.state[p]['kf_d_t'] = tmp_state['kf_d_t']
+                    self.state[p]['kf_m_t'] = tmp_state['kf_m_t']
+                    del tmp_state
                 self.state[p]["kf_d_t"].add_(p.data, alpha=1.0)
         return loss
