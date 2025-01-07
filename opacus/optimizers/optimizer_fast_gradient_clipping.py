@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 from typing import Callable, Optional
 
@@ -112,9 +113,9 @@ class DPOptimizerFastGradientClipping(DPOptimizer):
         """
         for p in self.params:
             if p.summed_grad is not None:
-                p.summed_grad += p.grad
+                p.summed_grad.add_(p.grad.data)
             else:
-                p.summed_grad = p.grad
+                p.summed_grad = copy.deepcopy(p.grad.data)
 
     def zero_grad(self, set_to_none: bool = False):
         """
