@@ -40,9 +40,9 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">.module_validator</span> <span class="kn">import</span> <span class="n">ModuleValidator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.module_validator</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleValidator</span>
 
 
 <span class="n">DEFAULT_MODULE_VALIDATOR</span> <span class="o">=</span> <span class="n">ModuleValidator</span>
@@ -50,7 +50,7 @@
 
 <div class="viewcode-block" id="register_module_validator">
 <a class="viewcode-back" href="../../../validator.html#opacus.validators.utils.register_module_validator">[docs]</a>
-<span class="k">def</span> <span class="nf">register_module_validator</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_module_validator</span><span class="p">(</span>
     <span class="n">target_class_or_classes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">type</span><span class="p">]],</span>
     <span class="n">validator_class</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">DEFAULT_MODULE_VALIDATOR</span><span class="p">,</span>
 <span class="p">):</span>
@@ -68,7 +68,7 @@
 <span class="sd">    It may help you to take a look at the existing validator inside Opacus, under ``opacus.validators.``</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
         <span class="n">target_classes</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">target_class_or_classes</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_class_or_classes</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span>
@@ -84,7 +84,7 @@
 
 <div class="viewcode-block" id="register_module_fixer">
 <a class="viewcode-back" href="../../../validator.html#opacus.validators.utils.register_module_fixer">[docs]</a>
-<span class="k">def</span> <span class="nf">register_module_fixer</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_module_fixer</span><span class="p">(</span>
     <span class="n">target_class_or_classes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">type</span><span class="p">]],</span>
     <span class="n">validator_class</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">DEFAULT_MODULE_VALIDATOR</span><span class="p">,</span>
 <span class="p">):</span>
@@ -102,7 +102,7 @@
 <span class="sd">    It may help you to take a look at the existing fixers inside Opacus, under ``opacus.validators.``</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
         <span class="n">target_classes</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">target_class_or_classes</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_class_or_classes</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span>
@@ -157,7 +157,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2025 Meta Platforms, Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

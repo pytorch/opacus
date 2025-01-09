@@ -39,34 +39,34 @@
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">IO</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">IO</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">opacus.accountants</span> <span class="kn">import</span> <span class="n">create_accountant</span>
-<span class="kn">from</span> <span class="nn">opacus.accountants.utils</span> <span class="kn">import</span> <span class="n">get_noise_multiplier</span>
-<span class="kn">from</span> <span class="nn">opacus.data_loader</span> <span class="kn">import</span> <span class="n">DPDataLoader</span><span class="p">,</span> <span class="n">switch_generator</span>
-<span class="kn">from</span> <span class="nn">opacus.distributed</span> <span class="kn">import</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span> <span class="k">as</span> <span class="n">DPDDP</span>
-<span class="kn">from</span> <span class="nn">opacus.grad_sample</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.accountants</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_accountant</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.accountants.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_noise_multiplier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.data_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">DPDataLoader</span><span class="p">,</span> <span class="n">switch_generator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.distributed</span><span class="w"> </span><span class="kn">import</span> <span class="n">DifferentiallyPrivateDistributedDataParallel</span> <span class="k">as</span> <span class="n">DPDDP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.grad_sample</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AbstractGradSampleModule</span><span class="p">,</span>
     <span class="n">GradSampleModule</span><span class="p">,</span>
     <span class="n">get_gsm_class</span><span class="p">,</span>
     <span class="n">wrap_model</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">opacus.optimizers</span> <span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">get_optimizer_class</span>
-<span class="kn">from</span> <span class="nn">opacus.schedulers</span> <span class="kn">import</span> <span class="n">_GradClipScheduler</span><span class="p">,</span> <span class="n">_NoiseScheduler</span>
-<span class="kn">from</span> <span class="nn">opacus.utils.fast_gradient_clipping_utils</span> <span class="kn">import</span> <span class="n">DPLossFastGradientClipping</span>
-<span class="kn">from</span> <span class="nn">opacus.validators.module_validator</span> <span class="kn">import</span> <span class="n">ModuleValidator</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
-<span class="kn">from</span> <span class="nn">torch.nn.parallel</span> <span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
-<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">get_optimizer_class</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.schedulers</span><span class="w"> </span><span class="kn">import</span> <span class="n">_GradClipScheduler</span><span class="p">,</span> <span class="n">_NoiseScheduler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.utils.fast_gradient_clipping_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">DPLossFastGradientClipping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.validators.module_validator</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleValidator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
 
 
 <div class="viewcode-block" id="PrivacyEngine">
 <a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine">[docs]</a>
-<span class="k">class</span> <span class="nc">PrivacyEngine</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PrivacyEngine</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Main entry point to the Opacus API - use ``PrivacyEngine``  to enable differential</span>
 <span class="sd">    privacy for your model training.</span>
@@ -91,7 +91,7 @@
 <span class="sd">        &gt;&gt;&gt; # continue training as normal</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">accountant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"prv"</span><span class="p">,</span> <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">accountant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"prv"</span><span class="p">,</span> <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 
 <span class="sd">        Args:</span>
@@ -112,13 +112,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># only used to detect switching to a different dataset</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="kn">import</span> <span class="nn">torchcsprng</span> <span class="k">as</span> <span class="nn">csprng</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">torchcsprng</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">csprng</span>
             <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"To use secure RNG, you must install the torchcsprng package! "</span>
                     <span class="s2">"Check out the instructions here: https://github.com/pytorch/csprng#installation"</span>
                 <span class="p">)</span>
-                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">secure_rng</span> <span class="o">=</span> <span class="n">csprng</span><span class="o">.</span><span class="n">create_random_device_generator</span><span class="p">(</span><span class="s2">"/dev/urandom"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -128,7 +128,7 @@
                 <span class="s2">"one last time before production with ``secure_mode`` turned on."</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_prepare_optimizer</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_optimizer</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">optimizer</span><span class="p">:</span> <span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
@@ -165,10 +165,9 @@
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
             <span class="n">secure_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">secure_mode</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_prepare_data_loader</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_data_loader</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -196,7 +195,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data_loader</span>
 
-    <span class="k">def</span> <span class="nf">_prepare_model</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_model</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -241,9 +240,29 @@
                     <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
                 <span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_criterion</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">GradSampleModule</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">DPOptimizer</span><span class="p">,</span>
+        <span class="n">criterion</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(),</span>
+        <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DPLossFastGradientClipping</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            module: GradSampleModule used for training,</span>
+<span class="sd">            optimizer: DPOptimizer used for training,</span>
+<span class="sd">            criterion: Loss function used for training,</span>
+<span class="sd">            loss_reduction: "mean" or "sum", indicates if the loss reduction (for aggregating the gradients)</span>
+
+<span class="sd">        Prepare the DP loss class, which packages the two backward passes for fast gradient clipping.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">DPLossFastGradientClipping</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">loss_reduction</span><span class="p">)</span>
+
 <div class="viewcode-block" id="PrivacyEngine.is_compatible">
 <a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.is_compatible">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_compatible</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_compatible</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -266,7 +285,7 @@
 
 <div class="viewcode-block" id="PrivacyEngine.validate">
 <a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.validate">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -292,7 +311,7 @@
 <div class="viewcode-block" id="PrivacyEngine.get_compatible_module">
 <a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_compatible_module">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">get_compatible_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_compatible_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return a privacy engine compatible module. Also validates the module after</span>
 <span class="sd">        running registered fixes.</span>
@@ -313,7 +332,7 @@
 
 <div class="viewcode-block" id="PrivacyEngine.make_private">
 <a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.make_private">[docs]</a>
-    <span class="k">def</span> <span class="nf">make_private</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_private</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -443,9 +462,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_optimizer_hook_fn</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">grad_sample_mode</span> <span class="o">==</span> <span class="s2">"ghost"</span><span class="p">:</span>
-            <span class="n">criterion</span> <span class="o">=</span> <span class="n">DPLossFastGradientClipping</span><span class="p">(</span>
-                <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">loss_reduction</span>
+            <span class="n">criterion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_criterion</span><span class="p">(</span>
+                <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
+                <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+                <span class="n">criterion</span><span class="o">=</span><span class="n">criterion</span><span class="p">,</span>
+                <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
+
             <span class="k">return</span> <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">data_loader</span>
 
         <span class="k">return</span> <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span></div>
@@ -453,7 +477,7 @@
 
 <div class="viewcode-block" id="PrivacyEngine.make_private_with_epsilon">
 <a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.make_private_with_epsilon">[docs]</a>
-    <span class="k">def</span> <span class="nf">make_private_with_epsilon</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_private_with_epsilon</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -560,7 +584,7 @@
 
 <div class="viewcode-block" id="PrivacyEngine.get_epsilon">
 <a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.get_epsilon">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Computes the (epsilon, delta) privacy budget spent so far.</span>
 
@@ -575,7 +599,7 @@
 
 <div class="viewcode-block" id="PrivacyEngine.save_checkpoint">
 <a class="viewcode-back" href="../../privacy_engine.html#opacus.privacy_engine.PrivacyEngine.save_checkpoint">[docs]</a>
-    <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_checkpoint</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">IO</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]],</span>
@@ -617,7 +641,7 @@
         <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">checkpoint_dict</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">torch_save_kwargs</span> <span class="ow">or</span> <span class="p">{}))</span></div>
 
 
-    <span class="k">def</span> <span class="nf">load_checkpoint</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_checkpoint</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">IO</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]],</span>
@@ -699,7 +723,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2025 Meta Platforms, Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

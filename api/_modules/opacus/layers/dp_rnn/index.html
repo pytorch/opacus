@@ -40,23 +40,23 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">import</span> <span class="nn">numbers</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numbers</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn.utils.rnn</span> <span class="kn">import</span> <span class="n">PackedSequence</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.utils.rnn</span><span class="w"> </span><span class="kn">import</span> <span class="n">PackedSequence</span>
 
-<span class="kn">from</span> <span class="nn">..utils.packed_sequences</span> <span class="kn">import</span> <span class="n">compute_seq_lengths</span>
-<span class="kn">from</span> <span class="nn">.param_rename</span> <span class="kn">import</span> <span class="n">RenameParamsMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.packed_sequences</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_seq_lengths</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.param_rename</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenameParamsMixin</span>
 
 
 <div class="viewcode-block" id="apply_permutation">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.apply_permutation">[docs]</a>
-<span class="k">def</span> <span class="nf">apply_permutation</span><span class="p">(</span><span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">permutation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_permutation</span><span class="p">(</span><span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">permutation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Permute elements of a tensor along a dimension `dim`. If permutation is None do nothing.</span>
 <span class="sd">    """</span>
@@ -68,7 +68,7 @@
 
 <div class="viewcode-block" id="RNNLinear">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.RNNLinear">[docs]</a>
-<span class="k">class</span> <span class="nc">RNNLinear</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RNNLinear</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Applies a linear transformation to the incoming data: :math:`y = xA^T + b`</span>
 
 <span class="sd">    This module is the same as a ``torch.nn.Linear``` layer, except that in the backward pass</span>
@@ -81,17 +81,17 @@
 
     <span class="n">max_batch_len</span><span class="p">:</span> <span class="nb">int</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">in_features</span><span class="p">,</span> <span class="n">out_features</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="DPRNNCellBase">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPRNNCellBase">[docs]</a>
-<span class="k">class</span> <span class="nc">DPRNNCellBase</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DPRNNCellBase</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="n">has_cell_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">num_chunks</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -104,12 +104,12 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">reset_parameters</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">reset_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">stdv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">weight</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="o">-</span><span class="n">stdv</span><span class="p">,</span> <span class="n">stdv</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">set_max_batch_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_max_batch_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ih</span><span class="o">.</span><span class="n">max_batch_len</span> <span class="o">=</span> <span class="n">max_batch_length</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hh</span><span class="o">.</span><span class="n">max_batch_len</span> <span class="o">=</span> <span class="n">max_batch_length</span></div>
 
@@ -117,14 +117,14 @@
 
 <div class="viewcode-block" id="DPRNNCell">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPRNNCell">[docs]</a>
-<span class="k">class</span> <span class="nc">DPRNNCell</span><span class="p">(</span><span class="n">DPRNNCellBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DPRNNCell</span><span class="p">(</span><span class="n">DPRNNCellBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""An Elman RNN cell with tanh or ReLU non-linearity.</span>
 
 <span class="sd">    DP-friendly drop-in replacement of the ``torch.nn.RNNCell`` module to use in ``DPRNN``.</span>
 <span class="sd">    Refer to ``torch.nn.RNNCell`` documentation for the model description, parameters and inputs/outputs.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">nonlinearity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"tanh"</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">num_chunks</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -134,7 +134,7 @@
 
 <div class="viewcode-block" id="DPRNNCell.forward">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPRNNCell.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">hx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -162,19 +162,19 @@
 
 <div class="viewcode-block" id="DPGRUCell">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPGRUCell">[docs]</a>
-<span class="k">class</span> <span class="nc">DPGRUCell</span><span class="p">(</span><span class="n">DPRNNCellBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DPGRUCell</span><span class="p">(</span><span class="n">DPRNNCellBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A gated recurrent unit (GRU) cell</span>
 
 <span class="sd">    DP-friendly drop-in replacement of the ``torch.nn.GRUCell`` module to use in ``DPGRU``.</span>
 <span class="sd">    Refer to ``torch.nn.GRUCell`` documentation for the model description, parameters and inputs/outputs.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">num_chunks</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DPGRUCell.forward">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPGRUCell.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">hx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -205,7 +205,7 @@
 
 <div class="viewcode-block" id="DPLSTMCell">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPLSTMCell">[docs]</a>
-<span class="k">class</span> <span class="nc">DPLSTMCell</span><span class="p">(</span><span class="n">DPRNNCellBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DPLSTMCell</span><span class="p">(</span><span class="n">DPRNNCellBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A long short-term memory (LSTM) cell.</span>
 
 <span class="sd">    DP-friendly drop-in replacement of the ``torch.nn.LSTMCell`` module to use in ``DPLSTM``.</span>
@@ -214,12 +214,12 @@
 
     <span class="n">has_cell_state</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">num_chunks</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DPLSTMCell.forward">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPLSTMCell.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">hx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -271,7 +271,7 @@
 
 <div class="viewcode-block" id="DPRNNBase">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPRNNBase">[docs]</a>
-<span class="k">class</span> <span class="nc">DPRNNBase</span><span class="p">(</span><span class="n">RenameParamsMixin</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DPRNNBase</span><span class="p">(</span><span class="n">RenameParamsMixin</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Base class for all RNN-like sequence models.</span>
 
 <span class="sd">    DP-friendly drop-in replacement of the ``torch.nn.RNNBase`` module.</span>
@@ -289,7 +289,7 @@
 
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mode</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">DPRNNCellBase</span><span class="p">]],</span>
         <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -361,7 +361,7 @@
     <span class="c1"># flake8: noqa C901</span>
 <div class="viewcode-block" id="DPRNNBase.forward">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPRNNBase.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">PackedSequence</span><span class="p">],</span>
         <span class="n">state_init</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -515,7 +515,7 @@
     <span class="c1"># flake8: noqa C901</span>
 <div class="viewcode-block" id="DPRNNBase.forward_layer">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPRNNBase.forward_layer">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward_layer</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_layer</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">PackedSequence</span><span class="p">],</span>
         <span class="n">h_0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -632,7 +632,7 @@
 
 <div class="viewcode-block" id="DPRNNBase.iterate_layers">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPRNNBase.iterate_layers">[docs]</a>
-    <span class="k">def</span> <span class="nf">iterate_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">iterate_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Iterate through all the layers and through all directions within each layer.</span>
 
@@ -666,7 +666,7 @@
             <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">initialize_cells</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">initialize_cells</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">cells</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">rename_map</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">directions</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterate_layers</span><span class="p">():</span>
@@ -702,7 +702,7 @@
 
 <div class="viewcode-block" id="DPRNN">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPRNN">[docs]</a>
-<span class="k">class</span> <span class="nc">DPRNN</span><span class="p">(</span><span class="n">DPRNNBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DPRNN</span><span class="p">(</span><span class="n">DPRNNBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Applies a multi-layer Elman RNN with :math:`\tanh` or :math:`\text{ReLU}` non-linearity to an</span>
 <span class="sd">    input sequence.</span>
 
@@ -712,7 +712,7 @@
 <span class="sd">    After training this module can be exported and loaded by the original ``torch.nn`` implementation for inference.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -741,7 +741,7 @@
 
 <div class="viewcode-block" id="DPGRU">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPGRU">[docs]</a>
-<span class="k">class</span> <span class="nc">DPGRU</span><span class="p">(</span><span class="n">DPRNNBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DPGRU</span><span class="p">(</span><span class="n">DPRNNBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Applies a multi-layer gated recurrent unit (GRU) RNN to an input sequence.</span>
 
 <span class="sd">    DP-friendly drop-in replacement of the ``torch.nn.GRU`` module.</span>
@@ -750,7 +750,7 @@
 <span class="sd">    After training this module can be exported and loaded by the original ``torch.nn`` implementation for inference.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -777,7 +777,7 @@
 
 <div class="viewcode-block" id="DPLSTM">
 <a class="viewcode-back" href="../../../dp_rnn.html#opacus.layers.dp_rnn.DPLSTM">[docs]</a>
-<span class="k">class</span> <span class="nc">DPLSTM</span><span class="p">(</span><span class="n">DPRNNBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DPLSTM</span><span class="p">(</span><span class="n">DPRNNBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Applies a multi-layer long short-term memory (LSTM) RNN to an input</span>
 <span class="sd">    sequence.</span>
 
@@ -787,7 +787,7 @@
 <span class="sd">    After training this module can be exported and loaded by the original ``torch.nn`` implementation for inference.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -853,7 +853,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/opacus_favicon.svg" alt="Opacus" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/faq">FAQ</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Github</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/opacus" data-count-href="https://github.com/pytorch/opacus/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star Opacus on GitHub">opacus</a></div></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="250" height="95"/></a><section class="copyright"> Copyright © 2025 Meta Platforms, Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
