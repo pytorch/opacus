@@ -9,21 +9,23 @@
     "rename-version": "docusaurus-rename-version"
   },
   "devDependencies": {
-    "docusaurus": "^1.9.0"
+    "docusaurus": "^1.14.7"
   },
   "dependencies": {
-    "prismjs": "^1.23.0",
-    "bl": "^1.2.3"
+    "@babel/helper-compilation-targets": "^8.0.0-alpha.14",
+    "bl": "^5.0.0",
+    "browserslist": "^4.21.4",
+    "prismjs": "^1.29.0"
   },
   "resolutions": {
-    "trim-newlines": "3.0.1",
-    "normalize-url": "4.5.1",
-    "highlight.js" : "10.5.0",
-    "react-dev-utils": "11.0.4",
-    "immer": "8.0.1",
-    "prismjs": "1.23.0",
-    "bl": "1.2.3",
-    "glob-parent": "5.1.2",
-    "browserslist": "4.16.5"
+    "trim-newlines": "^4.0.2",
+    "normalize-url": "^6.1.0",
+    "highlight.js": "^11.8.0",
+    "react-dev-utils": "^12.0.0",
+    "immer": "^10.0.0",
+    "prismjs": "^1.29.0",
+    "bl": "^5.0.0",
+    "glob-parent": "^6.0.2",
+    "browserslist": "^4.21.4"
   }
 }
