@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Optional, List
+from typing import Optional
 
 import torch
 from opacus.optimizers.optimizer import DPOptimizer
