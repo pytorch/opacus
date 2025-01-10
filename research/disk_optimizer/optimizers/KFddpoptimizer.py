@@ -59,10 +59,7 @@ class KF_DistributedDPOptimizer(KF_DPOptimizer):
         for p in self.params:
             if not p.requires_grad:
                 continue
-            torch.distributed.all_reduce(
-                p.grad,
-                op=torch.distributed.ReduceOp.SUM
-                )
+            torch.distributed.all_reduce(p.grad, op=torch.distributed.ReduceOp.SUM)
             if self.loss_reduction == "mean":
                 p.grad /= self.world_size
 
@@ -93,8 +90,8 @@ class KF_DistributedDPOptimizer(KF_DPOptimizer):
             for p in self.params:
                 if first_step:
                     tmp_state = tmp_states.pop(0)
-                    self.state[p]['kf_d_t'] = tmp_state['kf_d_t']
-                    self.state[p]['kf_m_t'] = tmp_state['kf_m_t']
+                    self.state[p]["kf_d_t"] = tmp_state["kf_d_t"]
+                    self.state[p]["kf_m_t"] = tmp_state["kf_m_t"]
                     del tmp_state
                 self.state[p]["kf_d_t"].add_(p.data, alpha=1.0)
         return loss

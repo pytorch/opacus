@@ -4,9 +4,7 @@ from functools import partial
 from typing import Callable, List, Optional
 
 import torch
-from opacus.optimizers.ddp_perlayeroptimizer import (
-    _clip_and_accumulate_parameter
-)
+from opacus.optimizers.ddp_perlayeroptimizer import _clip_and_accumulate_parameter
 from opacus.optimizers.optimizer import _generate_noise
 from torch import nn
 from torch.optim import Optimizer
@@ -70,8 +68,7 @@ class KF_DistributedPerLayerOptimizer(KF_DPOptimizer):
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
         self.max_grad_norms = max_grad_norm
-        max_grad_norm = torch.norm(
-            torch.Tensor(self.max_grad_norms), p=2).item()
+        max_grad_norm = torch.norm(torch.Tensor(self.max_grad_norms), p=2).item()
         super().__init__(
             optimizer,
             noise_multiplier=noise_multiplier,
