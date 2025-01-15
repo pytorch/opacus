@@ -38,6 +38,7 @@ class DistributedDPOptimizerFastGradientClipping(DPOptimizerFastGradientClipping
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
+        **kwargs,
     ):
         super().__init__(
             optimizer,
@@ -47,6 +48,7 @@ class DistributedDPOptimizerFastGradientClipping(DPOptimizerFastGradientClipping
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
+            **kwargs,
         )
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
