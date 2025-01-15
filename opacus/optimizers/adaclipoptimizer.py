@@ -53,6 +53,7 @@ class AdaClipDPOptimizer(DPOptimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
+        **kwargs,
     ):
         super().__init__(
             optimizer,
