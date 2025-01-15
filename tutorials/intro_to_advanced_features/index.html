@@ -111,21 +111,21 @@
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">TensorDataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">TensorDataset</span><span class="p">,</span> <span class="n">DataLoader</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">SampleNet</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">SampleNet</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     
-    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">x</span>
@@ -170,7 +170,7 @@
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
 <span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">'img/make_private.png'</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -201,7 +201,7 @@
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivacyEngine</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus</span> <span class="kn">import</span> <span class="n">PrivacyEngine</span>
 
 <span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">()</span>
 
@@ -313,7 +313,7 @@ After make_private(). Model:&lt;class 'opacus.grad_sample.grad_sample_module.Gra
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus</span><span class="w"> </span><span class="kn">import</span> <span class="n">GradSampleModule</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus</span> <span class="kn">import</span> <span class="n">GradSampleModule</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">GradSampleModule</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 <span class="n">model</span>
@@ -394,7 +394,7 @@ Average grad_sample over 1st dimension. Equal to original:  True
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus.privacy_engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">forbid_accumulation_hook</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.privacy_engine</span> <span class="kn">import</span> <span class="n">forbid_accumulation_hook</span>
 
 <span class="n">model</span><span class="o">.</span><span class="n">register_forward_pre_hook</span><span class="p">(</span><span class="n">forbid_accumulation_hook</span><span class="p">)</span>
 
@@ -471,7 +471,7 @@ Average grad_sample over 1st dimension. Equal to original:  True
 <div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus.data_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">DPDataLoader</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.data_loader</span> <span class="kn">import</span> <span class="n">DPDataLoader</span>
 
 <span class="n">dp_data_loader</span> <span class="o">=</span> <span class="n">DPDataLoader</span><span class="o">.</span><span class="n">from_data_loader</span><span class="p">(</span><span class="n">data_loader</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -552,7 +552,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 <div class="prompt input_prompt">In [10]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">DPOptimizer</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.optimizers</span> <span class="kn">import</span> <span class="n">DPOptimizer</span>
 
 <span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span>
 <span class="n">expected_batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span>
@@ -589,7 +589,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus.accountants</span><span class="w"> </span><span class="kn">import</span> <span class="n">RDPAccountant</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.accountants</span> <span class="kn">import</span> <span class="n">RDPAccountant</span>
 
 <span class="n">accountant</span> <span class="o">=</span> <span class="n">RDPAccountant</span><span class="p">()</span>
 <span class="n">optimizer</span><span class="o">.</span><span class="n">attach_step_hook</span><span class="p">(</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_optimizer_hook_fn</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">))</span>
@@ -604,7 +604,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 <p>Let's unpack what's happened here.</p>
 <p>First, DPOptimizer exposes a hook for functions to be executed during the <code>.step()</code> method. It's called after clipping and noise addition part, but before the parameters are updated.</p>
 <p>Accountant, on the other hand, provides a method to build hook function, given the sample rate (noise multiplier is stored in the optimizer, but the sample rate isn't)</p>
-<div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">hook_fn</span><span class="p">(</span><span class="n">optim</span><span class="p">:</span> <span class="n">DPOptimizer</span><span class="p">):</span>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">hook_fn</span><span class="p">(</span><span class="n">optim</span><span class="p">:</span> <span class="n">DPOptimizer</span><span class="p">):</span>
     <span class="n">accountant</span><span class="o">.</span><span class="n">step</span><span class="p">(</span>
         <span class="n">noise_multiplier</span><span class="o">=</span><span class="n">optim</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="p">,</span>
         <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">optim</span><span class="o">.</span><span class="n">accumulated_iterations</span><span class="p">,</span>
@@ -640,7 +640,7 @@ DPDataLoader sampler:  &lt;opacus.utils.uniform_sampler.UniformWithReplacementSa
 <div class="prompt input_prompt">In [12]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
 <span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">'img/optimizer.png'</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -685,12 +685,12 @@ For example, <code>DPPerLayerOptimizer</code> overrides <code>clip_and_accumulat
 <div class="prompt input_prompt">In [13]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus.optimizers.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">_check_processed_flag</span><span class="p">,</span> <span class="n">_mark_as_processed</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions.laplace</span><span class="w"> </span><span class="kn">import</span> <span class="n">Laplace</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.optimizers.optimizer</span> <span class="kn">import</span> <span class="n">_check_processed_flag</span><span class="p">,</span> <span class="n">_mark_as_processed</span>
+<span class="kn">from</span> <span class="nn">torch.distributions.laplace</span> <span class="kn">import</span> <span class="n">Laplace</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">LaplaceDPOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">LaplaceDPOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">laplace</span> <span class="o">=</span> <span class="n">Laplace</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
             <span class="n">_check_processed_flag</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span><span class="p">)</span>

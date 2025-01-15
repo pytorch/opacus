@@ -39,26 +39,26 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.optimizers.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">params</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">opacus.optimizers.utils</span> <span class="kn">import</span> <span class="n">params</span>
+<span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">_check_processed_flag</span><span class="p">,</span> <span class="n">_mark_as_processed</span>
+<span class="kn">from</span> <span class="nn">.optimizer</span> <span class="kn">import</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">_check_processed_flag</span><span class="p">,</span> <span class="n">_mark_as_processed</span>
 
 
 <div class="viewcode-block" id="DPPerLayerOptimizer">
 <a class="viewcode-back" href="../../../optim/dp_per_layer_optimizer.html#opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">DPPerLayerOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">DPPerLayerOptimizer</span><span class="p">(</span><span class="n">DPOptimizer</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    :class:`~opacus.optimizers.optimizer.DPOptimizer` that implements</span>
 <span class="sd">    per layer clipping strategy</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -68,6 +68,7 @@
         <span class="n">loss_reduction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
         <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">max_grad_norm</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">(</span><span class="n">optimizer</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norms</span> <span class="o">=</span> <span class="n">max_grad_norm</span>
@@ -80,11 +81,12 @@
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
             <span class="n">secure_mode</span><span class="o">=</span><span class="n">secure_mode</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="DPPerLayerOptimizer.clip_and_accumulate">
 <a class="viewcode-back" href="../../../optim/dp_per_layer_optimizer.html#opacus.optimizers.perlayeroptimizer.DPPerLayerOptimizer.clip_and_accumulate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">clip_and_accumulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">clip_and_accumulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">max_grad_norm</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norms</span><span class="p">):</span>
             <span class="n">_check_processed_flag</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="p">)</span>
 

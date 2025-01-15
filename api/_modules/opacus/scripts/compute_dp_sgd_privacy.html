@@ -66,14 +66,14 @@
 
 <span class="sd">    The optimal alpha is 5.0.</span>
 <span class="sd">"""</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.accountants.analysis.rdp</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_rdp</span><span class="p">,</span> <span class="n">get_privacy_spent</span>
+<span class="kn">from</span> <span class="nn">opacus.accountants.analysis.rdp</span> <span class="kn">import</span> <span class="n">compute_rdp</span><span class="p">,</span> <span class="n">get_privacy_spent</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_apply_dp_sgd_analysis</span><span class="p">(</span>
+<span class="k">def</span> <span class="nf">_apply_dp_sgd_analysis</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -123,7 +123,7 @@
 
 <div class="viewcode-block" id="compute_dp_sgd_privacy">
 <a class="viewcode-back" href="../../../compute_dp_sgd_privacy.html#opacus.scripts.compute_dp_sgd_privacy.compute_dp_sgd_privacy">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_dp_sgd_privacy</span><span class="p">(</span>
+<span class="k">def</span> <span class="nf">compute_dp_sgd_privacy</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -169,7 +169,7 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Estimate privacy of a model trained with DP-SGD using RDP accountant"</span><span class="p">,</span>
     <span class="p">)</span>

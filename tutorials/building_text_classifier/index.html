@@ -130,14 +130,14 @@
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">zipfile</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">download_and_extract</span><span class="p">(</span><span class="n">dataset_url</span><span class="p">,</span> <span class="n">data_dir</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">download_and_extract</span><span class="p">(</span><span class="n">dataset_url</span><span class="p">,</span> <span class="n">data_dir</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"Downloading and extracting ..."</span><span class="p">)</span>
     <span class="n">filename</span> <span class="o">=</span> <span class="s2">"snli_1.0.zip"</span>
     <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">dataset_url</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
@@ -214,7 +214,7 @@ Completed!
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="n">train_path</span> <span class="o">=</span>  <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">snli_folder</span><span class="p">,</span> <span class="s2">"snli_1.0_train.txt"</span><span class="p">)</span>
 <span class="n">dev_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">snli_folder</span><span class="p">,</span> <span class="s2">"snli_1.0_dev.txt"</span><span class="p">)</span>
 
@@ -510,7 +510,7 @@ It gives us a PyTorch implementation for the classic BERT architecture, as well 
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BertConfig</span><span class="p">,</span> <span class="n">BertTokenizer</span><span class="p">,</span> <span class="n">BertForSequenceClassification</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">BertConfig</span><span class="p">,</span> <span class="n">BertTokenizer</span><span class="p">,</span> <span class="n">BertForSequenceClassification</span>
 
 <span class="n">model_name</span> <span class="o">=</span> <span class="s2">"bert-base-cased"</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">BertConfig</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
@@ -585,7 +585,7 @@ As the model is already pre-trained and we only plan to fine-tune a few upper la
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
 <span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">'img/BERT.png'</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -667,12 +667,12 @@ Trainable parameters count: 7,680,771
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">TensorDataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers.data.processors.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputExample</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers.data.processors.glue</span><span class="w"> </span><span class="kn">import</span> <span class="n">glue_convert_examples_to_features</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">transformers</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">TensorDataset</span>
+<span class="kn">from</span> <span class="nn">transformers.data.processors.utils</span> <span class="kn">import</span> <span class="n">InputExample</span>
+<span class="kn">from</span> <span class="nn">transformers.data.processors.glue</span> <span class="kn">import</span> <span class="n">glue_convert_examples_to_features</span>
 </pre></div>
 </div>
 </div>
@@ -689,7 +689,7 @@ Trainable parameters count: 7,680,771
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_create_examples</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">set_type</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_create_examples</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">set_type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">""" Convert raw dataframe to a list of InputExample. Filter malformed examples</span>
 <span class="sd">    """</span>
     <span class="n">examples</span> <span class="o">=</span> <span class="p">[]</span>
@@ -704,7 +704,7 @@ Trainable parameters count: 7,680,771
             <span class="n">InputExample</span><span class="p">(</span><span class="n">guid</span><span class="o">=</span><span class="n">guid</span><span class="p">,</span> <span class="n">text_a</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s1">'sentence1'</span><span class="p">],</span> <span class="n">text_b</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s1">'sentence2'</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s1">'gold_label'</span><span class="p">]))</span>
     <span class="k">return</span> <span class="n">examples</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_df_to_features</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">set_type</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_df_to_features</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">set_type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">""" Pre-process text. This method will:</span>
 <span class="sd">    1) tokenize inputs</span>
 <span class="sd">    2) cut or pad each sequence to MAX_SEQ_LENGHT</span>
@@ -720,7 +720,7 @@ Trainable parameters count: 7,680,771
 
     <span class="c1">#backward compatibility with older transformers versions</span>
     <span class="n">legacy_kwards</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">packaging</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
+    <span class="kn">from</span> <span class="nn">packaging</span> <span class="kn">import</span> <span class="n">version</span>
     <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">transformers</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">"2.9.0"</span><span class="p">):</span>
         <span class="n">legacy_kwards</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"pad_on_left"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
@@ -737,7 +737,7 @@ Trainable parameters count: 7,680,771
         <span class="o">**</span><span class="n">legacy_kwards</span><span class="p">,</span>
     <span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_features_to_dataset</span><span class="p">(</span><span class="n">features</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_features_to_dataset</span><span class="p">(</span><span class="n">features</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">""" Convert features from `_df_to_features` into a single dataset</span>
 <span class="sd">    """</span>
     <span class="n">all_input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">f</span><span class="o">.</span><span class="n">input_ids</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
@@ -797,8 +797,8 @@ Trainable parameters count: 7,680,771
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">RandomSampler</span><span class="p">,</span> <span class="n">SequentialSampler</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.utils.uniform_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">UniformWithReplacementSampler</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">RandomSampler</span><span class="p">,</span> <span class="n">SequentialSampler</span>
+<span class="kn">from</span> <span class="nn">opacus.utils.uniform_sampler</span> <span class="kn">import</span> <span class="n">UniformWithReplacementSampler</span>
 
 <span class="n">train_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">)</span>
 <span class="n">test_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">SequentialSampler</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">)</span>
@@ -865,14 +865,14 @@ Trainable parameters count: 7,680,771
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm.notebook</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">accuracy</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">accuracy</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">preds</span> <span class="o">==</span> <span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
 
 <span class="c1"># define evaluation cycle</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
     <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
     <span class="n">loss_arr</span> <span class="o">=</span> <span class="p">[]</span>
@@ -920,7 +920,7 @@ Trainable parameters count: 7,680,771
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivacyEngine</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus</span> <span class="kn">import</span> <span class="n">PrivacyEngine</span>
 
 <span class="n">MAX_GRAD_NORM</span> <span class="o">=</span> <span class="mf">0.1</span>
 
@@ -952,7 +952,7 @@ Trainable parameters count: 7,680,771
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">opacus.utils.batch_memory_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchMemoryManager</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">opacus.utils.batch_memory_manager</span> <span class="kn">import</span> <span class="n">BatchMemoryManager</span>
 
 <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">EPOCHS</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1279,7 +1279,7 @@ You should probably TRAIN this model on a down-stream task to be able to use it 
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_peft_model</span><span class="p">,</span> <span class="n">LoraConfig</span><span class="p">,</span> <span class="n">TaskType</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">peft</span> <span class="kn">import</span> <span class="n">get_peft_model</span><span class="p">,</span> <span class="n">LoraConfig</span><span class="p">,</span> <span class="n">TaskType</span>
 
 <span class="n">lora_config</span> <span class="o">=</span> <span class="n">LoraConfig</span><span class="p">(</span>
     <span class="n">task_type</span><span class="o">=</span><span class="n">TaskType</span><span class="o">.</span><span class="n">SEQ_CLS</span><span class="p">,</span>  <span class="c1"># our particular task is sequence classification</span>

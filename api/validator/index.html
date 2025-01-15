@@ -119,7 +119,7 @@ it work for training with Opacus.
 You may supply your own validator_class that holds the registry of FIXERS.
 The signature of every fixer is always the same:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_module_fixer</span><span class="p">(</span><span class="n">MyCustomModel</span><span class="p">)</span>
-<span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">fix</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="gp">... </span>   <span class="k">pass</span>
 </pre></div>
 </div>
@@ -134,7 +134,7 @@ for training with Opacus.
 You may supply your own validator_class that holds the registry of VALIDATORS.
 The signature of every validator is always the same:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_module_validator</span><span class="p">(</span><span class="n">MyCustomModel</span><span class="p">)</span>
-<span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">opacus</span><span class="o">.</span><span class="n">validators</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">UnsupportedError</span><span class="p">]:</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">opacus</span><span class="o">.</span><span class="n">validators</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">UnsupportedError</span><span class="p">]:</span>
 <span class="gp">... </span>   <span class="k">pass</span>
 </pre></div>
 </div>
