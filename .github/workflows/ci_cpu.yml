@@ -52,13 +52,21 @@ jobs:
       - name: Run unit tests
         run: |
           mkdir unittest-py38-release-reports
-          coverage run -m pytest --doctest-modules -p conftest --junitxml=unittest-py38-release-reports/junit.xml opacus
+          coverage run -m pytest --doctest-modules -p conftest opacus
           coverage report -i -m
+          # Format into xml to be used for coveralls
+          coverage xml -i
       - name: Store test results
         uses: actions/upload-artifact@v4
         with:
           name: unittest-py38-release-reports
           path: unittest-py38-release-reports
+      - name: Send coverage to Coveralls (parallel)
+        uses: coverallsapp/github-action@v2
+        with:
+          format: cobertura
+          parallel: true
+          flag-name: run-1
 
   unittest_py39_torch_release:
     runs-on: ubuntu-latest
@@ -77,13 +85,19 @@ jobs:
       - name: Run unit tests
         run: |
           mkdir unittest-py39-release-reports
-          coverage run -m pytest --doctest-modules -p conftest --junitxml=unittest-py39-release-reports/junit.xml opacus
-          coverage report -i -m
+          coverage run -m pytest --doctest-modules -p conftest opacus
+          coverage xml -i
       - name: Store test results
         uses: actions/upload-artifact@v4
         with:
           name: unittest-py39-release-reports
           path: unittest-py39-release-reports
+      - name: Send coverage to Coveralls (parallel)
+        uses: coverallsapp/github-action@v2
+        with:
+          format: cobertura
+          parallel: true
+          flag-name: run-2
 
   prv_accountant_values:
     runs-on: ubuntu-latest
@@ -150,11 +164,18 @@ jobs:
           coverage run examples/mnist.py --lr 0.25 --sigma 0.7 -c 1.5 --batch-size 64 --epochs 1 --data-root runs/mnist/data --n-runs 1 --device cpu
           python -c "import torch; accuracy = torch.load('run_results_mnist_0.25_0.7_1.5_64_1.pt'); exit(0) if (accuracy[0]>0.78 and accuracy[0]<0.95) else exit(1)"
           coverage report -i -m
+          coverage xml -i
       - name: Store test results
         uses: actions/upload-artifact@v4
         with:
           name: mnist-cpu-reports
           path: runs/mnist/test-reports
+      - name: Send coverage to Coveralls (parallel)
+        uses: coverallsapp/github-action@v2
+        with:
+          format: cobertura
+          parallel: true
+          flag-name: run-3
 
   ######## FINISH COVERALLS ##########
   finish_coveralls_parallel:
@@ -168,3 +189,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
+          carryforward: "run-1,run-2,run-3"
