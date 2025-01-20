@@ -31,11 +31,16 @@ for advanced usage).
 
 Opacus also uses [isort](https://github.com/timothycrosley/isort) to sort imports
 alphabetically and separate into sections. isort is installed easily via
-pip using `pip install isort`, and run locally by calling
+pip using `pip install isort --upgrade`, and run locally by calling
 ```bash
-isort -v -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma  .
+isort -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma  .
 ```
 from the repository root. Configuration for isort is located in .isort.cfg.
+If using `isort` versions `<5.0.0` call
+```bash
+isort -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --recursive
+```
+
 
 We feel strongly that having a consistent code style is extremely important, so
 CircleCI will fail on your PR if it does not adhere to the black or flake8 formatting style or isort import ordering.
@@ -96,7 +101,7 @@ Run following command from `website` folder. It will build the docs and serve th
 ```
 
 You can also perform spell checks on documentation automatically (besides IDEs) using [```sphinxcontrib-spelling```](https://sphinxcontrib-spelling.readthedocs.io/en/latest/install.html)
-Note that you will also need [```PyEnchant```](https://pyenchant.github.io/pyenchant/) to run ```sphinxcontrib-spelling```, and thus the Enchant C library. Use this guide for ```PyEnchant```. 
+Note that you will also need [```PyEnchant```](https://pyenchant.github.io/pyenchant/) to run ```sphinxcontrib-spelling```, and thus the Enchant C library. Use this guide for ```PyEnchant```.
 
 Steps:
 1. Install the extension with pip: ```pip install sphinxcontrib-spelling```

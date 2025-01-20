@@ -8,7 +8,7 @@ flake8
 sphinx
 sphinx-autodoc-typehints
 mypy>=0.760
-isort
+isort>=5.0.0
 hypothesis
 tensorboard
 datasets
