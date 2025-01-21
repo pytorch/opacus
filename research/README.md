@@ -9,6 +9,8 @@ We warmly welcome and encourage contributions of new methods! To contribute, ple
 1. Fork the repo and create your branch from `main`.
 2. Place the new method in a separate subfolder within the `research` directory.
 3. The new folder should include a `README.md` that explains the method at a high level, demonstrates usage (e.g., introducing new parameters to the `PrivacyEngine`), and cites relevant sources. The subfolder name should aptly represent the method.
+4. Format code using `black`, `flake8`, and `isort` following the instructions under `Code Style` [here](https://github.com/pytorch/opacus/blob/main/CONTRIBUTING.md).
+5. Add copyright headers to each `.py` file contributed in the format `# Copyright (c) [copy-right holder]`.
 
 More detailed PR instructions can be found [here](https://github.com/pytorch/opacus/blob/main/CONTRIBUTING.md).
 
