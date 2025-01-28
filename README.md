@@ -23,6 +23,13 @@ This code release is aimed at two target audiences:
 2. Differential Privacy researchers will find this easy to experiment and tinker
    with, allowing them to focus on what matters.
 
+
+## Latest updates
+
+2024-12-18: We updated this [tutorial](https://github.com/pytorch/opacus/blob/main/tutorials/building_text_classifier.ipynb) to show how [LoRA](https://arxiv.org/abs/2106.09685) and [peft](https://huggingface.co/docs/peft/en/index) library could be used in conjuncture with DP-SGD.
+
+2024-08-20: We introduced [Fast Gradient Clipping](https://arxiv.org/abs/2009.03106) and Ghost Clipping(https://arxiv.org/abs/2110.05679) to Opacus, significantly reducing the memory requirements of DP-SGD. Please refer to our [blogpost](https://pytorch.org/blog/clipping-in-opacus/) for more information.
+
 ## Installation
 
 The latest release of Opacus can be installed via `pip`:
@@ -76,13 +83,6 @@ shows an end-to-end run using Opacus. The
 [examples](https://github.com/pytorch/opacus/tree/main/examples/) folder
 contains more such examples.
 
-### Migrating to 1.0
-
-Opacus 1.0 introduced many improvements to the library, but also some breaking
-changes. If you've been using Opacus 0.x and want to update to the latest
-release, please use this
-[Migration Guide](https://github.com/pytorch/opacus/blob/main/Migration_Guide.md)
-
 ## Learn more
 
 ### Interactive tutorials
@@ -90,9 +90,9 @@ release, please use this
 We've built a series of IPython-based tutorials as a gentle introduction to
 training models with privacy and using various Opacus features.
 
+- [Building text classifier with Differential Privacy on BERT](https://github.com/pytorch/opacus/blob/main/tutorials/building_text_classifier.ipynb)
 - [Building an Image Classifier with Differential Privacy](https://github.com/pytorch/opacus/blob/main/tutorials/building_image_classifier.ipynb)
 - [Training a differentially private LSTM model for name classification](https://github.com/pytorch/opacus/blob/main/tutorials/building_lstm_name_classifier.ipynb)
-- [Building text classifier with Differential Privacy on BERT](https://github.com/pytorch/opacus/blob/main/tutorials/building_text_classifier.ipynb)
 - [Opacus Guide: Introduction to advanced features](https://github.com/pytorch/opacus/blob/main/tutorials/intro_to_advanced_features.ipynb)
 - [Opacus Guide: Grad samplers](https://github.com/pytorch/opacus/blob/main/tutorials/guide_to_grad_sampler.ipynb)
 - [Opacus Guide: Module Validator and Fixer](https://github.com/pytorch/opacus/blob/main/tutorials/guide_to_module_validator.ipynb)
@@ -119,12 +119,12 @@ Consider citing the report if you use Opacus in your papers, as follows:
 If you want to learn more about DP-SGD and related topics, check out our series
 of blogposts and talks:
 
+- [Enabling Fast Gradient Clipping and Ghost Clipping in Opacus](https://pytorch.org/blog/clipping-in-opacus/)
 - [Differential Privacy Series Part 1 | DP-SGD Algorithm Explained](https://medium.com/pytorch/differential-privacy-series-part-1-dp-sgd-algorithm-explained-12512c3959a3)
 - [Differential Privacy Series Part 2 | Efficient Per-Sample Gradient Computation in Opacus](https://medium.com/pytorch/differential-privacy-series-part-2-efficient-per-sample-gradient-computation-in-opacus-5bf4031d9e22)
 - [PriCon 2020 Tutorial: Differentially Private Model Training with Opacus](https://www.youtube.com/watch?v=MWPwofiQMdE&list=PLUNOsx6Az_ZGKQd_p4StdZRFQkCBwnaY6&index=52)
 - [Differential Privacy on PyTorch | PyTorch Developer Day 2020](https://www.youtube.com/watch?v=l6fbl2CBnq0)
 - [Opacus v1.0 Highlights | PyTorch Developer Day 2021](https://www.youtube.com/watch?v=U1mszp8lzUI)
-- [Enabling Fast Gradient Clipping and Ghost Clipping in Opacus](https://pytorch.org/blog/clipping-in-opacus/)
 
 ## FAQ
 
