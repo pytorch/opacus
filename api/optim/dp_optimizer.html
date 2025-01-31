@@ -55,7 +55,7 @@ max grad norm limit (<code class="docutils literal notranslate"><span class="pre
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>optimizer</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch v2.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a></span>) – wrapped optimizer.</p></li>
+<li><p><strong>optimizer</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer" title="(in PyTorch v2.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a></span>) – wrapped optimizer.</p></li>
 <li><p><strong>noise_multiplier</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span>) – noise multiplier</p></li>
 <li><p><strong>max_grad_norm</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span>) – max grad norm used for gradient clipping</p></li>
 <li><p><strong>expected_batch_size</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]</span>) – batch_size used for averaging gradients. When using
@@ -111,7 +111,7 @@ Stores clipped and aggregated gradients into <cite>p.summed_grad``</cite></p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.grad_samples">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">grad_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.13)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.5)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.grad_samples" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">grad_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.13)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.6)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.grad_samples" title="Link to this definition">¶</a></dt>
 <dd><p>Returns a flat list of per sample gradient tensors (one per parameter)</p>
 </dd></dl>
 <dl class="py method">
@@ -127,6 +127,18 @@ from a call to <a class="reference internal" href="#opacus.optimizers.optimizer.
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The names of the parameters (if they exist under the “param_names” key of each param group
+in <a class="reference internal" href="#opacus.optimizers.optimizer.DPOptimizer.state_dict" title="opacus.optimizers.optimizer.DPOptimizer.state_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code></a>) will not affect the loading process.
+To use the parameters’ names for custom cases (such as when the parameters in the loaded state dict
+differ from those initialized in the optimizer),
+a custom <code class="docutils literal notranslate"><span class="pre">register_load_state_dict_pre_hook</span></code> should be implemented to adapt the loaded dict
+accordingly.
+If <code class="docutils literal notranslate"><span class="pre">param_names</span></code> exist in loaded state dict <code class="docutils literal notranslate"><span class="pre">param_groups</span></code> they will be saved and override
+the current names, if present, in the optimizer state. If they do not exist in loaded state dict,
+the optimizer <code class="docutils literal notranslate"><span class="pre">param_names</span></code> will remain unchanged.</p>
+</div>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.param_groups">
@@ -135,7 +147,7 @@ from a call to <a class="reference internal" href="#opacus.optimizers.optimizer.
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.params">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.13)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch v2.5)"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.params" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.13)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch v2.6)"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#opacus.optimizers.optimizer.DPOptimizer.params" title="Link to this definition">¶</a></dt>
 <dd><p>Returns a flat list of <code class="docutils literal notranslate"><span class="pre">nn.Parameter</span></code> managed by the optimizer</p>
 </dd></dl>
 <dl class="py method">
@@ -203,7 +215,9 @@ to a Dict with state corresponding to each parameter.</p>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">param_groups</span></code>: a List containing all parameter groups where each</dt><dd><p>parameter group is a Dict. Each parameter group contains metadata
 specific to the optimizer, such as learning rate and weight decay,
-as well as a List of parameter IDs of the parameters in the group.</p>
+as well as a List of parameter IDs of the parameters in the group.
+If a param group was initialized with <code class="docutils literal notranslate"><span class="pre">named_parameters()</span></code> the names
+content will also be saved in the state dict.</p>
 </dd>
 </dl>
 </li>
@@ -227,12 +241,14 @@ match state WITHOUT additional verification.</p>
             'weight_decay': 0,
             ...
             'params': [0]
+            'param_names' ['param0']  (optional)
         },
         {
             'lr': 0.001,
             'weight_decay': 0.5,
             ...
             'params': [1, 2, 3]
+            'param_names': ['param1', 'layer.weight', 'layer.bias'] (optional)
         }
     ]
 }
@@ -252,11 +268,6 @@ returns the loss. Optional for most optimizers.</p>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</span></p>
 </dd>
 </dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Unless otherwise specified, this function should not modify the
-<code class="docutils literal notranslate"><span class="pre">.grad</span></code> field of the parameters.</p>
-</div>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer.DPOptimizer.zero_grad">
