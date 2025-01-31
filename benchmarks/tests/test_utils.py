@@ -194,7 +194,7 @@ def pickle_data_and_config(
     ],
 )
 def test_save_results(
-    pickle_data_and_config: Tuple[Dict[str, Any], Dict[str, Any]]
+    pickle_data_and_config: Tuple[Dict[str, Any], Dict[str, Any]],
 ) -> None:
     """Tests saving benchmark results.
 

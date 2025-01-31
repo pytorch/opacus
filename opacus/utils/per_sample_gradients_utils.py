@@ -39,7 +39,7 @@ def clone_module(module: nn.Module) -> nn.Module:
     with io.BytesIO() as bytesio:
         torch.save(module, bytesio)
         bytesio.seek(0)
-        module_copy = torch.load(bytesio)
+        module_copy = torch.load(bytesio, weights_only=False)
     return module_copy
 
 
