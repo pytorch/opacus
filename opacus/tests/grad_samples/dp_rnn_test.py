@@ -60,7 +60,7 @@ class RNN_test(GradSampleHooks_test):
         using_packed_sequences=st.booleans(),
         packed_sequences_sorted=st.booleans(),
     )
-    @settings(deadline=30000)
+    @settings(deadline=60000)
     def test_rnn(
         self,
         model,

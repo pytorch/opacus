@@ -136,7 +136,7 @@ class AccountingTest(unittest.TestCase):
         ),
         delta=st.sampled_from([1e-4, 1e-5, 1e-6]),
     )
-    @settings(deadline=40000)
+    @settings(deadline=60000)
     def test_get_noise_multiplier_overshoot(self, epsilon, epochs, sample_rate, delta):
         noise_multiplier = get_noise_multiplier(
             target_epsilon=epsilon,

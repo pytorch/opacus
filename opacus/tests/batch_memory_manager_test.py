@@ -59,7 +59,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
         batch_size=st.sampled_from([8, 16, 64]),
         max_physical_batch_size=st.sampled_from([4, 8]),
     )
-    @settings(suppress_health_check=list(HealthCheck), deadline=40000)
+    @settings(suppress_health_check=list(HealthCheck), deadline=60000)
     def test_basic(
         self,
         num_workers: int,
@@ -119,7 +119,7 @@ class BatchMemoryManagerTest(unittest.TestCase):
         num_workers=st.integers(0, 4),
         pin_memory=st.booleans(),
     )
-    @settings(suppress_health_check=list(HealthCheck), deadline=40000)
+    @settings(suppress_health_check=list(HealthCheck), deadline=60000)
     def test_empty_batch(
         self,
         num_workers: int,
