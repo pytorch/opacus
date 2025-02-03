@@ -27,7 +27,7 @@ from .gsm_no_op import GradSampleModuleNoOp
 
 
 def register_grad_sampler(
-    target_class_or_classes: Union[Type[nn.Module], Sequence[Type[nn.Module]]]
+    target_class_or_classes: Union[Type[nn.Module], Sequence[Type[nn.Module]]],
 ):
     """
     Registers the decorated function as the ``grad_sampler`` of ``target_class_or_classes``, which is
@@ -56,7 +56,7 @@ def register_grad_sampler(
 
 
 def register_norm_sampler(
-    target_class_or_classes: Union[Type[nn.Module], Sequence[Type[nn.Module]]]
+    target_class_or_classes: Union[Type[nn.Module], Sequence[Type[nn.Module]]],
 ):
     """
     Registers the decorated function as the ``norm_sampler`` of ``target_class_or_classes``, which is
