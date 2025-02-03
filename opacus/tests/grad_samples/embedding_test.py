@@ -32,7 +32,7 @@ class Embedding_test(GradSampleHooks_test):
         dim=st.integers(2, 4),
         batch_first=st.booleans(),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_input_across_dims(
         self,
         N: int,

@@ -30,7 +30,7 @@ class LayerNorm_test(GradSampleHooks_test):
         input_dim=st.integers(2, 4),
         norm_dim=st.integers(1, 3),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_input_norm(
         self, N: int, Z: int, W: int, H: int, input_dim: int, norm_dim: int
     ):

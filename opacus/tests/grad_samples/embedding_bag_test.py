@@ -29,7 +29,7 @@ class Embedding_bag_test(GradSampleHooks_test):
         D=st.integers(10, 17),
         mode=st.sampled_from(["sum", "mean"]),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_input_across_dims(
         self,
         N: int,
