@@ -17,8 +17,8 @@ from typing import Dict, List
 
 import torch
 import torch.nn as nn
-
 from opacus.grad_sample import embedding_norm_sample
+
 from .utils import register_grad_sampler, register_norm_sampler
 
 
