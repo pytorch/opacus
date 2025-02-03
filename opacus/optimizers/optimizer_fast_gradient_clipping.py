@@ -63,6 +63,7 @@ class DPOptimizerFastGradientClipping(DPOptimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
+        **kwargs,
     ):
         """
 
@@ -91,6 +92,7 @@ class DPOptimizerFastGradientClipping(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
+            **kwargs,
         )
 
     @property

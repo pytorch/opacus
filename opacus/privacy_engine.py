@@ -136,6 +136,7 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=self.secure_mode,
+            **kwargs,
         )
 
     def _prepare_data_loader(

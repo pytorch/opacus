@@ -1,43 +1,22 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 from __future__ import annotations
 
 from functools import partial
 from typing import Callable, List, Optional
 
 import torch
+from opacus.optimizers.ddp_perlayeroptimizer import _clip_and_accumulate_parameter
+from opacus.optimizers.optimizer import _generate_noise
 from torch import nn
 from torch.optim import Optimizer
 
-from .ddpoptimizer import DistributedDPOptimizer
-from .optimizer import DPOptimizer, _generate_noise
-from .perlayeroptimizer import DPPerLayerOptimizer
+from .KFddpoptimizer import KF_DistributedDPOptimizer
+from .KFoptimizer import KF_DPOptimizer
+from .KFperlayeroptimizer import KF_DPPerLayerOptimizer
 
 
-def _clip_and_accumulate_parameter(p: nn.Parameter, max_grad_norm: float):
-    per_sample_norms = p.grad_sample.view(len(p.grad_sample), -1).norm(2, dim=-1)
-    per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0)
-
-    grad = torch.einsum("i,i...", per_sample_clip_factor, p.grad_sample)
-    if p.summed_grad is not None:
-        p.summed_grad += grad
-    else:
-        p.summed_grad = grad
-
-
-class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptimizer):
+class KF_SimpleDistributedPerLayerOptimizer(
+    KF_DPPerLayerOptimizer, KF_DistributedDPOptimizer
+):
     def __init__(
         self,
         optimizer: Optimizer,
@@ -48,7 +27,8 @@ class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptim
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
-        **kwargs,
+        kappa: float = 0.7,
+        gamma: float = 0.5,
     ):
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
@@ -61,10 +41,12 @@ class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptim
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
+            kappa=kappa,
+            gamma=gamma,
         )
 
 
-class DistributedPerLayerOptimizer(DPOptimizer):
+class KF_DistributedPerLayerOptimizer(KF_DPOptimizer):
     """
     :class:`~opacus.optimizers.optimizer.DPOptimizer` that implements
     per layer clipping strategy and is compatible with distributed data parallel
@@ -80,7 +62,8 @@ class DistributedPerLayerOptimizer(DPOptimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
-        **kwargs,
+        kappa: float = 0.7,
+        gamma: float = 0.5,
     ):
         self.rank = torch.distributed.get_rank()
         self.world_size = torch.distributed.get_world_size()
@@ -94,6 +77,8 @@ class DistributedPerLayerOptimizer(DPOptimizer):
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=secure_mode,
+            kappa=kappa,
+            gamma=gamma,
         )
         self._register_hooks()
 

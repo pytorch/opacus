@@ -13,8 +13,8 @@ Yes! Opacus is open-source for public use, and it is licensed under the [Apache 
 
 ## How can I report a bug or ask a question?
 
-You can report bugs by submitting GitHub issues. To submit a GitHub issue, please [click here](https://github.com/pytorch/opacus/issues).
-You can ask questions in our dedicated PyTorch [Discussion Forum](https://discuss.pytorch.org/c/opacus/29). We actively monitor questions in the PyTorch forums with the category `Opacus`.
+You can report bugs or ask questions by submitting GitHub issues. To submit a GitHub issue, please [click here](https://github.com/pytorch/opacus/issues).
+<!-- You can ask questions in our dedicated PyTorch [Discussion Forum](https://discuss.pytorch.org/c/opacus/29). We actively monitor questions in the PyTorch forums with the category `Opacus`. -->
 
 ## I'd like to contribute to Opacus. How can I do that?
 
@@ -76,7 +76,7 @@ If these interventions don’t help (or the model starts to converge but its pri
 
 ## How to deal with out-of-memory errors?
 
-Dealing with per-sample gradients will inevitably put more pressure on your memory: after all, if you want to train with batch size 64, you are looking to keep 64 copies of your parameter gradients. The first sanity check to do is to make sure that you don’t go out of memory with "standard" training (without DP). That should guarantee that you can train with batch size of 1 at least. Then, you can check your memory usage with e.g. `nvidia-smi` as usual, gradually increasing the batch size until you find your sweet spot. Note that this may mean that you still train with small batch size, which comes with its own training behavior (i.e. higher variance between batches). Training with larger batch sizes can be beneficial, and we built `virtual_step` to make this possible while still memory efficient (see *what is virtual batch size* in these FAQs).
+Dealing with per-sample gradients will inevitably put more pressure on your memory: after all, if you want to train with batch size 64, you are looking to keep 64 copies of your parameter gradients. The first sanity check to do is to make sure that you don’t go out of memory with "standard" training (without DP). That should guarantee that you can train with batch size of 1 at least. Then, you can check your memory usage with e.g. `nvidia-smi` as usual, gradually increasing the batch size until you find your sweet spot. Note that this may mean that you still train with small batch size, which comes with its own training behavior (i.e. higher variance between batches). Training with larger batch sizes can be beneficial. To this end, we built [Fast Gradient Clipping](https://pytorch.org/blog/clipping-in-opacus/) and `virtual_step` (see *what is virtual batch size* in these FAQs) to make DP-SGD memory efficient.
 
 ## What does epsilon=1.1 really mean? How about delta?
 
