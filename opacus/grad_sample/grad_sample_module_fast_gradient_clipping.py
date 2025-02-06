@@ -120,6 +120,7 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
         self.trainable_parameters = [p for _, p in trainable_parameters(self._module)]
         self.max_grad_norm = max_grad_norm
         self.use_ghost_clipping = use_ghost_clipping
+        self._per_sample_gradient_norms = None
 
     def get_clipping_coef(self) -> torch.Tensor:
         """Get per-example gradient scaling factor for clipping."""
@@ -131,6 +132,7 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
         norm_sample = torch.stack(
             [param._norm_sample for param in self.trainable_parameters], dim=0
         ).norm(2, dim=0)
+        self.per_sample_gradient_norms = norm_sample
         return norm_sample
 
     def capture_activations_hook(
@@ -231,3 +233,17 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
         if len(module.activations) == 0:
             if hasattr(module, "max_batch_len"):
                 del module.max_batch_len
+
+    @property
+    def per_sample_gradient_norms(self) -> torch.Tensor:
+        """Returns per sample gradient norms. Note that these are not privatized and should only be used for debugging purposes or in non-private settings"""
+        if self._per_sample_gradient_norms is not None:
+            return self._per_sample_gradient_norms
+        else:
+            raise AttributeError(
+                "per_sample_gradient_norms is not set. Please call forward and backward on the model before accessing this property."
+            )
+
+    @per_sample_gradient_norms.setter
+    def per_sample_gradient_norms(self, value):
+        self._per_sample_gradient_norms = value
