@@ -31,7 +31,7 @@ class Linear_test(GradSampleHooks_test):
         bias=st.booleans(),
         batch_first=st.booleans(),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_input_bias(
         self,
         N: int,

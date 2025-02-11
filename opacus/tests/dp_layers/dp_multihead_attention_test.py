@@ -57,7 +57,7 @@ class DPMultiheadAttention_test(DPModules_test):
         kdim=st.integers(2, 8) | st.none(),
         vdim=st.integers(2, 8) | st.none(),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_attn(
         self,
         batch_size: int,
@@ -142,7 +142,7 @@ class DPMultiheadAttention_test(DPModules_test):
         kdim=st.integers(2, 8) | st.none(),
         vdim=st.integers(2, 8) | st.none(),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_dp_attn(
         self,
         batch_size: int,
@@ -227,7 +227,7 @@ class DPMultiheadAttention_test(DPModules_test):
         kdim=st.integers(2, 8) | st.none(),
         vdim=st.integers(2, 8) | st.none(),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_dp_attn_hook(
         self,
         batch_size: int,

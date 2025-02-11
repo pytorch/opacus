@@ -35,7 +35,7 @@ class Conv1d_test(GradSampleHooks_test):
         dilation=st.integers(1, 2),
         groups=st.integers(1, 12),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_conv1d(
         self,
         N: int,

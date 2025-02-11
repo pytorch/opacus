@@ -81,7 +81,12 @@ class PRVAccountant(IAccountant):
             self.history.append((noise_multiplier, sample_rate, 1))
 
     def get_epsilon(
-        self, delta: float, *, eps_error: float = 0.01, delta_error: float = None
+        self,
+        delta: float,
+        *,
+        eps_error: float = 0.01,
+        delta_error: float = None,
+        **kwargs,
     ) -> float:
         """
         Return privacy budget (epsilon) expended so far.

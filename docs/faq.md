@@ -13,8 +13,8 @@ Yes! Opacus is open-source for public use, and it is licensed under the [Apache 
 
 ## How can I report a bug or ask a question?
 
-You can report bugs by submitting GitHub issues. To submit a GitHub issue, please [click here](https://github.com/pytorch/opacus/issues).
-You can ask questions in our dedicated PyTorch [Discussion Forum](https://discuss.pytorch.org/c/opacus/29). We actively monitor questions in the PyTorch forums with the category `Opacus`.
+You can report bugs or ask questions by submitting GitHub issues. To submit a GitHub issue, please [click here](https://github.com/pytorch/opacus/issues).
+<!-- You can ask questions in our dedicated PyTorch [Discussion Forum](https://discuss.pytorch.org/c/opacus/29). We actively monitor questions in the PyTorch forums with the category `Opacus`. -->
 
 ## I'd like to contribute to Opacus. How can I do that?
 
@@ -76,7 +76,7 @@ If these interventions don’t help (or the model starts to converge but its pri
 
 ## How to deal with out-of-memory errors?
 
-Dealing with per-sample gradients will inevitably put more pressure on your memory: after all, if you want to train with batch size 64, you are looking to keep 64 copies of your parameter gradients. The first sanity check to do is to make sure that you don’t go out of memory with "standard" training (without DP). That should guarantee that you can train with batch size of 1 at least. Then, you can check your memory usage with e.g. `nvidia-smi` as usual, gradually increasing the batch size until you find your sweet spot. Note that this may mean that you still train with small batch size, which comes with its own training behavior (i.e. higher variance between batches). Training with larger batch sizes can be beneficial, and we built `virtual_step` to make this possible while still memory efficient (see *what is virtual batch size* in these FAQs).
+Dealing with per-sample gradients will inevitably put more pressure on your memory: after all, if you want to train with batch size 64, you are looking to keep 64 copies of your parameter gradients. The first sanity check to do is to make sure that you don’t go out of memory with "standard" training (without DP). That should guarantee that you can train with batch size of 1 at least. Then, you can check your memory usage with e.g. `nvidia-smi` as usual, gradually increasing the batch size until you find your sweet spot. Note that this may mean that you still train with small batch size, which comes with its own training behavior (i.e. higher variance between batches). Training with larger batch sizes can be beneficial. To this end, we built [Fast Gradient Clipping](https://pytorch.org/blog/clipping-in-opacus/) and `virtual_step` (see *what is virtual batch size* in these FAQs) to make DP-SGD memory efficient.
 
 ## What does epsilon=1.1 really mean? How about delta?
 
@@ -108,7 +108,8 @@ Opacus computes and stores *per-sample* gradients under the hood. What this mean
 
 Although we report expended privacy budget using the (epsilon, delta) language, internally, we track it using Rényi Differential Privacy (RDP) [[Mironov 2017](https://arxiv.org/abs/1702.07476), [Mironov et al. 2019](https://arxiv.org/abs/1908.10530)]. In short, (alpha, epsilon)-RDP bounds the [Rényi divergence](https://en.wikipedia.org/wiki/R%C3%A9nyi_entropy#R%C3%A9nyi_divergence) of order alpha between the distribution of the mechanism’s outputs on any two datasets that differ in a single element. An (alpha, epsilon)-RDP statement is a relaxation of epsilon-DP but retains many of its important properties that make RDP particularly well-suited for privacy analysis of DP-SGD. The `alphas` parameter instructs the privacy engine what RDP orders to use for tracking privacy expenditure.
 
-When the privacy engine needs to bound the privacy loss of a training run using (epsilon, delta)-DP for a given delta, it searches for the optimal order from among `alphas`. There’s very little additional cost in expanding the list of orders. We suggest using a list `[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))`. You can pass your own alphas by passing `alphas=custom_alphas` when calling `privacy_engine.make_private_with_epsilon`.
+When the privacy engine needs to bound the privacy loss of a training run using (epsilon, delta)-DP for a given delta, it searches for the optimal order from among `alphas`. There’s very little additional cost in expanding the list of orders. We suggest using a list `[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))`.
+<!-- You can pass your own alphas by passing `alphas=custom_alphas` when calling `privacy_engine.make_private_with_epsilon`. -->
 
 A call to `privacy_engine.get_epsilon(delta=delta)` returns a pair: an epsilon such that the training run satisfies (epsilon, delta)-DP and an optimal order alpha. An easy diagnostic to determine whether the list of `alphas` ought to be expanded is whether the returned value alpha is one of the two boundary values of `alphas`.
 

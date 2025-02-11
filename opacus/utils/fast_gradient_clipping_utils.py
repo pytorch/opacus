@@ -68,7 +68,9 @@ class DPTensorFastGradientClipping:
         reduced_loss.backward(retain_graph=True)
         self.optimizer.zero_grad()
         coeff = self.module.get_clipping_coef()
-        second_loss_per_sample = coeff * self.loss_per_sample
+        second_loss_per_sample = (
+            coeff.to(self.loss_per_sample.device) * self.loss_per_sample
+        )
         second_loss = torch.sum(second_loss_per_sample)
         self.module.disable_hooks()
         second_loss.backward()
@@ -104,15 +106,27 @@ class DPLossFastGradientClipping:
         self.loss_reduction = loss_reduction
         self.criterion.reduction = "none"
 
-    def __call__(self, input, target) -> DPTensorFastGradientClipping:
+    def __call__(self, input, target, shape=None) -> DPTensorFastGradientClipping:
         """
         Redefining the forward function to compute per-sample loss and wrap it in DPTensorFastGradientClipping
         """
 
-        loss_per_sample = self.criterion(
-            input,
-            target,
-        )
+        loss_per_sample = self.criterion(input, target)
+
+        if shape is not None and loss_per_sample.shape[0] == shape[0] * shape[1]:
+            # Note that the privacy unit for generative NLP tasks is per sequence.
+            # The shape variable is the shape of the logits before flattening i.e., [batch_size, sequence_lenght, vocab_size].
+            # This variable is necessary for ghost clipping to work with generative NLP tasks.
+            loss_per_sample = loss_per_sample.view(shape[0], shape[1])  # BxT
+            if self.loss_reduction == "mean":
+                loss_per_sample = loss_per_sample.mean(dim=1)  # B
+            elif self.loss_reduction == "sum":
+                loss_per_sample = loss_per_sample.sum(dim=1)  # B
+            else:
+                raise ValueError(
+                    f"loss_reduction = {self.loss_reduction}. Only 'sum' and 'mean' losses are supported"
+                )
+
         return DPTensorFastGradientClipping(
             self.module, self.optimizer, loss_per_sample, self.loss_reduction
         )

@@ -205,6 +205,7 @@ class DPOptimizer(Optimizer):
         loss_reduction: str = "mean",
         generator=None,
         secure_mode: bool = False,
+        **kwargs,
     ):
         """
 
