@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+import unittest
 
 import hypothesis.strategies as st
 import torch
@@ -64,6 +65,21 @@ class SampleModule(nn.Module):
         x = self.fc4(x)
         x = self.fc5(x).flatten(start_dim=1)
         x = F.softmax(x)
+        return x
+
+
+class SampleEmbeddingModule(nn.Module):
+    def __init__(self, vocab_size, embedding_dim):
+        super(SampleEmbeddingModule, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+
+        # Manually set weights for the embedding layer for testing
+        self.embedding.weight = nn.Parameter(
+            torch.tensor([[0.1], [0.2], [0.3]], dtype=torch.float32)
+        )
+
+    def forward(self, x):
+        x = self.embedding(x)
         return x
 
 
@@ -257,6 +273,154 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
                 for (g_gc, g_normal) in zip(flat_grads_gc, flat_grads_normal)
             ]
         )
+        logging.info(f"Diff = {diff}")
+        msg = "Fail: Gradients from vanilla DP-SGD and from fast gradient clipping are different"
+        assert torch.allclose(flat_grads_normal, flat_grads_gc, atol=1e-3), msg
+
+
+class GradSampleModuleFastGradientClippingEmbeddingLayerTest(unittest.TestCase):
+
+    def test_norm_calculation(self):
+        """
+        Tests if norm calculation for embedding layer is the same between
+        standard (Opacus) and fast gradient clipping"
+        """
+        vocab_size = 3
+        embedding_dim = 1
+
+        criterion = torch.nn.CrossEntropyLoss(reduction="none")
+        noise_multiplier = 0.0
+        input_data = torch.tensor([[1, 1], [2, 0], [2, 0]], dtype=torch.long)
+        batch_size = 3
+        max_grad_norm = 1.0
+        sample_module = SampleEmbeddingModule(vocab_size, embedding_dim)
+        model_normal = GradSampleModule(clone_module(sample_module))
+        optimizer_normal = torch.optim.SGD(model_normal.parameters(), lr=1)
+        optimizer_normal = DPOptimizer(
+            optimizer_normal,
+            noise_multiplier=noise_multiplier,
+            max_grad_norm=max_grad_norm,
+            expected_batch_size=batch_size,
+        )
+
+        grad_sample_module = GradSampleModuleFastGradientClipping(
+            clone_module(sample_module),
+            max_grad_norm=max_grad_norm,
+            use_ghost_clipping=True,
+        )
+        optimizer_gc = torch.optim.SGD(grad_sample_module.parameters(), lr=1)
+        optimizer_gc = DPOptimizerFastGradientClipping(
+            optimizer_gc,
+            noise_multiplier=noise_multiplier,
+            max_grad_norm=max_grad_norm,
+            expected_batch_size=batch_size,
+        )
+
+        optimizer_normal.zero_grad()
+        output_normal = model_normal(input_data)
+        target_data = torch.rand_like(output_normal)
+
+        loss_normal = torch.mean(criterion(output_normal, target_data), dim=0)
+        loss_normal.backward()
+        all_norms_normal = torch.stack(
+            [
+                torch.stack([g.norm() for g in param.grad_sample], dim=0)
+                for param in model_normal.parameters()
+            ],
+            dim=0,
+        )
+        flat_norms_normal = torch.cat([p.flatten() for p in all_norms_normal])
+
+        grad_sample_module.enable_hooks()
+        output_gc = grad_sample_module(input_data)
+
+        first_loss_per_sample = criterion(output_gc, target_data)
+        first_loss = torch.mean(first_loss_per_sample)
+        first_loss.backward(retain_graph=True)
+
+        optimizer_gc.zero_grad()
+        coeff = grad_sample_module.get_clipping_coef()
+        second_loss_per_sample = coeff * first_loss_per_sample
+        second_loss = torch.sum(second_loss_per_sample)
+        grad_sample_module.disable_hooks()
+        second_loss.backward()
+
+        all_norms_gc = [param._norm_sample for param in grad_sample_module.parameters()]
+        flat_norms_gc = torch.cat([p.flatten() for p in all_norms_gc])
+
+        diff = flat_norms_normal - flat_norms_gc
+
+        logging.info(f"Diff = {diff}")
+        msg = "Fail: Gradient norms from vanilla DP-SGD and from fast gradient clipping are different"
+        assert torch.allclose(flat_norms_normal, flat_norms_gc, atol=1e-3), msg
+
+    def test_gradient_calculation(self):
+        """Tests if gradients for embedding layer are the same between standard
+        (Opacus) and fast gradient clipping."""
+
+        noise_multiplier = 0.0
+        vocab_size = 3
+        embedding_dim = 1
+        batch_size = 3
+        input_data = torch.tensor([[1, 1], [2, 0], [2, 0]], dtype=torch.long)
+        max_grad_norm = 1.0
+        criterion = torch.nn.CrossEntropyLoss()
+
+        sample_module = SampleEmbeddingModule(vocab_size, embedding_dim)
+        model_normal = GradSampleModule(clone_module(sample_module))
+        grad_sample_module = GradSampleModuleFastGradientClipping(
+            clone_module(sample_module),
+            max_grad_norm=max_grad_norm,
+            use_ghost_clipping=True,
+        )
+
+        optimizer_normal = torch.optim.SGD(model_normal.parameters(), lr=1)
+        optimizer_normal = DPOptimizer(
+            optimizer_normal,
+            noise_multiplier=noise_multiplier,
+            max_grad_norm=max_grad_norm,
+            expected_batch_size=batch_size,
+        )
+
+        optimizer_gc = torch.optim.SGD(grad_sample_module.parameters(), lr=1)
+        optimizer_gc = DPOptimizerFastGradientClipping(
+            optimizer_gc,
+            noise_multiplier=noise_multiplier,
+            max_grad_norm=max_grad_norm,
+            expected_batch_size=batch_size,
+        )
+
+        criterion_gc = DPLossFastGradientClipping(
+            grad_sample_module, optimizer_gc, criterion
+        )
+
+        optimizer_normal.zero_grad()
+        output_normal = model_normal(input_data)
+        target_data = torch.tensor([[[0.1], [0.1]], [[0.2], [0.3]], [[0.2], [0.3]]])
+        loss_normal = torch.mean(criterion(output_normal, target_data), dim=0)
+        loss_normal.backward()
+        optimizer_normal.step()
+
+        all_grads_normal = [param.summed_grad for param in model_normal.parameters()]
+        flat_grads_normal = torch.cat([p.flatten() for p in all_grads_normal])
+
+        optimizer_gc.zero_grad()
+        grad_sample_module.enable_hooks()
+        output_gc = grad_sample_module(input_data)
+
+        loss_gc = criterion_gc(output_gc, target_data)
+        loss_gc.backward()
+        optimizer_gc.step()
+
+        all_grads_gc = [param.grad for param in grad_sample_module.parameters()]
+        flat_grads_gc = torch.cat([p.flatten() for p in all_grads_gc])
+        diff = torch.tensor(
+            [
+                (g_gc - g_normal).norm()
+                for (g_gc, g_normal) in zip(flat_grads_gc, flat_grads_normal)
+            ]
+        )
+
         logging.info(f"Diff = {diff}")
         msg = "Fail: Gradients from vanilla DP-SGD and from fast gradient clipping are different"
         assert torch.allclose(flat_grads_normal, flat_grads_gc, atol=1e-3), msg
