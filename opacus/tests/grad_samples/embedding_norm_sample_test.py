@@ -15,6 +15,7 @@
 
 import unittest
 
+
 import torch
 import torch.nn as nn
 from opacus.grad_sample import embedding_norm_sample
@@ -36,10 +37,14 @@ class TestComputeEmbeddingNormSample(unittest.TestCase):
         # Example input ids (activations). Shape: [3, 2]
         input_ids = torch.tensor([[1, 1], [2, 0], [2, 0]], dtype=torch.long)
 
-        # Example backprops. Shape: [3, 2, 1]
-        backprops = torch.tensor(
-            [[[0.2], [0.2]], [[0.3], [0.1]], [[0.3], [0.1]]], dtype=torch.float32
+        # Example gradients with respect to the embedding output (backprops).
+        # Shape: [6, 1]
+        grad_values = torch.tensor(
+            [[0.2], [0.2], [0.3], [0.1], [0.3], [0.1]], dtype=torch.float32
         )
+
+        # Simulate backprop through embedding layer
+        backprops = grad_values
 
         # Wrap input_ids in a list as expected by the norm sample function
         activations = [input_ids]
@@ -66,7 +71,7 @@ class TestComputeEmbeddingNormSample(unittest.TestCase):
 
         # Manually set weights for the embedding layer for testing
         embedding_layer.weight = nn.Parameter(
-            torch.tensor([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]], dtype=torch.float32)
+            torch.tensor([[0.1], [0.2], [0.3]], dtype=torch.float32)
         )
 
         # Example input ids (activations). Shape: [6, 1, 1].
@@ -74,9 +79,9 @@ class TestComputeEmbeddingNormSample(unittest.TestCase):
             [[[1]], [[1]], [[2]], [[0]], [[2]], [[0]]], dtype=torch.long
         )
 
-        # Example backprops per input id, with embedding_dim=2.
+        # Example gradients per input id, with embedding_dim=2.
         # Shape: [6, 1, 1, 2]
-        backprops = torch.tensor(
+        grad_values = torch.tensor(
             [
                 [[[0.2, 0.2]]],
                 [[[0.2, 0.2]]],
@@ -87,6 +92,9 @@ class TestComputeEmbeddingNormSample(unittest.TestCase):
             ],
             dtype=torch.float32,
         )
+
+        # Simulate backprop through embedding layer
+        backprops = grad_values
 
         # Wrap input_ids in a list as expected by the grad norm function
         activations = [input_ids]
@@ -204,6 +212,7 @@ class TestComputeEmbeddingNormSample(unittest.TestCase):
         expected_norms = torch.tensor(
             [0.0150, 0.0071, 0.0005, 0.0081, 0.0039], dtype=torch.float32
         )
+        print("expected_norms: ", expected_norms)
         computed_norms = result[embedding_layer.weight]
 
         # Verify the computed norms match the expected norms

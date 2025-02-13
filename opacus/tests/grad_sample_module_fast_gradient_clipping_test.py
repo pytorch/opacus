@@ -351,6 +351,7 @@ class GradSampleModuleFastGradientClippingEmbeddingLayerTest(unittest.TestCase):
         diff = flat_norms_normal - flat_norms_gc
 
         logging.info(f"Diff = {diff}")
+
         msg = "Fail: Gradient norms from vanilla DP-SGD and from fast gradient clipping are different"
         assert torch.allclose(flat_norms_normal, flat_norms_gc, atol=1e-3), msg
 

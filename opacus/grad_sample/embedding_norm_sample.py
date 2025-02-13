@@ -46,6 +46,12 @@ def compute_embedding_norm_sample(
       activations:  [tensor([[1, 1],
           [2, 0],
           [2, 0]])]
+      backprops:  tensor([[0.2000],
+          [0.2000],
+          [0.3000],
+          [0.1000],
+          [0.3000],
+          [0.1000]])
       backprops:  tensor([[[0.2], [0.2]],
           [[0.3], [0.1]],
           [[0.3], [0.1]]])

@@ -15,6 +15,7 @@
 
 from typing import Dict, List
 
+from opacus.grad_sample import embedding_norm_sample
 import torch
 import torch.nn as nn
 from opacus.grad_sample import embedding_norm_sample
