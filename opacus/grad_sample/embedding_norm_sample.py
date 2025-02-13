@@ -52,6 +52,10 @@ def compute_embedding_norm_sample(
           [0.1000],
           [0.3000],
           [0.1000]])
+      backprops:  tensor([[[0.2], [0.2]],
+          [[0.3], [0.1]],
+          [[0.3], [0.1]]])
+      backprops.shape:  torch.Size([3, 2, 1])
 
     Intermediate values:
       input_ids:  tensor([[1, 1],

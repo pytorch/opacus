@@ -613,7 +613,7 @@ class PrivacyEngine:
         module_load_dict_kwargs: Optional[Dict[str, Any]] = None,
         torch_load_kwargs: Optional[Dict[str, Any]] = None,
     ) -> Dict:
-        checkpoint = torch.load(path, **(torch_load_kwargs or {}))
+        checkpoint = torch.load(path, **(torch_load_kwargs or {}), weights_only=False)
         module.load_state_dict(
             checkpoint["module_state_dict"], **(module_load_dict_kwargs or {})
         )

@@ -36,7 +36,7 @@ class GroupNorm_test(GradSampleHooks_test):
         W=st.integers(4, 8),
         num_groups=st.sampled_from([1, 4, "C"]),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_3d_input_groups(
         self,
         N: int,

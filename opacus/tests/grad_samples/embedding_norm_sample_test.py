@@ -15,9 +15,10 @@
 
 import unittest
 
-from opacus.grad_sample import embedding_norm_sample
+
 import torch
 import torch.nn as nn
+from opacus.grad_sample import embedding_norm_sample
 
 
 class TestComputeEmbeddingNormSample(unittest.TestCase):
