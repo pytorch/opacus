@@ -117,7 +117,7 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
             strict=strict,
             force_functorch=force_functorch,
         )
-        self.trainable_parameters = [p for _, p in trainable_parameters(self._module)]
+        self.all_parameters = [p for p in self.parameters()]
         self.max_grad_norm = max_grad_norm
         self.use_ghost_clipping = use_ghost_clipping
         self._per_sample_gradient_norms = None
@@ -130,7 +130,12 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
     def get_norm_sample(self) -> torch.Tensor:
         """Get per-example gradient norms."""
         norm_sample = torch.stack(
-            [param._norm_sample for param in self.trainable_parameters], dim=0
+            [
+                param._norm_sample
+                for param in self.all_parameters
+                if param.requires_grad
+            ],
+            dim=0,
         ).norm(2, dim=0)
         self.per_sample_gradient_norms = norm_sample
         return norm_sample
