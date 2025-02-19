@@ -3,7 +3,9 @@
 ## Introduction
 This part of the code introduces a new component to the optimizer named DiSK. The code uses a simplifed Kalman to improve the privatized gradient estimate. Speficially, the privatized minibatch gradient is replaced with:
 
-$$\mathbb{g_{t+\frac{1}{2}}} = \frac{1}{B}\sum_{\xi \in \mathcal{B}_t} \mathrm{clip}_C\left(\frac{1-\kappa}{\kappa\gamma}\nabla f(x_t + \gamma(x_t-x_{t-1});\xi) + \Big(1- \frac{1-\kappa}{\kappa\gamma}\Big)\nabla f(x_t;\xi)\right) + w_t$$
+
+$$\mathbb{g}_{t+\frac{1}{2}}(\xi) = \frac{1-\kappa}{\kappa\gamma}\nabla f(x_t + \gamma(x_t-x_{t-1});\xi) + \Big(1- \frac{1-\kappa}{\kappa\gamma}\Big)\nabla f(x_t;\xi)$$
+$$\mathbb{g_{t+\frac{1}{2}}} = \frac{1}{B}\sum_{\xi \in \mathcal{B}_t} \mathrm{clip}_C\left(\mathbb{g}_{t+\frac{1}{2}}(\xi)\right) + w_t$$
 $$g_{t}= (1-\kappa)g_{t-1} + \kappa g_{t+\frac{1}{2}}$$
 
 A detailed description of the algorithm can be found at [Here](https://arxiv.org/abs/2410.03883).
