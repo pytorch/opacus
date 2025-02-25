@@ -1374,15 +1374,15 @@ You should probably TRAIN this model on a down-stream task to be able to use it 
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda:0"</span><span class="p">)</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"CUDA_LAUNCH_BLOCKING"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"1"</span>
 
-<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">5e-4</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">model_with_lora</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">5e-4</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+<span class="n">model_with_lora</span> <span class="o">=</span> <span class="n">model_with_lora</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
 
 <span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">()</span>
 <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">)</span>
 
 <span class="n">model_lora</span><span class="p">,</span> <span class="n">optimizer_lora</span><span class="p">,</span> <span class="n">criterion_lora</span><span class="p">,</span> <span class="n">train_dataloader</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">privacy_engine</span><span class="o">.</span><span class="n">make_private_with_epsilon</span><span class="p">(</span>
-        <span class="n">module</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">module</span><span class="o">=</span><span class="n">model_with_lora</span><span class="p">,</span>
         <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
         <span class="n">data_loader</span><span class="o">=</span><span class="n">train_dataloader</span><span class="p">,</span>
         <span class="n">criterion</span><span class="o">=</span><span class="n">criterion</span><span class="p">,</span>
