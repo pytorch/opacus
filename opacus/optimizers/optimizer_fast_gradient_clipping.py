@@ -170,7 +170,6 @@ class DPOptimizerFastGradientClipping(DPOptimizer):
             self._is_last_step_skipped = True
             return False
 
-        self.add_noise()
         self.scale_grad()
 
         if self.step_hook:

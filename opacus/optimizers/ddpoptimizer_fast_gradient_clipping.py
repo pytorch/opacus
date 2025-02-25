@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Optional
 
 import torch
 from torch.optim import Optimizer
@@ -60,24 +60,3 @@ class DistributedDPOptimizerFastGradientClipping(DPOptimizerFastGradientClipping
         else:
             for p in self.params:
                 p.grad = p.summed_grad.view_as(p)
-
-    def reduce_gradients(self):
-        for p in self.params:
-            if not p.requires_grad:
-                continue
-            torch.distributed.all_reduce(p.grad, op=torch.distributed.ReduceOp.SUM)
-            if self.loss_reduction == "mean":
-                p.grad /= self.world_size
-
-    def step(
-        self, closure: Optional[Callable[[], float]] = None
-    ) -> Optional[torch.Tensor]:
-        if closure is not None:
-            with torch.enable_grad():
-                closure()
-
-        if self.pre_step():
-            self.reduce_gradients()
-            return self.original_optimizer.step()
-        else:
-            return None

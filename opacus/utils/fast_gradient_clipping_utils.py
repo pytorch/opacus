@@ -65,8 +65,10 @@ class DPTensorFastGradientClipping:
             raise ValueError(
                 f"loss_reduction = {self.loss_reduction}. Only 'sum' and 'mean' losses are supported"
             )
-        reduced_loss.backward(retain_graph=True)
+        with self.module._module.no_sync():
+            reduced_loss.backward(retain_graph=True)
         self.optimizer.zero_grad()
+        self.optimizer.add_noise()
         coeff = self.module.get_clipping_coef()
         second_loss_per_sample = (
             coeff.to(self.loss_per_sample.device) * self.loss_per_sample
