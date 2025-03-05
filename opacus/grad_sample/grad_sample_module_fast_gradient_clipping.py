@@ -26,7 +26,12 @@ from opacus.grad_sample.grad_sample_module import (
     create_or_accumulate_grad_sample,
     promote_current_grad_sample,
 )
-from opacus.utils.module_utils import requires_grad, trainable_parameters
+from opacus.layers.dp_rnn import DPGRU, DPLSTM, DPRNN
+from opacus.utils.module_utils import (
+    requires_grad,
+    trainable_modules,
+    trainable_parameters,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -109,6 +114,12 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
                 If ``strict`` is set to ``True`` and module ``m`` (or any of its
                 submodules) includes a buffer.
         """
+        if logger.isEnabledFor(logging.INFO):
+            self.log_module_gradient_sample_mode(
+                module=m,
+                force_functorch=force_functorch,
+                use_ghost_clipping=use_ghost_clipping,
+            )
 
         super().__init__(
             m,
@@ -233,6 +244,43 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
         if len(module.activations) == 0:
             if hasattr(module, "max_batch_len"):
                 del module.max_batch_len
+
+    def log_module_gradient_sample_mode(
+        self, module: nn.Module, *, force_functorch=False, use_ghost_clipping=True
+    ):
+        """
+        Add logs to track gradient sample mode for each part of the module, including 1) Ghost Clipping, 2) Fast Gradient Clipping (hook mode), and 3) Fast Gradient Clipping (functorch mode).
+
+        Args:
+            module: nn.Module to be checked
+            force_functorch: If set to ``True``, will use functorch to compute
+                all per sample gradients. Otherwise, functorch will be used only
+                for layers without registered grad sampler methods.
+            use_ghost_clipping: If set to ``True``, Ghost Clipping
+                will be used for clipping gradients of supported layers. If ``False``, Fast
+                Gradient Clipping will be used for all layers.
+        """
+        for m_name, m in trainable_modules(module):
+            if type(m) in [DPRNN, DPLSTM, DPGRU]:
+                logger.info(
+                    f"Module name: {m_name}, module type: {type(m)}. No hook or functorch is added."
+                )
+
+            elif use_ghost_clipping and type(m) in self.NORM_SAMPLERS:
+                logger.info(
+                    f"Module name: {m_name}, module type: {type(m)}, under Ghost Clipping."
+                )
+
+            else:
+                if not force_functorch and type(m) in self.GRAD_SAMPLERS:
+                    # When functorch is not enforced, use FGC (hook mode) if the layer has a registered grad_sampler (supported). Otherwise, use FGC (functorch mode).
+                    logger.info(
+                        f"Module name: {m_name}, module type: {type(m)}, under Fast Gradient Clipping (hook mode)."
+                    )
+                else:
+                    logger.info(
+                        f"Module name: {m_name}, module type: {type(m)}, under Fast Gradient Clipping (functorch mode)."
+                    )
 
     @property
     def per_sample_gradient_norms(self) -> torch.Tensor:
