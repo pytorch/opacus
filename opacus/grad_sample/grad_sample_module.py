@@ -199,7 +199,9 @@ class GradSampleModule(AbstractGradSampleModule):
             if type(module) in [DPRNN, DPLSTM, DPGRU]:
                 continue
 
-            if force_functorch or not type(module) in self.GRAD_SAMPLERS:
+            if force_functorch or not (
+                type(module) in self.GRAD_SAMPLERS or isinstance(module, nn.Linear)
+            ):
                 prepare_layer(module, batch_first=batch_first)
 
             self.autograd_grad_sample_hooks.append(

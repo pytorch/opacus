@@ -22,6 +22,9 @@ from .grad_sample_module import GradSampleModule, create_or_accumulate_grad_samp
 from .grad_sample_module_fast_gradient_clipping import (  # noqa
     GradSampleModuleFastGradientClipping,
 )
+from .grad_sample_module_ghost_clipping_fsdp import (  # noqa
+    GradSampleModuleGhostClippingFSDP,
+)
 from .group_norm import compute_group_norm_grad_sample  # noqa
 from .gsm_base import AbstractGradSampleModule
 from .gsm_exp_weights import GradSampleModuleExpandedWeights
@@ -40,6 +43,7 @@ from .utils import (
 __all__ = [
     "GradSampleModule",
     "GradSampleModuleFastGradientClipping",
+    "GradSampleModuleGhostClippingFSDP",
     "GradSampleModuleExpandedWeights",
     "GradSampleModuleNoOp",
     "AbstractGradSampleModule",
