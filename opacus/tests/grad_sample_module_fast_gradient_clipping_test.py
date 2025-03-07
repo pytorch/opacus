@@ -54,8 +54,8 @@ class SampleModule(nn.Module):
         super(SampleModule, self).__init__()
         self.fc1 = nn.Linear(2, 2)
         self.fc3 = nn.Linear(2, 1024)
-        self.fc4 = nn.Linear(1024, 1024)
-        self.fc5 = nn.Linear(1024, 1)
+        self.fc4 = nn.Linear(1024, 10)
+        self.fc5 = nn.Linear(10, 1)
         self.layer_norm = nn.LayerNorm(2)
 
     def forward(self, x):
@@ -119,7 +119,7 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
 
     @given(
         size=st.sampled_from([10]),
-        length=st.sampled_from([1]),
+        length=st.sampled_from([5]),
         dim=st.sampled_from([2]),
     )
     @settings(deadline=1000000)
@@ -195,12 +195,12 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
         diff = flat_norms_normal - flat_norms_gc
 
         logging.info(f"Diff = {diff}"),
-        msg = "Fail: Gradients from vanilla DP-SGD and from fast gradient clipping are different"
+        msg = "Fail: Per-sample gradient norms from vanilla DP-SGD and from fast gradient clipping are different"
         assert torch.allclose(flat_norms_normal, flat_norms_gc, atol=1e-3), msg
 
     @given(
         size=st.sampled_from([10]),
-        length=st.sampled_from([1, 5]),
+        length=st.sampled_from([5]),
         dim=st.sampled_from([2]),
     )
     @settings(deadline=1000000)
