@@ -2,6 +2,7 @@
 
 <hr/>
 
+[![PyPI Downloads](https://static.pepy.tech/badge/opacus)](https://pepy.tech/projects/opacus)
 [![GitHub Actions](https://github.com/pytorch/opacus/actions/workflows/ci_cpu.yml/badge.svg)](https://github.com/pytorch/opacus/actions/workflows/ci_cpu.yml)
 [![Coverage Status](https://coveralls.io/repos/github/pytorch/opacus/badge.svg?branch=main)](https://coveralls.io/github/pytorch/opacus?branch=main)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
