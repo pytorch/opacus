@@ -30,14 +30,7 @@ from .KFoptimizer import KF_DPOptimizer
 logger = logging.getLogger(__name__)
 logger.disabled = True
 
-<<<<<<< HEAD
-
-class KF_DPOptimizerFastGradientClipping(
-    DPOptimizerFastGradientClipping, KF_DPOptimizer
-):
-=======
 class KF_DPOptimizerFastGradientClipping(DPOptimizerFastGradientClipping, KF_DPOptimizer):
->>>>>>> f23c685cc2615a6aa74baa97f4f291f11cf40724
     def __init__(
         self,
         optimizer: Optimizer,
