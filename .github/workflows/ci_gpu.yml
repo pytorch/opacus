@@ -84,9 +84,9 @@ jobs:
           mkdir -p runs/cifar10/test-reports
           pip install tensorboard
           python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --batch-size 2000 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device cuda
-          python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
+          python -c "import torch; model = torch.load('model_best.pth.tar', weights_only=False); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
           python examples/cifar10.py --lr 0.1 --sigma 1.5 -c 10 --batch-size 2000 --epochs 10 --data-root runs/cifar10/data --log-dir runs/cifar10/logs --device cuda --grad_sample_mode no_op
-          python -c "import torch; model = torch.load('model_best.pth.tar'); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
+          python -c "import torch; model = torch.load('model_best.pth.tar', weights_only=False); exit(0) if (model['best_acc1']>0.4 and model['best_acc1']<0.49) else exit(1)"
 
       - name: Store CIFAR10 test results
         uses: actions/upload-artifact@v4

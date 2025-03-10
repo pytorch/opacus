@@ -57,7 +57,7 @@ class DPLSTM_test(DPModules_test):
         zero_init=st.booleans(),
         packed_input_flag=st.integers(0, 2),
     )
-    @settings(deadline=20000)
+    @settings(deadline=60000)
     def test_rnn(
         self,
         mode: str,

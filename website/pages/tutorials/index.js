@@ -20,7 +20,9 @@ const React = require('react');
 
 const CWD = process.cwd();
 
-const CompLibrary = require(`${CWD}/node_modules/docusaurus/lib/core/CompLibrary.js`);
+const CompLibrary = require(
+  `${CWD}/node_modules/docusaurus/lib/core/CompLibrary.js`,
+);
 const Container = CompLibrary.Container;
 const MarkdownBlock = CompLibrary.MarkdownBlock;
 
@@ -69,7 +71,8 @@ class TutorialHome extends React.Component {
                 <a
                   href="https://bit.ly/per-sample-gradient-computing-opacus-layers"
                   target="_blank">
-                  Efficient Per-Sample Gradient Computation for More Layers in Opacus
+                  Efficient Per-Sample Gradient Computation for More Layers in
+                  Opacus
                 </a>
               </li>
               <li>
@@ -81,13 +84,18 @@ class TutorialHome extends React.Component {
               </li>
             </ol>
             <h4>Videos*</h4>
-            <p>* Note that Opacus API has changed over time and some of the code samples and demos in the videos may not work. The concepts presented in the videos though are concrete and still valid.</p>
+            <p>
+              * Note that Opacus API has changed over time and some of the code
+              samples and demos in the videos may not work. The concepts
+              presented in the videos though are concrete and still valid.
+            </p>
             <ol>
               <li>
                 <a
                   href="https://www.youtube.com/watch?v=U1mszp8lzUI"
                   target="_blank">
-                  PyTorch Developer Day 2021: Fast and Flexible Differential Privacy Framework for PyTorch
+                  PyTorch Developer Day 2021: Fast and Flexible Differential
+                  Privacy Framework for PyTorch
                 </a>
               </li>
               <li>
@@ -112,13 +120,6 @@ class TutorialHome extends React.Component {
                   href="https://blog.openmined.org/differentially-private-deep-learning-using-opacus-in-20-lines-of-code/"
                   target="_blank">
                   Differentially Private Deep Learning In 20 Lines Of Code
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://blog.openmined.org/pysyft-opacus-federated-learning-with-differential-privacy/"
-                  target="_blank">
-                  PySyft + Opacus: Federated Learning With Differential Privacy
                 </a>
               </li>
             </ol>

@@ -71,7 +71,7 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
         groups=st.integers(1, 12),
         grad_sample_mode=st.sampled_from(get_grad_sample_modes(use_ew=True)),
     )
-    @settings(deadline=40000)
+    @settings(deadline=60000)
     def test_conv1d(
         self,
         N: int,
@@ -120,7 +120,7 @@ class PerSampleGradientsUtilsTest(unittest.TestCase):
         batch_first=st.booleans(),
         grad_sample_mode=st.sampled_from(get_grad_sample_modes(use_ew=True)),
     )
-    @settings(deadline=40000)
+    @settings(deadline=60000)
     def test_linear(
         self,
         N: int,

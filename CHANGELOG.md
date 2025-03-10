@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.5.3
+
+### New features
+
+#### Improvments to ghost clipping
+* The interface for ghost clipping is now similar to that of PyTorch and vanilla DP-SGD (#668)
+* Updated a tutorial on training language models with DP-SGD to include ghost clipping (#667) and LoRA (#698)
+* Added adaptive clipping support for ghost clipping (#711)
+* Add ghost clipping support for embedding layers (#694)
+* Support generative NLP tasks with ghost clipping (#722)
+* Add functionality to access per-sample gradients with ghost clipping (#724)
+
+#### Enabling more external contributions
+* Added a research folder for external contribution of promising new methods for PPML (#700)
+* DP-SGD optimizers with Kalman filters are now available in the research folder (#706)
+* Made it easier to define custom extensions of PrivacyEngine (#703, #704, #710)
+
+### Bug fixes
+* Fix the clipping operation for ghost clipping when using the PrivacyEngine interface (#664)
+* Fix issue with ghost clipping and BatchMemoryManager
+* Add `strict` and `force_functorch` parameters in initaliziation of `GradSampleModuleFastGradientClipping` (#675)
+* Fix failing tests (e.g., #726, #713, #727, #674)
+
+### Miscellaneous
+* Switch from  testing with CircleCI to GithubActions CI (#701)
+* Website and Github improvements (#723, #721, #677, #712)
+* Added multi-gpu test for ghost clipping (#665)
+
 ## v1.5.2
 
 ### New features

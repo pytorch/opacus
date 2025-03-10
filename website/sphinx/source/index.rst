@@ -13,6 +13,7 @@ Opacus API Reference
 
    privacy_engine
    grad_sample_module
+   grad_sample_module_fast_gradient_clipping
    optim/optimizers
    data_loader
    accounting/accounting

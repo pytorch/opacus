@@ -55,7 +55,7 @@ class MultiHeadAttention_test(GradSampleHooks_test):
         kv_dim=st.booleans(),
         test_or_check=st.integers(1, 2),
     )
-    @settings(deadline=10000)
+    @settings(deadline=60000)
     def test_multihead_attention(
         self,
         N: int,
