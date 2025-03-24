@@ -38,6 +38,11 @@ def _clip_and_accumulate_parameter(p: nn.Parameter, max_grad_norm: float):
 
 
 class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptimizer):
+    """
+    :class:`~opacus.optimizers.optimizer.DPOptimizer` that implements
+    per layer clipping strategy and is compatible with distributed data parallel. Used with "ew" grad sample mode.
+    """
+
     def __init__(
         self,
         optimizer: Optimizer,
@@ -67,7 +72,7 @@ class SimpleDistributedPerLayerOptimizer(DPPerLayerOptimizer, DistributedDPOptim
 class DistributedPerLayerOptimizer(DPOptimizer):
     """
     :class:`~opacus.optimizers.optimizer.DPOptimizer` that implements
-    per layer clipping strategy and is compatible with distributed data parallel
+    per layer clipping strategy and is compatible with distributed data parallel. Used with "hooks" grad sample mode.
     """
 
     def __init__(

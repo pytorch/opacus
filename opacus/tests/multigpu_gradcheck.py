@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import itertools
 import os
 import sys
 import unittest
@@ -26,10 +25,7 @@ import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample import GradSampleModuleFastGradientClipping
-from opacus.optimizers.ddp_perlayeroptimizer import (
-    DistributedPerLayerOptimizer,
-    SimpleDistributedPerLayerOptimizer,
-)
+from opacus.optimizers.ddp_perlayeroptimizer import SimpleDistributedPerLayerOptimizer
 from opacus.optimizers.ddpoptimizer import DistributedDPOptimizer
 from opacus.optimizers.ddpoptimizer_fast_gradient_clipping import (
     DistributedDPOptimizerFastGradientClipping,
@@ -134,6 +130,7 @@ def demo_basic(rank, weight, world_size, dp, clipping, grad_sample_mode):
 
     if dp and clipping == "flat":
         ddp_model = DPDDP(model)
+    # when no DP or when clipping is per layer, we use the default DDP
     else:
         ddp_model = DDP(model, device_ids=[rank])
 
@@ -165,10 +162,7 @@ def demo_basic(rank, weight, world_size, dp, clipping, grad_sample_mode):
             grad_sample_mode=grad_sample_mode,
         )
         if clipping == "per_layer":
-            assert isinstance(
-                optimizer,
-                (DistributedPerLayerOptimizer, SimpleDistributedPerLayerOptimizer),
-            )
+            assert isinstance(optimizer, SimpleDistributedPerLayerOptimizer)
         else:
             assert isinstance(optimizer, DistributedDPOptimizer)
 
@@ -201,10 +195,12 @@ class GradientComputationTest(unittest.TestCase):
             n_gpus >= 2, f"Need at least 2 gpus but was provided only {n_gpus}."
         )
 
-        clipping_grad_sample_pairs = list(
-            itertools.product(["flat", "per_layer"], ["hooks", "ew"])
-        )
-        clipping_grad_sample_pairs.append(("ghost", "ghost"))
+        clipping_grad_sample_pairs = [
+            ("flat", "hooks"),
+            ("flat", "ew"),
+            ("per_layer", "ew"),
+            ("ghost", "ghost"),
+        ]
 
         for clipping, grad_sample_mode in clipping_grad_sample_pairs:
 
