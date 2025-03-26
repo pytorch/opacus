@@ -305,24 +305,24 @@
     <span class="n">model</span> <span class="o">=</span> <span class="n">SampleConvNet</span><span class="p">()</span>
     <span class="c1">#model = DDP(model) -- non-private</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">DPDDP</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-    
+
     <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">LR</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">data_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
         <span class="n">mnist_train_ds</span><span class="p">,</span>
         <span class="c1">#batch_size=BATCH_SIZE // N_GPUS, -- non-private</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
-        <span class="c1">#sampler=DistributedSampler(mnist_train_ds) -- non-private   </span>
+        <span class="c1">#sampler=DistributedSampler(mnist_train_ds) -- non-private</span>
     <span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"(rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">) Initialized model (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">), "</span>
             <span class="sa">f</span><span class="s2">"optimizer (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">), "</span>
             <span class="sa">f</span><span class="s2">"data loader (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, len=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
-    
+
     <span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">PrivacyEngine</span><span class="p">()</span>
-    
+
     <span class="c1"># PrivacyEngine looks at the model's class and enables</span>
     <span class="c1"># distributed processing if it's wrapped with DPDDP</span>
     <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">make_private</span><span class="p">(</span>
@@ -332,16 +332,16 @@
         <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span>
         <span class="n">max_grad_norm</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span>
     <span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"(rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">) After privatization: model (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">), "</span>
             <span class="sa">f</span><span class="s2">"optimizer (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">), "</span>
             <span class="sa">f</span><span class="s2">"data loader (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, len=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
-    
+
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"(rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">) Average batch size per GPU: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">optimizer</span><span class="o">.</span><span class="n">expected_batch_size</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    
+
     <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">privacy_engine</span>
 </pre></div>
 </div>
@@ -380,7 +380,7 @@
         <span class="n">mnist_test_ds</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
     <span class="p">)</span>
-    
+
     <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
     <span class="n">correct</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
@@ -391,42 +391,42 @@
                 <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
             <span class="n">correct</span> <span class="o">+=</span> <span class="n">pred</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">pred</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-    
+
     <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">correct</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">mnist_test_ds</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">launch</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">,</span> <span class="n">epochs</span><span class="p">):</span>
     <span class="n">setup</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">)</span>
     <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
-        
-    <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">init_training</span><span class="p">(</span><span class="n">rank</span><span class="p">)</span>    
+
+    <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">privacy_engine</span> <span class="o">=</span> <span class="n">init_training</span><span class="p">(</span><span class="n">rank</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">rank</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-    
-    
+
+
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
         <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">correct</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
-        
+
         <span class="k">for</span> <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
             <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">rank</span><span class="p">),</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">rank</span><span class="p">)</span>
             <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
             <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            
+
             <span class="n">pred</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">correct</span> <span class="o">+=</span> <span class="n">pred</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">pred</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
             <span class="n">total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            
+
             <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
             <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
             <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
             <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-        
+
         <span class="n">test_accuracy</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">rank</span><span class="p">)</span>
         <span class="n">train_accuracy</span> <span class="o">=</span> <span class="n">correct</span> <span class="o">/</span> <span class="n">total</span>
         <span class="n">epsilon</span> <span class="o">=</span> <span class="n">privacy_engine</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
-        
+
         <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Epoch: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2"> </span><span class="se">\t</span><span class="s2">"</span>
@@ -558,6 +558,7 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 <li>Distributed, private (with Poisson sampling)</li>
 </ul>
 <p>All three are initialized so that the logical batch size is 64.</p>
+<p>Note that the <code>make_private</code> method uses <code>DPDataLoader</code> only when <code>poisson_sampling</code> is set to <code>True</code> (which is the default value). If <code>poisson_sampling</code> is set to <code>False</code> when using <code>DPDPP</code> then we need to explicity provide the <code>DistributedSampler</code> and <code>batch_size</code> as <code>BATCH_SIZE // world_size</code> to the <code>DataLoader</code> similar to the non-private case.</p>
 </div>
 </div>
 </div>
@@ -580,20 +581,20 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 
 <span class="k">def</span> <span class="nf">init_data</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">):</span>
     <span class="n">setup</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">)</span>
-    
+
     <span class="n">non_distributed_dl</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
         <span class="n">mnist_train_ds</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span>
     <span class="p">)</span>
-    
+
     <span class="n">distributed_non_private_dl</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
         <span class="n">mnist_train_ds</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span> <span class="o">//</span> <span class="n">world_size</span><span class="p">,</span>
         <span class="n">sampler</span><span class="o">=</span><span class="n">DistributedSampler</span><span class="p">(</span><span class="n">mnist_train_ds</span><span class="p">),</span>
     <span class="p">)</span>
-    
+
     <span class="n">private_dl</span> <span class="o">=</span> <span class="n">DPDataLoader</span><span class="o">.</span><span class="n">from_data_loader</span><span class="p">(</span><span class="n">non_distributed_dl</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"(rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">) Non-distributed non-private data loader. "</span>
@@ -710,7 +711,7 @@ Epoch: 9 	Train Loss: 0.4129 | Train Accuracy: 0.92 | Test Accuracy: 0.93 |(ε =
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>One significant difference between <code>DDP</code> and <code>DPDDP</code> is how it approaches synchronisation.</p>
-<p>Normally with Distributed Data Parallel forward and backward passes are synchronisation points, and <code>DDP</code> wrapper ensures that the gradients are synchronised across workers at the end of the backward pass.</p>
+<p>Normally with Distributed Data Parallel forward and backward passes are synchronisation points, and <code>DDP</code> wrapper ensures that the gradients are synchronised across workers as soon as they are avaliable for each layer during the backward pass.</p>
 <p>Opacus, however, need a later synchronisation point. Before we can use the gradients, we need to clip them and add noise. This is done in the optimizer, which moves the synchronisation point from the backward pass to the optimization step.
 Additionally, to simplify the calculations, we only add noise on worker with <code>rank=0</code>, and use the noise scale calibrated to the combined batch across all workers.</p>
 </div>
@@ -745,17 +746,17 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 <span class="k">def</span> <span class="nf">init_training</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">):</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">SampleConvNet</span><span class="p">()</span>
     <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">LR</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    
+
     <span class="n">model</span> <span class="o">=</span> <span class="n">GradSampleModule</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">DPDDP</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-    
+
     <span class="n">optimizer</span> <span class="o">=</span> <span class="n">DistributedDPOptimizer</span><span class="p">(</span>
         <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
         <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span>
         <span class="n">max_grad_norm</span><span class="o">=</span><span class="mf">100.</span><span class="p">,</span>
         <span class="n">expected_batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="o">//</span><span class="n">world_size</span><span class="p">,</span>
     <span class="p">)</span>
-    
+
     <span class="n">data_loader</span> <span class="o">=</span> <span class="n">DPDataLoader</span><span class="o">.</span><span class="n">from_data_loader</span><span class="p">(</span>
         <span class="n">data_loader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span>
             <span class="n">mnist_train_ds</span><span class="p">,</span>
@@ -763,8 +764,8 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
         <span class="p">),</span>
         <span class="n">distributed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-    
-    
+
+
     <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span>
 </pre></div>
 </div>
@@ -809,11 +810,11 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
 <span class="k">def</span> <span class="nf">launch</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">):</span>
     <span class="n">setup</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">)</span>
     <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
-        
-    <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span> <span class="o">=</span> <span class="n">init_training</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">)</span>    
+
+    <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">data_loader</span> <span class="o">=</span> <span class="n">init_training</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">rank</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-    
+
     <span class="k">for</span> <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
@@ -824,7 +825,7 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
         <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
         <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-        
+
         <span class="n">flat_grad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()])</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="o">/</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">expected_batch_size</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"(rank=</span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">) Gradient norm before optimizer.step(): </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">flat_grad</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span>
@@ -834,7 +835,7 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
         <span class="p">)</span>
 
         <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-        
+
         <span class="n">flat_grad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()])</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"(rank=</span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">) Gradient norm after optimizer.step(): </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">flat_grad</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span>
@@ -842,7 +843,7 @@ Additionally, to simplify the calculations, we only add noise on worker with <co
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"(rank=</span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">) Gradient sample after optimizer.step(): </span><span class="si">{</span><span class="n">flat_grad</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-                
+
         <span class="k">break</span>
 
     <span class="n">cleanup</span><span class="p">()</span>
