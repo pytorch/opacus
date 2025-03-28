@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: '3.9'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -35,7 +35,7 @@ jobs:
         run: isort -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
 
   ########### UNIT TESTS ##############
-  unittest_py38_torch_release:
+  unittest_py310_torch_release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,7 +43,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: '3.10'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -51,7 +51,7 @@ jobs:
           ./scripts/install_via_pip.sh
       - name: Run unit tests
         run: |
-          mkdir unittest-py38-release-reports
+          mkdir unittest-py310-release-reports
           coverage run -m pytest --doctest-modules -p conftest opacus
           coverage report -i -m
           # Format into xml to be used for coveralls
@@ -59,8 +59,8 @@ jobs:
       - name: Store test results
         uses: actions/upload-artifact@v4
         with:
-          name: unittest-py38-release-reports
-          path: unittest-py38-release-reports
+          name: unittest-py310-release-reports
+          path: unittest-py310-release-reports
       - name: Send coverage to Coveralls (parallel)
         uses: coverallsapp/github-action@v2
         with:
@@ -179,7 +179,7 @@ jobs:
 
   ######## FINISH COVERALLS ##########
   finish_coveralls_parallel:
-    needs: [unittest_py38_torch_release, unittest_py39_torch_release, integrationtest_py39_torch_release_cpu]
+    needs: [unittest_py310_torch_release, unittest_py39_torch_release, integrationtest_py39_torch_release_cpu]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
