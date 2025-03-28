@@ -56,7 +56,9 @@ def get_optimizer_class(clipping: str, distributed: bool, grad_sample_mode: str 
         return DPPerLayerOptimizer
     elif clipping == "per_layer" and distributed is True:
         if grad_sample_mode == "hooks":
-            return DistributedPerLayerOptimizer
+            raise ValueError(
+                "Distributed per-layer clipping with hooks is not supported. As an alternative, use 'ew' as grad sample mode."
+            )
         elif grad_sample_mode == "ew":
             return SimpleDistributedPerLayerOptimizer
         else:
