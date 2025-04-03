@@ -13,10 +13,7 @@
 # limitations under the License.
 
 from .adaclipoptimizer import AdaClipDPOptimizer
-from .ddp_perlayeroptimizer import (
-    DistributedPerLayerOptimizer,
-    SimpleDistributedPerLayerOptimizer,
-)
+from .ddp_perlayeroptimizer import SimpleDistributedPerLayerOptimizer
 from .ddpoptimizer import DistributedDPOptimizer
 from .ddpoptimizer_fast_gradient_clipping import (
     DistributedDPOptimizerFastGradientClipping,
@@ -28,7 +25,6 @@ from .perlayeroptimizer import DPPerLayerOptimizer
 
 __all__ = [
     "AdaClipDPOptimizer",
-    "DistributedPerLayerOptimizer",
     "DistributedDPOptimizer",
     "DPOptimizer",
     "DPOptimizerFastGradientClipping",
@@ -55,9 +51,7 @@ def get_optimizer_class(clipping: str, distributed: bool, grad_sample_mode: str 
     elif clipping == "per_layer" and distributed is False:
         return DPPerLayerOptimizer
     elif clipping == "per_layer" and distributed is True:
-        if grad_sample_mode == "hooks":
-            return DistributedPerLayerOptimizer
-        elif grad_sample_mode == "ew":
+        if grad_sample_mode == "hooks" or grad_sample_mode == "ew":
             return SimpleDistributedPerLayerOptimizer
         else:
             raise ValueError(f"Unexpected grad_sample_mode: {grad_sample_mode}")

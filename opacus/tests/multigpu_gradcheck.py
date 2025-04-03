@@ -26,10 +26,7 @@ import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample import GradSampleModuleFastGradientClipping
-from opacus.optimizers.ddp_perlayeroptimizer import (
-    DistributedPerLayerOptimizer,
-    SimpleDistributedPerLayerOptimizer,
-)
+from opacus.optimizers.ddp_perlayeroptimizer import SimpleDistributedPerLayerOptimizer
 from opacus.optimizers.ddpoptimizer import DistributedDPOptimizer
 from opacus.optimizers.ddpoptimizer_fast_gradient_clipping import (
     DistributedDPOptimizerFastGradientClipping,
@@ -165,10 +162,7 @@ def demo_basic(rank, weight, world_size, dp, clipping, grad_sample_mode):
             grad_sample_mode=grad_sample_mode,
         )
         if clipping == "per_layer":
-            assert isinstance(
-                optimizer,
-                (DistributedPerLayerOptimizer, SimpleDistributedPerLayerOptimizer),
-            )
+            assert isinstance(optimizer, SimpleDistributedPerLayerOptimizer)
         else:
             assert isinstance(optimizer, DistributedDPOptimizer)
 
