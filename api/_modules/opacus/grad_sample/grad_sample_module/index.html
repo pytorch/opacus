@@ -244,7 +244,7 @@
             <span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">module</span><span class="o">.</span><span class="n">register_backward_hook</span><span class="p">(</span>
+                <span class="n">module</span><span class="o">.</span><span class="n">register_full_backward_hook</span><span class="p">(</span>
                     <span class="n">partial</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">capture_backprops_hook</span><span class="p">,</span>
                         <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
