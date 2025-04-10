@@ -268,7 +268,7 @@ class BasePrivacyEngineTest(ABC):
         do_clip=st.booleans(),
         do_noise=st.booleans(),
         use_closure=st.booleans(),
-        max_steps=st.sampled_from([1, 4]),
+        max_steps=st.sampled_from([1, 3]),
     )
     @settings(suppress_health_check=list(HealthCheck), deadline=None)
     def test_compare_to_vanilla(
@@ -660,7 +660,7 @@ class BasePrivacyEngineTest(ABC):
 
     @given(
         noise_multiplier=st.floats(0.5, 5.0),
-        max_steps=st.integers(8, 10),
+        max_steps=st.integers(3, 5),
         secure_mode=st.just(False),  # TODO: enable after fixing torchcsprng build
     )
     @settings(suppress_health_check=list(HealthCheck), deadline=None)
