@@ -83,7 +83,6 @@ def compute_linear_norm_sample(
 
             ret[layer.weight] = torch.sqrt(ga)
         if layer.bias is not None and layer.bias.requires_grad:
-            ggT = torch.einsum("nik,njk->nij", backprops, backprops)
-            gg = torch.einsum("n...i,n...i->n", ggT, ggT).clamp(min=0)
-            ret[layer.bias] = torch.sqrt(gg)
+            ggT = torch.einsum("nik,njk->nij", backprops, backprops)  # batchwise g g^T
+            ret[layer.bias] = torch.sqrt(torch.einsum("n...i->n", ggT).clamp(min=0))
     return ret
