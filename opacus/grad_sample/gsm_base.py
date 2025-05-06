@@ -24,7 +24,12 @@ from torch.utils.hooks import RemovableHandle
 
 logger = logging.getLogger(__name__)
 
-OPACUS_PARAM_MONKEYPATCH_ATTRS = ["_forward_counter", "_current_grad_sample"]
+OPACUS_PARAM_MONKEYPATCH_ATTRS = [
+    "grad_sample",
+    "_forward_counter",
+    "_current_grad_sample",
+    "_norm_sample",
+]
 
 
 class AbstractGradSampleModule(nn.Module, ABC):
@@ -131,17 +136,14 @@ class AbstractGradSampleModule(nn.Module, ABC):
         return self._module
 
     def _close(self):
-        self.del_grad_sample()
-        self._clean_up_attributes()
-
-    def __repr__(self):
-        return f"{type(self).__name__}({self._module.__repr__()})"
-
-    def _clean_up_attributes(self):
+        # Clean up attributes
         for attr in OPACUS_PARAM_MONKEYPATCH_ATTRS:
             for p in self.parameters():
                 if hasattr(p, attr):
                     delattr(p, attr)
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self._module.__repr__()})"
 
     def forbid_grad_accumulation(self):
         """
