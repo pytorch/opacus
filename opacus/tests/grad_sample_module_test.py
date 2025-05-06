@@ -130,7 +130,7 @@ class GradSampleModuleTest(unittest.TestCase):
             self.original_model.state_dict(),
             strict=True,
         )
-        new_grad_sample_module = GradSampleModule(
+        new_grad_sample_module = self.CLS(
             copy_of_original_model, batch_first=True, loss_reduction="mean"
         )
 
