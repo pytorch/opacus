@@ -108,9 +108,9 @@ returns the loss. Optional for most optimizers.</p>
 <dt class="sig sig-object py" id="opacus.optimizers.optimizer_fast_gradient_clipping.DPOptimizerFastGradientClipping.zero_grad">
 <span class="sig-name descname"><span class="pre">zero_grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set_to_none</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/opacus/optimizers/optimizer_fast_gradient_clipping.html#DPOptimizerFastGradientClipping.zero_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opacus.optimizers.optimizer_fast_gradient_clipping.DPOptimizerFastGradientClipping.zero_grad" title="Link to this definition">¶</a></dt>
 <dd><p>Clear gradients.</p>
-<p>Clears <code class="docutils literal notranslate"><span class="pre">p.grad</span></code>, <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code> and <code class="docutils literal notranslate"><span class="pre">p.summed_grad</span></code> for all of it’s parameters</p>
+<p>Clears <code class="docutils literal notranslate"><span class="pre">p.grad</span></code> and <code class="docutils literal notranslate"><span class="pre">p.summed_grad</span></code> for all of it’s parameters</p>
 <p class="rubric">Notes</p>
-<p><code class="docutils literal notranslate"><span class="pre">set_to_none</span></code> argument only affects <code class="docutils literal notranslate"><span class="pre">p.grad</span></code>. <code class="docutils literal notranslate"><span class="pre">p.grad_sample</span></code> and
+<p><code class="docutils literal notranslate"><span class="pre">set_to_none</span></code> argument only affects <code class="docutils literal notranslate"><span class="pre">p.grad</span></code> and
 <code class="docutils literal notranslate"><span class="pre">p.summed_grad</span></code> is never zeroed out and always set to None.
 Normal grads can do this, because their shape is always the same.
 Grad samples do not behave like this, as we accumulate gradients from different

@@ -157,10 +157,10 @@
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Clear gradients.</span>
 
-<span class="sd">        Clears ``p.grad``, ``p.grad_sample`` and ``p.summed_grad`` for all of it's parameters</span>
+<span class="sd">        Clears ``p.grad`` and ``p.summed_grad`` for all of it's parameters</span>
 
 <span class="sd">        Notes:</span>
-<span class="sd">            ``set_to_none`` argument only affects ``p.grad``. ``p.grad_sample`` and</span>
+<span class="sd">            ``set_to_none`` argument only affects ``p.grad`` and</span>
 <span class="sd">            ``p.summed_grad`` is never zeroed out and always set to None.</span>
 <span class="sd">            Normal grads can do this, because their shape is always the same.</span>
 <span class="sd">            Grad samples do not behave like this, as we accumulate gradients from different</span>
@@ -174,13 +174,11 @@
         <span class="k">if</span> <span class="n">set_to_none</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
                 <span class="s2">"Despite set_to_none is set to False, "</span>
-                <span class="s2">"opacus will set p.grad_sample and p.summed_grad to None due to "</span>
+                <span class="s2">"opacus will set p.summed_grad to None due to "</span>
                 <span class="s2">"non-trivial gradient accumulation behaviour"</span>
             <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">grad_sample</span> <span class="o">=</span> <span class="kc">None</span>
-
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_last_step_skipped</span><span class="p">:</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">summed_grad</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">original_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">(</span><span class="n">set_to_none</span><span class="p">)</span></div>
