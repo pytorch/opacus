@@ -349,7 +349,10 @@
         <span class="n">noise_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">grad_sample_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"hooks"</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">Tuple</span><span class="p">[</span><span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">],</span>
+        <span class="n">Tuple</span><span class="p">[</span><span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">DPLossFastGradientClipping</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">],</span>
+    <span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Add privacy-related responsibilities to the main PyTorch training objects:</span>
 <span class="sd">        model, optimizer, and the data loader.</span>
@@ -359,6 +362,7 @@
 
 <span class="sd">        - Model is wrapped to also compute per sample gradients.</span>
 <span class="sd">        - Optimizer is now responsible for gradient clipping and adding noise to the gradients.</span>
+<span class="sd">        - Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.</span>
 <span class="sd">        - DataLoader is updated to perform Poisson sampling.</span>
 
 <span class="sd">        Notes:</span>
@@ -399,12 +403,14 @@
 <span class="sd">                details</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tuple of (model, optimizer, data_loader).</span>
+<span class="sd">            Tuple of  (model, optimizer, data_loader) or (model, optimizer, criterion, data_loader).</span>
 
 <span class="sd">            Model is a wrapper around the original model that also computes per sample</span>
 <span class="sd">                gradients</span>
 <span class="sd">            Optimizer is a wrapper around the original optimizer that also does</span>
 <span class="sd">             gradient clipping and noise addition to the gradients</span>
+<span class="sd">            Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.</span>
+<span class="sd">                Only returned when grad_sample_mode is "ghost".</span>
 <span class="sd">            DataLoader is a brand new DataLoader object, constructed to behave as</span>
 <span class="sd">                equivalent to the original data loader, possibly with updated</span>
 <span class="sd">                sampling mechanism. Points to the same dataset object.</span>
@@ -496,7 +502,10 @@
         <span class="n">noise_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">grad_sample_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"hooks"</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">Tuple</span><span class="p">[</span><span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">],</span>
+        <span class="n">Tuple</span><span class="p">[</span><span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">DPOptimizer</span><span class="p">,</span> <span class="n">DPLossFastGradientClipping</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">],</span>
+    <span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Version of :meth:`~opacus.privacy_engine.PrivacyEngine.make_private`,</span>
 <span class="sd">        that calculates privacy parameters based on a given privacy budget.</span>
@@ -540,12 +549,14 @@
 <span class="sd">                details</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tuple of (model, optimizer, data_loader).</span>
+<span class="sd">            Tuple of (model, optimizer, data_loader) or (model, optimizer, criterion, data_loader).</span>
 
 <span class="sd">            Model is a wrapper around the original model that also computes per sample</span>
 <span class="sd">                gradients</span>
 <span class="sd">            Optimizer is a wrapper around the original optimizer that also does</span>
 <span class="sd">                gradient clipping and noise addition to the gradients</span>
+<span class="sd">            Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.</span>
+<span class="sd">                Only returned when grad_sample_mode is "ghost".</span>
 <span class="sd">            DataLoader is a brand new DataLoader object, constructed to behave as</span>
 <span class="sd">                equivalent to the original data loader, possibly with updated</span>
 <span class="sd">                sampling mechanism. Points to the same dataset object.</span>

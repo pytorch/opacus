@@ -129,6 +129,7 @@ passed as arguments, but with added DP tasks.</p>
 <ul class="simple">
 <li><p>Model is wrapped to also compute per sample gradients.</p></li>
 <li><p>Optimizer is now responsible for gradient clipping and adding noise to the gradients.</p></li>
+<li><p>Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.</p></li>
 <li><p>DataLoader is updated to perform Poisson sampling.</p></li>
 </ul>
 <p class="rubric">Notes</p>
@@ -171,14 +172,16 @@ details</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>, <a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>]</span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>, <a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>, <a class="reference internal" href="utils/fast_gradient_clipping_utils.html#opacus.utils.fast_gradient_clipping_utils.DPLossFastGradientClipping" title="opacus.utils.fast_gradient_clipping_utils.DPLossFastGradientClipping"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPLossFastGradientClipping</span></code></a>, <a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>]]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><p>Tuple of (model, optimizer, data_loader).</p>
+<dd class="field-odd"><p><p>Tuple of  (model, optimizer, data_loader) or (model, optimizer, criterion, data_loader).</p>
 <dl class="simple">
 <dt>Model is a wrapper around the original model that also computes per sample</dt><dd><p>gradients</p>
 </dd>
 <dt>Optimizer is a wrapper around the original optimizer that also does</dt><dd><p>gradient clipping and noise addition to the gradients</p>
+</dd>
+<dt>Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.</dt><dd><p>Only returned when grad_sample_mode is “ghost”.</p>
 </dd>
 <dt>DataLoader is a brand new DataLoader object, constructed to behave as</dt><dd><p>equivalent to the original data loader, possibly with updated
 sampling mechanism. Points to the same dataset object.</p>
@@ -233,12 +236,17 @@ implementation class for the wrapped <code class="docutils literal notranslate">
 details</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>Tuple of (model, optimizer, data_loader).</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>, <a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference internal" href="grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule" title="opacus.grad_sample.grad_sample_module.GradSampleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradSampleModule</span></code></a>, <a class="reference internal" href="optim/dp_optimizer.html#opacus.optimizers.optimizer.DPOptimizer" title="opacus.optimizers.optimizer.DPOptimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPOptimizer</span></code></a>, <a class="reference internal" href="utils/fast_gradient_clipping_utils.html#opacus.utils.fast_gradient_clipping_utils.DPLossFastGradientClipping" title="opacus.utils.fast_gradient_clipping_utils.DPLossFastGradientClipping"><code class="xref py py-class docutils literal notranslate"><span class="pre">DPLossFastGradientClipping</span></code></a>, <a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a>]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>Tuple of (model, optimizer, data_loader) or (model, optimizer, criterion, data_loader).</p>
 <dl class="simple">
 <dt>Model is a wrapper around the original model that also computes per sample</dt><dd><p>gradients</p>
 </dd>
 <dt>Optimizer is a wrapper around the original optimizer that also does</dt><dd><p>gradient clipping and noise addition to the gradients</p>
+</dd>
+<dt>Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.</dt><dd><p>Only returned when grad_sample_mode is “ghost”.</p>
 </dd>
 <dt>DataLoader is a brand new DataLoader object, constructed to behave as</dt><dd><p>equivalent to the original data loader, possibly with updated
 sampling mechanism. Points to the same dataset object.</p>
