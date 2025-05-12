@@ -309,7 +309,10 @@ class PrivacyEngine:
         noise_generator=None,
         grad_sample_mode: str = "hooks",
         **kwargs,
-    ) -> Tuple[GradSampleModule, DPOptimizer, DataLoader]:
+    ) -> Union[
+        Tuple[GradSampleModule, DPOptimizer, DataLoader],
+        Tuple[GradSampleModule, DPOptimizer, DPLossFastGradientClipping, DataLoader],
+    ]:
         """
         Add privacy-related responsibilities to the main PyTorch training objects:
         model, optimizer, and the data loader.
@@ -319,6 +322,7 @@ class PrivacyEngine:
 
         - Model is wrapped to also compute per sample gradients.
         - Optimizer is now responsible for gradient clipping and adding noise to the gradients.
+        - Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.
         - DataLoader is updated to perform Poisson sampling.
 
         Notes:
@@ -359,12 +363,14 @@ class PrivacyEngine:
                 details
 
         Returns:
-            Tuple of (model, optimizer, data_loader).
+            Tuple of  (model, optimizer, data_loader) or (model, optimizer, criterion, data_loader).
 
             Model is a wrapper around the original model that also computes per sample
                 gradients
             Optimizer is a wrapper around the original optimizer that also does
              gradient clipping and noise addition to the gradients
+            Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.
+                Only returned when grad_sample_mode is "ghost".
             DataLoader is a brand new DataLoader object, constructed to behave as
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.
@@ -453,7 +459,10 @@ class PrivacyEngine:
         noise_generator=None,
         grad_sample_mode: str = "hooks",
         **kwargs,
-    ):
+    ) -> Union[
+        Tuple[GradSampleModule, DPOptimizer, DataLoader],
+        Tuple[GradSampleModule, DPOptimizer, DPLossFastGradientClipping, DataLoader],
+    ]:
         """
         Version of :meth:`~opacus.privacy_engine.PrivacyEngine.make_private`,
         that calculates privacy parameters based on a given privacy budget.
@@ -497,12 +506,14 @@ class PrivacyEngine:
                 details
 
         Returns:
-            Tuple of (model, optimizer, data_loader).
+            Tuple of (model, optimizer, data_loader) or (model, optimizer, criterion, data_loader).
 
             Model is a wrapper around the original model that also computes per sample
                 gradients
             Optimizer is a wrapper around the original optimizer that also does
                 gradient clipping and noise addition to the gradients
+            Criterion is a wrapper around the original criterion that packages the two backward passes for fast gradient clipping.
+                Only returned when grad_sample_mode is "ghost".
             DataLoader is a brand new DataLoader object, constructed to behave as
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.
