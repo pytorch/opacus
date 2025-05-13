@@ -64,18 +64,23 @@ class AdaClipDPOptimizer(DPOptimizer):
             generator=generator,
             secure_mode=secure_mode,
         )
-        assert (
-            max_clipbound > min_clipbound
-        ), "max_clipbound must be larger than min_clipbound."
+        if max_clipbound <= min_clipbound:
+            raise ValueError("max_clipbound must be larger than min_clipbound.")
+        if noise_multiplier >= 2 * unclipped_num_std:
+            raise ValueError(
+                "noise_multiplier must be smaller than 2 * unclipped_num_std. This is a requirement stemming from Theorem 1 in https://arxiv.org/pdf/1905.03871.pdf"
+            )
+
         self.target_unclipped_quantile = target_unclipped_quantile
         self.clipbound_learning_rate = clipbound_learning_rate
         self.max_clipbound = max_clipbound
         self.min_clipbound = min_clipbound
         self.unclipped_num_std = unclipped_num_std
         # Theorem 1. in  https://arxiv.org/pdf/1905.03871.pdf
-        self.noise_multiplier = (
-            self.noise_multiplier ** (-2) - (2 * unclipped_num_std) ** (-2)
-        ) ** (-1 / 2)
+        if self.noise_multiplier > 0:  # if noise_multiplier = 0 then it stays zero
+            self.noise_multiplier = (
+                self.noise_multiplier ** (-2) - (2 * unclipped_num_std) ** (-2)
+            ) ** (-1 / 2)
         self.sample_size = 0
         self.unclipped_num = 0
 
