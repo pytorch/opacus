@@ -20,8 +20,6 @@ import warnings
 from functools import partial
 from typing import Iterable, List, Tuple
 
-import torch
-import torch.nn as nn
 from opacus.grad_sample.functorch import ft_compute_per_sample_gradient, prepare_layer
 from opacus.grad_sample.gsm_base import AbstractGradSampleModule
 from opacus.layers.dp_rnn import DPGRU, DPLSTM, DPRNN, RNNLinear
@@ -31,6 +29,9 @@ from opacus.utils.module_utils import (
     trainable_modules,
     trainable_parameters,
 )
+
+import torch
+import torch.nn as nn
 
 
 logger = logging.getLogger(__name__)
@@ -199,7 +200,11 @@ class GradSampleModule(AbstractGradSampleModule):
             if type(module) in [DPRNN, DPLSTM, DPGRU]:
                 continue
 
-            if force_functorch or not type(module) in self.GRAD_SAMPLERS:
+            module_type = next(
+                (i for i in self.GRAD_SAMPLERS.keys() if isinstance(module, i)),
+                type(module),
+            )
+            if force_functorch or not (module_type in self.GRAD_SAMPLERS):
                 prepare_layer(module, batch_first=batch_first)
 
             self.autograd_grad_sample_hooks.append(
