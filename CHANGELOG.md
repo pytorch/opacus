@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.5.4
+
+### New features
+
+#### Improvments
+* Support of `register_full_backward_hook` (#720, #750)
+* Add hook function of `RMSNorm` (#755)
+* Numpy 2.0 support (#746)
+
+### Bug fixes
+* Fix failing tests (#727, #739)
+* Fix lint issues (#741, #760)
+* Fix the norm calculation of bias under ghost clipping (#751)
+* Fix 'to_standard_module' under ghost clipping (#754)
+* Fix the return type of 'make_private' (#759)
+
+### Miscellaneous
+* Copyright for DISK (#719)
+* Improve the logging system (#735)
+* Update the tutorials (#733, #745)
+* Minor change on the ghost clipping optimizer (#756)
+* Warning about restriction for adaptive clipping (#758)
+
 ## v1.5.3
 
 ### New features
