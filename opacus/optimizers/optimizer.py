@@ -134,7 +134,7 @@ def _generate_noise(
         `2^53` (easy to break) but with `n=2`, we get `2^159`, which is hard
         enough for an attacker to break.
     """
-    zeros = torch.zeros(reference.shape, device=reference.device)
+    zeros = torch.zeros(reference.shape, device=reference.device, dtype=reference.dtype)
     if std == 0:
         return zeros
     # TODO: handle device transfers: generator and reference tensor
@@ -164,6 +164,7 @@ def _generate_noise(
             size=reference.shape,
             device=reference.device,
             generator=generator,
+            dtype=reference.dtype,
         )
 
 
@@ -432,7 +433,6 @@ class DPOptimizer(Optimizer):
         Performs gradient clipping.
         Stores clipped and aggregated gradients into `p.summed_grad```
         """
-
         if len(self.grad_samples[0]) == 0:
             # Empty batch
             per_sample_clip_factor = torch.zeros(
@@ -450,6 +450,14 @@ class DPOptimizer(Optimizer):
         for p in self.params:
             _check_processed_flag(p.grad_sample)
             grad_sample = self._get_flat_grad_sample(p)
+
+            # gradients should match the dtype of the optimizer parameters
+            # for mixed precision, optimizer parameters are usually in FP32
+            # lower precision grads will be cast up to FP32
+            if grad_sample.dtype != p.dtype:
+                grad_sample = grad_sample.to(p.dtype)
+            if per_sample_clip_factor.dtype != p.dtype:
+                per_sample_clip_factor = per_sample_clip_factor.to(p.dtype)
             grad = torch.einsum("i,i...", per_sample_clip_factor, grad_sample)
 
             if p.summed_grad is not None:
@@ -463,7 +471,6 @@ class DPOptimizer(Optimizer):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-
         for p in self.params:
             _check_processed_flag(p.summed_grad)
 
@@ -474,7 +481,6 @@ class DPOptimizer(Optimizer):
                 secure_mode=self.secure_mode,
             )
             p.grad = (p.summed_grad + noise).view_as(p)
-
             _mark_as_processed(p.summed_grad)
 
     def scale_grad(self):

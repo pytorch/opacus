@@ -40,6 +40,10 @@ def compute_conv_grad_sample(
         backprops: Backpropagations
     """
     activations = activations[0]
+
+    if activations.dtype != backprops.dtype:
+        activations = activations.to(backprops.dtype)
+
     n = activations.shape[0]
     if n == 0:
         # Empty batch
