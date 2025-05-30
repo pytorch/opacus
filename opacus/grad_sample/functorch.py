@@ -81,7 +81,6 @@ def prepare_layer(layer, batch_first=True):
             # If batch_first is False, the batch dimension is the second dimension
             batched_activations = activations.unsqueeze(1)
             batched_backprops = backprops.unsqueeze(1)
-
         output = flayer(params, batched_activations)
         loss = (output * batched_backprops).sum()
         return loss
@@ -105,9 +104,11 @@ def ft_compute_per_sample_gradient(layer, activations, backprops):
     if not hasattr(layer, "ft_compute_sample_grad"):
         prepare_layer(layer)
 
-    per_sample_grads = layer.ft_compute_sample_grad(
-        parameters, activations[0], backprops
-    )
+    activations = activations[0]
+    print(activations.dtype)
+    if activations.dtype != backprops.dtype and activations.is_floating_point():
+        activations = activations.to(backprops.dtype)
+    per_sample_grads = layer.ft_compute_sample_grad(parameters, activations, backprops)
 
     ret = {}
     for i_p, p in enumerate(parameters):

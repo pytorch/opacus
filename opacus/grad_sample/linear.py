@@ -39,6 +39,9 @@ def compute_linear_grad_sample(
         backprops: Backpropagations
     """
     activations = activations[0]
+    if activations.dtype != backprops.dtype:
+        activations = activations.to(backprops.dtype)
+
     ret = {}
     if layer.weight.requires_grad:
         gs = torch.einsum("n...i,n...j->nij", backprops, activations)
@@ -61,8 +64,10 @@ def compute_linear_norm_sample(
         backprops: Backpropagations
     """
     activations = activations[0]
-    ret = {}
+    if activations.dtype != backprops.dtype:
+        activations = activations.to(backprops.dtype)
 
+    ret = {}
     if backprops.dim() == 2:
         if layer.weight.requires_grad:
             g = torch.einsum("n...i,n...i->n", backprops, backprops)
