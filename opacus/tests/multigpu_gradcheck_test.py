@@ -188,6 +188,7 @@ def run_demo(demo_fn, weight, world_size, dp, clipping, grad_sample_mode):
 
 
 class GradientComputationTest(unittest.TestCase):
+    @unittest.skipIf(torch.cuda.device_count() < 2, "Need at least 2 GPUs")
     def test_gradient_correct(self) -> None:
         # Tests that gradient is the same with DP or without DDP
         n_gpus = torch.cuda.device_count()
