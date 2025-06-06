@@ -18,6 +18,7 @@ from .ddpoptimizer import DistributedDPOptimizer
 from .ddpoptimizer_fast_gradient_clipping import (
     DistributedDPOptimizerFastGradientClipping,
 )
+from .fsdpoptimizer_fast_gradient_clipping import FSDPOptimizerFastGradientClipping
 from .optimizer import DPOptimizer
 from .optimizer_fast_gradient_clipping import DPOptimizerFastGradientClipping
 from .perlayeroptimizer import DPPerLayerOptimizer
@@ -29,6 +30,7 @@ __all__ = [
     "DPOptimizer",
     "DPOptimizerFastGradientClipping",
     "DistributedDPOptimizerFastGradientlipping",
+    "FSDPOptimizerFastGradientClipping",
     "DPPerLayerOptimizer",
     "SimpleDistributedPerLayerOptimizer",
 ]
@@ -43,6 +45,13 @@ def get_optimizer_class(clipping: str, distributed: bool, grad_sample_mode: str 
         else:
             raise ValueError(
                 f"Unsupported combination of parameters. Clipping: {clipping} and grad_sample_mode: {grad_sample_mode}"
+            )
+    elif grad_sample_mode == "ghost_fsdp":
+        if clipping == "flat" and distributed is True:
+            return FSDPOptimizerFastGradientClipping
+        else:
+            raise ValueError(
+                f"Unsupported combination of parameters. Clipping: {clipping}, distributed: {distributed}, and grad_sample_mode: {grad_sample_mode}"
             )
     elif clipping == "flat" and distributed is False:
         return DPOptimizer
