@@ -67,7 +67,7 @@ class ToyModel(nn.Module):
 
 def demo_basic(rank, weight, world_size, dp):
     torch.manual_seed(world_size)
-    batch_size = 32
+    batch_size = 2
     setup(rank, world_size)
 
     # create model and move it to GPU with id rank
@@ -129,7 +129,8 @@ def run_demo(demo_fn, weight, world_size, dp):
 
 
 class GradientComputationTestAdaptiveClipping(unittest.TestCase):
-    def test_gradient_correct_adaptive(self) -> None:
+    @unittest.skipIf(torch.cuda.device_count() < 2, "Need at least 2 GPUs")
+    def test_adaptive_gradient_correct(self) -> None:
 
         # Tests that gradient is the same with DP or without DP in the distributed setting
         n_gpus = torch.cuda.device_count()
