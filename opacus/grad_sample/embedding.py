@@ -51,7 +51,10 @@ def compute_embedding_grad_sample(
             .reshape(batch_size, -1, layer.embedding_dim)
         )
         grad_sample = torch.zeros(
-            batch_size, *layer.weight.shape, device=layer.weight.device
+            batch_size,
+            *layer.weight.shape,
+            device=layer.weight.device,
+            dtype=backprops.dtype
         )
         grad_sample.scatter_add_(
             1, index, backprops.reshape(batch_size, -1, layer.embedding_dim)
@@ -65,7 +68,13 @@ def compute_embedding_grad_sample(
 def compute_embeddingbag_gradsampler(layer, inputs, backprops):
     index, offset = inputs
     batch_size = offset.shape[0]
-    gsm = torch.zeros(batch_size, layer.num_embeddings, layer.embedding_dim)
+    gsm = torch.zeros(
+        batch_size,
+        layer.num_embeddings,
+        layer.embedding_dim,
+        device=index.device,
+        dtype=backprops.dtype,
+    )
 
     for i in range(batch_size):
         begin = offset[i]
