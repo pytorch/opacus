@@ -14,8 +14,7 @@
 # limitations under the License.
 
 [string]$TORCH_VERSION=$args[0]
-If ($TORCH_VERSION -eq "1.13.1") {
-  $TORCHVISION_VERSION="0.14.1"
+If ($TORCH_VERSION -eq "2.6.0") {
+  $TORCHVISION_VERSION="0.21.0"
 }
-pip install torch==$TORCH_VERSION+cpu torchvision==$TORCHVISION_VERSION+cpu -f https://download.pytorch.org/whl/torch_stable.html
-
+pip install torch==$TORCH_VERSION torchvision==$TORCHVISION_VERSION -f https://download.pytorch.org/whl/torch_stable.html

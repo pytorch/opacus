@@ -16,11 +16,10 @@
 set -e
 TORCH_VERSION=$1
 
-if [ "$TORCH_VERSION" = "1.13.1" ]
+if [ "$TORCH_VERSION" = "2.6.0" ]
 then
-    TORCHVISION_VERSION="0.14.1"
+    TORCHVISION_VERSION="0.21.0"
 fi
 
 pip install torch=="${TORCH_VERSION}" --extra-index-url https://download.pytorch.org/whl/cpu
 pip install torchvision==${TORCHVISION_VERSION} --extra-index-url https://download.pytorch.org/whl/cpu
-
