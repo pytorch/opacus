@@ -198,6 +198,9 @@
         <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">children</span><span class="p">():</span>
             <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterate_submodules</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_get_module_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
 <div class="viewcode-block" id="GradSampleModule.add_hooks">
 <a class="viewcode-back" href="../../../grad_sample_module.html#opacus.grad_sample.grad_sample_module.GradSampleModule.add_hooks">[docs]</a>
     <span class="k">def</span> <span class="nf">add_hooks</span><span class="p">(</span>
@@ -236,7 +239,8 @@
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="n">DPRNN</span><span class="p">,</span> <span class="n">DPLSTM</span><span class="p">,</span> <span class="n">DPGRU</span><span class="p">]:</span>
                 <span class="k">continue</span>
 
-            <span class="k">if</span> <span class="n">force_functorch</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">:</span>
+            <span class="n">module_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_module_type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">force_functorch</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="n">module_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">):</span>
                 <span class="n">prepare_layer</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">autograd_grad_sample_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -379,8 +383,11 @@
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_functorch</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">:</span>
-            <span class="n">grad_sampler_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_functorch</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_module_type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span>
+        <span class="p">):</span>
+            <span class="n">grad_sampler_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRAD_SAMPLERS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_module_type</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">grad_sampler_fn</span> <span class="o">=</span> <span class="n">ft_compute_per_sample_gradient</span>
 

@@ -48,6 +48,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">opacus.optimizers.utils</span> <span class="kn">import</span> <span class="n">params</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch.distributed.tensor</span> <span class="kn">import</span> <span class="n">DTensor</span>
 <span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
 
@@ -129,10 +130,10 @@
 
 <span class="k">def</span> <span class="nf">_generate_noise</span><span class="p">(</span>
     <span class="n">std</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">DTensor</span><span class="p">],</span>
     <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">secure_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">DTensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Generates noise according to a Gaussian distribution with mean 0</span>
 

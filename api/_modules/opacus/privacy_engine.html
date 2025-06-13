@@ -60,6 +60,7 @@
 <span class="kn">from</span> <span class="nn">opacus.utils.fast_gradient_clipping_utils</span> <span class="kn">import</span> <span class="n">DPLossFastGradientClipping</span>
 <span class="kn">from</span> <span class="nn">opacus.validators.module_validator</span> <span class="kn">import</span> <span class="n">ModuleValidator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
+<span class="kn">from</span> <span class="nn">torch.distributed._composable.fsdp</span> <span class="kn">import</span> <span class="n">FSDPModule</span>
 <span class="kn">from</span> <span class="nn">torch.nn.parallel</span> <span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
 
@@ -225,7 +226,7 @@
 
             <span class="k">return</span> <span class="n">module</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">grad_sample_mode</span> <span class="o">==</span> <span class="s2">"ghost"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">grad_sample_mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"ghost"</span><span class="p">,</span> <span class="s2">"ghost_fsdp"</span><span class="p">]:</span>
                 <span class="k">return</span> <span class="n">wrap_model</span><span class="p">(</span>
                     <span class="n">module</span><span class="p">,</span>
                     <span class="n">grad_sample_mode</span><span class="o">=</span><span class="n">grad_sample_mode</span><span class="p">,</span>
@@ -428,7 +429,7 @@
                     <span class="s2">"Module parameters are different than optimizer Parameters"</span>
                 <span class="p">)</span>
 
-        <span class="n">distributed</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">DPDDP</span><span class="p">,</span> <span class="n">DDP</span><span class="p">))</span>
+        <span class="n">distributed</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">DPDDP</span><span class="p">,</span> <span class="n">DDP</span><span class="p">,</span> <span class="n">FSDPModule</span><span class="p">))</span>
 
         <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_model</span><span class="p">(</span>
             <span class="n">module</span><span class="p">,</span>
@@ -468,7 +469,7 @@
         <span class="n">optimizer</span><span class="o">.</span><span class="n">attach_step_hook</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_optimizer_hook_fn</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">grad_sample_mode</span> <span class="o">==</span> <span class="s2">"ghost"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"ghost"</span> <span class="ow">in</span> <span class="n">grad_sample_mode</span><span class="p">:</span>
             <span class="n">criterion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_criterion</span><span class="p">(</span>
                 <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
                 <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
