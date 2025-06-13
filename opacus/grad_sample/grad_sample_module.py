@@ -163,6 +163,9 @@ class GradSampleModule(AbstractGradSampleModule):
         for m in module.children():
             yield from self.iterate_submodules(m)
 
+    def _get_module_type(self, module: nn.Module) -> str:
+        return type(module)
+
     def add_hooks(
         self,
         *,
@@ -199,7 +202,8 @@ class GradSampleModule(AbstractGradSampleModule):
             if type(module) in [DPRNN, DPLSTM, DPGRU]:
                 continue
 
-            if force_functorch or not type(module) in self.GRAD_SAMPLERS:
+            module_type = self._get_module_type(module)
+            if force_functorch or not (module_type in self.GRAD_SAMPLERS):
                 prepare_layer(module, batch_first=batch_first)
 
             self.autograd_grad_sample_hooks.append(
@@ -330,8 +334,11 @@ class GradSampleModule(AbstractGradSampleModule):
             loss_reduction=loss_reduction,
             batch_first=batch_first,
         )
-        if not self.force_functorch and type(module) in self.GRAD_SAMPLERS:
-            grad_sampler_fn = self.GRAD_SAMPLERS[type(module)]
+        if (
+            not self.force_functorch
+            and self._get_module_type(module) in self.GRAD_SAMPLERS
+        ):
+            grad_sampler_fn = self.GRAD_SAMPLERS[self._get_module_type(module)]
         else:
             grad_sampler_fn = ft_compute_per_sample_gradient
 

@@ -33,6 +33,7 @@ from opacus.schedulers import _GradClipScheduler, _NoiseScheduler
 from opacus.utils.fast_gradient_clipping_utils import DPLossFastGradientClipping
 from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
+from torch.distributed._composable.fsdp import FSDPModule
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 
@@ -196,7 +197,7 @@ class PrivacyEngine:
 
             return module
         else:
-            if grad_sample_mode == "ghost":
+            if grad_sample_mode in ["ghost", "ghost_fsdp"]:
                 return wrap_model(
                     module,
                     grad_sample_mode=grad_sample_mode,
@@ -388,7 +389,7 @@ class PrivacyEngine:
                     "Module parameters are different than optimizer Parameters"
                 )
 
-        distributed = isinstance(module, (DPDDP, DDP))
+        distributed = isinstance(module, (DPDDP, DDP, FSDPModule))
 
         module = self._prepare_model(
             module,
@@ -428,7 +429,7 @@ class PrivacyEngine:
         optimizer.attach_step_hook(
             self.accountant.get_optimizer_hook_fn(sample_rate=sample_rate)
         )
-        if grad_sample_mode == "ghost":
+        if "ghost" in grad_sample_mode:
             criterion = self._prepare_criterion(
                 module=module,
                 optimizer=optimizer,
