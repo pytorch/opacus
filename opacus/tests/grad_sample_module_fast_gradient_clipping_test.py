@@ -201,9 +201,9 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
         dim=st.sampled_from([2]),
     )
     @settings(deadline=1000000)
-    def test_gradient_calculation_fast_gradient_clipping(self, size, length, dim):
+    def test_weight_update_fast_gradient_clipping(self, size, length, dim):
         """
-        Tests if gradients are the same between standard (opacus) and fast gradient clipping"
+        Tests if weight updates are the same between standard (opacus) and fast gradient clipping"
         """
 
         noise_multiplier = 0.0
@@ -250,29 +250,29 @@ class GradSampleModuleFastGradientClippingTest(GradSampleModuleTest):
         loss_normal.backward()
         optimizer_normal.step()
 
-        all_grads_normal = [
-            param.summed_grad for param in self.model_normal.parameters()
-        ]
-        flat_grads_normal = torch.cat([p.flatten() for p in all_grads_normal])
+        all_params_normal = [param for param in self.model_normal.parameters()]
+        flat_params_normal = torch.cat([p.flatten() for p in all_params_normal])
 
         output_gc = self.grad_sample_module(input_data)
 
         loss_gc = criterion_gc(output_gc, target_data)
         loss_gc.backward()
-        # double_backward(self.grad_sample_module, optimizer_gc, first_loss_per_sample)
+        optimizer_gc.step()
 
-        all_grads_gc = [param.grad for param in self.grad_sample_module.parameters()]
-        flat_grads_gc = torch.cat([p.flatten() for p in all_grads_gc])
+        all_params_gc = [param for param in self.grad_sample_module.parameters()]
+        flat_params_gc = torch.cat([p.flatten() for p in all_params_gc])
 
         diff = torch.tensor(
             [
-                (g_gc - g_normal).norm()
-                for (g_gc, g_normal) in zip(flat_grads_gc, flat_grads_normal)
+                (p_gc - p_normal).norm()
+                for (p_gc, p_normal) in zip(flat_params_gc, flat_params_normal)
             ]
         )
-        logging.info(f"Max difference between (vanilla) Opacus and FGC = {max(diff)}")
-        msg = "Fail: Gradients from vanilla DP-SGD and from fast gradient clipping are different"
-        assert torch.allclose(flat_grads_normal, flat_grads_gc, atol=1e-3), msg
+        logging.info(
+            f"Max difference between the model parameters of (vanilla) Opacus and FGC = {max(diff)}"
+        )
+        msg = "Fail: Parameters from vanilla DP-SGD and from fast gradient clipping are different"
+        assert torch.allclose(flat_params_normal, flat_params_gc, atol=1e-3), msg
 
 
 class GradSampleModuleFastGradientClippingEmbeddingLayerTest(unittest.TestCase):
