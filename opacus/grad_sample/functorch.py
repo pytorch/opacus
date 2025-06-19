@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import copy
+from contextlib import nullcontext
 
 import torch
 import torch.nn as nn
@@ -82,8 +83,19 @@ def prepare_layer(layer, batch_first=True):
             batched_activations = activations.unsqueeze(1)
             batched_backprops = backprops.unsqueeze(1)
 
-        output = flayer(params, batched_activations)
-        loss = (output * batched_backprops).sum()
+        # mixed precision logic
+        is_mixed = activations.dtype != params[0].dtype
+        mixed_lowest_dtype = activations.dtype
+        device_type = activations.device.type
+
+        # use amp context if user is using mixed_precision, else proceed as usual
+        with (
+            torch.amp.autocast(device_type=device_type, dtype=mixed_lowest_dtype)
+            if is_mixed
+            else nullcontext()
+        ):
+            output = flayer(params, batched_activations)
+            loss = (output * batched_backprops).sum()
         return loss
 
     ft_compute_grad = grad(compute_loss_stateless_model)
@@ -105,9 +117,10 @@ def ft_compute_per_sample_gradient(layer, activations, backprops):
     if not hasattr(layer, "ft_compute_sample_grad"):
         prepare_layer(layer)
 
-    per_sample_grads = layer.ft_compute_sample_grad(
-        parameters, activations[0], backprops
-    )
+    activations = activations[0]
+    if activations.dtype != backprops.dtype and activations.is_floating_point():
+        activations = activations.to(backprops.dtype)
+    per_sample_grads = layer.ft_compute_sample_grad(parameters, activations, backprops)
 
     ret = {}
     for i_p, p in enumerate(parameters):
