@@ -33,6 +33,28 @@ jobs:
   #       run: |
   #         python3 -m unittest opacus.tests.multigpu_gradcheck.GradientComputationTest.test_gradient_correct
 
+  unittest_mixed_precision:
+    runs-on: 4-core-ubuntu-gpu-t4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Display Python version
+        run: python3 -c "import sys; print(sys.version)"
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          ./scripts/install_via_pip.sh -c
+
+      - name: Run mixed precision unit tests
+        run: |
+          python3 -m unittest opacus.tests.mixed_precision_test
 
   integrationtest_py39_torch_release_cuda:
     runs-on: 4-core-ubuntu-gpu-t4
