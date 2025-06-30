@@ -135,7 +135,7 @@ def _generate_noise(
         `2^53` (easy to break) but with `n=2`, we get `2^159`, which is hard
         enough for an attacker to break.
     """
-    zeros = torch.zeros(reference.shape, device=reference.device)
+    zeros = torch.zeros(reference.shape, device=reference.device, dtype=reference.dtype)
     if std == 0:
         return zeros
     # TODO: handle device transfers: generator and reference tensor
@@ -165,6 +165,7 @@ def _generate_noise(
             size=reference.shape,
             device=reference.device,
             generator=generator,
+            dtype=reference.dtype,
         )
 
 
@@ -451,6 +452,12 @@ class DPOptimizer(Optimizer):
         for p in self.params:
             _check_processed_flag(p.grad_sample)
             grad_sample = self._get_flat_grad_sample(p)
+
+            # gradients should match the dtype of the optimizer parameters
+            # for mixed precision, optimizer parameters are usually in FP32
+            # lower precision grads will be cast up to FP32
+            grad_sample = grad_sample.to(p.dtype)
+            per_sample_clip_factor = per_sample_clip_factor.to(p.dtype)
             grad = torch.einsum("i,i...", per_sample_clip_factor, grad_sample)
 
             if p.summed_grad is not None:

@@ -131,7 +131,10 @@ def compute_embedding_norm_sample(
     # Sum gradients over new index positions and compute squared gradient norms
     num_unique_paired_indices = unique_paired_indices.size(0)
     summed_gradients = torch.zeros(
-        num_unique_paired_indices, grad_values.size(-1), device=device
+        num_unique_paired_indices,
+        grad_values.size(-1),
+        device=device,
+        dtype=grad_values.dtype,
     )
     summed_gradients = summed_gradients.index_add(
         0, new_index_positions.to(device), grad_values
@@ -139,7 +142,7 @@ def compute_embedding_norm_sample(
     sqr_gradient_sum = torch.sum(summed_gradients**2, dim=1)
 
     # Scatter add the squared sums back to their respective rows
-    result = torch.zeros(nrows, device=device)
+    result = torch.zeros(nrows, device=device, dtype=grad_values.dtype)
     unique_batch_ids = unique_paired_indices[:, 0].to(device)
     result.scatter_add_(0, unique_batch_ids, sqr_gradient_sum)
 
