@@ -97,7 +97,7 @@ class IAccountant(abc.ABC):
         if destination is None:
             destination = OrderedDict()
         destination["history"] = deepcopy(self.history)
-        destination["mechanism"] = self.__class__.mechanism
+        destination["mechanism"] = self.mechanism()
         return destination
 
     def load_state_dict(self, state_dict: T_state_dict):
@@ -126,9 +126,9 @@ class IAccountant(abc.ABC):
                 "state_dict does not have the key `mechanism`."
                 " Cannot be loaded into Privacy Accountant."
             )
-        if self.__class__.mechanism != state_dict["mechanism"]:
+        if self.mechanism() != state_dict["mechanism"]:
             raise ValueError(
                 f"state_dict of {state_dict['mechanism']} cannot be loaded into "
-                f" Privacy Accountant with mechanism {self.__class__.mechanism}"
+                f" Privacy Accountant with mechanism {self.mechanism()}"
             )
         self.history = state_dict["history"]
