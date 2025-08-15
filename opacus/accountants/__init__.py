@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Type
 
 from .accountant import IAccountant
 from .gdp import GaussianAccountant
@@ -24,13 +25,13 @@ __all__ = [
     "RDPAccountant",
 ]
 
+_ACCOUNTANTS = {"rdp": RDPAccountant, "gdp": GaussianAccountant, "prv": PRVAccountant}
+
+def register_accountant(mechanism: str, accountant: Type[IAccountant]):
+    _ACCOUNTANTS[mechanism] = accountant
 
 def create_accountant(mechanism: str) -> IAccountant:
-    if mechanism == "rdp":
-        return RDPAccountant()
-    elif mechanism == "gdp":
-        return GaussianAccountant()
-    elif mechanism == "prv":
-        return PRVAccountant()
+    if mechanism in _ACCOUNTANTS:
+        return _ACCOUNTANTS[mechanism]()
 
     raise ValueError(f"Unexpected accounting mechanism: {mechanism}")
