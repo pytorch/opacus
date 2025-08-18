@@ -140,7 +140,7 @@
         <span class="k">if</span> <span class="n">destination</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">destination</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
         <span class="n">destination</span><span class="p">[</span><span class="s2">"history"</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
-        <span class="n">destination</span><span class="p">[</span><span class="s2">"mechanism"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">mechanism</span>
+        <span class="n">destination</span><span class="p">[</span><span class="s2">"mechanism"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mechanism</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">destination</span></div>
 
 
@@ -172,10 +172,10 @@
                 <span class="s2">"state_dict does not have the key `mechanism`."</span>
                 <span class="s2">" Cannot be loaded into Privacy Accountant."</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">mechanism</span> <span class="o">!=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"mechanism"</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mechanism</span><span class="p">()</span> <span class="o">!=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"mechanism"</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"state_dict of </span><span class="si">{</span><span class="n">state_dict</span><span class="p">[</span><span class="s1">'mechanism'</span><span class="p">]</span><span class="si">}</span><span class="s2"> cannot be loaded into "</span>
-                <span class="sa">f</span><span class="s2">" Privacy Accountant with mechanism </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">mechanism</span><span class="si">}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">" Privacy Accountant with mechanism </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mechanism</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"history"</span><span class="p">]</span></div>
 </div>
