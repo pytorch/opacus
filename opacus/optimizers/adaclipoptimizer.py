@@ -126,7 +126,7 @@ class AdaClipDPOptimizer(DPOptimizer):
 
         unclipped_num_noise = _generate_noise(
             std=self.unclipped_num_std,
-            reference=self.unclipped_num,
+            reference=self.unclipped_num.float(),
             generator=self.generator,
         )
 
