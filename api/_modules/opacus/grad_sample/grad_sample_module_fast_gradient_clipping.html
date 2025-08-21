@@ -246,6 +246,10 @@
             <span class="n">loss_reduction</span><span class="o">=</span><span class="n">loss_reduction</span><span class="p">,</span>
             <span class="n">batch_first</span><span class="o">=</span><span class="n">batch_first</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">activations</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">temp</span><span class="o">.</span><span class="n">to_local</span><span class="p">()</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span> <span class="ow">is</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">tensor</span><span class="o">.</span><span class="n">DTensor</span> <span class="k">else</span> <span class="n">temp</span>
+            <span class="k">for</span> <span class="n">temp</span> <span class="ow">in</span> <span class="n">activations</span>
+        <span class="p">]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_ghost_clipping</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">NORM_SAMPLERS</span><span class="p">:</span>
             <span class="n">norm_sampler_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NORM_SAMPLERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)]</span>
