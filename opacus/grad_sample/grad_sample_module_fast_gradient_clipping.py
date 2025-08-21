@@ -206,6 +206,10 @@ class GradSampleModuleFastGradientClipping(GradSampleModule):
             loss_reduction=loss_reduction,
             batch_first=batch_first,
         )
+        activations = [
+            temp.to_local() if type(temp) is torch.distributed.tensor.DTensor else temp
+            for temp in activations
+        ]
 
         if self.use_ghost_clipping and type(module) in self.NORM_SAMPLERS:
             norm_sampler_fn = self.NORM_SAMPLERS[type(module)]
