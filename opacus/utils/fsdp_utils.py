@@ -15,12 +15,17 @@
 
 from typing import Iterable
 
+import torch
 import torch.nn as nn
 from opacus.grad_sample.grad_sample_module_fast_gradient_clipping_fsdp import (
     GradSampleModuleFastGradientClippingFSDP,
 )
 from opacus.utils.module_utils import has_trainable_params
 from torch.distributed._composable.fsdp import fully_shard
+from torch.distributed.fsdp import MixedPrecisionPolicy
+
+
+OPACUS_HIGH_PRECISION_LAYERS = (nn.LayerNorm,)
 
 
 def has_params(module: nn.Module) -> bool:
@@ -35,13 +40,23 @@ def iterate_submodules(module: nn.Module) -> Iterable[nn.Module]:
         yield from iterate_submodules(m)
 
 
-def FSDP2Wrapper(model: nn.Module) -> nn.Module:
+def FSDP2Wrapper(model: nn.Module, **kwargs) -> nn.Module:
     sampler_classes = set(
         list(GradSampleModuleFastGradientClippingFSDP.GRAD_SAMPLERS.keys())
         + list(GradSampleModuleFastGradientClippingFSDP.NORM_SAMPLERS.keys())
     )
+    mp_policy = kwargs.get("mp_policy", MixedPrecisionPolicy())
     for module in iterate_submodules(model):
         if (type(module) in sampler_classes) or (not has_trainable_params(module)):
-            fully_shard(module)
-    model = fully_shard(model)
+            if isinstance(module, OPACUS_HIGH_PRECISION_LAYERS):
+                # For certain layers, higher precision is needed to stablize the training of DP-SGD.
+                fully_shard(
+                    module,
+                    mp_policy=MixedPrecisionPolicy(
+                        param_dtype=torch.get_default_dtype()
+                    ),
+                )
+            else:
+                fully_shard(module, mp_policy=mp_policy)
+    model = fully_shard(model, mp_policy=mp_policy)
     return model
