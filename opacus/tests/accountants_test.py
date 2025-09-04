@@ -22,11 +22,38 @@ from opacus.accountants import (
     PRVAccountant,
     RDPAccountant,
     create_accountant,
+    IAccountant,
+    register_accountant,
 )
 from opacus.accountants.utils import get_noise_multiplier
 
 
 class AccountingTest(unittest.TestCase):
+    def test_register_accountant(self) -> None:
+        class DummyAccountant(IAccountant):
+            def __init__(self):
+                pass
+
+            def __len__(self):
+                return 0
+
+            def step(self, **kwargs):
+                pass
+
+            def get_epsilon(self, **kwargs):
+                return 0.0
+
+            def mechanism(cls) -> str:
+                return "dummy"
+
+        register_accountant("dummy", DummyAccountant)
+        self.assertIsInstance(create_accountant("dummy"), DummyAccountant)
+        self.assertEqual(create_accountant("dummy").mechanism(), "dummy")
+
+    def test_get_accountant_not_registered(self) -> None:
+        with self.assertRaises(ValueError):
+            create_accountant("not_registered")
+
     def test_rdp_accountant(self) -> None:
         noise_multiplier = 1.5
         sample_rate = 0.04
