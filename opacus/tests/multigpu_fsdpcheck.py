@@ -60,12 +60,14 @@ class ToyModel(nn.Module):
         self.net1 = nn.Linear(10, 10)
         self.relu = nn.ReLU()
         self.net2 = nn.Linear(10, 5)
+        self.net3 = nn.LayerNorm(5)
+        self.net4 = nn.Linear(5, 5)
 
     def forward(self, x):
-        return self.net2(self.relu(self.net1(x)))
+        return self.net4(self.net3(self.net2(self.relu(self.net1(x)))))
 
 
-def demo_basic(rank, weight, world_size, grad_sample_mode):
+def demo_basic(rank, weight, world_size, grad_sample_mode, mixed_precision):
     torch.manual_seed(world_size)
     batch_size = 32
     torch.cuda.set_device(rank)
@@ -86,7 +88,17 @@ def demo_basic(rank, weight, world_size, grad_sample_mode):
     if grad_sample_mode == "ghost":
         dp_model = DPDDP(model)
     else:
-        dp_model = FSDP2Wrapper(model)
+        if not mixed_precision:
+            dp_model = FSDP2Wrapper(model)
+        else:
+            dp_model = FSDP2Wrapper(
+                model,
+                mp_policy=dist.fsdp.MixedPrecisionPolicy(
+                    param_dtype=torch.bfloat16, reduce_dtype=torch.float32
+                ),
+                opacus_high_precision_layers=(nn.LayerNorm,),
+            )
+
     optimizer = optim.SGD(model.parameters(), lr=1)
 
     privacy_engine = PrivacyEngine()
@@ -106,15 +118,26 @@ def demo_basic(rank, weight, world_size, grad_sample_mode):
         poisson_sampling=False,
         grad_sample_mode=grad_sample_mode,
     )
-
-    for x, y in data_loader:
-        outputs = dp_model(x.to(rank))
-        loss = loss_fn(outputs, y)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        break
-
+    if grad_sample_mode == "ghost" and mixed_precision is True:
+        for x, y in data_loader:
+            with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                outputs = dp_model(x.to(rank))
+                assert outputs.dtype == torch.bfloat16
+                loss = loss_fn(outputs, y)
+                optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            break
+    else:
+        for x, y in data_loader:
+            outputs = dp_model(x.to(rank))
+            loss = loss_fn(outputs, y)
+            optimizer.zero_grad()
+            loss.backward()
+            if mixed_precision is True:
+                assert outputs.dtype == torch.bfloat16
+            optimizer.step()
+            break
     if grad_sample_mode == "ghost_fsdp":
         full_weight = model.net1.weight.full_tensor()
     else:
@@ -123,10 +146,10 @@ def demo_basic(rank, weight, world_size, grad_sample_mode):
     cleanup()
 
 
-def run_demo(demo_fn, weight, world_size, grad_sample_mode):
+def run_demo(demo_fn, weight, world_size, grad_sample_mode, mixed_precision):
     mp.spawn(
         demo_fn,
-        args=(weight, world_size, grad_sample_mode),
+        args=(weight, world_size, grad_sample_mode, mixed_precision),
         nprocs=world_size,
         join=True,
     )
@@ -144,12 +167,39 @@ class GradientComputationTestFSDP(unittest.TestCase):
             weight_ddp,
             2,
             grad_sample_mode="ghost",
+            mixed_precision=False,
         )
         run_demo(
             demo_basic,
             weight_fsdp,
             2,
             grad_sample_mode="ghost_fsdp",
+            mixed_precision=False,
+        )
+        self.assertTrue(
+            not torch.allclose(weight_fsdp, torch.zeros(10, 10), atol=1e-5, rtol=1e-3)
+        )
+        self.assertTrue(torch.allclose(weight_ddp, weight_fsdp, atol=1e-5, rtol=1e-3))
+
+    @unittest.skipIf(torch.cuda.device_count() < 2, "Need at least 2 GPUs")
+    def test_gradient_correct_fsdp_mixed_precision(self) -> None:
+        # Tests that gradient is the same with DDP or with FSDP under mixed precision
+
+        weight_ddp, weight_fsdp = torch.zeros(10, 10), torch.zeros(10, 10)
+
+        run_demo(
+            demo_basic,
+            weight_ddp,
+            2,
+            grad_sample_mode="ghost",
+            mixed_precision=True,
+        )
+        run_demo(
+            demo_basic,
+            weight_fsdp,
+            2,
+            grad_sample_mode="ghost_fsdp",
+            mixed_precision=True,
         )
         self.assertTrue(
             not torch.allclose(weight_fsdp, torch.zeros(10, 10), atol=1e-5, rtol=1e-3)

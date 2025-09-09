@@ -32,7 +32,7 @@ jobs:
       - name: Lint with black
         run: black --check --diff --color .
       - name: Check import order with isort
-        run: isort -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only .
+        run: isort -l 88 -o opacus --lines-after-imports 2 -m 3 --trailing-comma --check-only --diff .
 
   ########### UNIT TESTS ##############
   unittest_py310_torch_release:
