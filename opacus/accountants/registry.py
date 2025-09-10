@@ -27,17 +27,21 @@ _ACCOUNTANTS: Dict[str, Type[IAccountant]] = {
 }
 
 
-def register_accountant(mechanism: str, accountant: Type[IAccountant]):
+def register_accountant(mechanism: str, accountant: Type[IAccountant], force: bool = False):
     r"""
     Register a new accountant class to be used with a specified mechanism name.
 
     Args:
         mechanism: Name of the mechanism to register the accountant for
         accountant: Accountant class (subclass of IAccountant) to register
+        force: If True, overwrites existing accountant for the specified mechanism.
 
-    Example:
-        >>> register_accountant("my_accountant", MyAccountant)
+    Raises:
+        ValueError: If the mechanism is already registered.
     """
+    if mechanism in _ACCOUNTANTS and not force:
+        raise ValueError(f"Accountant for mechanism {mechanism} is already registered")
+
     _ACCOUNTANTS[mechanism] = accountant
 
 
@@ -54,11 +58,6 @@ def create_accountant(mechanism: str) -> IAccountant:
 
     Raises:
         ValueError: If the specified mechanism is not registered.
-
-    Example:
-        >>> accountant = create_accountant("rdp")
-        >>> accountant.step(noise_multiplier=1.0, sample_rate=0.01)
-        >>> epsilon = accountant.get_epsilon(delta=1e-5)
     """
     if mechanism in _ACCOUNTANTS:
         return _ACCOUNTANTS[mechanism]()

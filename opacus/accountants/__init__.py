@@ -16,7 +16,8 @@ from .accountant import IAccountant
 from .gdp import GaussianAccountant
 from .prv import PRVAccountant
 from .rdp import RDPAccountant
-from .registry import register_accountant, create_accountant
+from .registry import create_accountant, register_accountant
+
 
 __all__ = [
     "IAccountant",
