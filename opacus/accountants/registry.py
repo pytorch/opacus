@@ -27,7 +27,9 @@ _ACCOUNTANTS: Dict[str, Type[IAccountant]] = {
 }
 
 
-def register_accountant(mechanism: str, accountant: Type[IAccountant], force: bool = False):
+def register_accountant(
+    mechanism: str, accountant: Type[IAccountant], force: bool = False
+):
     r"""
     Register a new accountant class to be used with a specified mechanism name.
 
