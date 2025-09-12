@@ -106,12 +106,14 @@ class DPLossFastGradientClipping:
         self.loss_reduction = loss_reduction
         self.criterion.reduction = "none"
 
-    def __call__(self, input, target, shape=None) -> DPTensorFastGradientClipping:
+    def __call__(
+        self, input, target, shape=None, **kwargs
+    ) -> DPTensorFastGradientClipping:
         """
         Redefining the forward function to compute per-sample loss and wrap it in DPTensorFastGradientClipping
         """
 
-        loss_per_sample = self.criterion(input, target)
+        loss_per_sample = self.criterion(input, target, **kwargs)
 
         if shape is not None and loss_per_sample.shape[0] == shape[0] * shape[1]:
             # Note that the privacy unit for generative NLP tasks is per sequence.
