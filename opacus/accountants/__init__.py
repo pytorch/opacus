@@ -33,4 +33,4 @@ def create_accountant(mechanism: str) -> IAccountant:
     elif mechanism == "prv":
         return PRVAccountant()
 
-    raise ValueError(f"Unexpected accounting mechanism: {mechanism}")
+    raise ValueError(f"This is an Unexpected accounting mechanism: {mechanism}")
