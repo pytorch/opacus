@@ -207,14 +207,13 @@ class DPLossFastGradientAdaptiveClipping(DPLossFastGradientClipping):
         self.clipbound_learning_rate = clipbound_learning_rate
         self.initial_noise_multiplier = initial_noise_multiplier
 
-    def __call__(self, input, target, **kwargs) -> DPTensorFastGradientAdaptiveClipping:
+    def __call__(self, *args, **kwargs) -> DPTensorFastGradientAdaptiveClipping:
         """
         Redefining the forward function to compute per-sample loss and wrap it in DPTensorFastGradientAdaptiveClipping
         """
 
         loss_per_sample = self.criterion(
-            input,
-            target,
+            *args,
             **kwargs,
         )
         return DPTensorFastGradientAdaptiveClipping(
