@@ -24,46 +24,73 @@ from opacus.accountants import (
     RDPAccountant,
     create_accountant,
     register_accountant,
+    registry,
 )
 from opacus.accountants.utils import get_noise_multiplier
 
 
-class DummyAccountant(IAccountant):
-    def __init__(self):
+class AccountantRegistryTest(unittest.TestCase):
+
+    class DummyAccountant(IAccountant):
+        def __init__(self):
+            pass
+
+        def __len__(self):
+            return 0
+
+        def step(self, **kwargs):
+            pass
+
+        def get_epsilon(self, **kwargs):
+            return 0.0
+
+        def mechanism(cls) -> str:
+            return "dummy"
+
+    class Dummy2Accountant(DummyAccountant):
         pass
 
-    def __len__(self):
-        return 0
-
-    def step(self, **kwargs):
-        pass
-
-    def get_epsilon(self, **kwargs):
-        return 0.0
-
-    def mechanism(cls) -> str:
-        return "dummy"
-
-
-class AccountingTest(unittest.TestCase):
     def test_register_accountant(self) -> None:
-        register_accountant("dummy", DummyAccountant)
-        self.assertIsInstance(create_accountant("dummy"), DummyAccountant)
-        self.assertEqual(create_accountant("dummy").mechanism(), "dummy")
+        try:
+            register_accountant("dummy", AccountantRegistryTest.DummyAccountant)
+            self.assertIsInstance(
+                create_accountant("dummy"), AccountantRegistryTest.DummyAccountant
+            )
+            self.assertEqual(create_accountant("dummy").mechanism(), "dummy")
+        finally:
+            if "dummy" in registry._ACCOUNTANTS:
+                del registry._ACCOUNTANTS["dummy"]
 
     def test_create_accountant_not_registered(self) -> None:
         with self.assertRaises(ValueError):
             create_accountant("not_registered")
 
     def test_register_existing_accountant(self):
-        with self.assertRaises(ValueError):
-            register_accountant("rdp", DummyAccountant)
+        try:
+            register_accountant("dummy", AccountantRegistryTest.DummyAccountant)
+
+            with self.assertRaises(ValueError):
+                register_accountant("rdp", AccountantRegistryTest.DummyAccountant)
+        finally:
+            if "dummy" in registry._ACCOUNTANTS:
+                del registry._ACCOUNTANTS["dummy"]
 
     def test_force_register_existing_accountant(self) -> None:
-        register_accountant("rdp", DummyAccountant, force=True)
-        self.assertIsInstance(create_accountant("rdp"), DummyAccountant)
-        self.assertEqual(create_accountant("rdp").mechanism(), "dummy")
+        try:
+            register_accountant("dummy", AccountantRegistryTest.DummyAccountant)
 
+            register_accountant(
+                "dummy", AccountantRegistryTest.Dummy2Accountant, force=True
+            )
+            self.assertIsInstance(
+                create_accountant("dummy"), AccountantRegistryTest.Dummy2Accountant
+            )
+        finally:
+            if "dummy" in registry._ACCOUNTANTS:
+                del registry._ACCOUNTANTS["dummy"]
+
+
+class AccountingTest(unittest.TestCase):
     def test_rdp_accountant(self) -> None:
         noise_multiplier = 1.5
         sample_rate = 0.04
