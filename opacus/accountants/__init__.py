@@ -16,21 +16,14 @@ from .accountant import IAccountant
 from .gdp import GaussianAccountant
 from .prv import PRVAccountant
 from .rdp import RDPAccountant
+from .registry import create_accountant, register_accountant
 
 
 __all__ = [
     "IAccountant",
     "GaussianAccountant",
     "RDPAccountant",
+    "PRVAccountant",
+    "register_accountant",
+    "create_accountant",
 ]
-
-
-def create_accountant(mechanism: str) -> IAccountant:
-    if mechanism == "rdp":
-        return RDPAccountant()
-    elif mechanism == "gdp":
-        return GaussianAccountant()
-    elif mechanism == "prv":
-        return PRVAccountant()
-
-    raise ValueError(f"Unexpected accounting mechanism: {mechanism}")
