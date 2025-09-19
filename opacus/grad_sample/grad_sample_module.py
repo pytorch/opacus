@@ -145,6 +145,20 @@ class GradSampleModule(AbstractGradSampleModule):
             force_functorch=force_functorch,
         )
 
+    def requires_grad_(self, requires_grad: bool = True) -> nn.Module:
+        "Rewrite requires_grad_ to add/remove hooks based on requires_grad value"
+        if requires_grad:
+            # Attack hook to the module
+            self.add_hooks(
+                loss_reduction=self.loss_reduction,
+                batch_first=self.batch_first,
+                force_functorch=self.force_functorch,
+            )
+        else:
+            # Remove hooks
+            self.remove_hooks()
+        return super().requires_grad_(requires_grad)
+
     def forward(self, *args, **kwargs):
         return self._module(*args, **kwargs)
 
