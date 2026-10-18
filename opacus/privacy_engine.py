@@ -20,7 +20,7 @@ from typing import IO, Any, BinaryIO, Dict, List, Optional, Tuple, Union
 import torch
 from opacus.accountants import create_accountant
 from opacus.accountants.utils import get_noise_multiplier
-from opacus.data_loader import DPDataLoader, switch_generator
+from opacus.data_loader import DPDataLoader, _get_sample_rate, switch_generator
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
 from opacus.grad_sample import (
     AbstractGradSampleModule,
@@ -149,6 +149,7 @@ class PrivacyEngine:
         distributed: bool,
         batch_first: bool = True,
         rand_on_empty: bool = False,
+        sample_rate: Optional[float] = None,
     ) -> DataLoader:
         if self.dataset is None:
             self.dataset = data_loader.dataset
@@ -169,6 +170,7 @@ class PrivacyEngine:
                 distributed=distributed,
                 batch_first=batch_first,
                 rand_on_empty=rand_on_empty,
+                sample_rate=sample_rate,
             )
         elif self.secure_mode:
             return switch_generator(data_loader=data_loader, generator=self.secure_rng)
@@ -321,6 +323,7 @@ class PrivacyEngine:
         grad_sample_mode: str = "hooks",
         wrap_model: bool = True,
         rand_on_empty: bool = False,
+        sample_rate: Optional[float] = None,
         **kwargs,
     ) -> Union[
         Tuple[
@@ -383,6 +386,8 @@ class PrivacyEngine:
                 details
             rand_on_empty: Indicates whether to return a batch containing random numbers when encountering
                 empty batch samples with Poisson sampling rather than tensors with zero-length batch dimensions
+            sample_rate: Probability with which each element is included in a batch. If None,
+                it is derived from data_loader.
 
         Returns:
             Tuple of (hooks_or_module, optimizer, data_loader) or (hooks_or_module, optimizer, criterion, data_loader).
@@ -429,15 +434,18 @@ class PrivacyEngine:
         if poisson_sampling:
             module.forbid_grad_accumulation()
 
+        if sample_rate is None:
+            sample_rate = _get_sample_rate(data_loader)
+
         data_loader = self._prepare_data_loader(
             data_loader,
             distributed=distributed,
             poisson_sampling=poisson_sampling,
             batch_first=batch_first,
             rand_on_empty=rand_on_empty,
+            sample_rate=sample_rate,
         )
 
-        sample_rate = 1 / len(data_loader)
         expected_batch_size = int(len(data_loader.dataset) * sample_rate)
 
         # expected_batch_size is the *per worker* batch size
@@ -492,6 +500,7 @@ class PrivacyEngine:
         noise_generator=None,
         grad_sample_mode: str = "hooks",
         wrap_model: bool = True,
+        sample_rate: Optional[float] = None,
         **kwargs,
     ) -> Union[
         Tuple[
@@ -550,6 +559,8 @@ class PrivacyEngine:
                 without wrapping. The original model remains unchanged and can be used normally.
                 Cleanup via returned hooks.cleanup() is required when done. Recommended for
                 HuggingFace Transformers and models with custom __getattr__ that don't work well with wrapping.
+            sample_rate: Probability with which each element is included in a batch. If None,
+                it is derived from data_loader.
 
         Returns:
             Tuple of (hooks_or_module, optimizer, data_loader) or (hooks_or_module, optimizer, criterion, data_loader).
@@ -570,7 +581,8 @@ class PrivacyEngine:
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.
         """
-        sample_rate = 1 / len(data_loader)
+        if sample_rate is None:
+            sample_rate = _get_sample_rate(data_loader)
 
         if len(self.accountant) > 0:
             warnings.warn(
@@ -600,6 +612,7 @@ class PrivacyEngine:
             poisson_sampling=poisson_sampling,
             clipping=clipping,
             wrap_model=wrap_model,
+            sample_rate=sample_rate,
             **kwargs,
         )
 
