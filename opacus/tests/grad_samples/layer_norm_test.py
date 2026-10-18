@@ -44,6 +44,13 @@ class LayerNorm_test(GradSampleHooks_test):
         x = torch.randn(x_shape)
         self.run_test(x, norm, batch_first=True)
 
+    def test_no_bias(self) -> None:
+        for normalized_shape in [(4,), (3, 4)]:
+            with self.subTest(normalized_shape=normalized_shape):
+                norm = nn.LayerNorm(normalized_shape, bias=False)
+                x = torch.randn(2, 5, *normalized_shape)
+                self.run_test(x, norm, batch_first=True)
+
     @staticmethod
     def get_x_shape_and_norm_shape(H, N, W, Z, input_dim, norm_dim):
         if norm_dim == 1:
