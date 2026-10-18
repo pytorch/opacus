@@ -31,7 +31,7 @@ def compute_layer_norm_grad_sample(
     backprops: torch.Tensor,
 ) -> Dict[nn.Parameter, torch.Tensor]:
     """
-    Computes per sample gradients for LayerNorm
+    Computes per sample gradients for LayerNorm, including ``bias=False``.
 
     Args:
         layer: Layer
@@ -46,6 +46,6 @@ def compute_layer_norm_grad_sample(
             * backprops,
             layer.weight.dim(),
         )
-    if layer.bias.requires_grad:
+    if layer.bias is not None and layer.bias.requires_grad:
         ret[layer.bias] = sum_over_all_but_batch_and_last_n(backprops, layer.bias.dim())
     return ret
