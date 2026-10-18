@@ -35,7 +35,7 @@ from opacus.utils.module_utils import are_state_dict_equal
 from opacus.validators.errors import UnsupportedModuleError
 from opacus.validators.module_validator import ModuleValidator
 from opt_einsum import contract
-from torch.utils.data import DataLoader, Dataset, TensorDataset
+from torch.utils.data import DataLoader, Dataset, TensorDataset, WeightedRandomSampler
 from torchvision import models, transforms
 from torchvision.datasets import FakeData
 
@@ -476,6 +476,36 @@ class BasePrivacyEngineTest(ABC):
         self.assertAlmostEqual(
             target_eps, privacy_engine.get_epsilon(target_delta), places=2
         )
+
+    def test_make_private_with_epsilon_weighted_sampler(self) -> None:
+        dataset_size = 1000
+        batch_size = 10
+        weights = torch.ones(dataset_size)
+        sampler = WeightedRandomSampler(weights, num_samples=100, replacement=True)
+        ds = TensorDataset(
+            torch.randn(dataset_size, 4), torch.randint(0, 2, (dataset_size,))
+        )
+        dl = DataLoader(ds, batch_size=batch_size, sampler=sampler)
+
+        model = nn.Linear(4, 2)
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+        privacy_engine = PrivacyEngine()
+        model, optimizer, dp_dl = privacy_engine.make_private_with_epsilon(
+            module=model,
+            optimizer=optimizer,
+            data_loader=dl,
+            target_epsilon=8.0,
+            target_delta=1e-5,
+            epochs=1,
+            max_grad_norm=1.0,
+            grad_sample_mode=self.GRAD_SAMPLE_MODE,
+            wrap_model=self.WRAP_MODEL,
+        )
+
+        expected_sample_rate = batch_size / dataset_size
+        self.assertAlmostEqual(dp_dl.sample_rate, expected_sample_rate)
+        self.assertEqual(optimizer.expected_batch_size, batch_size)
 
     def test_deterministic_run(self) -> None:
         """

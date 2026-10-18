@@ -312,6 +312,7 @@ class DPDataLoader(DataLoader):
         generator=None,
         batch_first: bool = True,
         rand_on_empty: bool = False,
+        sample_rate: Optional[float] = None,
     ):
         """
         Creates new ``DPDataLoader`` based on passed ``data_loader`` argument.
@@ -327,8 +328,9 @@ class DPDataLoader(DataLoader):
                 ``[K, batch_size, ...]``
             rand_on_empty: set ``True`` to return a batch containing random numbers when encountering
                 empty batches rather than tensors with zero-length batch dimensions
-
-
+            sample_rate: Optional probability with which each element is included in the batch.
+                If None, it is derived from the data_loader batch_size and dataset size,
+                or falls back to 1 / len(data_loader).
 
         Returns:
             New DPDataLoader instance, with all attributes and parameters inherited
@@ -344,9 +346,12 @@ class DPDataLoader(DataLoader):
         if isinstance(data_loader.dataset, IterableDataset):
             raise ValueError("Uniform sampling is not supported for IterableDataset")
 
+        if sample_rate is None:
+            sample_rate = _get_sample_rate(data_loader)
+
         return cls(
             dataset=data_loader.dataset,
-            sample_rate=1 / len(data_loader),
+            sample_rate=sample_rate,
             num_workers=data_loader.num_workers,
             collate_fn=data_loader.collate_fn,
             pin_memory=data_loader.pin_memory,
@@ -361,6 +366,34 @@ class DPDataLoader(DataLoader):
             batch_first=batch_first,
             rand_on_empty=rand_on_empty,
         )
+
+
+def _get_batch_size(data_loader: DataLoader) -> Optional[int]:
+    if data_loader.batch_size is not None:
+        return data_loader.batch_size
+    elif data_loader.batch_sampler is not None and hasattr(
+        data_loader.batch_sampler, "batch_size"
+    ):
+        return data_loader.batch_sampler.batch_size
+    return None
+
+
+def _get_sample_rate(data_loader: DataLoader) -> float:
+    if hasattr(data_loader, "sample_rate") and data_loader.sample_rate is not None:
+        return data_loader.sample_rate
+
+    batch_size = _get_batch_size(data_loader)
+    if (
+        batch_size is not None
+        and hasattr(data_loader, "dataset")
+        and hasattr(data_loader.dataset, "__len__")
+        and len(data_loader.dataset) > 0
+    ):
+        return batch_size / len(data_loader.dataset)
+
+    if len(data_loader) == 0:
+        raise ValueError("data_loader must have at least one batch")
+    return 1 / len(data_loader)
 
 
 def _is_supported_batch_sampler(sampler: Sampler):

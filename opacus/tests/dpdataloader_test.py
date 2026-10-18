@@ -16,7 +16,13 @@ import unittest
 
 import torch
 from opacus.data_loader import CollateFnWithEmpty, DPDataLoader, wrap_collate_with_empty
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import (
+    BatchSampler,
+    DataLoader,
+    SequentialSampler,
+    TensorDataset,
+    WeightedRandomSampler,
+)
 from torch.utils.data._utils.collate import default_collate
 
 
@@ -394,6 +400,37 @@ class CollateFnWithEmptyTest(unittest.TestCase):
         self.assertTrue(torch.is_tensor(result))
         self.assertEqual(result.shape[0], 0)
         self.assertEqual(result.shape[1], 2)
+
+    def test_from_data_loader_sample_rate_weighted_sampler(self) -> None:
+        dataset_size = 500
+        batch_size = 20
+        weights = torch.ones(dataset_size)
+        sampler = WeightedRandomSampler(weights, num_samples=50, replacement=True)
+        dataset = TensorDataset(torch.randn(dataset_size, 5))
+        data_loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler)
+
+        dp_loader = DPDataLoader.from_data_loader(data_loader)
+        expected_sample_rate = batch_size / dataset_size
+        self.assertAlmostEqual(dp_loader.sample_rate, expected_sample_rate)
+
+    def test_from_data_loader_custom_sample_rate(self) -> None:
+        dataset = TensorDataset(torch.randn(100, 5))
+        data_loader = DataLoader(dataset, batch_size=10)
+
+        custom_sample_rate = 0.25
+        dp_loader = DPDataLoader.from_data_loader(
+            data_loader, sample_rate=custom_sample_rate
+        )
+        self.assertEqual(dp_loader.sample_rate, custom_sample_rate)
+
+    def test_from_data_loader_with_batch_sampler(self) -> None:
+        dataset = TensorDataset(torch.randn(100, 5))
+        sampler = SequentialSampler(dataset)
+        batch_sampler = BatchSampler(sampler, batch_size=25, drop_last=False)
+        data_loader = DataLoader(dataset, batch_sampler=batch_sampler)
+
+        dp_loader = DPDataLoader.from_data_loader(data_loader)
+        self.assertAlmostEqual(dp_loader.sample_rate, 25 / 100)
 
 
 class DPDataLoaderEmptyFirstBatchTest(unittest.TestCase):
