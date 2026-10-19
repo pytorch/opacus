@@ -21,7 +21,9 @@ The AdaClip optimizer uses an adjusted noise multiplier for gradient noise
 noise_multiplier should be preserved for privacy accounting.
 """
 
+import math
 import unittest
+from unittest import mock
 
 import torch
 import torch.nn as nn
@@ -30,6 +32,10 @@ from opacus.accountants import RDPAccountant
 from opacus.optimizers.adaclipoptimizer import AdaClipDPOptimizer
 from opacus.optimizers.optimizer import DPOptimizer
 from torch.utils.data import DataLoader, TensorDataset
+
+
+CLIPPED = 10.0
+UNCLIPPED = 0.5
 
 
 class SimpleModel(nn.Module):
@@ -263,6 +269,148 @@ class AdaClipNoiseMultiplierTest(unittest.TestCase):
             "noise_multiplier must be smaller than 2 * unclipped_num_std",
             str(context.exception),
         )
+
+
+class AdaClipUnclippedFractionTest(unittest.TestCase):
+    def setUp(self):
+        self.noise_multiplier = 1.0
+        self.unclipped_num_std = 1.0
+        self.max_grad_norm = 1.0
+        self.clipbound_learning_rate = 0.2
+        self.target_unclipped_quantile = 0.5
+        self.noise_stds = []
+        self.noise_secure_modes = []
+
+    def _zero_noise(self, std, reference, generator=None, secure_mode=False):
+        self.noise_stds.append(std)
+        self.noise_secure_modes.append(secure_mode)
+        return torch.zeros_like(reference)
+
+    def _make_optimizer(self, expected_batch_size, **kwargs):
+        self.param = torch.nn.Parameter(torch.zeros(1))
+        return AdaClipDPOptimizer(
+            torch.optim.SGD([self.param], lr=0.0),
+            noise_multiplier=self.noise_multiplier,
+            target_unclipped_quantile=self.target_unclipped_quantile,
+            clipbound_learning_rate=self.clipbound_learning_rate,
+            max_clipbound=1e9,
+            min_clipbound=1e-9,
+            unclipped_num_std=self.unclipped_num_std,
+            max_grad_norm=self.max_grad_norm,
+            expected_batch_size=expected_batch_size,
+            loss_reduction="sum",
+            **kwargs,
+        )
+
+    def _step(self, optimizer, per_sample_grads):
+        optimizer.max_grad_norm = self.max_grad_norm
+        if isinstance(per_sample_grads[0], list):
+            self.param.grad_sample = [
+                torch.tensor(g).reshape(-1, 1) for g in per_sample_grads
+            ]
+        else:
+            self.param.grad_sample = torch.tensor(per_sample_grads).reshape(-1, 1)
+        self.param.grad = torch.zeros(1)
+        with mock.patch(
+            "opacus.optimizers.adaclipoptimizer._generate_noise", self._zero_noise
+        ):
+            optimizer.step()
+        grad_sum = self.param.grad.item()
+        new_max_grad_norm = float(optimizer.max_grad_norm)
+        optimizer.zero_grad()
+        return grad_sum, new_max_grad_norm
+
+    def _released_fraction(self, new_max_grad_norm):
+        return (
+            self.target_unclipped_quantile
+            - math.log(new_max_grad_norm / self.max_grad_norm)
+            / self.clipbound_learning_rate
+        )
+
+    def test_requires_expected_batch_size(self):
+        with self.assertRaises(ValueError):
+            self._make_optimizer(expected_batch_size=None)
+
+    def test_joint_sensitivity_matches_noise_multiplier(self):
+        n = 8
+        for base, extra in [([CLIPPED] * n, UNCLIPPED), ([UNCLIPPED] * n, CLIPPED)]:
+            optimizer = self._make_optimizer(expected_batch_size=n)
+            self.noise_stds = []
+            grad_b, clip_b = self._step(optimizer, base)
+            grad_bp, clip_bp = self._step(optimizer, base + [extra])
+            grad_std, count_std = self.noise_stds[:2]
+
+            centred_b = (self._released_fraction(clip_b) - 0.5) * n
+            centred_bp = (self._released_fraction(clip_bp) - 0.5) * n
+            delta_count = centred_bp - centred_b
+            delta_grad = grad_bp - grad_b
+
+            expected_delta = 0.5 if extra == UNCLIPPED else -0.5
+            self.assertAlmostEqual(delta_count, expected_delta, places=5)
+            self.assertLessEqual(abs(delta_grad), self.max_grad_norm + 1e-5)
+            self.assertAlmostEqual(count_std, self.unclipped_num_std)
+
+            worst_case = math.hypot(self.max_grad_norm / grad_std, 0.5 / count_std)
+            self.assertAlmostEqual(worst_case, 1 / self.noise_multiplier, places=5)
+            self.assertLessEqual(
+                math.hypot(delta_grad / grad_std, delta_count / count_std),
+                1 / self.noise_multiplier + 1e-5,
+            )
+
+    def test_fraction_uses_expected_batch_size(self):
+        m = 10
+        optimizer = self._make_optimizer(expected_batch_size=m)
+        grads = [UNCLIPPED] * 4 + [CLIPPED] * 2
+        _, new_max_grad_norm = self._step(optimizer, grads)
+        expected_frac = (4 - 6 / 2) / m + 0.5
+        self.assertAlmostEqual(
+            self._released_fraction(new_max_grad_norm), expected_frac, places=5
+        )
+        self.assertAlmostEqual(
+            new_max_grad_norm,
+            self.max_grad_norm
+            * math.exp(
+                -self.clipbound_learning_rate
+                * (expected_frac - self.target_unclipped_quantile)
+            ),
+            places=5,
+        )
+
+    def test_fraction_equals_unclipped_share_at_expected_batch_size(self):
+        m = 10
+        optimizer = self._make_optimizer(expected_batch_size=m)
+        grads = [UNCLIPPED] * 3 + [CLIPPED] * 7
+        _, new_max_grad_norm = self._step(optimizer, grads)
+        self.assertAlmostEqual(
+            self._released_fraction(new_max_grad_norm), 3 / m, places=5
+        )
+
+    def test_fraction_with_accumulated_iterations(self):
+        m = 4
+        optimizer = self._make_optimizer(expected_batch_size=m)
+        grads = [[UNCLIPPED] * 3 + [CLIPPED], [CLIPPED]]
+        _, new_max_grad_norm = self._step(optimizer, grads)
+        expected_frac = (3 - 5 / 2) / (2 * m) + 0.5
+        self.assertAlmostEqual(
+            self._released_fraction(new_max_grad_norm), expected_frac, places=5
+        )
+
+    def test_fraction_with_skipped_virtual_steps(self):
+        m = 6
+        optimizer = self._make_optimizer(expected_batch_size=m)
+        optimizer.signal_skip_step(do_skip=True)
+        _, clip_after_skip = self._step(optimizer, [UNCLIPPED] * 3)
+        self.assertEqual(clip_after_skip, self.max_grad_norm)
+        optimizer.signal_skip_step(do_skip=False)
+        _, new_max_grad_norm = self._step(optimizer, [CLIPPED] * 3)
+        self.assertAlmostEqual(
+            self._released_fraction(new_max_grad_norm), 3 / m, places=5
+        )
+
+    def test_unclipped_count_noise_uses_secure_mode(self):
+        optimizer = self._make_optimizer(expected_batch_size=4, secure_mode=True)
+        self._step(optimizer, [UNCLIPPED] * 4)
+        self.assertEqual(self.noise_secure_modes, [True, True])
 
 
 if __name__ == "__main__":
