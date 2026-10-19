@@ -64,6 +64,11 @@ class AdaClipDPOptimizer(DPOptimizer):
             generator=generator,
             secure_mode=secure_mode,
         )
+        if expected_batch_size is None:
+            raise ValueError(
+                "You must provide expected_batch_size for adaptive clipping, as the "
+                "unclipped fraction is estimated with respect to it."
+            )
         if max_clipbound <= min_clipbound:
             raise ValueError("max_clipbound must be larger than min_clipbound.")
         if noise_multiplier >= 2 * unclipped_num_std:
@@ -81,12 +86,16 @@ class AdaClipDPOptimizer(DPOptimizer):
 
     def zero_grad(self, set_to_none: bool = False):
         """
-        Clear gradients, self.sample_size and self.unclipped_num
+        Clear gradients, self.sample_size and self.unclipped_num.
+
+        If the last step was skipped, self.sample_size and self.unclipped_num are
+        kept, so that they cover the whole logical batch.
         """
         super().zero_grad(set_to_none)
 
-        self.sample_size = 0
-        self.unclipped_num = 0
+        if not self._is_last_step_skipped:
+            self.sample_size = 0
+            self.unclipped_num = 0
 
     def clip_and_accumulate(self):
         per_param_norms = [
@@ -135,6 +144,13 @@ class AdaClipDPOptimizer(DPOptimizer):
 
         The original noise_multiplier is preserved for privacy accounting,
         while this adjusted value is used only for noise generation.
+
+        Theorem 1 requires the noisy unclipped count to have sensitivity 1/2, so
+        noise is added to the recentred count sum_i (b_i - 1/2), where b_i = 1 if
+        sample i is unclipped. The unclipped fraction is then estimated as
+        (sum_i (b_i - 1/2) + N(0, σ_u^2)) / m + 1/2, where m is the expected
+        number of samples per step, ``expected_batch_size * accumulated_iterations``.
+        The actual number of samples is not used, as it is private.
         """
         # Calculate adjusted noise multiplier for gradient noise (Theorem 1)
         if self.noise_multiplier > 0:
@@ -163,19 +179,23 @@ class AdaClipDPOptimizer(DPOptimizer):
             std=self.unclipped_num_std,
             reference=self.unclipped_num.float(),
             generator=self.generator,
+            secure_mode=self.secure_mode,
         )
 
         self.unclipped_num = float(self.unclipped_num)
         self.unclipped_num += unclipped_num_noise
+        self.unclipped_frac = (self.unclipped_num - self.sample_size / 2) / (
+            self.expected_batch_size * self.accumulated_iterations
+        ) + 0.5
 
     def update_max_grad_norm(self):
         """
-        Update clipping bound based on unclipped fraction
+        Update clipping bound based on the noisy unclipped fraction estimated in
+        :meth:`add_noise`
         """
-        unclipped_frac = self.unclipped_num / self.sample_size
         self.max_grad_norm *= torch.exp(
             -self.clipbound_learning_rate
-            * (unclipped_frac - self.target_unclipped_quantile)
+            * (self.unclipped_frac - self.target_unclipped_quantile)
         )
         if self.max_grad_norm > self.max_clipbound:
             self.max_grad_norm = self.max_clipbound
