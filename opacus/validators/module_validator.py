@@ -26,7 +26,6 @@ from opacus.validators.errors import (
 )
 from opacus.validators.inplace import disable_inplace, fix_inplace_operations
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -61,7 +60,28 @@ class ModuleValidator:
             errors.append(
                 IllegalModuleConfigurationError("Model needs to be in training mode")
             )
-        # 2. perform module specific validations for trainable modules.
+        # 2. validate that module has trainable parameters
+        if not any(p.requires_grad for p in module.parameters()):
+            errors.append(
+                IllegalModuleConfigurationError(
+                    "Model does not contain any trainable parameters (requires_grad=True). "
+                    "If using PEFT/LoRA, ensure adapters are enabled and marked as trainable."
+                )
+            )
+        # 3. check for PEFT / LoRA adapter configurations
+        if hasattr(module, "peft_config"):
+            for name, sub_module in module.named_modules():
+                base_layer = getattr(sub_module, "base_layer", None)
+                if base_layer is not None and type(base_layer).__name__ == "Conv1D":
+                    warnings.warn(
+                        f"PEFT module '{name}' wraps a Conv1D layer. Conv1D uses "
+                        "transposed weights that may cause near-zero adapter gradients "
+                        "and silent corruption during differential privacy training. "
+                        "Consider converting Conv1D to nn.Linear before applying PEFT.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+        # 4. perform module specific validations for trainable modules.
         # TODO: use module name here - it's useful part of error message
         for _, sub_module in trainable_modules(module):
             if type(sub_module) in ModuleValidator.VALIDATORS:
