@@ -26,7 +26,7 @@ from .optimizer import (
     _generate_noise,
     _mark_as_processed,
 )
-
+from .utils import check_grad_sample_batch_size_consistency
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +89,7 @@ class AdaClipDPOptimizer(DPOptimizer):
         self.unclipped_num = 0
 
     def clip_and_accumulate(self):
+        check_grad_sample_batch_size_consistency(self.params, self.grad_samples)
         per_param_norms = [
             g.view(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
         ]

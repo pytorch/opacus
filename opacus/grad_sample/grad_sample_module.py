@@ -35,7 +35,6 @@ from opacus.utils.module_utils import (
     trainable_parameters,
 )
 
-
 logger = logging.getLogger(__name__)
 logger.disabled = True
 
@@ -137,6 +136,10 @@ class GradSampleHooks(AbstractGradSampleHooks):
                 f"Validation found the following errors: {errors}."
                 "Using non-strict mode, continuing"
             )
+
+        for p_name, p in trainable_parameters(self._module):
+            if not hasattr(p, "_param_name"):
+                p._param_name = p_name
 
         self.hooks_enabled = False
         self.grad_accumulation_allowed = True
