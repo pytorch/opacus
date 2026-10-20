@@ -19,11 +19,13 @@ from collections import defaultdict
 from typing import Callable, List, Optional, Union
 
 import torch
-from opacus.optimizers.utils import params
+from opacus.optimizers.utils import (
+    check_grad_sample_batch_size_consistency,
+    params,
+)
 from torch import nn
 from torch.distributed.tensor import DTensor
 from torch.optim import Optimizer
-
 
 logger = logging.getLogger(__name__)
 logger.disabled = True
@@ -441,6 +443,7 @@ class DPOptimizer(Optimizer):
                 (0,), device=self.grad_samples[0].device
             )
         else:
+            check_grad_sample_batch_size_consistency(self.params, self.grad_samples)
             per_param_norms = [
                 g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
             ]

@@ -33,6 +33,13 @@ def compute_embedding_grad_sample(
         layer: Layer
         activations: Activations
         backprops: Backpropagations
+
+    Note:
+        The input activations are expected to carry the batch dimension as the first dimension.
+        When fine-tuning transformer models (such as GPT-2 or BERT) where position IDs might be
+        unexpanded or broadcasted (e.g. shape ``[1, seq_len]``), inputs must be explicitly expanded
+        to match the batch size (e.g., ``position_ids.expand(batch_size, -1)``) or frozen with
+        ``requires_grad=False`` to ensure valid per-sample gradients can be computed.
     """
     activations = activations[0]
     ret = {}

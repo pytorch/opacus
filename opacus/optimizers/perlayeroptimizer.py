@@ -17,7 +17,10 @@ from __future__ import annotations
 from typing import List, Optional
 
 import torch
-from opacus.optimizers.utils import params
+from opacus.optimizers.utils import (
+    check_grad_sample_batch_size_consistency,
+    params,
+)
 from torch.optim import Optimizer
 
 from .optimizer import DPOptimizer, _check_processed_flag, _mark_as_processed
@@ -56,6 +59,7 @@ class DPPerLayerOptimizer(DPOptimizer):
         )
 
     def clip_and_accumulate(self):
+        check_grad_sample_batch_size_consistency(self.params, self.grad_samples)
         for p, max_grad_norm in zip(self.params, self.max_grad_norms):
             _check_processed_flag(p.grad_sample)
 
