@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import List, Optional
 
 import torch
@@ -63,6 +64,15 @@ class DPPerLayerOptimizer(DPOptimizer):
             per_sample_norms = grad_sample.norm(
                 2, dim=tuple(range(1, grad_sample.ndim))
             )
+            if len(per_sample_norms) > 0 and (per_sample_norms == 0).all():
+                warnings.warn(
+                    "Trainable parameter has zero per-sample gradients during optimizer step. "
+                    "If using PEFT/LoRA, check target modules, device placement, and adapter initialization "
+                    "to ensure gradients are not detached or zeroed out. Adding differential privacy noise "
+                    "to zero gradients will cause silent weight corruption.",
+                    UserWarning,
+                    stacklevel=2,
+                )
             per_sample_clip_factor = (max_grad_norm / (per_sample_norms + 1e-6)).clamp(
                 max=1.0
             )

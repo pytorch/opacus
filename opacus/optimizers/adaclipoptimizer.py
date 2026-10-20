@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Callable, Optional
 
 import torch
@@ -26,7 +27,6 @@ from .optimizer import (
     _generate_noise,
     _mark_as_processed,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +98,15 @@ class AdaClipDPOptimizer(DPOptimizer):
             per_param_norms = [norm.to(target_device) for norm in per_param_norms]
 
         per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
+        if len(per_sample_norms) > 0 and (per_sample_norms == 0).all():
+            warnings.warn(
+                "All trainable parameters have zero per-sample gradients during optimizer step. "
+                "If using PEFT/LoRA, check target modules, device placement, and adapter initialization "
+                "to ensure gradients are not detached or zeroed out. Adding differential privacy noise "
+                "to zero gradients will cause silent weight corruption.",
+                UserWarning,
+                stacklevel=2,
+            )
         per_sample_clip_factor = (self.max_grad_norm / (per_sample_norms + 1e-6)).clamp(
             max=1.0
         )

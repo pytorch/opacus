@@ -17,10 +17,10 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
+import torch
 import torch.nn as nn
 from opacus.utils.module_utils import trainable_parameters
 from torch.utils.hooks import RemovableHandle
-
 
 logger = logging.getLogger(__name__)
 
@@ -202,6 +202,18 @@ class AbstractGradSampleModule(nn.Module, AbstractGradSampleHooks, ABC):
             )
         self.set_grad_sample_to_none()
         super().zero_grad(set_to_none)
+
+    def _apply(self, fn):
+        super()._apply(fn)
+        for p in self._module.parameters():
+            if hasattr(p, "grad_sample") and p.grad_sample is not None:
+                if isinstance(p.grad_sample, torch.Tensor):
+                    p.grad_sample = fn(p.grad_sample)
+                elif isinstance(p.grad_sample, list):
+                    p.grad_sample = [fn(g) for g in p.grad_sample]
+            if hasattr(p, "summed_grad") and p.summed_grad is not None:
+                p.summed_grad = fn(p.summed_grad)
+        return self
 
     def to_standard_module(self) -> nn.Module:
         """

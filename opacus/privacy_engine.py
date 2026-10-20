@@ -30,6 +30,7 @@ from opacus.grad_sample import (
     prepare_module,
 )
 from opacus.optimizers import DPOptimizer, get_optimizer_class
+from opacus.optimizers.utils import params
 from opacus.schedulers import _GradClipScheduler, _NoiseScheduler
 from opacus.utils.fast_gradient_clipping_utils import DPLossFastGradientClipping
 from opacus.validators.module_validator import ModuleValidator
@@ -282,8 +283,26 @@ class PrivacyEngine:
         Raises:
             UnsupportedModuleError
                 If one or more modules found to be incompatible
+            ValueError
+                If optimizer configuration is invalid or mismatched
         """
         ModuleValidator.validate(module, strict=True)
+        if optimizer is not None:
+            trainable_params = params(optimizer)
+            if len(trainable_params) == 0:
+                raise ValueError(
+                    "The optimizer does not manage any parameters that require gradients "
+                    "(requires_grad=True). If using PEFT/LoRA, ensure adapters are "
+                    "initialized and marked as trainable before creating the optimizer."
+                )
+            module_param_set = set(module.parameters())
+            mismatched = [p for p in trainable_params if p not in module_param_set]
+            if mismatched:
+                raise ValueError(
+                    f"Optimizer manages {len(mismatched)} trainable parameter(s) that "
+                    "do not belong to the module passed to PrivacyEngine. Ensure the "
+                    "optimizer was created with the same model parameters."
+                )
 
     @classmethod
     def get_compatible_module(cls, module: nn.Module) -> nn.Module:

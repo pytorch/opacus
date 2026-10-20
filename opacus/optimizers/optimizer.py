@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from collections import defaultdict
 from typing import Callable, List, Optional, Union
 
@@ -23,7 +24,6 @@ from opacus.optimizers.utils import params
 from torch import nn
 from torch.distributed.tensor import DTensor
 from torch.optim import Optimizer
-
 
 logger = logging.getLogger(__name__)
 logger.disabled = True
@@ -450,6 +450,15 @@ class DPOptimizer(Optimizer):
                 per_param_norms = [norm.to(target_device) for norm in per_param_norms]
 
             per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
+            if len(per_sample_norms) > 0 and (per_sample_norms == 0).all():
+                warnings.warn(
+                    "All trainable parameters have zero per-sample gradients during optimizer step. "
+                    "If using PEFT/LoRA, check target modules, device placement, and adapter initialization "
+                    "to ensure gradients are not detached or zeroed out. Adding differential privacy noise "
+                    "to zero gradients will cause silent weight corruption.",
+                    UserWarning,
+                    stacklevel=2,
+                )
             per_sample_clip_factor = (
                 self.max_grad_norm / (per_sample_norms + 1e-6)
             ).clamp(max=1.0)
