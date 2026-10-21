@@ -83,10 +83,14 @@ def compute_embeddingbag_gradsampler(layer, inputs, backprops):
         else:
             end = index.shape[0]
 
+        # accumulate=True: an index repeated within a bag must contribute once
+        # per occurrence, as in the EmbeddingBag backward.
         if layer.mode == "sum":
-            gsm[i][index[begin:end]] += backprops[i]
+            gsm[i].index_put_((index[begin:end],), backprops[i], accumulate=True)
         elif layer.mode == "mean":
-            gsm[i][index[begin:end]] += backprops[i] / (end - begin)
+            gsm[i].index_put_(
+                (index[begin:end],), backprops[i] / (end - begin), accumulate=True
+            )
 
     ret = {}
     ret[layer.weight] = gsm
