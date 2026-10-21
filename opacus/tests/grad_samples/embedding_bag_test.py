@@ -21,6 +21,16 @@ from hypothesis import given, settings
 from .common import GradSampleHooks_test
 
 
+def chunk_method(x):
+    input, offsets = x
+    for i_offset, offset in enumerate(offsets):
+        if i_offset < len(offsets) - 1:
+            next_offset = offsets[i_offset + 1]
+        else:
+            next_offset = len(input)
+        yield (input[offset:next_offset], torch.LongTensor([0]))
+
+
 class Embedding_bag_test(GradSampleHooks_test):
     @given(
         N=st.integers(4, 8),
@@ -48,15 +58,21 @@ class Embedding_bag_test(GradSampleHooks_test):
 
         input = torch.cat(input, dim=0)
 
-        def chunk_method(x):
-            input, offsets = x
-            for i_offset, offset in enumerate(offsets):
-                if i_offset < len(offsets) - 1:
-                    next_offset = offsets[i_offset + 1]
-                else:
-                    next_offset = len(input)
-                yield (input[offset:next_offset], torch.LongTensor([0]))
-
         self.run_test(
             (input, offsets), emb, chunk_method=chunk_method, ew_compatible=False
         )
+
+    def test_repeated_indices_in_bag(self):
+        # Bags that contain the same index more than once, e.g. a repeated
+        # word in a bag-of-words model.
+        input = torch.LongTensor([3, 3, 5, 1, 2, 7, 7, 7])
+        offsets = torch.LongTensor([0, 3, 5])
+        for mode in ["sum", "mean"]:
+            with self.subTest(mode=mode):
+                emb = nn.EmbeddingBag(num_embeddings=10, embedding_dim=4, mode=mode)
+                self.run_test(
+                    (input, offsets),
+                    emb,
+                    chunk_method=chunk_method,
+                    ew_compatible=False,
+                )
