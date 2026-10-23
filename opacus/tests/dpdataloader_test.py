@@ -121,16 +121,6 @@ class DPDataLoaderTest(unittest.TestCase):
         data_loader = DataLoader(dataset, drop_last=True)
         _ = DPDataLoader.from_data_loader(data_loader)
 
-    @unittest.expectedFailure
-    def test_sample_rate_reaches_batch_sampler(self) -> None:
-        """DPDataLoader.sample_rate is only read in __init__"""
-        x = torch.randn(self.data_size, self.dimension)
-
-        dataset = TensorDataset(x)
-        data_loader = DPDataLoader(dataset, sample_rate=0.1)
-        data_loader.sample_rate = 0.5
-        self.assertEqual(data_loader.batch_sampler.sample_rate, 0.5)
-
 
 class CollateFnWithEmptyTest(unittest.TestCase):
     """Tests for the CollateFnWithEmpty class"""

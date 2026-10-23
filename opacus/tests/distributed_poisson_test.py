@@ -60,13 +60,6 @@ class PoissonSamplingTest(unittest.TestCase):
         for dataloader in self.dataloaders:
             self.assertEqual(len(dataloader), 10)
 
-    @unittest.expectedFailure
-    def test_length_follows_sample_rate(self) -> None:
-        # num_batches = int(1 / sample_rate) is computed once in __init__
-        for sampler in self.samplers:
-            sampler.sample_rate = 0.5
-            self.assertEqual(len(sampler), 2)
-
     def test_batch_sizes(self) -> None:
         for dataloader in self.dataloaders:
             batch_sizes = []

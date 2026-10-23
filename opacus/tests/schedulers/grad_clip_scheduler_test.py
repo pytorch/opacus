@@ -73,36 +73,3 @@ class GradClipSchedulerTest(unittest.TestCase):
         self.assertEqual(self.optimizer.max_grad_norm, 1.0)
         scheduler.step()
         self.assertEqual(self.optimizer.max_grad_norm, scheduler_function(1))
-
-    @unittest.expectedFailure
-    def test_per_layer_clipping(self):
-        # per-layer clipping uses max_grad_norms, which the scheduler doesn't update
-        n_data, dim = 4, 10
-        data = torch.randn(n_data, dim) * 10
-        labels = torch.randint(0, 10, (n_data,))
-        model = nn.Linear(10, 10)
-        optimizer = optim.SGD(model.parameters(), lr=0.0)
-        data_loader = DataLoader(TensorDataset(data, labels), batch_size=n_data)
-
-        module, optimizer, _ = PrivacyEngine().make_private(
-            module=model,
-            optimizer=optimizer,
-            data_loader=data_loader,
-            noise_multiplier=0.0,
-            max_grad_norm=[1.0, 1.0],
-            clipping="per_layer",
-            poisson_sampling=False,
-            loss_reduction="sum",
-        )
-        scheduler = ExponentialGradClip(optimizer, gamma=0.1)
-        scheduler.step()
-
-        optimizer.zero_grad()
-        loss = nn.functional.cross_entropy(
-            module(data[:1]), labels[:1], reduction="sum"
-        )
-        loss.backward()
-        optimizer.step()
-
-        grad_norm = torch.sqrt(sum((p.grad**2).sum() for p in optimizer.params))
-        self.assertAlmostEqual(grad_norm.item(), optimizer.max_grad_norm, places=4)

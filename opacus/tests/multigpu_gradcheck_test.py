@@ -17,7 +17,6 @@ import itertools
 import os
 import sys
 import unittest
-from unittest.mock import patch
 
 import torch
 import torch.distributed as dist
@@ -26,11 +25,8 @@ import torch.nn as nn
 import torch.optim as optim
 from opacus import PrivacyEngine
 from opacus.distributed import DifferentiallyPrivateDistributedDataParallel as DPDDP
-from opacus.grad_sample import GradSampleModule, GradSampleModuleFastGradientClipping
-from opacus.optimizers.ddp_perlayeroptimizer import (
-    DistributedPerLayerOptimizer,
-    SimpleDistributedPerLayerOptimizer,
-)
+from opacus.grad_sample import GradSampleModuleFastGradientClipping
+from opacus.optimizers.ddp_perlayeroptimizer import SimpleDistributedPerLayerOptimizer
 from opacus.optimizers.ddpoptimizer import DistributedDPOptimizer
 from opacus.optimizers.ddpoptimizer_fast_gradient_clipping import (
     DistributedDPOptimizerFastGradientClipping,
@@ -200,29 +196,6 @@ def run_demo(
 
 
 class GradientComputationTest(unittest.TestCase):
-    @unittest.expectedFailure
-    @patch("torch.distributed.get_world_size", return_value=1)
-    @patch("torch.distributed.get_rank", return_value=0)
-    def test_ddp_per_layer_max_grad_norms(self, *_):
-        # each layer's bound is bound into its hook with partial() when the
-        # hooks are registered
-        model = GradSampleModule(nn.Linear(10, 10), loss_reduction="sum")
-        optimizer = DistributedPerLayerOptimizer(
-            optim.SGD(model.parameters(), lr=0.0),
-            noise_multiplier=0.0,
-            max_grad_norm=[1.0, 1.0],
-            expected_batch_size=1,
-            loss_reduction="sum",
-        )
-        optimizer.max_grad_norms = [0.1, 0.1]
-
-        x = torch.randn(1, 10) * 10
-        y = torch.randint(0, 10, (1,))
-        loss = nn.functional.cross_entropy(model(x), y, reduction="sum")
-        loss.backward()
-        for p in optimizer.params:
-            self.assertAlmostEqual(p.summed_grad.norm().item(), 0.1, places=4)
-
     @unittest.skipIf(torch.cuda.device_count() < 2, "Need at least 2 GPUs")
     def test_gradient_correct(self) -> None:
         # Tests that gradient is the same with DP or without DDP

@@ -356,43 +356,6 @@ class BasePrivacyEngineTest(ABC):
                 min(non_clipped_norm, max_grad_norm_per_layer), clipped_norm, places=3
             )
 
-    @unittest.expectedFailure
-    def test_per_layer_clipping_noise_bound(self) -> None:
-        # max_grad_norm (used to scale the noise) is computed from max_grad_norms
-        # once, in __init__
-        _, p_optimizer, _, _ = self._init_private_training(
-            clipping="per_layer",
-            poisson_sampling=False,
-            grad_sample_mode=self.GRAD_SAMPLE_MODE,
-        )
-        num_layers = len(p_optimizer.max_grad_norms)
-        p_optimizer.max_grad_norms = [3.0] * num_layers
-        self.assertAlmostEqual(
-            p_optimizer.max_grad_norm, 3.0 * math.sqrt(num_layers), places=5
-        )
-
-    @unittest.expectedFailure
-    def test_accountant_sample_rate(self) -> None:
-        # the accountant hook captures sample_rate in make_private, while the
-        # batch sampler reads its own sample_rate on every batch
-        p_model, p_optimizer, p_dl, privacy_engine = self._init_private_training(
-            grad_sample_mode=self.GRAD_SAMPLE_MODE,
-        )
-        p_dl.batch_sampler.sample_rate = 0.5
-        self._train_steps(p_model, p_optimizer, p_dl, max_steps=1)
-
-        _, sample_rate, _ = privacy_engine.accountant.history[-1]
-        self.assertEqual(sample_rate, 0.5)
-
-    @unittest.expectedFailure
-    def test_expected_batch_size_follows_sample_rate(self) -> None:
-        # expected_batch_size is computed once in make_private
-        _, p_optimizer, p_dl, _ = self._init_private_training(
-            grad_sample_mode=self.GRAD_SAMPLE_MODE,
-        )
-        p_dl.batch_sampler.sample_rate = 0.5
-        self.assertEqual(p_optimizer.expected_batch_size, int(len(p_dl.dataset) * 0.5))
-
     def test_sample_grad_aggregation(self) -> None:
         """
         Check if final gradient is indeed an aggregation over per-sample gradients

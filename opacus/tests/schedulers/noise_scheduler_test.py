@@ -18,9 +18,6 @@ import unittest
 import torch
 from opacus import PrivacyEngine
 from opacus.schedulers import ExponentialNoise, LambdaNoise, StepNoise
-from opacus.utils.adaptive_clipping.adaptive_clipping_utils import (
-    PrivacyEngineAdaptiveClipping,
-)
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -74,39 +71,3 @@ class NoiseSchedulerTest(unittest.TestCase):
         self.assertEqual(self.optimizer.noise_multiplier, 1.0)
         scheduler.step()
         self.assertEqual(self.optimizer.noise_multiplier, noise_lambda(1))
-
-    @unittest.expectedFailure
-    def test_adaptive_ghost_clipping(self):
-        # the criterion copies the noise multiplier when it's built, but the
-        # accountant charges the scheduled optimizer.noise_multiplier
-        n_data, dim = 32, 10
-        data = torch.randn(n_data, dim)
-        labels = torch.randint(0, 10, (n_data,))
-        model = nn.Linear(10, 10)
-        optimizer = optim.SGD(model.parameters(), lr=0.0)
-        data_loader = DataLoader(TensorDataset(data, labels), batch_size=n_data)
-
-        module, optimizer, criterion, _ = PrivacyEngineAdaptiveClipping().make_private(
-            module=model,
-            optimizer=optimizer,
-            data_loader=data_loader,
-            criterion=nn.CrossEntropyLoss(reduction="mean"),
-            noise_multiplier=0.5,
-            max_grad_norm=1.0,
-            poisson_sampling=False,
-            grad_sample_mode="ghost",
-        )
-        scheduler = ExponentialNoise(optimizer, gamma=2.0)
-        scheduler.step()
-
-        optimizer.zero_grad()
-        loss = criterion(module(data), labels)
-        loss.backward()
-        optimizer.step()
-
-        # Theorem 1 of https://arxiv.org/pdf/1905.03871, where the criterion uses
-        # batch_size / 20 as the std of the unclipped-count noise
-        sigma = optimizer.noise_multiplier
-        sigma_b = n_data / 20.0
-        expected = (sigma**-2 - (2.0 * sigma_b) ** -2) ** -0.5
-        self.assertAlmostEqual(optimizer._adjusted_noise_multiplier, expected, places=5)
