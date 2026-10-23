@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import List
 
 import torch
@@ -130,9 +131,46 @@ class GradSampleHooksFastGradientClipping(GradSampleHooks):
             force_functorch=force_functorch,
         )
         self.trainable_parameters = [p for _, p in trainable_parameters(self._module)]
+        self._optimizer = None
         self.max_grad_norm = max_grad_norm
         self.use_ghost_clipping = use_ghost_clipping
         self._per_sample_gradient_norms = None
+
+    @property
+    def max_grad_norm(self) -> float:
+        """
+        Returns the clipping bound. Reads from the attached optimizer, if any.
+        """
+        if self._optimizer is not None:
+            return self._optimizer.max_grad_norm
+        return self._max_grad_norm
+
+    @max_grad_norm.setter
+    def max_grad_norm(self, value: float):
+        if self._optimizer is not None:
+            self._optimizer.max_grad_norm = value
+        else:
+            self._max_grad_norm = value
+
+    def attach_optimizer(self, optimizer) -> None:
+        """
+        Attaches the optimizer so that ``max_grad_norm`` is read from (and written to)
+        ``optimizer.max_grad_norm``. Needed for ``GradClipScheduler`` to take effect
+        under ghost clipping.
+
+        Does nothing if the optimizer has no ``max_grad_norm`` attribute.
+
+        Args:
+            optimizer: optimizer to attach, typically ``DPOptimizerFastGradientClipping``
+        """
+        if not hasattr(optimizer, "max_grad_norm"):
+            return
+        if optimizer.max_grad_norm != self.max_grad_norm:
+            warnings.warn(
+                f"Module max_grad_norm ({self.max_grad_norm}) differs from optimizer "
+                f"max_grad_norm ({optimizer.max_grad_norm}). Using the optimizer's."
+            )
+        self._optimizer = optimizer
 
     def get_clipping_coef(self) -> torch.Tensor:
         """Get per-example gradient scaling factor for clipping."""
