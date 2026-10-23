@@ -131,8 +131,7 @@ class GradSampleHooksFastGradientClipping(GradSampleHooks):
             force_functorch=force_functorch,
         )
         self.trainable_parameters = [p for _, p in trainable_parameters(self._module)]
-        # set by attach_clip_bound_owner() so that the optimizer owns max_grad_norm
-        self._clip_bound_owner = None
+        self._optimizer = None
         self.max_grad_norm = max_grad_norm
         self.use_ghost_clipping = use_ghost_clipping
         self._per_sample_gradient_norms = None
@@ -140,39 +139,38 @@ class GradSampleHooksFastGradientClipping(GradSampleHooks):
     @property
     def max_grad_norm(self) -> float:
         """
-        The value at which gradients are clipped. Read from the attached optimizer,
-        if any, so that schedulers updating ``optimizer.max_grad_norm`` (e.g.
-        ``GradClipScheduler``) also update the clipping bound.
+        Returns the clipping bound. Reads from the attached optimizer, if any.
         """
-        owner = self._clip_bound_owner
-        return owner.max_grad_norm if owner is not None else self._max_grad_norm
+        if self._optimizer is not None:
+            return self._optimizer.max_grad_norm
+        return self._max_grad_norm
 
     @max_grad_norm.setter
     def max_grad_norm(self, value: float):
-        if self._clip_bound_owner is not None:
-            self._clip_bound_owner.max_grad_norm = value
+        if self._optimizer is not None:
+            self._optimizer.max_grad_norm = value
         else:
             self._max_grad_norm = value
 
-    def attach_clip_bound_owner(self, owner) -> None:
+    def attach_optimizer(self, optimizer) -> None:
         """
-        Read and write ``max_grad_norm`` through ``owner`` (the DP optimizer), so that
-        the clipping bound and the noise scale always agree.
+        Attaches the optimizer so that ``max_grad_norm`` is read from (and written to)
+        ``optimizer.max_grad_norm``. Needed for ``GradClipScheduler`` to take effect
+        under ghost clipping.
 
-        ``owner.max_grad_norm`` is used from now on and the module's own value is
-        ignored. A warning is raised if the two differ.
+        Does nothing if the optimizer has no ``max_grad_norm`` attribute.
 
         Args:
-            owner: object exposing a ``max_grad_norm`` attribute, usually
-                the ``DPOptimizerFastGradientClipping`` used for training
+            optimizer: optimizer to attach, typically ``DPOptimizerFastGradientClipping``
         """
-        if owner.max_grad_norm != self.max_grad_norm:
+        if not hasattr(optimizer, "max_grad_norm"):
+            return
+        if optimizer.max_grad_norm != self.max_grad_norm:
             warnings.warn(
-                f"max_grad_norm differs between the module ({self.max_grad_norm}) "
-                f"and the optimizer ({owner.max_grad_norm}). Clipping with the "
-                f"optimizer's max_grad_norm."
+                f"Module max_grad_norm ({self.max_grad_norm}) differs from optimizer "
+                f"max_grad_norm ({optimizer.max_grad_norm}). Using the optimizer's."
             )
-        self._clip_bound_owner = owner
+        self._optimizer = optimizer
 
     def get_clipping_coef(self) -> torch.Tensor:
         """Get per-example gradient scaling factor for clipping."""
