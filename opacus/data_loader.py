@@ -135,6 +135,8 @@ class CollateFnWithEmpty:
 
         if isinstance(sample, (list, tuple)):
             converted = [self._make_empty_batch(v) for v in sample]
+            if isinstance(sample, tuple) and hasattr(sample, "_fields"):
+                return type(sample)(*converted)
             return type(sample)(converted)
 
         # Unsupported type - raise error to preserve DP guarantees

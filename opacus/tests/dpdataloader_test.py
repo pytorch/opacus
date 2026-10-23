@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import unittest
+from collections import namedtuple
 
 import torch
 from opacus.data_loader import CollateFnWithEmpty, DPDataLoader, wrap_collate_with_empty
@@ -120,6 +121,28 @@ class DPDataLoaderTest(unittest.TestCase):
         dataset = TensorDataset(x)
         data_loader = DataLoader(dataset, drop_last=True)
         _ = DPDataLoader.from_data_loader(data_loader)
+
+    def test_collate_namedtuple(self) -> None:
+        Record = namedtuple("Record", ["features", "label"])
+        dataset = [
+            Record(torch.arange(self.dimension, dtype=torch.float64) + index, index)
+            for index in range(self.data_size)
+        ]
+        data_loader = DPDataLoader(
+            dataset,
+            sample_rate=0.1,
+            generator=torch.Generator().manual_seed(0),
+        )
+
+        empty_batches = 0
+        for batch in data_loader:
+            self.assertIsInstance(batch, Record)
+            self.assertEqual(batch.features.shape[1:], (self.dimension,))
+            self.assertEqual(batch.label.shape, (batch.features.shape[0],))
+            self.assertEqual(batch.features.dtype, torch.float64)
+            self.assertEqual(batch.label.dtype, torch.int64)
+            empty_batches += batch.features.shape[0] == 0
+        self.assertGreater(empty_batches, 0)
 
 
 class CollateFnWithEmptyTest(unittest.TestCase):
@@ -325,6 +348,44 @@ class CollateFnWithEmptyTest(unittest.TestCase):
         self.assertEqual(len(empty_result), 2)
         self.assertEqual(empty_result[0].shape[0], 0)
         self.assertEqual(empty_result[1].shape[0], 0)
+
+    def test_namedtuple_preservation(self) -> None:
+        for fields in (["x"], ["x", "y"]):
+            with self.subTest(fields=fields):
+                Record = namedtuple("Record", fields)
+                values = [torch.tensor([1.0, 2.0]), torch.tensor(3)]
+                collate_fn = CollateFnWithEmpty(default_collate)
+                result = collate_fn([Record(*values[: len(fields)])])
+                empty_result = collate_fn([])
+
+                self.assertIsInstance(empty_result, Record)
+                for field in fields:
+                    value = getattr(result, field)
+                    empty_value = getattr(empty_result, field)
+                    self.assertTrue(torch.is_tensor(empty_value))
+                    self.assertEqual(empty_value.shape, (0, *value.shape[1:]))
+                    self.assertEqual(empty_value.dtype, value.dtype)
+                    self.assertEqual(empty_value.device, value.device)
+
+    def test_nested_namedtuple_preservation(self) -> None:
+        Record = namedtuple("Record", ["features", "target"])
+        Target = namedtuple("Target", ["label"])
+        collate_fn = CollateFnWithEmpty(default_collate)
+        record = Record(
+            {"tokens": torch.tensor([1, 2]), "mask": torch.tensor([True, False])},
+            Target(torch.tensor(3)),
+        )
+        collate_fn([{"record": record}])
+        empty_result = collate_fn([])["record"]
+
+        self.assertIsInstance(empty_result, Record)
+        self.assertIsInstance(empty_result.target, Target)
+        self.assertEqual(empty_result.features["tokens"].shape, (0, 2))
+        self.assertEqual(empty_result.features["tokens"].dtype, torch.int64)
+        self.assertEqual(empty_result.features["mask"].shape, (0, 2))
+        self.assertEqual(empty_result.features["mask"].dtype, torch.bool)
+        self.assertEqual(empty_result.target.label.shape, (0,))
+        self.assertEqual(empty_result.target.label.dtype, torch.int64)
 
     def test_unsupported_type_raises_error(self) -> None:
         """Test that unsupported batch types raise TypeError to preserve DP guarantees"""
